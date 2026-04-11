@@ -190,18 +190,19 @@ export default function PublishCar() {
   const handlePublish = () => {
     const cars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
     cars.push({
-      ...form,
-      specs: specs || {},
-      photos: photos.map(p => p.url),
-      id: Date.now().toString(),
-      owner_id: user.id,
-      owner_name: user.name,
-      is_verified: true,
-      rating: 0,
-      reviews_count: 0,
-      available: true,
-      created_at: new Date().toISOString(),
-    });
+  ...form,
+  specs: specs || {},
+  photos: photos.map(p => p.url),
+  id: Date.now().toString(),
+  owner_id: user.id,
+  owner_name: user.name,
+  is_verified: false,
+  approved: false,
+  rating: 0,
+  reviews_count: 0,
+  available: true,
+  created_at: new Date().toISOString(),
+});
     localStorage.setItem("fw_my_cars", JSON.stringify(cars));
     setDone(true);
   };

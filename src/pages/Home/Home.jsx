@@ -44,7 +44,12 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Todos");
 
-  const filtered = mockCars.filter(c => {
+  const allCars = [
+  ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
+  ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]").filter(c => c.approved && !c.banned),
+];
+
+const filtered = allCars.filter(c => {
     const matchSearch = !search ||
       c.location.toLowerCase().includes(search.toLowerCase()) ||
       c.brand.toLowerCase().includes(search.toLowerCase());

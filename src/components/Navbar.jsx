@@ -15,6 +15,8 @@ const styles = {
   avatar: { width:34, height:34, borderRadius:"50%", background:"#dbeafe",
     display:"flex", alignItems:"center", justifyContent:"center",
     fontWeight:600, fontSize:13, color:"#1d4ed8", cursor:"pointer" },
+  adminBadge: { background:"#fef2f2", color:"#dc2626", padding:"4px 12px",
+    borderRadius:20, fontSize:12, fontWeight:700, textDecoration:"none" },
 };
 
 export default function Navbar() {
@@ -30,15 +32,30 @@ export default function Navbar() {
         <Link to="/" style={styles.link}>Explorar</Link>
         {user ? (
           <>
-            <Link to="/publish" style={styles.link}>Publicar auto</Link>
-            <Link to="/chat" style={styles.link}>Mensajes</Link>
-            <Link to="/dashboard" style={styles.link}>Mi panel</Link>
-            <div style={styles.avatar} title={user.name}
-              onClick={() => navigate("/dashboard")}>
-              {user.name?.[0]?.toUpperCase()}
-            </div>
-            <button style={{...styles.btn,...styles.btnOutline}}
-              onClick={handleLogout}>Salir</button>
+            {user.role === "admin" ? (
+              <>
+                <Link to="/admin" style={styles.adminBadge}>
+                  🔧 Panel Admin
+                </Link>
+                <div style={styles.avatar} title={user.name}>
+                  {user.name?.[0]?.toUpperCase()}
+                </div>
+                <button style={{...styles.btn,...styles.btnOutline}}
+                  onClick={handleLogout}>Salir</button>
+              </>
+            ) : (
+              <>
+                <Link to="/publish" style={styles.link}>Publicar auto</Link>
+                <Link to="/chat" style={styles.link}>Mensajes</Link>
+                <Link to="/dashboard" style={styles.link}>Mi panel</Link>
+                <div style={styles.avatar} title={user.name}
+                  onClick={() => navigate("/dashboard")}>
+                  {user.name?.[0]?.toUpperCase()}
+                </div>
+                <button style={{...styles.btn,...styles.btnOutline}}
+                  onClick={handleLogout}>Salir</button>
+              </>
+            )}
           </>
         ) : (
           <>

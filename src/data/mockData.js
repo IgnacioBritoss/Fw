@@ -8,14 +8,16 @@ export const mockCars = [
     price_per_day: 8500,
     location: "Palermo, CABA",
     description: "Auto en excelente estado, muy económico. Nunca tuve incidentes.",
-    photos: ["https://via.placeholder.com/400x240?text=Toyota+Corolla"],
+    photos: [],
     seats: 5,
     transmission: "Automático",
     fuel: "Nafta",
     owner_id: "2",
+    owner_name: "Roberto O.",
     rating: 4.8,
     reviews_count: 12,
     is_verified: true,
+    approved: true,
     available: true,
   },
   {
@@ -27,14 +29,16 @@ export const mockCars = [
     price_per_day: 12000,
     location: "Belgrano, CABA",
     description: "SUV familiar, espacioso y cómodo para viajes largos. Acepta mascotas.",
-    photos: ["https://via.placeholder.com/400x240?text=VW+T-Cross"],
+    photos: [],
     seats: 5,
     transmission: "Automático",
     fuel: "Nafta",
     owner_id: "2",
+    owner_name: "Roberto O.",
     rating: 4.6,
     reviews_count: 7,
     is_verified: true,
+    approved: true,
     available: true,
   },
   {
@@ -46,14 +50,16 @@ export const mockCars = [
     price_per_day: 6000,
     location: "San Isidro, GBA Norte",
     description: "Económico y fácil de estacionar. Ideal para la ciudad.",
-    photos: ["https://via.placeholder.com/400x240?text=Fiat+Cronos"],
+    photos: [],
     seats: 5,
     transmission: "Manual",
     fuel: "Nafta",
     owner_id: "3",
+    owner_name: "Carmen V.",
     rating: 4.3,
     reviews_count: 5,
     is_verified: true,
+    approved: true,
     available: true,
   },
 ];
@@ -72,6 +78,13 @@ export const mockReviews = {
 export const mockOwners = {
   "2": { name: "Roberto O.", rating: 4.9, rentals: 19, verified: true, since: "2023" },
   "3": { name: "Carmen V.", rating: 4.5, rentals: 5, verified: true, since: "2024" },
+};
+
+export const initMockCars = () => {
+  const existing = localStorage.getItem("fw_all_cars");
+  if (!existing) {
+    localStorage.setItem("fw_all_cars", JSON.stringify(mockCars));
+  }
 };
 
 export const mockMessages = [
