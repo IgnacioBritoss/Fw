@@ -1,16 +1,33 @@
-# React + Vite
+# Freewheel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripción
 
-Currently, two official plugins are available:
+Esta plataforma permite:
+- publicar y alquilar autos entre particulares,
+- gestionar reservas con calendario de disponibilidad,
+- verificar usuarios con DNI y licencia de conducir,
+- moderar publicaciones y reportes desde un panel de administración,
+- obtener especificaciones técnicas de vehículos mediante IA.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Herramientas usadas
 
-## React Compiler
+- React 18 + Vite
+- React Router DOM
+- Leaflet + OpenStreetMap
+- react-datepicker
+- Node.js + Express
+- Groq API (llama-3.3-70b-versatile)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Cómo ejecutarlo
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Abrir dos terminales en la carpeta del proyecto.
+2. Instalar dependencias del frontend:
+```bash
+   npm install
+```
+3. Instalar dependencias del backend:
+```bash
+   cd server
+   npm install
+```
+4. Agregar la API key de Groq en `.env` (raíz) y `server/.env`:
