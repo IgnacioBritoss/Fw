@@ -46,19 +46,19 @@ export default function BookingCalendar({ car, onConfirm }) {
     <div style={s.wrap}>
       <div style={s.title}>Seleccioná las fechas</div>
       <div style={s.legend}>
-        <div style={s.legendItem}>
-          <div style={{ ...s.dot, background: "#1d4ed8" }} />
-          Disponible
-        </div>
-        <div style={s.legendItem}>
-          <div style={{ ...s.dot, background: "#fca5a5" }} />
-          Ocupado
-        </div>
-        <div style={s.legendItem}>
-          <div style={{ ...s.dot, background: "#bfdbfe" }} />
-          Seleccionado
-        </div>
-      </div>
+  <div style={s.legendItem}>
+    <div style={{ ...s.dot, background: "#000000" }} />
+    Disponible
+  </div>
+  <div style={s.legendItem}>
+    <div style={{ ...s.dot, background: "#777676" }} />
+    Ocupado
+  </div>
+  <div style={s.legendItem}>
+    <div style={{ ...s.dot, background: "#035e22" }} />
+    Seleccionado
+  </div>
+</div>
 
       <DatePicker
         selectsRange
@@ -92,7 +92,7 @@ export default function BookingCalendar({ car, onConfirm }) {
           </div>
           <button
             style={{ width: "100%", marginTop: 14, padding: "13px",
-              background: "#1d4ed8", color: "#fff", border: "none",
+              background: "#16531e", color: "#fff", border: "none",
               borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
             onClick={() => onConfirm({
               start, end, days, total, commission, deposit,

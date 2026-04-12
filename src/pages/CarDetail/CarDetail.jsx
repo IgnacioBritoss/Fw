@@ -6,52 +6,60 @@ import { useAuth } from "../../context/AuthContext";
 
 const s = {
   page: { maxWidth:860, margin:"0 auto", padding:"32px 24px" },
-  imgContainer: { width:"100%", height:320, background:"#e5e7eb", borderRadius:14,
-    overflow:"hidden", marginBottom:28, display:"flex",
-    alignItems:"center", justifyContent:"center", fontSize:80 },
-  img: { width:"100%", height:"100%", objectFit:"cover" },
   grid: { display:"grid", gridTemplateColumns:"1fr 340px", gap:32 },
-  title: { fontSize:26, fontWeight:700, marginBottom:6 },
+  title: { fontSize:26, fontWeight:800, marginBottom:6, color:"#111827",
+    letterSpacing:"-.5px" },
   location: { color:"#6b7280", fontSize:14, marginBottom:16 },
   badge: { display:"inline-block", padding:"3px 12px", background:"#dcfce7",
     color:"#166534", borderRadius:20, fontSize:12, fontWeight:600, marginRight:8 },
+  pendingBadge: { display:"inline-block", padding:"3px 12px",
+    background:"#fef9c3", color:"#854d0e", borderRadius:20,
+    fontSize:12, fontWeight:600, marginRight:8 },
   section: { marginTop:24 },
-  sectionTitle: { fontSize:16, fontWeight:600, marginBottom:12, color:"#111827" },
+  sectionTitle: { fontSize:15, fontWeight:700, marginBottom:12,
+    color:"#111827" },
   specGrid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 },
   spec: { background:"#f9fafb", borderRadius:8, padding:"10px 14px",
-    fontSize:13, color:"#374151" },
-  specLabel: { color:"#6b7280", fontSize:11, marginBottom:2 },
-  review: { borderBottom:"1px solid #f3f4f6", paddingBottom:14, marginBottom:14 },
-  reviewAuthor: { fontWeight:600, fontSize:14, marginBottom:2 },
+    fontSize:13, color:"#374151", border:"1px solid #f3f4f6" },
+  specLabel: { color:"#9ca3af", fontSize:11, marginBottom:2 },
+  review: { borderBottom:"1px solid #f3f4f6", paddingBottom:14,
+    marginBottom:14 },
+  reviewAuthor: { fontWeight:600, fontSize:14, marginBottom:2,
+    color:"#111827" },
   reviewText: { fontSize:13, color:"#4b5563" },
   stars: { color:"#f59e0b", fontSize:13 },
-  priceCard: { background:"#fff", border:"1px solid #e5e7eb", borderRadius:14,
-    padding:24, position:"sticky", top:80 },
-  price: { fontSize:28, fontWeight:700, color:"#1d4ed8", marginBottom:4 },
+  priceCard: { background:"#fff", border:"1px solid #e5e7eb",
+    borderRadius:14, padding:24, position:"sticky", top:80 },
+  price: { fontSize:28, fontWeight:800, color:"#1a4d2e", marginBottom:4 },
   priceSub: { fontSize:13, color:"#6b7280", marginBottom:20 },
   ownerBox: { display:"flex", alignItems:"center", gap:12,
     padding:"14px 0", borderTop:"1px solid #f3f4f6", marginTop:14 },
-  ownerAvatar: { width:44, height:44, borderRadius:"50%", background:"#dbeafe",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    fontWeight:700, fontSize:18, color:"#1d4ed8" },
-  ownerName: { fontWeight:600, fontSize:14 },
+  ownerAvatar: { width:44, height:44, borderRadius:"50%",
+    background:"#f0f7f2", display:"flex", alignItems:"center",
+    justifyContent:"center", fontWeight:700, fontSize:18, color:"#1a4d2e" },
+  ownerName: { fontWeight:700, fontSize:14, color:"#111827" },
   ownerMeta: { fontSize:12, color:"#6b7280" },
-  btn: { width:"100%", padding:"14px", background:"#1d4ed8", color:"#fff",
-    border:"none", borderRadius:10, fontSize:16, fontWeight:700,
+  btn: { width:"100%", padding:"14px", background:"#1a4d2e", color:"#fff",
+    border:"none", borderRadius:10, fontSize:15, fontWeight:700,
     cursor:"pointer", marginBottom:10 },
   chatBtn: { width:"100%", padding:"11px", background:"transparent",
-    border:"2px solid #1d4ed8", color:"#1d4ed8", borderRadius:10,
+    border:"2px solid #1a4d2e", color:"#1a4d2e", borderRadius:10,
     fontSize:14, fontWeight:600, cursor:"pointer" },
   row: { display:"flex", justifyContent:"space-between", fontSize:13,
     color:"#6b7280", marginBottom:6 },
   total: { display:"flex", justifyContent:"space-between", fontWeight:700,
     fontSize:15, color:"#111827", borderTop:"1px solid #e5e7eb",
     paddingTop:10, marginTop:6 },
-  pendingBadge: { display:"inline-block", padding:"3px 12px", background:"#fef9c3",
-    color:"#854d0e", borderRadius:20, fontSize:12, fontWeight:600, marginRight:8 },
-  specBadge: { display:"inline-block", fontSize:10, padding:"2px 8px",
-    background:"#dcfce7", color:"#166534", borderRadius:20,
-    fontWeight:600, marginLeft:6 },
+  arrowBtn: { position:"absolute", top:"50%", transform:"translateY(-50%)",
+    width:44, height:44, borderRadius:"50%",
+    background:"rgba(255,255,255,.92)", border:"none", cursor:"pointer",
+    fontSize:22, fontWeight:700, display:"flex", alignItems:"center",
+    justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,.15)" },
+  dot: { height:8, borderRadius:4, cursor:"pointer",
+    transition:"all .2s", background:"rgba(255,255,255,.5)" },
+  dotActive: { background:"#fff" },
+  thumbnail: { width:88, height:60, objectFit:"cover", borderRadius:8,
+    cursor:"pointer", flexShrink:0, transition:"all .15s" },
 };
 
 export default function CarDetail() {
@@ -59,6 +67,7 @@ export default function CarDetail() {
   const { user } = useAuth();
   const [showReport, setShowReport] = useState(false);
   const [showReportUser, setShowReportUser] = useState(false);
+  const [currentPhoto, setCurrentPhoto] = useState(0);
   const navigate = useNavigate();
 
   const allCars = [
@@ -75,22 +84,66 @@ export default function CarDetail() {
     </div>
   );
 
-  const handleReservar = () => {
-    if (!user) { navigate("/login"); return; }
-    alert("✅ Reserva iniciada (en el MVP real se procesaría el pago con Mercado Pago)");
-  };
-
+  const photos = car.photos || [];
   const ownerName = owner?.name || car.owner_name || "Dueño";
   const ownerRating = owner?.rating || "—";
   const ownerRentals = owner?.rentals || 0;
   const ownerSince = owner?.since || "2024";
 
+  const prevPhoto = () =>
+    setCurrentPhoto(p => p === 0 ? photos.length - 1 : p - 1);
+  const nextPhoto = () =>
+    setCurrentPhoto(p => p === photos.length - 1 ? 0 : p + 1);
+
   return (
     <div style={s.page}>
-      <div style={s.imgContainer}>
-        {car.photos?.length > 0
-          ? <img src={car.photos[0]} alt={`${car.brand} ${car.model}`} style={s.img} />
-          : "🚙"}
+
+      {/* Galería */}
+      <div style={{ position:"relative", marginBottom:28 }}>
+        <div style={{ width:"100%", height:380, borderRadius:14,
+          overflow:"hidden", position:"relative", background:"#f3f4f6",
+          display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {photos.length > 0
+            ? <img src={photos[currentPhoto]} alt=""
+                style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            : <span style={{ color:"#9ca3af", fontSize:14 }}>Sin fotos</span>}
+
+          {photos.length > 1 && (
+            <>
+              <button style={{ ...s.arrowBtn, left:16 }}
+                onClick={prevPhoto}>‹</button>
+              <button style={{ ...s.arrowBtn, right:16 }}
+                onClick={nextPhoto}>›</button>
+              <div style={{ position:"absolute", bottom:14, left:"50%",
+                transform:"translateX(-50%)", display:"flex", gap:6 }}>
+                {photos.map((_, i) => (
+                  <div key={i} onClick={() => setCurrentPhoto(i)}
+                    style={{ ...s.dot, width: i === currentPhoto ? 22 : 8,
+                      ...(i === currentPhoto ? s.dotActive : {}) }} />
+                ))}
+              </div>
+              <div style={{ position:"absolute", top:14, right:14,
+                background:"rgba(0,0,0,.55)", color:"#fff",
+                borderRadius:20, padding:"4px 12px", fontSize:12 }}>
+                {currentPhoto + 1} / {photos.length}
+              </div>
+            </>
+          )}
+        </div>
+
+        {photos.length > 1 && (
+          <div style={{ display:"flex", gap:8, marginTop:10,
+            overflowX:"auto", paddingBottom:4 }}>
+            {photos.map((p, i) => (
+              <img key={i} src={p} alt=""
+                onClick={() => setCurrentPhoto(i)}
+                style={{ ...s.thumbnail,
+                  border: i === currentPhoto
+                    ? "2px solid #1a4d2e" : "2px solid transparent",
+                  opacity: i === currentPhoto ? 1 : 0.6 }} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={s.grid}>
@@ -99,12 +152,13 @@ export default function CarDetail() {
           <div style={s.location}>📍 {car.location}</div>
 
           {car.is_verified
-            ? <span style={s.badge}>✓ Vehículo verificado</span>
-            : <span style={s.pendingBadge}>⏳ Pendiente de verificación</span>}
-
-          <span style={{...s.badge, background:"#fef9c3", color:"#854d0e"}}>
-            ★ {car.rating || "Nuevo"} ({car.reviews_count || 0} reseñas)
-          </span>
+            ? <span style={s.badge}>Vehículo verificado</span>
+            : <span style={s.pendingBadge}>Pendiente de verificación</span>}
+          {(car.rating > 0) && (
+            <span style={{...s.badge, background:"#fef9c3", color:"#854d0e"}}>
+              {car.rating} ({car.reviews_count || 0} reseñas)
+            </span>
+          )}
 
           <div style={s.section}>
             <div style={s.sectionTitle}>Descripción</div>
@@ -132,14 +186,13 @@ export default function CarDetail() {
 
           {car.specs && Object.keys(car.specs).length > 0 && (
             <div style={s.section}>
-              <div style={s.sectionTitle}>
-                Especificaciones técnicas
-                <span style={s.specBadge}>IA</span>
-              </div>
+              <div style={s.sectionTitle}>Especificaciones técnicas</div>
               <div style={s.specGrid}>
                 {Object.entries(car.specs).map(([key, val]) => (
                   <div key={key} style={s.spec}>
-                    <div style={s.specLabel}>{key.replace(/_/g, " ")}</div>
+                    <div style={s.specLabel}>
+                      {key.replace(/_/g," ")}
+                    </div>
                     <strong>{String(val)}</strong>
                   </div>
                 ))}
@@ -147,26 +200,18 @@ export default function CarDetail() {
             </div>
           )}
 
-          {car.photos?.length > 1 && (
-            <div style={s.section}>
-              <div style={s.sectionTitle}>Fotos</div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
-                {car.photos.map((p, i) => (
-                  <img key={i} src={p} alt={`foto ${i+1}`}
-                    style={{ width:"100%", aspectRatio:"4/3",
-                      objectFit:"cover", borderRadius:8 }} />
-                ))}
-              </div>
-            </div>
-          )}
-
           <div style={s.section}>
-            <div style={s.sectionTitle}>Reseñas ({reviews.length})</div>
+            <div style={s.sectionTitle}>
+              Reseñas ({reviews.length})
+            </div>
             {reviews.length === 0
-              ? <p style={{color:"#9ca3af", fontSize:13}}>Aún sin reseñas.</p>
+              ? <p style={{color:"#9ca3af", fontSize:13}}>
+                  Aún sin reseñas.
+                </p>
               : reviews.map(r => (
                 <div key={r.id} style={s.review}>
-                  <div style={{display:"flex", justifyContent:"space-between"}}>
+                  <div style={{display:"flex",
+                    justifyContent:"space-between"}}>
                     <span style={s.reviewAuthor}>{r.author}</span>
                     <span style={s.stars}>{"★".repeat(r.rating)}</span>
                   </div>
@@ -178,7 +223,9 @@ export default function CarDetail() {
 
         <div>
           <div style={s.priceCard}>
-            <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>
+            <div style={s.price}>
+              ${Number(car.price_per_day).toLocaleString()}
+            </div>
             <div style={s.priceSub}>por día</div>
             <div style={s.row}>
               <span>Precio base (3 días)</span>
@@ -186,7 +233,9 @@ export default function CarDetail() {
             </div>
             <div style={s.row}>
               <span>Comisión Freewheel</span>
-              <span>${Math.round(car.price_per_day*3*.1).toLocaleString()}</span>
+              <span>
+                ${Math.round(car.price_per_day*3*.1).toLocaleString()}
+              </span>
             </div>
             <div style={s.row}>
               <span>Depósito garantía</span>
@@ -194,15 +243,23 @@ export default function CarDetail() {
             </div>
             <div style={s.total}>
               <span>Total estimado</span>
-              <span>${Math.round(car.price_per_day*3*1.1+car.price_per_day*2).toLocaleString()}</span>
+              <span>
+                ${Math.round(
+                  car.price_per_day*3*1.1+car.price_per_day*2
+                ).toLocaleString()}
+              </span>
             </div>
             <br/>
-            <button style={s.btn} onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}>
+            <button style={s.btn}
+              onClick={() => user
+                ? navigate(`/booking/${car.id}`)
+                : navigate("/login")}>
               {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
             </button>
             <button style={s.chatBtn}
-              onClick={() => user ? navigate("/chat") : navigate("/login")}>
-              💬 Contactar al dueño
+              onClick={() => user
+                ? navigate("/chat") : navigate("/login")}>
+              Contactar al dueño
             </button>
 
             <div style={s.ownerBox}>
@@ -210,13 +267,15 @@ export default function CarDetail() {
               <div style={{ flex:1 }}>
                 <div style={s.ownerName}>{ownerName}</div>
                 <div style={s.ownerMeta}>
-                  ★ {ownerRating} · {ownerRentals} alquileres · desde {ownerSince}
+                  {ownerRating} · {ownerRentals} alquileres · desde {ownerSince}
                 </div>
               </div>
               <button
-                onClick={() => user ? setShowReportUser(true) : navigate("/login")}
-                style={{ background:"none", border:"1px solid #fecaca",
-                  borderRadius:8, color:"#dc2626", fontSize:11,
+                onClick={() => user
+                  ? setShowReportUser(true) : navigate("/login")}
+                style={{ background:"none",
+                  border:"1px solid #fecaca", borderRadius:8,
+                  color:"#dc2626", fontSize:11,
                   cursor:"pointer", padding:"4px 10px" }}>
                 Reportar
               </button>
@@ -227,7 +286,8 @@ export default function CarDetail() {
 
       <div style={{ textAlign:"center", marginTop:32 }}>
         <button
-          onClick={() => user ? setShowReport(true) : navigate("/login")}
+          onClick={() => user
+            ? setShowReport(true) : navigate("/login")}
           style={{ background:"none", border:"none", color:"#9ca3af",
             fontSize:13, cursor:"pointer", textDecoration:"underline" }}>
           Reportar esta publicación
@@ -241,7 +301,6 @@ export default function CarDetail() {
           onClose={() => setShowReport(false)}
         />
       )}
-
       {showReportUser && (
         <ReportModal
           target={ownerName}

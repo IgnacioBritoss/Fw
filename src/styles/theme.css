@@ -1,0 +1,104 @@
+:root {
+  --primary: #1a4d2e;
+  --primary-light: #2d6e47;
+  --primary-dark: #0f2e1a;
+  --primary-bg: #f0f7f2;
+  --accent: #f4a623;
+  --accent-hover: #e09510;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --border: #e5e7eb;
+  --border-dark: #d1d5db;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --surface-3: #f3f4f6;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  color: var(--text-primary);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+/* Datepicker override */
+.react-datepicker {
+  font-family: inherit !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.react-datepicker__header {
+  background: var(--primary) !important;
+  border-bottom: none !important;
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+}
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: #fff !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range,
+.react-datepicker__day--range-start,
+.react-datepicker__day--range-end {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+.react-datepicker__day--in-selecting-range {
+  background: var(--primary-bg) !important;
+  color: var(--primary) !important;
+}
+.react-datepicker__day:hover {
+  background: var(--primary-bg) !important;
+  color: var(--primary) !important;
+}
+.react-datepicker__navigation-icon::before {
+  border-color: #fff !important;
+}
+
+/* Fix z-index mapa vs navbar */
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-map-pane svg,
+.leaflet-map-pane canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  z-index: 0 !important;
+}
+
+.leaflet-control {
+  z-index: 1 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 1 !important;
+}
+
+.leaflet-popup {
+  z-index: 2 !important;
+}
