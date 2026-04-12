@@ -1,5 +1,4 @@
 # Freewheel
-Ignacio Britos — Full Stack / IA
 
 ## Descripción
 
