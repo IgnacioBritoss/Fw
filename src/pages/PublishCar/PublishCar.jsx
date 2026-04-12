@@ -1,22 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
+  pageMobile: { padding: "20px 16px" },
   title: { fontSize: 24, fontWeight: 800, color: "#111827",
     letterSpacing: "-.5px", marginBottom: 6 },
   sub: { color: "#6b7280", fontSize: 14, marginBottom: 32 },
-  steps: { display: "flex", marginBottom: 36 },
-  step: { flex: 1, textAlign: "center", fontSize: 12, color: "#9ca3af" },
-  stepDot: { width: 28, height: 28, borderRadius: "50%",
-    background: "#e5e7eb", margin: "0 auto 6px", display: "flex",
-    alignItems: "center", justifyContent: "center",
-    fontSize: 13, fontWeight: 700, color: "#6b7280" },
-  stepDotActive: { background: "#1a4d2e", color: "#fff" },
-  stepDotDone: { background: "#16a34a", color: "#fff" },
   card: { background: "#fff", borderRadius: 14, padding: 28,
+    boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 16,
+    border: "1px solid #f3f4f6" },
+  cardMobile: { background: "#fff", borderRadius: 14, padding: 16,
     boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 16,
     border: "1px solid #f3f4f6" },
   sectionTitle: { fontSize: 15, fontWeight: 700, color: "#111827",
@@ -32,7 +29,9 @@ const s = {
     border: "1.5px solid #e5e7eb", fontSize: 14,
     background: "#fff", color: "#111827" },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
+  grid2Mobile: { display: "grid", gridTemplateColumns: "1fr", gap: 0 },
   grid3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 },
+  grid3Mobile: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
   uploadArea: { border: "2px dashed #d1d5db", borderRadius: 10,
     padding: "32px 20px", textAlign: "center", cursor: "pointer",
     transition: ".15s", background: "#fafafa" },
@@ -52,8 +51,7 @@ const s = {
   termsTitle: { fontWeight: 700, fontSize: 14, marginBottom: 8,
     color: "#92400e" },
   termsText: { fontSize: 12, color: "#78350f", lineHeight: 1.6 },
-  termsCheck: { display: "flex", gap: 8, alignItems: "center",
-    marginTop: 12 },
+  termsCheck: { display: "flex", gap: 8, alignItems: "center", marginTop: 12 },
   btnRow: { display: "flex", gap: 10, marginTop: 8 },
   btn: { flex: 1, padding: "13px", background: "#1a4d2e", color: "#fff",
     border: "none", borderRadius: 10, fontSize: 14,
@@ -77,7 +75,7 @@ const s = {
   specLabel: { fontSize: 11, color: "#6b7280", marginBottom: 4 },
 };
 
-const STEPS = ["Datos del auto", "Fotos", "Condiciones", "Confirmar"];
+const STEPS = ["Datos", "Fotos", "Condiciones", "Confirmar"];
 
 const SPEC_LABELS = {
   baul_litros: "Baúl (litros)",
@@ -97,6 +95,7 @@ const SPEC_LABELS = {
 export default function PublishCar() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
   const [step, setStep] = useState(0);
   const [ownerTerms, setOwnerTerms] = useState(false);
   const [done, setDone] = useState(false);
@@ -190,8 +189,10 @@ export default function PublishCar() {
     setDone(true);
   };
 
+  const cardStyle = isMobile ? s.cardMobile : s.card;
+
   if (done) return (
-    <div style={s.page}>
+    <div style={{ ...(isMobile ? s.pageMobile : s.page) }}>
       <div style={s.success}>
         <div style={{ width:64, height:64, borderRadius:"50%",
           background:"#f0f7f2", display:"flex", alignItems:"center",
@@ -213,66 +214,69 @@ export default function PublishCar() {
   );
 
   return (
-    <div style={s.page}>
+    <div style={{ ...(isMobile ? s.pageMobile : s.page) }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={s.title}>Publicar mi auto</div>
+      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
+        Publicar mi auto
+      </div>
       <div style={s.sub}>Completá los datos del vehículo</div>
 
+      {/* Steps */}
       <div style={{ display:"flex", alignItems:"center", marginBottom:36 }}>
-  {STEPS.map((st, i) => (
-    <div key={st} style={{ display:"flex", alignItems:"center",
-      flex: i < STEPS.length - 1 ? 1 : "none" }}>
-      <div style={{ display:"flex", flexDirection:"column",
-        alignItems:"center", gap:6 }}>
-        <div style={{
-          width:32, height:32, borderRadius:"50%",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:13, fontWeight:700, transition:"all .3s",
-          background: i < step ? "#16a34a" : i === step ? "#1a4d2e" : "#e5e7eb",
-          color: i <= step ? "#fff" : "#9ca3af",
-          boxShadow: i === step ? "0 0 0 4px #dcfce7" : "none",
-        }}>
-          {i < step ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5"
-                strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ) : i + 1}
-        </div>
-        <span style={{ fontSize:11, fontWeight:500, whiteSpace:"nowrap",
-          color: i === step ? "#1a4d2e" : i < step ? "#16a34a" : "#9ca3af" }}>
-          {st}
-        </span>
+        {STEPS.map((st, i) => (
+          <div key={st} style={{ display:"flex", alignItems:"center",
+            flex: i < STEPS.length - 1 ? 1 : "none" }}>
+            <div style={{ display:"flex", flexDirection:"column",
+              alignItems:"center", gap:6 }}>
+              <div style={{
+                width: isMobile ? 28 : 32,
+                height: isMobile ? 28 : 32,
+                borderRadius:"50%", display:"flex", alignItems:"center",
+                justifyContent:"center", fontSize:13, fontWeight:700,
+                transition:"all .3s",
+                background: i < step ? "#16a34a" : i === step ? "#1a4d2e" : "#e5e7eb",
+                color: i <= step ? "#fff" : "#9ca3af",
+                boxShadow: i === step ? "0 0 0 4px #dcfce7" : "none",
+              }}>
+                {i < step ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : i + 1}
+              </div>
+              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight:500,
+                whiteSpace:"nowrap",
+                color: i === step ? "#1a4d2e" : i < step ? "#16a34a" : "#9ca3af" }}>
+                {st}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div style={{ flex:1, height:2, margin:"0 6px", marginBottom:18,
+                background:"#e5e7eb", position:"relative", overflow:"hidden",
+                borderRadius:2 }}>
+                <div style={{ position:"absolute", left:0, top:0, height:"100%",
+                  borderRadius:2, transition:"width .4s ease", background:"#1a4d2e",
+                  width: i < step ? "100%" : "0%",
+                }}/>
+                {i >= step && (
+                  <div style={{ position:"absolute", left:0, top:0,
+                    width:"100%", height:"100%",
+                    backgroundImage:"repeating-linear-gradient(90deg, #d1d5db 0px, #d1d5db 6px, transparent 6px, transparent 12px)",
+                  }}/>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-      {i < STEPS.length - 1 && (
-        <div style={{ flex:1, height:2, margin:"0 8px", marginBottom:18,
-          background:"#e5e7eb", position:"relative", overflow:"hidden",
-          borderRadius:2 }}>
-          <div style={{
-            position:"absolute", left:0, top:0, height:"100%",
-            borderRadius:2, transition:"width .4s ease",
-            background:"#1a4d2e",
-            width: i < step ? "100%" : "0%",
-          }}/>
-          {i >= step && (
-            <div style={{
-              position:"absolute", left:0, top:0,
-              width:"100%", height:"100%",
-              backgroundImage:"repeating-linear-gradient(90deg, #d1d5db 0px, #d1d5db 6px, transparent 6px, transparent 12px)",
-            }}/>
-          )}
-        </div>
-      )}
-    </div>
-  ))}
-</div>
 
       {error && <div style={s.error}>{error}</div>}
 
       {step === 0 && (
-        <div style={s.card}>
+        <div style={cardStyle}>
           <div style={s.sectionTitle}>Datos del vehículo</div>
-          <div style={s.grid3}>
+          <div style={isMobile ? s.grid3Mobile : s.grid3}>
             <div style={s.field}>
               <label style={s.label}>Marca</label>
               <input style={s.input} placeholder="Toyota"
@@ -289,7 +293,7 @@ export default function PublishCar() {
                 value={form.year} onChange={e => set("year", e.target.value)} />
             </div>
           </div>
-          <div style={s.grid2}>
+          <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
               <label style={s.label}>Categoría</label>
               <select style={s.select} value={form.category}
@@ -323,7 +327,7 @@ export default function PublishCar() {
 
           <div style={{ marginTop: 8 }}>
             <div style={{ display:"flex", justifyContent:"space-between",
-              alignItems:"center", marginBottom:14 }}>
+              alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8 }}>
               <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>
                 Especificaciones técnicas
               </div>
@@ -365,7 +369,7 @@ export default function PublishCar() {
       )}
 
       {step === 1 && (
-        <div style={s.card}>
+        <div style={cardStyle}>
           <div style={s.sectionTitle}>Fotos del vehículo</div>
           <p style={{ fontSize:13, color:"#6b7280", marginBottom:16 }}>
             Subí hasta 6 fotos. La primera será la foto principal.
@@ -410,9 +414,9 @@ export default function PublishCar() {
       )}
 
       {step === 2 && (
-        <div style={s.card}>
+        <div style={cardStyle}>
           <div style={s.sectionTitle}>Precio y condiciones</div>
-          <div style={s.grid2}>
+          <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
               <label style={s.label}>Precio por día ($ARS)</label>
               <input style={s.input} type="number" placeholder="8500"
@@ -451,7 +455,8 @@ export default function PublishCar() {
             </div>
             <div style={s.termsCheck}>
               <input type="checkbox" checked={ownerTerms}
-                onChange={e => setOwnerTerms(e.target.checked)} />
+                onChange={e => setOwnerTerms(e.target.checked)}
+                style={{ flexShrink:0 }} />
               <span style={{ fontSize:13, color:"#92400e" }}>
                 Acepto estas condiciones como dueño del vehículo
               </span>
@@ -466,12 +471,12 @@ export default function PublishCar() {
       )}
 
       {step === 3 && (
-        <div style={s.card}>
+        <div style={cardStyle}>
           <div style={s.sectionTitle}>Revisá tu publicación</div>
           {photos.length > 0 && (
             <img src={photos[0].url} alt="principal"
-              style={{ width:"100%", height:200, objectFit:"cover",
-                borderRadius:10, marginBottom:20 }} />
+              style={{ width:"100%", height: isMobile ? 160 : 200,
+                objectFit:"cover", borderRadius:10, marginBottom:20 }} />
           )}
           {[
             ["Vehículo", `${form.brand} ${form.model} ${form.year}`],
@@ -484,7 +489,8 @@ export default function PublishCar() {
             ["Specs", specs ? "Completadas" : "No obtenidas"],
           ].map(([k, v]) => (
             <div key={k} style={{ display:"flex", justifyContent:"space-between",
-              padding:"9px 0", borderBottom:"1px solid #f3f4f6", fontSize:14 }}>
+              padding:"9px 0", borderBottom:"1px solid #f3f4f6",
+              fontSize: isMobile ? 13 : 14 }}>
               <span style={{ color:"#6b7280" }}>{k}</span>
               <span style={{ fontWeight:500 }}>{v}</span>
             </div>

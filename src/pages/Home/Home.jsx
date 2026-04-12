@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 const CATEGORIES = [
   { id: "Todos", label: "Todos" },
@@ -11,6 +12,7 @@ const CATEGORIES = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Todos");
   const [view, setView] = useState("lista");
@@ -35,6 +37,7 @@ export default function Home() {
     return matchSearch && matchCat && c.available !== false;
   });
 
+  // Cargar Leaflet
   useEffect(() => {
     if (window.L) { setMapLoaded(true); return; }
     const link = document.createElement("link");
@@ -47,6 +50,16 @@ export default function Home() {
     document.head.appendChild(script);
   }, []);
 
+  // Destruir mapa al cambiar a lista
+  useEffect(() => {
+    if (view === "lista" && mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      markersRef.current = {};
+    }
+  }, [view]);
+
+  // Inicializar mapa al cambiar a mapa
   useEffect(() => {
     if (view !== "mapa") return;
     const init = () => {
@@ -54,40 +67,40 @@ export default function Home() {
       const L = window.L;
       if (!L) return;
       const map = L.map(mapRef.current, {
-        center: [-34.6037, -58.3816], zoom: 12,
+        center: [-34.6037, -58.3816],
+        zoom: isMobile ? 11 : 12,
       });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap",
       }).addTo(map);
       mapInstanceRef.current = map;
+
+      // Agregar markers inmediatamente después de inicializar
+      addMarkers(map, L);
     };
-    if (window.L) setTimeout(init, 100);
+    if (window.L) setTimeout(init, 150);
     else {
       const iv = setInterval(() => {
-        if (window.L) { clearInterval(iv); setTimeout(init, 100); }
+        if (window.L) { clearInterval(iv); setTimeout(init, 150); }
       }, 100);
     }
   }, [view, mapLoaded]);
 
-  useEffect(() => {
-    if (!mapLoaded || !mapInstanceRef.current) return;
-    const L = window.L;
-    const map = mapInstanceRef.current;
-    Object.values(markersRef.current).forEach(m => map.removeLayer(m));
+  // Función para agregar markers
+  const addMarkers = useCallback((map, L) => {
+    if (!map || !L) return;
+    Object.values(markersRef.current).forEach(m => {
+      try { map.removeLayer(m); } catch {}
+    });
     markersRef.current = {};
 
     filtered.forEach(car => {
       if (!car.lat || !car.lng) return;
-      const isHovered = hoveredCar === car.id;
       const icon = L.divIcon({
         className: "",
-        html: `<div style="
-          width:14px;height:14px;
-          background:${isHovered ? "#1a4d2e" : "#e00"};
-          border:2px solid #fff;border-radius:50%;
-          box-shadow:0 2px 6px rgba(0,0,0,.35);
-          cursor:pointer;transition:all .15s;
-        "></div>`,
+        html: `<div style="width:14px;height:14px;
+          background:#e00;border:2px solid #fff;border-radius:50%;
+          box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
         iconAnchor: [7, 7],
       });
       const marker = L.marker([car.lat, car.lng], { icon });
@@ -98,7 +111,8 @@ export default function Home() {
             margin-bottom:10px;background:#e5e7eb;">
             ${car.photos?.length > 0
               ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
-              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
+              : `<div style="width:100%;height:100%;display:flex;align-items:center;
+                  justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
           </div>
           <div style="font-size:11px;color:#6b7280;margin-bottom:4px">
             ${car.category} · ${car.transmission}
@@ -123,7 +137,17 @@ export default function Home() {
       markersRef.current[car.id] = marker;
     });
     window.__fwOpen = (id) => navigate(`/cars/${id}`);
-  }, [filtered, mapLoaded, hoveredCar]);
+  }, [filtered, navigate]);
+
+  // Actualizar markers cuando cambian los filtros
+  useEffect(() => {
+    if (view !== "mapa" || !mapInstanceRef.current || !window.L) return;
+    addMarkers(mapInstanceRef.current, window.L);
+  }, [filtered, addMarkers, view]);
+
+  const handleViewChange = (newView) => {
+    setView(newView);
+  };
 
   const CarCard = ({ car }) => (
     <div
@@ -138,8 +162,8 @@ export default function Home() {
           ? <img src={car.photos[0]} alt=""
               style={{ width:"100%", height:"100%", objectFit:"cover",
                 transition:"transform .3s" }}
-              onMouseEnter={e => e.target.style.transform = "scale(1.03)"}
-              onMouseLeave={e => e.target.style.transform = "scale(1)"} />
+              onMouseEnter={e => !isMobile && (e.target.style.transform="scale(1.03)")}
+              onMouseLeave={e => !isMobile && (e.target.style.transform="scale(1)")} />
           : <div style={{ width:"100%", height:"100%", display:"flex",
               alignItems:"center", justifyContent:"center",
               color:"#9ca3af", fontSize:14 }}>Sin foto</div>}
@@ -163,8 +187,7 @@ export default function Home() {
           </div>
         </div>
         {car.rating > 0 && (
-          <div style={{ fontSize:13, color:"#111827", fontWeight:600,
-            display:"flex", alignItems:"center", gap:3 }}>
+          <div style={{ fontSize:13, color:"#111827", fontWeight:600 }}>
             ★ {car.rating}
           </div>
         )}
@@ -181,28 +204,32 @@ export default function Home() {
   return (
     <div style={{ minHeight:"100vh", background:"#fff" }}>
       {/* Hero */}
-      <div style={{ background:"linear-gradient(135deg, #1a4d2e 0%, #2d6e47 100%)",
-        padding:"64px 32px", textAlign:"center", color:"#fff" }}>
-        <div style={{ fontSize:42, fontWeight:800, marginBottom:12,
-          letterSpacing:"-1px", lineHeight:1.2 }}>
+      <div style={{ background:"linear-gradient(135deg,#1a4d2e 0%,#2d6e47 100%)",
+        padding: isMobile ? "40px 20px" : "64px 32px",
+        textAlign:"center", color:"#fff" }}>
+        <div style={{ fontSize: isMobile ? 28 : 42, fontWeight:800,
+          marginBottom:12, letterSpacing:"-1px", lineHeight:1.2 }}>
           Alquilá el auto perfecto
         </div>
-        <div style={{ fontSize:18, opacity:.85, marginBottom:40,
-          fontWeight:400 }}>
+        <div style={{ fontSize: isMobile ? 15 : 18, opacity:.85,
+          marginBottom: isMobile ? 24 : 40, fontWeight:400 }}>
           Entre particulares, con confianza y sin complicaciones
         </div>
-        <div style={{ background:"#fff", borderRadius:16, padding:"8px 8px 8px 20px",
+        <div style={{ background:"#fff", borderRadius:16,
+          padding: isMobile ? "8px 8px 8px 16px" : "8px 8px 8px 20px",
           maxWidth:620, margin:"0 auto", display:"flex", gap:8,
           boxShadow:"0 8px 32px rgba(0,0,0,.15)" }}>
           <input
-            style={{ flex:1, border:"none", outline:"none", fontSize:15,
+            style={{ flex:1, border:"none", outline:"none",
+              fontSize: isMobile ? 14 : 15,
               color:"#111827", background:"transparent" }}
-            placeholder="Ciudad, zona o modelo de auto..."
+            placeholder="Ciudad, zona o modelo..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <button style={{ padding:"12px 24px", background:"#1a4d2e",
-            color:"#fff", border:"none", borderRadius:10, fontSize:15,
+          <button style={{ padding: isMobile ? "10px 16px" : "12px 24px",
+            background:"#1a4d2e", color:"#fff", border:"none",
+            borderRadius:10, fontSize: isMobile ? 14 : 15,
             fontWeight:700, cursor:"pointer" }}>
             Buscar
           </button>
@@ -211,13 +238,15 @@ export default function Home() {
 
       {/* Filtros */}
       <div style={{ maxWidth:1280, margin:"0 auto",
-        padding:"20px 24px 10px", borderBottom:"1px solid #f3f4f6" }}>
+        padding: isMobile ? "14px 16px 10px" : "20px 24px 10px",
+        borderBottom:"1px solid #f3f4f6" }}>
         <div style={{ display:"flex", justifyContent:"space-between",
-          alignItems:"center", flexWrap:"wrap", gap:10 }}>
+          alignItems:"center", flexWrap:"wrap", gap:8 }}>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
             {CATEGORIES.map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} style={{
-                padding:"8px 18px", borderRadius:20, fontSize:13,
+                padding: isMobile ? "5px 12px" : "8px 18px",
+                borderRadius:20, fontSize: isMobile ? 11 : 13,
                 cursor:"pointer", fontWeight:500, transition:"all .15s",
                 border: cat === c.id ? "2px solid #1a4d2e" : "1.5px solid #e5e7eb",
                 background: cat === c.id ? "#1a4d2e" : "#fff",
@@ -227,8 +256,9 @@ export default function Home() {
           </div>
           <div style={{ display:"flex", gap:6 }}>
             {[["lista","Lista"],["mapa","Mapa"]].map(([k,l]) => (
-              <button key={k} onClick={() => setView(k)} style={{
-                padding:"8px 18px", borderRadius:20, fontSize:13,
+              <button key={k} onClick={() => handleViewChange(k)} style={{
+                padding: isMobile ? "5px 12px" : "8px 18px",
+                borderRadius:20, fontSize: isMobile ? 11 : 13,
                 cursor:"pointer", fontWeight:500,
                 border: view === k ? "2px solid #1a4d2e" : "1.5px solid #e5e7eb",
                 background: view === k ? "#1a4d2e" : "#fff",
@@ -239,49 +269,65 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Contenido */}
-      {view === "lista" ? (
-        <div style={{ maxWidth:1280, margin:"0 auto", padding:"32px 24px" }}>
-          <div style={{ fontSize:13, color:"#6b7280", marginBottom:20 }}>
-            {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
-          </div>
-          <div style={{ display:"grid",
-            gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",
-            gap:"0 28px" }}>
-            {filtered.map(car => <CarCard key={car.id} car={car} />)}
-            {filtered.length === 0 && (
-              <div style={{ gridColumn:"1/-1", textAlign:"center",
-                padding:80, color:"#9ca3af" }}>
-                No se encontraron autos para tu búsqueda.
-              </div>
-            )}
-          </div>
+      {/* Contenido — lista siempre montada, mapa se muestra/oculta */}
+      <div style={{ display: view === "lista" ? "block" : "none",
+        maxWidth:1280, margin:"0 auto",
+        padding: isMobile ? "20px 16px" : "32px 24px" }}>
+        <div style={{ fontSize:13, color:"#6b7280", marginBottom:20 }}>
+          {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
         </div>
-      ) : (
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 45%",
-          maxWidth:1280, margin:"0 auto", padding:"24px", gap:24 }}>
-          <div style={{ overflowY:"auto",
-            maxHeight:"calc(100vh - 200px)", paddingRight:8 }}>
-            <div style={{ fontSize:13, color:"#6b7280", marginBottom:20 }}>
+        <div style={{ display:"grid",
+          gridTemplateColumns: isMobile
+            ? "repeat(2,1fr)"
+            : "repeat(auto-fill,minmax(240px,1fr))",
+          gap: isMobile ? "0 12px" : "0 28px" }}>
+          {filtered.map(car => <CarCard key={car.id} car={car} />)}
+          {filtered.length === 0 && (
+            <div style={{ gridColumn:"1/-1", textAlign:"center",
+              padding: isMobile ? 40 : 80, color:"#9ca3af" }}>
+              No se encontraron autos.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: view === "mapa" ? "block" : "none" }}>
+        {isMobile ? (
+          <div style={{ display:"flex", flexDirection:"column",
+            height:"calc(100vh - 180px)" }}>
+            <div style={{ fontSize:13, color:"#6b7280", padding:"10px 16px" }}>
               {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
             </div>
-            <div style={{ display:"grid",
-              gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",
-              gap:"0 20px" }}>
-              {filtered.map(car => <CarCard key={car.id} car={car} />)}
+            <div ref={mapRef} style={{ flex:1, zIndex:0 }} />
+          </div>
+        ) : (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 45%",
+            maxWidth:1280, margin:"0 auto", padding:"24px", gap:24 }}>
+            <div style={{ overflowY:"auto",
+              maxHeight:"calc(100vh - 200px)", paddingRight:8 }}>
+              <div style={{ fontSize:13, color:"#6b7280", marginBottom:20 }}>
+                {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
+              </div>
+              <div style={{ display:"grid",
+                gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",
+                gap:"0 20px" }}>
+                {filtered.map(car => <CarCard key={car.id} car={car} />)}
+              </div>
+            </div>
+            <div style={{ position:"sticky", top:80 }}>
+              <div ref={mapRef} style={{ height:"calc(100vh - 140px)",
+                borderRadius:14, overflow:"hidden", zIndex:0,
+                border:"1px solid #e5e7eb" }} />
             </div>
           </div>
-          <div style={{ position:"sticky", top:80 }}>
-            <div ref={mapRef} style={{ height:"calc(100vh - 140px)",
-              borderRadius:14, overflow:"hidden", zIndex:0,
-              border:"1px solid #e5e7eb" }} />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Footer simple */}
-      <div style={{ borderTop:"1px solid #f3f4f6", padding:"32px 24px",
-        textAlign:"center", color:"#9ca3af", fontSize:13, marginTop:40 }}>
+      {/* Footer */}
+      <div style={{ borderTop:"1px solid #f3f4f6",
+        padding: isMobile ? "24px 16px" : "32px 24px",
+        textAlign:"center", color:"#9ca3af", fontSize:13, marginTop:40,
+        display: view === "mapa" ? "none" : "block" }}>
         © 2025 Freewheel · Alquiler de autos entre particulares en Argentina
       </div>
     </div>

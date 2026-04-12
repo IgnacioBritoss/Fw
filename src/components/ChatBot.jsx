@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 const SYSTEM_PROMPT = `Sos el asistente virtual de Freewheel, una plataforma de alquiler de autos entre particulares en Argentina.
 Tu rol es ayudar a usuarios con dudas sobre:
@@ -27,92 +28,31 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatBot() {
+  const { isMobile } = useIsMobile();
+  const location = useLocation();
+  const isChat = location.pathname === "/chat";
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
-
-const location = useLocation();
-const isChat = location.pathname === "/chat";
-
-  const s = {
-    fab: {
-      position: "fixed", bottom: 28,
-      right: isChat ? "auto" : 28,
-      left: isChat ? 28 : "auto",
-      width: 52, height: 52, borderRadius: "50%",
-      background: "#1a4d2e", color: "#fff", border: "none",
-      fontSize: 20, cursor: "pointer",
-      boxShadow: "0 4px 16px rgba(26,77,46,.4)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 1000, transition: "transform .15s, box-shadow .15s",
-    },
-    widget: {
-      position: "fixed", bottom: 92,
-      right: isChat ? "auto" : 28,
-      left: isChat ? 28 : "auto",
-      width: 360, height: 500, background: "#fff",
-      borderRadius: 16, boxShadow: "0 8px 40px rgba(0,0,0,.15)",
-      display: "flex", flexDirection: "column",
-      zIndex: 1000, overflow: "hidden", border: "1px solid #e5e7eb",
-    },
-    header: {
-      background: "#1a4d2e", padding: "16px 18px",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-    },
-    headerLeft: { display: "flex", alignItems: "center", gap: 10 },
-    avatarIcon: {
-      width: 36, height: 36, borderRadius: "50%",
-      background: "rgba(255,255,255,.15)", display: "flex",
-      alignItems: "center", justifyContent: "center",
-    },
-    headerName: { color: "#fff", fontWeight: 700, fontSize: 14 },
-    headerSub: { color: "rgba(255,255,255,.7)", fontSize: 11 },
-    closeBtn: {
-      background: "none", border: "none", color: "rgba(255,255,255,.8)",
-      fontSize: 20, cursor: "pointer", padding: 4, lineHeight: 1,
-    },
-    messages: {
-      flex: 1, overflowY: "auto", padding: 16,
-      display: "flex", flexDirection: "column", gap: 10, background: "#f9fafb",
-    },
-    msgBot: {
-      alignSelf: "flex-start", maxWidth: "85%", background: "#fff",
-      border: "1px solid #e5e7eb", borderRadius: "12px 12px 12px 2px",
-      padding: "10px 14px", fontSize: 13, lineHeight: 1.6, color: "#111827",
-    },
-    msgUser: {
-      alignSelf: "flex-end", maxWidth: "85%", background: "#1a4d2e",
-      color: "#fff", borderRadius: "12px 12px 2px 12px",
-      padding: "10px 14px", fontSize: 13, lineHeight: 1.6,
-    },
-    typing: {
-      alignSelf: "flex-start", background: "#fff",
-      border: "1px solid #e5e7eb", borderRadius: "12px 12px 12px 2px",
-      padding: "12px 16px", display: "flex", gap: 4, alignItems: "center",
-    },
-    dot: { width: 6, height: 6, borderRadius: "50%", background: "#9ca3af" },
-    inputRow: {
-      display: "flex", gap: 8, padding: "12px 14px",
-      borderTop: "1px solid #f3f4f6", background: "#fff",
-    },
-    input: {
-      flex: 1, padding: "10px 14px", borderRadius: 24,
-      border: "1.5px solid #e5e7eb", fontSize: 13, outline: "none",
-      color: "#111827",
-    },
-    sendBtn: {
-      width: 38, height: 38, borderRadius: "50%", background: "#1a4d2e",
-      color: "#fff", border: "none", cursor: "pointer", fontSize: 16,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0,
-    },
-  };
+  const inputRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  // En mobile, cuando aparece el teclado scrollea al fondo
+  useEffect(() => {
+    if (!isMobile || !open) return;
+    const handler = () => {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    };
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [isMobile, open]);
 
   const send = async (text) => {
     const userText = text || input.trim();
@@ -145,6 +85,40 @@ const isChat = location.pathname === "/chat";
     }
   };
 
+  // Estilos del widget según plataforma
+  const widgetStyle = isMobile ? {
+    // Mobile: ocupa toda la pantalla con top/bottom fijos
+    // El browser ajusta bottom automáticamente cuando sube el teclado
+    position: "fixed",
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: "#fff",
+    display: "flex", flexDirection: "column",
+    zIndex: 1000, overflow: "hidden",
+  } : {
+    // Desktop: flotante 360x500
+    position: "fixed",
+    bottom: 92,
+    right: isChat ? "auto" : 28,
+    left: isChat ? 28 : "auto",
+    width: 360, height: 500,
+    background: "#fff", borderRadius: 16,
+    boxShadow: "0 8px 40px rgba(0,0,0,.15)",
+    display: "flex", flexDirection: "column",
+    zIndex: 1000, overflow: "hidden",
+    border: "1px solid #e5e7eb",
+  };
+
+  const fabStyle = {
+    position: "fixed", bottom: 80,
+    right: isChat ? "auto" : 20,
+    left: isChat ? 20 : "auto",
+    width: 50, height: 50, borderRadius: "50%",
+    background: "#1a4d2e", color: "#fff", border: "none",
+    cursor: "pointer", boxShadow: "0 4px 16px rgba(26,77,46,.4)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 999, transition: "transform .15s, box-shadow .15s",
+  };
+
   return (
     <>
       <style>{`
@@ -158,10 +132,15 @@ const isChat = location.pathname === "/chat";
       `}</style>
 
       {open && (
-        <div style={s.widget}>
-          <div style={s.header}>
-            <div style={s.headerLeft}>
-              <div style={s.avatarIcon}>
+        <div style={widgetStyle}>
+          {/* Header */}
+          <div style={{ background: "#1a4d2e", padding: "16px 18px",
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%",
+                background: "rgba(255,255,255,.15)", display: "flex",
+                alignItems: "center", justifyContent: "center" }}>
                 <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
                   <circle cx="18" cy="18" r="15" stroke="#fff" strokeWidth="2"/>
                   <circle cx="18" cy="18" r="5" fill="#fff"/>
@@ -176,49 +155,96 @@ const isChat = location.pathname === "/chat";
                 </svg>
               </div>
               <div>
-                <div style={s.headerName}>Asistente Freewheel</div>
-                <div style={s.headerSub}>En línea</div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
+                  Asistente Freewheel
+                </div>
+                <div style={{ color: "rgba(255,255,255,.7)", fontSize: 11 }}>
+                  En línea
+                </div>
               </div>
             </div>
-            <button style={s.closeBtn} onClick={() => setOpen(false)}>×</button>
+            <button onClick={() => setOpen(false)}
+              style={{ background: "none", border: "none",
+                color: "rgba(255,255,255,.8)", fontSize: 20,
+                cursor: "pointer", padding: 4, lineHeight: 1 }}>
+              ×
+            </button>
           </div>
 
-          <div style={s.messages}>
+          {/* Mensajes */}
+          <div style={{ flex: 1, overflowY: "auto", padding: 16,
+            display: "flex", flexDirection: "column", gap: 10,
+            background: "#f9fafb", minHeight: 0,
+            WebkitOverflowScrolling: "touch" }}>
             {messages.map((m, i) => (
-              <div key={i} style={m.role === "assistant" ? s.msgBot : s.msgUser}>
+              <div key={i} style={m.role === "assistant" ? {
+                alignSelf: "flex-start", maxWidth: "85%", background: "#fff",
+                border: "1px solid #e5e7eb", borderRadius: "12px 12px 12px 2px",
+                padding: "10px 14px", fontSize: 13, lineHeight: 1.6,
+                color: "#111827",
+              } : {
+                alignSelf: "flex-end", maxWidth: "85%", background: "#1a4d2e",
+                color: "#fff", borderRadius: "12px 12px 2px 12px",
+                padding: "10px 14px", fontSize: 13, lineHeight: 1.6,
+              }}>
                 {m.text}
               </div>
             ))}
             {loading && (
-              <div style={s.typing}>
-                <div style={s.dot} className="fw-dot-1"/>
-                <div style={s.dot} className="fw-dot-2"/>
-                <div style={s.dot} className="fw-dot-3"/>
+              <div style={{ alignSelf: "flex-start", background: "#fff",
+                border: "1px solid #e5e7eb", borderRadius: "12px 12px 12px 2px",
+                padding: "12px 16px", display: "flex", gap: 4,
+                alignItems: "center" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%",
+                  background: "#9ca3af" }} className="fw-dot-1"/>
+                <div style={{ width: 6, height: 6, borderRadius: "50%",
+                  background: "#9ca3af" }} className="fw-dot-2"/>
+                <div style={{ width: 6, height: 6, borderRadius: "50%",
+                  background: "#9ca3af" }} className="fw-dot-3"/>
               </div>
             )}
             <div ref={bottomRef}/>
           </div>
 
+          {/* Sugerencias */}
           {messages.length <= 1 && (
-            <div style={{ display:"flex", gap:6, padding:"0 12px 10px",
-              flexWrap:"wrap", background:"#fff" }}>
+            <div style={{ display: "flex", gap: 6, padding: "0 12px 10px",
+              flexWrap: "wrap", background: "#fff", flexShrink: 0 }}>
               {SUGGESTIONS.map(sg => (
                 <button key={sg} onClick={() => send(sg)} style={{
-                  padding:"5px 12px", borderRadius:20,
-                  border:"1.5px solid #d1fae5", background:"#f0fdf4",
-                  color:"#1a4d2e", fontSize:11, cursor:"pointer", fontWeight:600,
-                }}>{sg}</button>
+                  padding: "5px 12px", borderRadius: 20,
+                  border: "1.5px solid #d1fae5", background: "#f0fdf4",
+                  color: "#1a4d2e", fontSize: 11, cursor: "pointer",
+                  fontWeight: 600 }}>{sg}</button>
               ))}
             </div>
           )}
 
-          <div style={s.inputRow}>
-            <input style={s.input}
+          {/* Input */}
+          <div style={{ display: "flex", gap: 8, padding: "12px 14px",
+            paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+            borderTop: "1px solid #f3f4f6", background: "#fff",
+            flexShrink: 0 }}>
+            <input
+              ref={inputRef}
+              style={{ flex: 1, padding: "10px 14px", borderRadius: 24,
+                border: "1.5px solid #e5e7eb",
+                fontSize: 16, // 16px evita zoom en iOS
+                outline: "none", color: "#111827" }}
               placeholder="Escribí tu pregunta..."
               value={input}
+              enterKeyHint="send"
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && send()} />
-            <button style={s.sendBtn} onClick={() => send()}>
+              onKeyDown={e => e.key === "Enter" && send()}
+              onFocus={() => setTimeout(() =>
+                bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300
+              )}
+            />
+            <button style={{ width: 38, height: 38, borderRadius: "50%",
+              background: "#1a4d2e", color: "#fff", border: "none",
+              cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", flexShrink: 0 }}
+              onClick={() => send()}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M22 2L11 13" stroke="#fff" strokeWidth="2"
                   strokeLinecap="round"/>
@@ -230,7 +256,7 @@ const isChat = location.pathname === "/chat";
         </div>
       )}
 
-      <button style={s.fab}
+      <button style={fabStyle}
         onClick={() => setOpen(o => !o)}
         onMouseEnter={e => {
           e.currentTarget.style.transform = "scale(1.08)";

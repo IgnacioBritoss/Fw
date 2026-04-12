@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 const s = {
   page: { minHeight:"100vh", background:"#f9fafb", display:"flex",
     alignItems:"center", justifyContent:"center", padding:24 },
+  pageMobile: { minHeight:"100vh", background:"#f9fafb",
+    padding:"20px 16px" },
   card: { background:"#fff", borderRadius:16, padding:"40px 36px",
     width:"100%", maxWidth:520, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
+  cardMobile: { background:"#fff", borderRadius:16, padding:"24px 20px",
+    width:"100%", boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   header: { marginBottom:28 },
   title: { fontSize:24, fontWeight:800, color:"#111827",
     letterSpacing:"-0.5px", marginBottom:6 },
@@ -21,9 +26,12 @@ const s = {
     border:"1.5px solid #e5e7eb", fontSize:14, outline:"none",
     transition:"border .15s", color:"#111827" },
   grid2: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
-  roleRow: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 },
+  grid2Mobile: { display:"grid", gridTemplateColumns:"1fr", gap:0 },
+  roleRow: { display:"grid", gridTemplateColumns:"1fr 1fr",
+    gap:10, marginBottom:14 },
   roleCard: { padding:"14px", border:"1.5px solid #e5e7eb",
-    borderRadius:10, cursor:"pointer", textAlign:"center", transition:".15s" },
+    borderRadius:10, cursor:"pointer", textAlign:"center",
+    transition:".15s" },
   roleCardActive: { borderColor:"#1a4d2e", background:"#f0f7f2" },
   roleLabel: { fontSize:13, fontWeight:700, color:"#111827", marginBottom:2 },
   roleSub: { fontSize:11, color:"#6b7280" },
@@ -87,6 +95,7 @@ function TermsModal({ onClose }) {
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
   const [form, setForm] = useState({
     name: "", email: "", phone: "", password: "", confirmPassword: "",
     role: "renter", dni: "", licencia: "",
@@ -121,20 +130,18 @@ export default function Register() {
       return setError("Las contraseñas no coinciden.");
     }
     if (!terms) return setError("Tenés que aceptar los términos y condiciones.");
-    register({
-      ...form,
-      dniVerified: false,
-      licenciaVerified: false,
-    });
+    register({ ...form, dniVerified: false, licenciaVerified: false });
     navigate("/");
   };
 
   return (
-    <div style={s.page}>
+    <div style={isMobile ? s.pageMobile : s.page}>
       {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
-      <div style={s.card}>
+      <div style={isMobile ? s.cardMobile : s.card}>
         <div style={s.header}>
-          <div style={s.title}>Crear cuenta en Freewheel</div>
+          <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
+            Crear cuenta en Freewheel
+          </div>
           <div style={s.sub}>Completá tus datos para empezar</div>
         </div>
 
@@ -146,7 +153,8 @@ export default function Register() {
           <input style={s.input} placeholder="Juan García"
             value={form.name} onChange={e => set("name", e.target.value)} />
         </div>
-        <div style={s.grid2}>
+
+        <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Email *</label>
             <input style={s.input} type="email" placeholder="juan@email.com"
@@ -158,15 +166,19 @@ export default function Register() {
               value={form.phone} onChange={e => set("phone", e.target.value)} />
           </div>
         </div>
-        <div style={s.grid2}>
+
+        <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Contraseña *</label>
-            <input style={s.input} type="password" placeholder="Mínimo 8 caracteres"
-              value={form.password} onChange={e => set("password", e.target.value)} />
+            <input style={s.input} type="password"
+              placeholder="Mínimo 8 caracteres"
+              value={form.password}
+              onChange={e => set("password", e.target.value)} />
           </div>
           <div style={s.field}>
             <label style={s.label}>Confirmar contraseña *</label>
-            <input style={s.input} type="password" placeholder="Repetí la contraseña"
+            <input style={s.input} type="password"
+              placeholder="Repetí la contraseña"
               value={form.confirmPassword}
               onChange={e => set("confirmPassword", e.target.value)} />
           </div>
@@ -174,12 +186,14 @@ export default function Register() {
 
         <div style={s.section}>Tipo de cuenta</div>
         <div style={s.roleRow}>
-          <div style={{...s.roleCard,...(form.role==="renter"?s.roleCardActive:{})}}
+          <div style={{...s.roleCard,
+            ...(form.role==="renter" ? s.roleCardActive : {})}}
             onClick={() => set("role","renter")}>
             <div style={s.roleLabel}>Quiero alquilar</div>
             <div style={s.roleSub}>Busco autos disponibles</div>
           </div>
-          <div style={{...s.roleCard,...(form.role==="owner"?s.roleCardActive:{})}}
+          <div style={{...s.roleCard,
+            ...(form.role==="owner" ? s.roleCardActive : {})}}
             onClick={() => set("role","owner")}>
             <div style={s.roleLabel}>Tengo un auto</div>
             <div style={s.roleSub}>Quiero publicarlo</div>
@@ -187,7 +201,7 @@ export default function Register() {
         </div>
 
         <div style={s.section}>Documentación</div>
-        <div style={s.grid2}>
+        <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Número de DNI *</label>
             <input style={s.input} placeholder="12.345.678"
@@ -204,32 +218,39 @@ export default function Register() {
         </div>
 
         <div style={s.field}>
-  <label style={s.label}>Foto del DNI (frente)</label>
-  <div style={s.uploadArea} onClick={() => document.getElementById('dni-input').click()}>
-    <input id="dni-input" type="file" accept="image/*" style={{ display:"none" }}
-      onChange={e => handleFileChange(e, "dni")} />
-    <div style={s.uploadLabel}>Subir foto del DNI</div>
-    <div style={s.uploadSub}>JPG o PNG — frente del documento</div>
-    {dniFile && <div style={s.uploadDone}>Cargado: {dniFile.name}</div>}
-  </div>
-</div>
+          <label style={s.label}>Foto del DNI (frente)</label>
+          <div style={s.uploadArea}
+            onClick={() => document.getElementById('dni-input').click()}>
+            <input id="dni-input" type="file" accept="image/*"
+              style={{ display:"none" }}
+              onChange={e => handleFileChange(e, "dni")} />
+            <div style={s.uploadLabel}>Subir foto del DNI</div>
+            <div style={s.uploadSub}>JPG o PNG — frente del documento</div>
+            {dniFile && <div style={s.uploadDone}>Cargado: {dniFile.name}</div>}
+          </div>
+        </div>
 
-{form.role === "renter" && (
-  <div style={s.field}>
-    <label style={s.label}>Foto de la licencia de conducir</label>
-    <div style={s.uploadArea} onClick={() => document.getElementById('lic-input').click()}>
-      <input id="lic-input" type="file" accept="image/*" style={{ display:"none" }}
-        onChange={e => handleFileChange(e, "licencia")} />
-      <div style={s.uploadLabel}>Subir foto de la licencia</div>
-      <div style={s.uploadSub}>JPG o PNG — frente de la licencia</div>
-      {licenciaFile && <div style={s.uploadDone}>Cargado: {licenciaFile.name}</div>}
-    </div>
-  </div>
-)}
+        {form.role === "renter" && (
+          <div style={s.field}>
+            <label style={s.label}>Foto de la licencia de conducir</label>
+            <div style={s.uploadArea}
+              onClick={() => document.getElementById('lic-input').click()}>
+              <input id="lic-input" type="file" accept="image/*"
+                style={{ display:"none" }}
+                onChange={e => handleFileChange(e, "licencia")} />
+              <div style={s.uploadLabel}>Subir foto de la licencia</div>
+              <div style={s.uploadSub}>JPG o PNG — frente de la licencia</div>
+              {licenciaFile && (
+                <div style={s.uploadDone}>Cargado: {licenciaFile.name}</div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={s.termsRow}>
           <input type="checkbox" checked={terms}
-            onChange={e => setTerms(e.target.checked)} style={{ marginTop:2 }} />
+            onChange={e => setTerms(e.target.checked)}
+            style={{ marginTop:2, flexShrink:0 }} />
           <span style={s.termsText}>
             Acepto los{" "}
             <span style={s.termsLink} onClick={() => setShowTerms(true)}>
@@ -239,7 +260,16 @@ export default function Register() {
             garantías y cancelaciones.
           </span>
         </div>
-
+<button onClick={() => setForm({
+  name:"Ignacio Britos", email:"ignacio@test.com",
+  phone:"1134567890", password:"test12345",
+  confirmPassword:"test12345", role:"renter",
+  dni:"40123456", licencia:"B123456",
+})} style={{ width:"100%", padding:"10px", background:"#f0f7f2",
+  color:"#1a4d2e", border:"1.5px solid #bbf7d0", borderRadius:8,
+  fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:10 }}>
+  Rellenar datos de prueba
+</button>
         <button style={s.btn} onClick={handleSubmit}>Crear mi cuenta</button>
         <div style={s.loginLink}>
           ¿Ya tenés cuenta?{" "}

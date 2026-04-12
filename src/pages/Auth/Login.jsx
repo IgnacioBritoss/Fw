@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 const s = {
   page: { minHeight:"100vh", background:"#f9fafb", display:"flex",
     alignItems:"center", justifyContent:"center", padding:24 },
+  pageMobile: { minHeight:"100vh", background:"#f9fafb",
+    display:"flex", alignItems:"center", justifyContent:"center",
+    padding:"20px 16px" },
   card: { background:"#fff", borderRadius:16, padding:"40px 36px",
     width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
+  cardMobile: { background:"#fff", borderRadius:16, padding:"28px 20px",
+    width:"100%", boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   title: { fontSize:24, fontWeight:800, color:"#111827",
     letterSpacing:"-0.5px", marginBottom:6 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:28 },
@@ -33,6 +39,7 @@ const s = {
 export default function Login() {
   const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
   const [form, setForm] = useState({ email:"", password:"" });
   const [error, setError] = useState("");
 
@@ -49,14 +56,31 @@ export default function Login() {
   };
 
   return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <div style={s.title}>Bienvenido de vuelta</div>
+    <div style={isMobile ? s.pageMobile : s.page}>
+      <div style={isMobile ? s.cardMobile : s.card}>
+        <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
+          Bienvenido de vuelta
+        </div>
         <div style={s.sub}>Iniciá sesión en Freewheel</div>
 
         <div style={s.adminHint}>
-          Acceso admin: <strong>admin@freewheel.com</strong> / <strong>admin123</strong>
-        </div>
+  Acceso admin: <strong>admin@freewheel.com</strong> / <strong>admin123</strong>
+</div>
+
+<div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+  <button onClick={() => setForm({ email:"admin@freewheel.com", password:"admin123" })}
+    style={{ flex:1, padding:"8px 12px", background:"#1a4d2e", color:"#fff",
+      border:"none", borderRadius:8, fontSize:12, fontWeight:600,
+      cursor:"pointer" }}>
+    Entrar como Admin
+  </button>
+  <button onClick={() => setForm({ email:"ignacio@test.com", password:"test12345" })}
+    style={{ flex:1, padding:"8px 12px", background:"#f0f7f2",
+      color:"#1a4d2e", border:"1.5px solid #bbf7d0", borderRadius:8,
+      fontSize:12, fontWeight:600, cursor:"pointer" }}>
+    Entrar como Usuario
+  </button>
+</div>
 
         {error && <div style={s.error}>{error}</div>}
 

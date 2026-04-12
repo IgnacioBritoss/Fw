@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import DatePicker from "react-datepicker";
@@ -8,24 +9,39 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const s = {
   page: { maxWidth:900, margin:"0 auto", padding:"40px 24px" },
+  pageMobile: { padding:"20px 16px" },
   title: { fontSize:24, fontWeight:800, color:"#111827",
+    letterSpacing:"-.5px", marginBottom:6 },
+  titleMobile: { fontSize:20, fontWeight:800, color:"#111827",
     letterSpacing:"-.5px", marginBottom:6 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:28 },
   tabs: { display:"flex", gap:4, marginBottom:24,
-    borderBottom:"2px solid #f3f4f6" },
+    borderBottom:"2px solid #f3f4f6", overflowX:"auto" },
   tab: { padding:"10px 18px", fontSize:14, fontWeight:500,
     cursor:"pointer", border:"none", background:"transparent",
-    color:"#6b7280", borderBottom:"3px solid transparent" },
+    color:"#6b7280", borderBottom:"3px solid transparent",
+    whiteSpace:"nowrap" },
+  tabMobile: { padding:"8px 10px", fontSize:12, fontWeight:500,
+    cursor:"pointer", border:"none", background:"transparent",
+    color:"#6b7280", borderBottom:"3px solid transparent",
+    whiteSpace:"nowrap" },
   tabActive: { color:"#1a4d2e", borderBottom:"3px solid #1a4d2e" },
   card: { background:"#fff", borderRadius:12, padding:20,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
     display:"flex", gap:16, border:"1px solid #f3f4f6" },
+  cardMobile: { background:"#fff", borderRadius:12, padding:14,
+    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:10,
+    border:"1px solid #f3f4f6" },
   carImg: { width:100, height:76, borderRadius:8, background:"#f3f4f6",
     display:"flex", alignItems:"center", justifyContent:"center",
     fontSize:28, flexShrink:0, overflow:"hidden" },
+  carImgMobile: { width:"100%", height:140, borderRadius:8,
+    background:"#f3f4f6", overflow:"hidden", marginBottom:10 },
   info: { flex:1 },
   carName: { fontWeight:700, fontSize:15, marginBottom:4, color:"#111827" },
+  carNameMobile: { fontWeight:700, fontSize:14, marginBottom:4, color:"#111827" },
   dates: { fontSize:13, color:"#6b7280", marginBottom:4 },
+  datesMobile: { fontSize:12, color:"#6b7280", marginBottom:4 },
   renterName: { fontSize:13, color:"#374151", marginBottom:4 },
   total: { fontSize:14, fontWeight:700, color:"#1a4d2e", marginBottom:8 },
   statusBadge: { display:"inline-block", padding:"3px 12px",
@@ -44,6 +60,9 @@ const s = {
   empty: { textAlign:"center", padding:"60px 0", color:"#9ca3af" },
   calCard: { background:"#fff", borderRadius:12, padding:20,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
+    border:"1px solid #f3f4f6" },
+  calCardMobile: { background:"#fff", borderRadius:12, padding:14,
+    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:10,
     border:"1px solid #f3f4f6" },
   calHeader: { display:"flex", justifyContent:"space-between",
     alignItems:"center", marginBottom:8 },
@@ -65,6 +84,7 @@ const STATUS_LABELS = {
 export default function MyBookings() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
   const [tab, setTab] = useState("mis-reservas");
   const [bookings, setBookings] = useState([]);
   const [myCars, setMyCars] = useState([]);
@@ -137,6 +157,51 @@ export default function MyBookings() {
     ];
     const car = allCars.find(c => c.id === b.car_id);
 
+    if (isMobile) return (
+      <div style={s.cardMobile}>
+        <div style={s.carImgMobile}>
+          {car?.photos?.length > 0
+            ? <img src={car.photos[0]} alt=""
+                style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            : <div style={{ width:"100%", height:"100%", display:"flex",
+                alignItems:"center", justifyContent:"center",
+                color:"#9ca3af", fontSize:12 }}>Sin foto</div>}
+        </div>
+        <div style={s.carNameMobile}>{b.car_name}</div>
+        <div style={s.datesMobile}>
+          {format(parseISO(b.start_date), "d MMM", { locale:es })} —{" "}
+          {format(parseISO(b.end_date), "d MMM yyyy", { locale:es })}
+          {" "}· {b.days} día{b.days !== 1 ? "s" : ""}
+        </div>
+        {isOwner && (
+          <div style={{ fontSize:12, color:"#374151", marginBottom:4 }}>
+            Conductor: <strong>{b.renter_name}</strong>
+          </div>
+        )}
+        <div style={{ display:"flex", justifyContent:"space-between",
+          alignItems:"center", marginTop:6 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:"#1a4d2e" }}>
+            ${b.total_final?.toLocaleString()}
+          </div>
+          <span style={{ ...s.statusBadge, ...s[b.status], fontSize:11 }}>
+            {STATUS_LABELS[b.status]}
+          </span>
+        </div>
+        <div style={s.btnRow}>
+          {isOwner && b.status === "pending" && (
+            <button style={s.btnConfirm} onClick={() => confirmBooking(b.id)}>
+              Confirmar
+            </button>
+          )}
+          {b.status === "pending" && (
+            <button style={s.btnCancel} onClick={() => cancelBooking(b.id)}>
+              Cancelar
+            </button>
+          )}
+        </div>
+      </div>
+    );
+
     return (
       <div style={s.card}>
         <div style={s.carImg}>
@@ -149,16 +214,15 @@ export default function MyBookings() {
           <div style={s.carName}>{b.car_name}</div>
           <div style={s.dates}>
             {format(parseISO(b.start_date), "d MMM yyyy", { locale:es })} —{" "}
-            {format(parseISO(b.end_date), "d MMM yyyy", { locale:es })} · {b.days} día{b.days !== 1 ? "s" : ""}
+            {format(parseISO(b.end_date), "d MMM yyyy", { locale:es })}
+            {" "}· {b.days} día{b.days !== 1 ? "s" : ""}
           </div>
           {isOwner && (
             <div style={s.renterName}>
               Conductor: <strong>{b.renter_name}</strong>
             </div>
           )}
-          <div style={s.total}>
-            ${b.total_final?.toLocaleString()} total
-          </div>
+          <div style={s.total}>${b.total_final?.toLocaleString()} total</div>
           <span style={{ ...s.statusBadge, ...s[b.status] }}>
             {STATUS_LABELS[b.status]}
           </span>
@@ -180,18 +244,21 @@ export default function MyBookings() {
   };
 
   return (
-    <div style={s.page}>
-      <div style={s.title}>Mis reservas</div>
+    <div style={isMobile ? s.pageMobile : s.page}>
+      <div style={isMobile ? s.titleMobile : s.title}>Mis reservas</div>
       <div style={s.sub}>Gestioná tus alquileres y calendarios</div>
 
       <div style={s.tabs}>
         {[
-          ["mis-reservas", `Mis alquileres (${myRentals.length})`],
-          ["solicitudes", `Solicitudes recibidas (${myCarBookings.length})`],
+          ["mis-reservas", isMobile ? `Alquileres (${myRentals.length})` : `Mis alquileres (${myRentals.length})`],
+          ["solicitudes", isMobile ? `Solicitudes (${myCarBookings.length})` : `Solicitudes recibidas (${myCarBookings.length})`],
           ["calendarios", `Calendarios (${myCars.length})`],
         ].map(([k, l]) => (
           <button key={k}
-            style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
+            style={{
+              ...(isMobile ? s.tabMobile : s.tab),
+              ...(tab === k ? s.tabActive : {})
+            }}
             onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -230,13 +297,13 @@ export default function MyBookings() {
             <div style={{ fontSize:13 }}>No tenés autos publicados.</div>
           </div>
         ) : myCars.map(car => (
-          <div key={car.id} style={s.calCard}>
+          <div key={car.id} style={isMobile ? s.calCardMobile : s.calCard}>
             <div style={s.calHeader}>
               <div>
-                <div style={s.calTitle}>
+                <div style={{ ...s.calTitle, fontSize: isMobile ? 14 : 15 }}>
                   {car.brand} {car.model} {car.year}
                 </div>
-                <div style={s.calMeta}>📍 {car.location}</div>
+                <div style={s.calMeta}>{car.location}</div>
               </div>
               <div style={{ fontSize:13, color:"#6b7280" }}>
                 {bookings.filter(b =>
@@ -246,23 +313,28 @@ export default function MyBookings() {
             </div>
             <div style={s.legend}>
               <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#969696" }}/> Ocupado
+                <div style={{ ...s.dot, background:"#1a4d2e" }}/> Disponible
               </div>
               <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#000000" }}/> Disponible
+                <div style={{ ...s.dot, background:"#fca5a5" }}/> Ocupado
+              </div>
+              <div style={s.legendItem}>
+                <div style={{ ...s.dot, background:"#bbf7d0" }}/> Seleccionado
               </div>
             </div>
-            <DatePicker
-              inline
-              monthsShown={2}
-              locale={es}
-              filterDate={(date) => !isOccupied(date, car.id)}
-              highlightDates={[{
-                "react-datepicker__day--highlighted-custom":
-                  getOccupiedDates(car.id),
-              }]}
-              onChange={() => {}}
-            />
+            <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
+              <DatePicker
+                inline
+                monthsShown={isMobile ? 1 : 2}
+                locale={es}
+                filterDate={(date) => !isOccupied(date, car.id)}
+                highlightDates={[{
+                  "react-datepicker__day--highlighted-custom":
+                    getOccupiedDates(car.id),
+                }]}
+                onChange={() => {}}
+              />
+            </div>
           </div>
         ))
       )}
