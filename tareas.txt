@@ -1,0 +1,2 @@
+mejorar los chats para el telefono que suba el teclado como si fuera watsap pa ambos el chatbot y el chat de usuarios 
+base de datos muchos datos 
