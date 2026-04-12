@@ -11,6 +11,8 @@ import PublishCar from "./pages/PublishCar/PublishCar";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Chat from "./pages/Chat/Chat";
 import Admin from "./pages/Admin/Admin";
+import Booking from "./pages/Booking/Booking";
+import MyBookings from "./pages/MyBookings/MyBookings";
 
 export default function App() {
   return (
@@ -31,6 +33,12 @@ export default function App() {
           } />
           <Route path="/chat" element={
             <PrivateRoute><Chat /></PrivateRoute>
+          } />
+          <Route path="/booking/:id" element={
+           <PrivateRoute><Booking /></PrivateRoute>
+          } />
+          <Route path="/my-bookings" element={
+            <PrivateRoute><MyBookings /></PrivateRoute>
           } />
         </Routes>
         <ChatBot />

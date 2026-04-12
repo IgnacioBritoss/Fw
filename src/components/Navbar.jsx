@@ -47,6 +47,7 @@ export default function Navbar() {
               <>
                 <Link to="/publish" style={styles.link}>Publicar auto</Link>
                 <Link to="/chat" style={styles.link}>Mensajes</Link>
+                <Link to="/my-bookings" style={styles.link}>Mis reservas</Link>
                 <Link to="/dashboard" style={styles.link}>Mi panel</Link>
                 <div style={styles.avatar} title={user.name}
                   onClick={() => navigate("/dashboard")}>

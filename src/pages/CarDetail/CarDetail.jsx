@@ -197,7 +197,7 @@ export default function CarDetail() {
               <span>${Math.round(car.price_per_day*3*1.1+car.price_per_day*2).toLocaleString()}</span>
             </div>
             <br/>
-            <button style={s.btn} onClick={handleReservar}>
+            <button style={s.btn} onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}>
               {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
             </button>
             <button style={s.chatBtn}

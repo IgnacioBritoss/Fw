@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import LocationPicker from "../../components/LocationPicker";
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
@@ -108,7 +109,7 @@ export default function PublishCar() {
 
   const [form, setForm] = useState({
     brand: "", model: "", year: "2022", category: "Sedan",
-    price_per_day: "", location: "", description: "",
+    price_per_day: "", location: "", lat: null, lng: null, description: "",
     transmission: "Manual", fuel: "Nafta", seats: "5", km_limit: "300",
   });
 
@@ -198,6 +199,8 @@ export default function PublishCar() {
   owner_name: user.name,
   is_verified: false,
   approved: false,
+  lat: form.lat,
+  lng: form.lng,
   rating: 0,
   reviews_count: 0,
   available: true,
@@ -273,11 +276,14 @@ export default function PublishCar() {
                   <option key={c}>{c}</option>)}
               </select>
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Ubicación</label>
-              <input style={s.input} placeholder="Palermo, CABA"
-                value={form.location} onChange={e => set("location", e.target.value)} />
-            </div>
+            <LocationPicker
+  value={form.lat ? { lat: form.lat, lng: form.lng, address: form.location } : null}
+  onChange={(loc) => {
+    set("location", loc.address);
+    set("lat", loc.lat);
+    set("lng", loc.lng);
+  }}
+/>
           </div>
           <div style={s.field}>
             <label style={s.label}>Descripción</label>
@@ -286,40 +292,48 @@ export default function PublishCar() {
               value={form.description} onChange={e => set("description", e.target.value)} />
           </div>
 
-          <div style={s.aiBox}>
-            <div style={s.aiHeader}>
-              <div style={{ flex: 1 }}>
-                <div style={s.aiTitle}>✨ Autocompletar especificaciones con IA</div>
-                <div style={s.aiSub}>
-                  Ingresá marca, modelo y año arriba y hacé clic para completar
-                  automáticamente baúl, potencia, consumo y más.
-                </div>
-              </div>
-              <button
-                style={{ ...s.aiBtn, ...(aiLoading ? s.aiBtnLoading : {}) }}
-                onClick={fetchSpecs}
-                disabled={aiLoading}>
-                {aiLoading
-                  ? <><span style={s.spinner} /> Consultando...</>
-                  : "Obtener specs"
-                }
-              </button>
-            </div>
+          <div style={{ marginTop: 8 }}>
+  <div style={{ display: "flex", justifyContent: "space-between",
+    alignItems: "center", marginBottom: 16 }}>
+    <div style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>
+      Especificaciones técnicas
+    </div>
+    <button
+      style={{
+        padding: "8px 16px",
+        background: aiLoading ? "#e5e7eb" : "#111827",
+        color: aiLoading ? "#9ca3af" : "#fff",
+        border: "none", borderRadius: 8, fontSize: 13,
+        fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer",
+        display: "flex", alignItems: "center", gap: 6,
+      }}
+      onClick={fetchSpecs}
+      disabled={aiLoading}>
+      {aiLoading
+        ? <><span style={s.spinner} /> Completando...</>
+        : "Autocompletar"}
+    </button>
+  </div>
 
-            {specs && (
-              <div style={s.specGrid}>
-                {Object.entries(specs).map(([key, val]) => (
-                  <div key={key} style={s.specItem}>
-                    <div style={s.specLabel}>{SPEC_LABELS[key] || key}</div>
-                    <div style={s.specValue}>
-                      {String(val)}
-                      <span style={s.specBadge}>IA</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+  <div style={s.specGrid}>
+    {Object.keys(SPEC_LABELS).map(key => (
+      <div key={key} style={s.specItem}>
+        <div style={s.specLabel}>{SPEC_LABELS[key]}</div>
+        <input
+          style={{ width: "100%", border: "none", outline: "none",
+            fontSize: 14, fontWeight: 600, color: "#111827",
+            background: "transparent" }}
+          placeholder="—"
+          value={specs?.[key] !== undefined ? String(specs[key]) : ""}
+          onChange={e => setSpecs(prev => ({
+            ...(prev || {}),
+            [key]: e.target.value
+          }))}
+        />
+      </div>
+    ))}
+  </div>
+</div>
 
           <div style={s.btnRow}>
             <button style={s.btn} onClick={next}>Siguiente →</button>
