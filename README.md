@@ -1,4 +1,5 @@
 # Freewheel
+Ignacio Britos — Full Stack / IA
 
 ## Descripción
 
@@ -31,3 +32,48 @@ Esta plataforma permite:
    npm install
 ```
 4. Agregar la API key de Groq en `.env` (raíz) y `server/.env`:
+   VITE_GROQ_API_KEY=tu_api_key
+   GROQ_API_KEY=tu_api_key
+5. Levantar el frontend:
+```bash
+   npm run dev
+```
+6. Levantar el backend en la segunda terminal:
+```bash
+   cd server
+   node index.js
+```
+7. Abrir `http://localhost:5173` en el navegador.
+
+## Estructura
+
+```text
+src/
+  components/
+    Navbar.jsx
+    ChatBot.jsx
+    BookingCalendar.jsx
+    LocationPicker.jsx
+    ReportModal.jsx
+  context/
+    AuthContext.jsx
+  hooks/
+    useIsMobile.js
+  pages/
+    Home/
+    Auth/
+    CarDetail/
+    PublishCar/
+    Dashboard/
+    Booking/
+    MyBookings/
+    Chat/
+    Admin/
+  data/
+    mockData.js
+  styles/
+    theme.css
+server/
+  index.js
+index.html
+```
