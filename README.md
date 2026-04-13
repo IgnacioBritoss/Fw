@@ -36,6 +36,7 @@ Esta plataforma permite:
 5. Levantar el frontend:
 ```bash
    npm run dev
+   npm run dev -- --host
 ```
 6. Levantar el backend en la segunda terminal:
 ```bash
