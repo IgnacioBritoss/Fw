@@ -140,27 +140,24 @@ export default function ChatBot() {
     });
 
     try {
-      const res = await fetch("http://localhost:3001/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages.map((m) => ({
-            role: m.role === "assistant" ? "assistant" : "user",
-            content: m.text,
-          })),
-          system: SYSTEM_PROMPT,
-        }),
-      });
+  const res = await fetch("https://freewheel.app.n8n.cloud/webhook/FreeWheel-chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    message: newMessages[newMessages.length - 1].text,
+    sessionId: "guest",
+  }),
+});
 
-      const data = await res.json();
+const data = await res.json();
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: data.reply || "No pude generar una respuesta en este momento.",
-        },
-      ]);
+setMessages((prev) => [
+  ...prev,
+  {
+    role: "assistant",
+    text: data[0]?.output || "No pude generar una respuesta en este momento.",
+  },
+]);
     } catch {
       setMessages((prev) => [
         ...prev,
