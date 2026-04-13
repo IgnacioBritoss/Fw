@@ -6,8 +6,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 const s = {
   page: { minHeight:"100vh", background:"#f9fafb", display:"flex",
     alignItems:"center", justifyContent:"center", padding:24 },
-  pageMobile: { minHeight:"100vh", background:"#f9fafb",
-    padding:"20px 16px" },
+  pageMobile: { minHeight:"100vh", background:"#f9fafb", padding:"20px 16px" },
   card: { background:"#fff", borderRadius:16, padding:"40px 36px",
     width:"100%", maxWidth:520, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   cardMobile: { background:"#fff", borderRadius:16, padding:"24px 20px",
@@ -25,13 +24,16 @@ const s = {
   input: { width:"100%", padding:"11px 14px", borderRadius:8,
     border:"1.5px solid #e5e7eb", fontSize:14, outline:"none",
     transition:"border .15s", color:"#111827" },
+  inputError: { width:"100%", padding:"11px 14px", borderRadius:8,
+    border:"1.5px solid #fca5a5", fontSize:14, outline:"none",
+    transition:"border .15s", color:"#111827" },
+  hint: { fontSize:11, color:"#9ca3af", marginTop:4 },
   grid2: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
   grid2Mobile: { display:"grid", gridTemplateColumns:"1fr", gap:0 },
   roleRow: { display:"grid", gridTemplateColumns:"1fr 1fr",
     gap:10, marginBottom:14 },
   roleCard: { padding:"14px", border:"1.5px solid #e5e7eb",
-    borderRadius:10, cursor:"pointer", textAlign:"center",
-    transition:".15s" },
+    borderRadius:10, cursor:"pointer", textAlign:"center", transition:".15s" },
   roleCardActive: { borderColor:"#1a4d2e", background:"#f0f7f2" },
   roleLabel: { fontSize:13, fontWeight:700, color:"#111827", marginBottom:2 },
   roleSub: { fontSize:11, color:"#6b7280" },
@@ -92,6 +94,25 @@ function TermsModal({ onClose }) {
   );
 }
 
+// Validaciones
+const VALIDATIONS = {
+  name: v => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/.test(v.trim()),
+  email: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()),
+  phone: v => /^[0-9]{10,11}$/.test(v.replace(/\s|-/g, "")),
+  password: v => v.length >= 8 && /[0-9]/.test(v) && /[a-zA-Z]/.test(v),
+  dni: v => /^[0-9]{7,8}$/.test(v.replace(/\./g, "")),
+  licencia: v => /^[a-zA-Z0-9]{6,10}$/.test(v.trim()),
+};
+
+const MESSAGES = {
+  name: "Solo letras y espacios, mínimo 3 caracteres.",
+  email: "Ingresá un email válido (ejemplo@dominio.com).",
+  phone: "Ingresá un teléfono válido de 10 u 11 dígitos sin espacios ni guiones.",
+  password: "Mínimo 8 caracteres, al menos una letra y un número.",
+  dni: "El DNI debe tener 7 u 8 dígitos numéricos.",
+  licencia: "La licencia debe tener entre 6 y 10 caracteres alfanuméricos.",
+};
+
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -100,6 +121,7 @@ export default function Register() {
     name: "", email: "", phone: "", password: "", confirmPassword: "",
     role: "renter", dni: "", licencia: "",
   });
+  const [touched, setTouched] = useState({});
   const [dniFile, setDniFile] = useState(null);
   const [licenciaFile, setLicenciaFile] = useState(null);
   const [terms, setTerms] = useState(false);
@@ -107,6 +129,9 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const set = (k, v) => setForm(f => ({...f, [k]: v}));
+  const touch = (k) => setTouched(t => ({...t, [k]: true}));
+
+  const isFieldError = (k) => touched[k] && VALIDATIONS[k] && !VALIDATIONS[k](form[k]);
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
@@ -115,24 +140,34 @@ export default function Register() {
     else setLicenciaFile(file);
   };
 
+  // Solo permite números en campos numéricos
+  const onlyNumbers = (v) => v.replace(/[^0-9]/g, "");
+
   const handleSubmit = () => {
-    if (!form.name || !form.email || !form.password || !form.phone) {
-      return setError("Completá todos los campos obligatorios.");
-    }
-    if (!form.dni) return setError("Ingresá tu número de DNI.");
-    if (form.role === "renter" && !form.licencia) {
-      return setError("Ingresá tu número de licencia de conducir.");
-    }
-    if (form.password.length < 8) {
-      return setError("La contraseña debe tener al menos 8 caracteres.");
-    }
-    if (form.password !== form.confirmPassword) {
+    setError("");
+
+    if (!VALIDATIONS.name(form.name))
+      return setError(MESSAGES.name);
+    if (!VALIDATIONS.email(form.email))
+      return setError(MESSAGES.email);
+    if (!VALIDATIONS.phone(form.phone))
+      return setError(MESSAGES.phone);
+    if (!VALIDATIONS.password(form.password))
+      return setError(MESSAGES.password);
+    if (form.password !== form.confirmPassword)
       return setError("Las contraseñas no coinciden.");
-    }
-    if (!terms) return setError("Tenés que aceptar los términos y condiciones.");
+    if (!VALIDATIONS.dni(form.dni))
+      return setError(MESSAGES.dni);
+    if (form.role === "renter" && !VALIDATIONS.licencia(form.licencia))
+      return setError(MESSAGES.licencia);
+    if (!terms)
+      return setError("Tenés que aceptar los términos y condiciones.");
+
     register({ ...form, dniVerified: false, licenciaVerified: false });
     navigate("/");
   };
+
+  const inputStyle = (k) => isFieldError(k) ? s.inputError : s.input;
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
@@ -150,50 +185,81 @@ export default function Register() {
         <div style={s.section}>Datos personales</div>
         <div style={s.field}>
           <label style={s.label}>Nombre completo *</label>
-          <input style={s.input} placeholder="Juan García"
-            value={form.name} onChange={e => set("name", e.target.value)} />
+          <input
+            style={inputStyle("name")}
+            placeholder="Juan García"
+            value={form.name}
+            onChange={e => set("name", e.target.value)}
+            onBlur={() => touch("name")}
+          />
+          {isFieldError("name") && <div style={s.hint}>{MESSAGES.name}</div>}
         </div>
 
         <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Email *</label>
-            <input style={s.input} type="email" placeholder="juan@email.com"
-              value={form.email} onChange={e => set("email", e.target.value)} />
+            <input
+              style={inputStyle("email")}
+              type="email"
+              placeholder="juan@email.com"
+              value={form.email}
+              onChange={e => set("email", e.target.value)}
+              onBlur={() => touch("email")}
+            />
+            {isFieldError("email") && <div style={s.hint}>{MESSAGES.email}</div>}
           </div>
           <div style={s.field}>
-            <label style={s.label}>Teléfono *</label>
-            <input style={s.input} placeholder="11 1234-5678"
-              value={form.phone} onChange={e => set("phone", e.target.value)} />
+            <label style={s.label}>Teléfono * (sin espacios ni guiones)</label>
+            <input
+              style={inputStyle("phone")}
+              placeholder="1134567890"
+              value={form.phone}
+              maxLength={11}
+              onChange={e => set("phone", onlyNumbers(e.target.value))}
+              onBlur={() => touch("phone")}
+            />
+            {isFieldError("phone") && <div style={s.hint}>{MESSAGES.phone}</div>}
           </div>
         </div>
 
         <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Contraseña *</label>
-            <input style={s.input} type="password"
-              placeholder="Mínimo 8 caracteres"
+            <input
+              style={inputStyle("password")}
+              type="password"
+              placeholder="Mínimo 8 caracteres, letras y números"
               value={form.password}
-              onChange={e => set("password", e.target.value)} />
+              onChange={e => set("password", e.target.value)}
+              onBlur={() => touch("password")}
+            />
+            {isFieldError("password") && <div style={s.hint}>{MESSAGES.password}</div>}
           </div>
           <div style={s.field}>
             <label style={s.label}>Confirmar contraseña *</label>
-            <input style={s.input} type="password"
+            <input
+              style={touched.confirmPassword && form.password !== form.confirmPassword
+                ? s.inputError : s.input}
+              type="password"
               placeholder="Repetí la contraseña"
               value={form.confirmPassword}
-              onChange={e => set("confirmPassword", e.target.value)} />
+              onChange={e => set("confirmPassword", e.target.value)}
+              onBlur={() => touch("confirmPassword")}
+            />
+            {touched.confirmPassword && form.password !== form.confirmPassword && (
+              <div style={s.hint}>Las contraseñas no coinciden.</div>
+            )}
           </div>
         </div>
 
         <div style={s.section}>Tipo de cuenta</div>
         <div style={s.roleRow}>
-          <div style={{...s.roleCard,
-            ...(form.role==="renter" ? s.roleCardActive : {})}}
+          <div style={{...s.roleCard, ...(form.role==="renter" ? s.roleCardActive : {})}}
             onClick={() => set("role","renter")}>
             <div style={s.roleLabel}>Quiero alquilar</div>
             <div style={s.roleSub}>Busco autos disponibles</div>
           </div>
-          <div style={{...s.roleCard,
-            ...(form.role==="owner" ? s.roleCardActive : {})}}
+          <div style={{...s.roleCard, ...(form.role==="owner" ? s.roleCardActive : {})}}
             onClick={() => set("role","owner")}>
             <div style={s.roleLabel}>Tengo un auto</div>
             <div style={s.roleSub}>Quiero publicarlo</div>
@@ -203,16 +269,29 @@ export default function Register() {
         <div style={s.section}>Documentación</div>
         <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
-            <label style={s.label}>Número de DNI *</label>
-            <input style={s.input} placeholder="12.345.678"
-              value={form.dni} onChange={e => set("dni", e.target.value)} />
+            <label style={s.label}>Número de DNI * (7 u 8 dígitos)</label>
+            <input
+              style={inputStyle("dni")}
+              placeholder="12345678"
+              value={form.dni}
+              maxLength={8}
+              onChange={e => set("dni", onlyNumbers(e.target.value))}
+              onBlur={() => touch("dni")}
+            />
+            {isFieldError("dni") && <div style={s.hint}>{MESSAGES.dni}</div>}
           </div>
           {form.role === "renter" && (
             <div style={s.field}>
               <label style={s.label}>Número de licencia *</label>
-              <input style={s.input} placeholder="Nro. de licencia"
+              <input
+                style={inputStyle("licencia")}
+                placeholder="B123456"
                 value={form.licencia}
-                onChange={e => set("licencia", e.target.value)} />
+                maxLength={10}
+                onChange={e => set("licencia", e.target.value.toUpperCase())}
+                onBlur={() => touch("licencia")}
+              />
+              {isFieldError("licencia") && <div style={s.hint}>{MESSAGES.licencia}</div>}
             </div>
           )}
         </div>
@@ -260,16 +339,21 @@ export default function Register() {
             garantías y cancelaciones.
           </span>
         </div>
-<button onClick={() => setForm({
-  name:"Ignacio Britos", email:"ignacio@test.com",
-  phone:"1134567890", password:"test12345",
-  confirmPassword:"test12345", role:"renter",
-  dni:"40123456", licencia:"B123456",
-})} style={{ width:"100%", padding:"10px", background:"#f0f7f2",
-  color:"#1a4d2e", border:"1.5px solid #bbf7d0", borderRadius:8,
-  fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:10 }}>
-  Rellenar datos de prueba
-</button>
+
+        <button onClick={() => {
+          setForm({
+            name:"Ignacio Britos", email:"ignacio@test.com",
+            phone:"1134567890", password:"test12345",
+            confirmPassword:"test12345", role:"renter",
+            dni:"40123456", licencia:"B123456",
+          });
+          setTouched({});
+        }} style={{ width:"100%", padding:"10px", background:"#f0f7f2",
+          color:"#1a4d2e", border:"1.5px solid #bbf7d0", borderRadius:8,
+          fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:10 }}>
+          Rellenar datos de prueba
+        </button>
+
         <button style={s.btn} onClick={handleSubmit}>Crear mi cuenta</button>
         <div style={s.loginLink}>
           ¿Ya tenés cuenta?{" "}

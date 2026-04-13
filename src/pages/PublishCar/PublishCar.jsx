@@ -17,14 +17,18 @@ const s = {
     boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 16,
     border: "1px solid #f3f4f6" },
   sectionTitle: { fontSize: 15, fontWeight: 700, color: "#111827",
-    marginBottom: 16, paddingBottom: 10,
-    borderBottom: "1px solid #f3f4f6" },
+    marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid #f3f4f6" },
   field: { marginBottom: 16 },
   label: { display: "block", fontSize: 13, fontWeight: 500,
     color: "#374151", marginBottom: 6 },
   input: { width: "100%", padding: "11px 14px", borderRadius: 8,
     border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none",
     color: "#111827" },
+  inputError: { width: "100%", padding: "11px 14px", borderRadius: 8,
+    border: "1.5px solid #fca5a5", fontSize: 14, outline: "none",
+    color: "#111827" },
+  hint: { fontSize: 11, color: "#9ca3af", marginTop: 4 },
+  hintError: { fontSize: 11, color: "#dc2626", marginTop: 4 },
   select: { width: "100%", padding: "11px 14px", borderRadius: 8,
     border: "1.5px solid #e5e7eb", fontSize: 14,
     background: "#fff", color: "#111827" },
@@ -44,18 +48,16 @@ const s = {
   photoRemove: { position: "absolute", top: 6, right: 6,
     width: 22, height: 22, borderRadius: "50%",
     background: "rgba(0,0,0,.6)", color: "#fff", border: "none",
-    cursor: "pointer", fontSize: 14, lineHeight: "22px",
-    textAlign: "center" },
+    cursor: "pointer", fontSize: 14, lineHeight: "22px", textAlign: "center" },
   termsBox: { background: "#fffbeb", border: "1px solid #fde68a",
     borderRadius: 10, padding: 16, marginBottom: 18 },
-  termsTitle: { fontWeight: 700, fontSize: 14, marginBottom: 8,
-    color: "#92400e" },
+  termsTitle: { fontWeight: 700, fontSize: 14, marginBottom: 8, color: "#92400e" },
   termsText: { fontSize: 12, color: "#78350f", lineHeight: 1.6 },
   termsCheck: { display: "flex", gap: 8, alignItems: "center", marginTop: 12 },
   btnRow: { display: "flex", gap: 10, marginTop: 8 },
   btn: { flex: 1, padding: "13px", background: "#1a4d2e", color: "#fff",
-    border: "none", borderRadius: 10, fontSize: 14,
-    fontWeight: 700, cursor: "pointer" },
+    border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700,
+    cursor: "pointer" },
   btnBack: { flex: 1, padding: "13px", background: "transparent",
     border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10,
     fontSize: 14, cursor: "pointer" },
@@ -63,8 +65,7 @@ const s = {
     borderRadius: 8, padding: "10px 14px", color: "#b91c1c",
     fontSize: 13, marginBottom: 16 },
   success: { textAlign: "center", padding: "60px 20px" },
-  successTitle: { fontSize: 22, fontWeight: 800, marginBottom: 8,
-    color: "#111827" },
+  successTitle: { fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" },
   successSub: { color: "#6b7280", marginBottom: 24, lineHeight: 1.6 },
   spinner: { display: "inline-block", width: 14, height: 14,
     border: "2px solid #fff", borderTopColor: "transparent",
@@ -76,21 +77,71 @@ const s = {
 };
 
 const STEPS = ["Datos", "Fotos", "Condiciones", "Confirmar"];
+const CURRENT_YEAR = new Date().getFullYear();
 
-const SPEC_LABELS = {
-  baul_litros: "Baúl (litros)",
-  aire_acondicionado: "Aire acondicionado",
-  puertas: "Puertas",
-  potencia_cv: "Potencia (CV)",
-  consumo_mixto: "Consumo mixto",
-  traccion: "Tracción",
-  largo_mm: "Largo (mm)",
-  ancho_mm: "Ancho (mm)",
-  peso_kg: "Peso (kg)",
-  bluetooth: "Bluetooth",
-  camara_reversa: "Cámara de reversa",
-  sensor_estacionamiento: "Sensores de estac.",
+// Límites lógicos por campo de spec
+const SPEC_CONFIG = {
+  baul_litros: {
+    label: "Baúl (litros)",
+    type: "number", min: 50, max: 1000,
+    hint: "Entre 50 y 1000 litros",
+  },
+  aire_acondicionado: {
+    label: "Aire acondicionado",
+    type: "select", options: ["Sí", "No", "Climatizador"],
+  },
+  puertas: {
+    label: "Puertas",
+    type: "number", min: 2, max: 5,
+    hint: "Entre 2 y 5 puertas",
+  },
+  potencia_cv: {
+    label: "Potencia (CV)",
+    type: "number", min: 50, max: 1000,
+    hint: "Entre 50 y 1000 CV",
+  },
+  consumo_mixto: {
+    label: "Consumo mixto",
+    type: "text",
+    placeholder: "ej: 7.5 l/100km",
+    hint: "Formato: X.X l/100km",
+  },
+  traccion: {
+    label: "Tracción",
+    type: "select", options: ["Delantera", "Trasera", "4x4", "AWD"],
+  },
+  largo_mm: {
+    label: "Largo (mm)",
+    type: "number", min: 2500, max: 6000,
+    hint: "Entre 2500 y 6000 mm",
+  },
+  ancho_mm: {
+    label: "Ancho (mm)",
+    type: "number", min: 1400, max: 2500,
+    hint: "Entre 1400 y 2500 mm",
+  },
+  peso_kg: {
+    label: "Peso (kg)",
+    type: "number", min: 500, max: 5000,
+    hint: "Entre 500 y 5000 kg",
+  },
+  bluetooth: {
+    label: "Bluetooth",
+    type: "select", options: ["Sí", "No"],
+  },
+  camara_reversa: {
+    label: "Cámara de reversa",
+    type: "select", options: ["Sí", "No"],
+  },
+  sensor_estacionamiento: {
+    label: "Sensores de estac.",
+    type: "select",
+    options: ["No", "Traseros", "Delanteros", "Delanteros y traseros"],
+  },
 };
+
+const onlyNumbers = (v) => v.replace(/[^0-9]/g, "");
+const onlyLetters = (v) => v.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
 
 export default function PublishCar() {
   const { user } = useAuth();
@@ -105,13 +156,23 @@ export default function PublishCar() {
   const [photos, setPhotos] = useState([]);
   const [uploadHover, setUploadHover] = useState(false);
   const [form, setForm] = useState({
-    brand: "", model: "", year: "2022", category: "Sedan",
-    price_per_day: "", location: "", lat: null, lng: null,
-    description: "", transmission: "Manual", fuel: "Nafta",
-    seats: "5", km_limit: "300",
+    brand: "", model: "", year: String(CURRENT_YEAR - 1),
+    category: "Sedan", price_per_day: "", location: "",
+    lat: null, lng: null, description: "",
+    transmission: "Manual", fuel: "Nafta", seats: "5", km_limit: "300",
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const setSpec = (key, val) => {
+    const config = SPEC_CONFIG[key];
+    if (config?.type === "number" && val !== "") {
+      const num = Number(val);
+      if (num < config.min) return;
+      if (num > config.max) return;
+    }
+    setSpecs(prev => ({ ...(prev || {}), [key]: val }));
+  };
 
   const fetchSpecs = async () => {
     if (!form.brand || !form.model || !form.year) {
@@ -124,9 +185,7 @@ export default function PublishCar() {
       const res = await fetch("http://localhost:3001/api/specs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brand: form.brand, model: form.model, year: form.year,
-        }),
+        body: JSON.stringify({ brand: form.brand, model: form.model, year: form.year }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -156,19 +215,51 @@ export default function PublishCar() {
   const removePhoto = (idx) => setPhotos(p => p.filter((_, i) => i !== idx));
 
   const validateStep = () => {
-    if (step === 0 && (!form.brand || !form.model || !form.year)) {
-      setError("Completá marca, modelo y año."); return false;
+    setError("");
+
+    if (step === 0) {
+      if (!form.brand || form.brand.trim().length < 2)
+        return setError("Ingresá la marca del vehículo (mínimo 2 caracteres)."), false;
+      if (!form.model || form.model.trim().length < 2)
+        return setError("Ingresá el modelo del vehículo (mínimo 2 caracteres)."), false;
+      const yearNum = parseInt(form.year);
+      if (!form.year || yearNum < 1990 || yearNum > CURRENT_YEAR)
+        return setError(`El año debe estar entre 1990 y ${CURRENT_YEAR}.`), false;
+      const seatsNum = parseInt(form.seats);
+      if (!form.seats || seatsNum < 2 || seatsNum > 9)
+        return setError("La cantidad de asientos debe ser entre 2 y 9."), false;
+      if (!form.description || form.description.trim().length < 20)
+        return setError("La descripción debe tener al menos 20 caracteres."), false;
+      if (!form.lat || !form.lng)
+        return setError("Seleccioná la ubicación del auto en el mapa."), false;
+
+      // Validar specs si fueron completadas manualmente
+      if (specs) {
+        for (const [key, config] of Object.entries(SPEC_CONFIG)) {
+          if (config.type === "number" && specs[key] !== undefined && specs[key] !== "") {
+            const num = Number(specs[key]);
+            if (isNaN(num) || num < config.min || num > config.max)
+              return setError(`${config.label}: ${config.hint}.`), false;
+          }
+        }
+      }
     }
-    if (step === 1 && photos.length === 0) {
-      setError("Subí al menos una foto."); return false;
+
+    if (step === 1 && photos.length === 0)
+      return setError("Subí al menos una foto del vehículo."), false;
+
+    if (step === 2) {
+      const price = Number(form.price_per_day);
+      if (!form.price_per_day || price < 1000 || price > 500000)
+        return setError("El precio por día debe estar entre $1.000 y $500.000 ARS."), false;
+      const km = Number(form.km_limit);
+      if (!form.km_limit || km < 50 || km > 2000)
+        return setError("El límite de km diario debe estar entre 50 y 2000 km."), false;
+      if (!ownerTerms)
+        return setError("Aceptá las condiciones para dueños."), false;
     }
-    if (step === 2 && !form.price_per_day) {
-      setError("Ingresá el precio por día."); return false;
-    }
-    if (step === 2 && !ownerTerms) {
-      setError("Aceptá las condiciones para dueños."); return false;
-    }
-    setError(""); return true;
+
+    return true;
   };
 
   const next = () => { if (validateStep()) setStep(s => s + 1); };
@@ -191,8 +282,45 @@ export default function PublishCar() {
 
   const cardStyle = isMobile ? s.cardMobile : s.card;
 
+  const SpecInput = ({ specKey }) => {
+    const config = SPEC_CONFIG[specKey];
+    const val = specs?.[specKey] !== undefined ? String(specs[specKey]) : "";
+
+    if (config.type === "select") return (
+      <select
+        style={{ width:"100%", border:"none", outline:"none", fontSize:14,
+          fontWeight:600, color:"#111827", background:"transparent",
+          cursor:"pointer" }}
+        value={val}
+        onChange={e => setSpec(specKey, e.target.value)}>
+        <option value="">—</option>
+        {config.options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+
+    return (
+      <>
+        <input
+          type={config.type}
+          min={config.min}
+          max={config.max}
+          style={{ width:"100%", border:"none", outline:"none", fontSize:14,
+            fontWeight:600, color:"#111827", background:"transparent" }}
+          placeholder={config.placeholder || "—"}
+          value={val}
+          onChange={e => setSpec(specKey, e.target.value)}
+        />
+        {config.hint && (
+          <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>
+            {config.hint}
+          </div>
+        )}
+      </>
+    );
+  };
+
   if (done) return (
-    <div style={{ ...(isMobile ? s.pageMobile : s.page) }}>
+    <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
         <div style={{ width:64, height:64, borderRadius:"50%",
           background:"#f0f7f2", display:"flex", alignItems:"center",
@@ -214,11 +342,9 @@ export default function PublishCar() {
   );
 
   return (
-    <div style={{ ...(isMobile ? s.pageMobile : s.page) }}>
+    <div style={isMobile ? s.pageMobile : s.page}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
-        Publicar mi auto
-      </div>
+      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Publicar mi auto</div>
       <div style={s.sub}>Completá los datos del vehículo</div>
 
       {/* Steps */}
@@ -229,8 +355,7 @@ export default function PublishCar() {
             <div style={{ display:"flex", flexDirection:"column",
               alignItems:"center", gap:6 }}>
               <div style={{
-                width: isMobile ? 28 : 32,
-                height: isMobile ? 28 : 32,
+                width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
                 borderRadius:"50%", display:"flex", alignItems:"center",
                 justifyContent:"center", fontSize:13, fontWeight:700,
                 transition:"all .3s",
@@ -278,19 +403,27 @@ export default function PublishCar() {
           <div style={s.sectionTitle}>Datos del vehículo</div>
           <div style={isMobile ? s.grid3Mobile : s.grid3}>
             <div style={s.field}>
-              <label style={s.label}>Marca</label>
+              <label style={s.label}>Marca *</label>
               <input style={s.input} placeholder="Toyota"
-                value={form.brand} onChange={e => set("brand", e.target.value)} />
+                value={form.brand}
+                onChange={e => set("brand", onlyLetters(e.target.value))} />
+              <div style={s.hint}>Solo letras</div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Modelo</label>
+              <label style={s.label}>Modelo *</label>
               <input style={s.input} placeholder="Corolla"
-                value={form.model} onChange={e => set("model", e.target.value)} />
+                value={form.model}
+                onChange={e => set("model", e.target.value)} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Año</label>
-              <input style={s.input} type="number" min="2000" max="2025"
-                value={form.year} onChange={e => set("year", e.target.value)} />
+              <label style={s.label}>Año * (1990-{CURRENT_YEAR})</label>
+              <input style={s.input} type="number"
+                min="1990" max={CURRENT_YEAR}
+                value={form.year}
+                onChange={e => {
+                  const v = e.target.value;
+                  if (v.length <= 4) set("year", v);
+                }} />
             </div>
           </div>
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
@@ -303,13 +436,20 @@ export default function PublishCar() {
               </select>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Asientos</label>
-              <input style={s.input} type="number" value={form.seats}
-                onChange={e => set("seats", e.target.value)} />
+              <label style={s.label}>Asientos * (2-9)</label>
+              <input style={s.input} type="number" min="2" max="9"
+                value={form.seats}
+                onChange={e => {
+                  const v = parseInt(e.target.value);
+                  if (!e.target.value || (v >= 1 && v <= 9))
+                    set("seats", e.target.value);
+                }} />
             </div>
           </div>
           <div style={s.field}>
-            <label style={s.label}>Descripción</label>
+            <label style={s.label}>
+              Descripción * — {form.description.length} / 20 mínimos
+            </label>
             <textarea style={{ ...s.input, height: 80, resize: "none" }}
               placeholder="Contá el estado del auto, extras, experiencia de uso..."
               value={form.description}
@@ -325,7 +465,7 @@ export default function PublishCar() {
             }}
           />
 
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 16 }}>
             <div style={{ display:"flex", justifyContent:"space-between",
               alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8 }}>
               <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>
@@ -339,24 +479,14 @@ export default function PublishCar() {
                   fontWeight:600, cursor: aiLoading ? "not-allowed" : "pointer",
                   display:"flex", alignItems:"center", gap:6 }}
                 onClick={fetchSpecs} disabled={aiLoading}>
-                {aiLoading
-                  ? <><span style={s.spinner}/> Completando...</>
-                  : "Autocompletar"}
+                {aiLoading ? <><span style={s.spinner}/> Completando...</> : "Autocompletar"}
               </button>
             </div>
             <div style={s.specGrid}>
-              {Object.keys(SPEC_LABELS).map(key => (
+              {Object.keys(SPEC_CONFIG).map(key => (
                 <div key={key} style={s.specItem}>
-                  <div style={s.specLabel}>{SPEC_LABELS[key]}</div>
-                  <input
-                    style={{ width:"100%", border:"none", outline:"none",
-                      fontSize:14, fontWeight:600, color:"#111827",
-                      background:"transparent" }}
-                    placeholder="—"
-                    value={specs?.[key] !== undefined ? String(specs[key]) : ""}
-                    onChange={e => setSpecs(prev => ({
-                      ...(prev || {}), [key]: e.target.value
-                    }))} />
+                  <div style={s.specLabel}>{SPEC_CONFIG[key].label}</div>
+                  <SpecInput specKey={key} />
                 </div>
               ))}
             </div>
@@ -383,9 +513,7 @@ export default function PublishCar() {
               style={{ display:"none" }} onChange={handlePhotos} />
             <div style={{ fontSize:13, fontWeight:600, color:"#374151",
               marginBottom:4 }}>Hacé clic para subir fotos</div>
-            <div style={{ fontSize:12, color:"#9ca3af" }}>
-              JPG, PNG — máximo 6 fotos
-            </div>
+            <div style={{ fontSize:12, color:"#9ca3af" }}>JPG, PNG — máximo 6 fotos</div>
           </div>
           {photos.length > 0 && (
             <div style={s.photoGrid}>
@@ -399,15 +527,13 @@ export default function PublishCar() {
                       Principal
                     </div>
                   )}
-                  <button style={s.photoRemove}
-                    onClick={() => removePhoto(i)}>×</button>
+                  <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
               ))}
             </div>
           )}
           <div style={s.btnRow}>
-            <button style={s.btnBack}
-              onClick={() => setStep(s => s - 1)}>Atrás</button>
+            <button style={s.btnBack} onClick={() => setStep(s => s - 1)}>Atrás</button>
             <button style={s.btn} onClick={next}>Siguiente</button>
           </div>
         </div>
@@ -418,29 +544,45 @@ export default function PublishCar() {
           <div style={s.sectionTitle}>Precio y condiciones</div>
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
-              <label style={s.label}>Precio por día ($ARS)</label>
-              <input style={s.input} type="number" placeholder="8500"
+              <label style={s.label}>Precio por día ($ARS) *</label>
+              <input style={s.input} type="number"
+                placeholder="8500" min="1000" max="500000"
                 value={form.price_per_day}
-                onChange={e => set("price_per_day", e.target.value)} />
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  if (e.target.value === "" || (v >= 0 && v <= 500000))
+                    set("price_per_day", e.target.value);
+                }} />
+              <div style={s.hint}>Entre $1.000 y $500.000 ARS</div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Km diario incluido</label>
-              <input style={s.input} type="number" value={form.km_limit}
-                onChange={e => set("km_limit", e.target.value)} />
+              <label style={s.label}>Km diario incluido *</label>
+              <input style={s.input} type="number"
+                min="50" max="2000"
+                value={form.km_limit}
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  if (e.target.value === "" || (v >= 0 && v <= 2000))
+                    set("km_limit", e.target.value);
+                }} />
+              <div style={s.hint}>Entre 50 y 2000 km</div>
             </div>
             <div style={s.field}>
               <label style={s.label}>Transmisión</label>
               <select style={s.select} value={form.transmission}
                 onChange={e => set("transmission", e.target.value)}>
-                <option>Manual</option><option>Automático</option>
+                <option>Manual</option>
+                <option>Automático</option>
               </select>
             </div>
             <div style={s.field}>
               <label style={s.label}>Combustible</label>
               <select style={s.select} value={form.fuel}
                 onChange={e => set("fuel", e.target.value)}>
-                <option>Nafta</option><option>Diesel</option>
-                <option>Eléctrico</option><option>GNC</option>
+                <option>Nafta</option>
+                <option>Diesel</option>
+                <option>Eléctrico</option>
+                <option>GNC</option>
               </select>
             </div>
           </div>
@@ -463,8 +605,7 @@ export default function PublishCar() {
             </div>
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack}
-              onClick={() => setStep(s => s - 1)}>Atrás</button>
+            <button style={s.btnBack} onClick={() => setStep(s => s - 1)}>Atrás</button>
             <button style={s.btn} onClick={next}>Siguiente</button>
           </div>
         </div>
@@ -485,6 +626,8 @@ export default function PublishCar() {
             ["Precio/día", `$${Number(form.price_per_day).toLocaleString()} ARS`],
             ["Km incluidos/día", `${form.km_limit} km`],
             ["Transmisión", form.transmission],
+            ["Combustible", form.fuel],
+            ["Asientos", form.seats],
             ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
             ["Specs", specs ? "Completadas" : "No obtenidas"],
           ].map(([k, v]) => (
@@ -500,11 +643,8 @@ export default function PublishCar() {
             Tu auto quedará pendiente de aprobación por el equipo de Freewheel.
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack}
-              onClick={() => setStep(s => s - 1)}>Atrás</button>
-            <button style={s.btn} onClick={handlePublish}>
-              Publicar ahora
-            </button>
+            <button style={s.btnBack} onClick={() => setStep(s => s - 1)}>Atrás</button>
+            <button style={s.btn} onClick={handlePublish}>Publicar ahora</button>
           </div>
         </div>
       )}
