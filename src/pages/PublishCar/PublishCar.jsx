@@ -451,14 +451,36 @@ export default function PublishCar() {
             </div>
           </div>
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
-            <div style={s.field}>
-              <label style={s.label}>Categoría</label>
-              <select style={s.select} value={form.category}
-                onChange={e => set("category", e.target.value)}>
-                {["Sedan","SUV","Pickup","Deportivo","Eléctrico","Utilitario"]
-                  .map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
+          <div style={s.field}>
+  <label style={s.label}>Categoría</label>
+  <button
+    onClick={() => {
+      const opts = ["Sedan","SUV","Pickup","Deportivo","Eléctrico","Utilitario"];
+      const idx = opts.indexOf(form.category);
+      set("category", opts[(idx + 1) % opts.length]);
+    }}
+    style={{
+      width: "100%",
+      padding: "11px 14px",
+      borderRadius: 8,
+      border: "1.5px solid #e5e7eb",
+      fontSize: 14,
+      background: "#rgb(250, 250, 250)",
+      color: "##rgb(0, 0, 0)",
+      fontWeight: 700,
+      cursor: "pointer",
+      textAlign: "left",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+    }}
+  >
+    <span>{form.category}</span>
+    <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 400 }}>
+      {["Sedan","SUV","Pickup","Deportivo","Eléctrico","Utilitario"].indexOf(form.category) + 1} / 6
+    </span>
+  </button>
+</div>
             <div style={s.field}>
               <label style={s.label}>Asientos * (2-9)</label>
               <input style={s.input} type="number" min="2" max="9"
