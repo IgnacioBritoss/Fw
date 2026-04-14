@@ -1,2 +1,0 @@
-mejorar la entrada de datos con la base de tejada
-n8n para el agente ya esta y para el autocompletado de datos
