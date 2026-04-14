@@ -79,7 +79,6 @@ const s = {
 const STEPS = ["Datos", "Fotos", "Condiciones", "Confirmar"];
 const CURRENT_YEAR = new Date().getFullYear();
 
-// Límites lógicos por campo de spec
 const SPEC_CONFIG = {
   baul_litros: {
     label: "Baúl (litros)",
@@ -140,7 +139,6 @@ const SPEC_CONFIG = {
   },
 };
 
-const onlyNumbers = (v) => v.replace(/[^0-9]/g, "");
 const onlyLetters = (v) => v.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
 
 export default function PublishCar() {
@@ -172,6 +170,16 @@ export default function PublishCar() {
       if (num > config.max) return;
     }
     setSpecs(prev => ({ ...(prev || {}), [key]: val }));
+  };
+
+  const cycleSpec = (key) => {
+    const config = SPEC_CONFIG[key];
+    if (config.type !== "select") return;
+    const options = config.options;
+    const current = specs?.[key];
+    const currentIdx = options.indexOf(current);
+    const nextIdx = (currentIdx + 1) % options.length;
+    setSpecs(prev => ({ ...(prev || {}), [key]: options[nextIdx] }));
   };
 
   const fetchSpecs = async () => {
@@ -216,7 +224,6 @@ export default function PublishCar() {
 
   const validateStep = () => {
     setError("");
-
     if (step === 0) {
       if (!form.brand || form.brand.trim().length < 2)
         return setError("Ingresá la marca del vehículo (mínimo 2 caracteres)."), false;
@@ -232,8 +239,6 @@ export default function PublishCar() {
         return setError("La descripción debe tener al menos 20 caracteres."), false;
       if (!form.lat || !form.lng)
         return setError("Seleccioná la ubicación del auto en el mapa."), false;
-
-      // Validar specs si fueron completadas manualmente
       if (specs) {
         for (const [key, config] of Object.entries(SPEC_CONFIG)) {
           if (config.type === "number" && specs[key] !== undefined && specs[key] !== "") {
@@ -244,10 +249,8 @@ export default function PublishCar() {
         }
       }
     }
-
     if (step === 1 && photos.length === 0)
       return setError("Subí al menos una foto del vehículo."), false;
-
     if (step === 2) {
       const price = Number(form.price_per_day);
       if (!form.price_per_day || price < 1000 || price > 500000)
@@ -258,7 +261,6 @@ export default function PublishCar() {
       if (!ownerTerms)
         return setError("Aceptá las condiciones para dueños."), false;
     }
-
     return true;
   };
 
@@ -282,21 +284,43 @@ export default function PublishCar() {
 
   const cardStyle = isMobile ? s.cardMobile : s.card;
 
+  // ← ÚNICO CAMBIO: select → botón que cicla opciones
   const SpecInput = ({ specKey }) => {
     const config = SPEC_CONFIG[specKey];
     const val = specs?.[specKey] !== undefined ? String(specs[specKey]) : "";
 
-    if (config.type === "select") return (
-      <select
-        style={{ width:"100%", border:"none", outline:"none", fontSize:14,
-          fontWeight:600, color:"#111827", background:"transparent",
-          cursor:"pointer" }}
-        value={val}
-        onChange={e => setSpec(specKey, e.target.value)}>
-        <option value="">—</option>
-        {config.options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-    );
+    if (config.type === "select") {
+      const hasValue = val !== "";
+      return (
+        <button
+          onClick={() => cycleSpec(specKey)}
+          style={{
+            width: "100%",
+            border: "none",
+            outline: "none",
+            background: hasValue ? "#e8f5ee" : "#f3f4f6",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontSize: 13,
+            fontWeight: 700,
+            color: hasValue ? "#1a4d2e" : "#9ca3af",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            transition: "background .15s",
+          }}
+        >
+          <span>{hasValue ? val : "Tocar para elegir"}</span>
+          <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 400 }}>
+            {hasValue
+              ? `${config.options.indexOf(val) + 1}/${config.options.length}`
+              : "↺"}
+          </span>
+        </button>
+      );
+    }
 
     return (
       <>
@@ -304,14 +328,14 @@ export default function PublishCar() {
           type={config.type}
           min={config.min}
           max={config.max}
-          style={{ width:"100%", border:"none", outline:"none", fontSize:14,
-            fontWeight:600, color:"#111827", background:"transparent" }}
+          style={{ width: "100%", border: "none", outline: "none", fontSize: 14,
+            fontWeight: 600, color: "#111827", background: "transparent" }}
           placeholder={config.placeholder || "—"}
           value={val}
           onChange={e => setSpec(specKey, e.target.value)}
         />
         {config.hint && (
-          <div style={{ fontSize:10, color:"#9ca3af", marginTop:2 }}>
+          <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>
             {config.hint}
           </div>
         )}
@@ -322,9 +346,9 @@ export default function PublishCar() {
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
-        <div style={{ width:64, height:64, borderRadius:"50%",
-          background:"#f0f7f2", display:"flex", alignItems:"center",
-          justifyContent:"center", margin:"0 auto 20px" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%",
+          background: "#f0f7f2", display: "flex", alignItems: "center",
+          justifyContent: "center", margin: "0 auto 20px" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17L4 12" stroke="#1a4d2e" strokeWidth="2.5"
               strokeLinecap="round" strokeLinejoin="round"/>
@@ -348,17 +372,17 @@ export default function PublishCar() {
       <div style={s.sub}>Completá los datos del vehículo</div>
 
       {/* Steps */}
-      <div style={{ display:"flex", alignItems:"center", marginBottom:36 }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
         {STEPS.map((st, i) => (
-          <div key={st} style={{ display:"flex", alignItems:"center",
+          <div key={st} style={{ display: "flex", alignItems: "center",
             flex: i < STEPS.length - 1 ? 1 : "none" }}>
-            <div style={{ display:"flex", flexDirection:"column",
-              alignItems:"center", gap:6 }}>
+            <div style={{ display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 6 }}>
               <div style={{
                 width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
-                borderRadius:"50%", display:"flex", alignItems:"center",
-                justifyContent:"center", fontSize:13, fontWeight:700,
-                transition:"all .3s",
+                borderRadius: "50%", display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: 13, fontWeight: 700,
+                transition: "all .3s",
                 background: i < step ? "#16a34a" : i === step ? "#1a4d2e" : "#e5e7eb",
                 color: i <= step ? "#fff" : "#9ca3af",
                 boxShadow: i === step ? "0 0 0 4px #dcfce7" : "none",
@@ -370,24 +394,24 @@ export default function PublishCar() {
                   </svg>
                 ) : i + 1}
               </div>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight:500,
-                whiteSpace:"nowrap",
+              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 500,
+                whiteSpace: "nowrap",
                 color: i === step ? "#1a4d2e" : i < step ? "#16a34a" : "#9ca3af" }}>
                 {st}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div style={{ flex:1, height:2, margin:"0 6px", marginBottom:18,
-                background:"#e5e7eb", position:"relative", overflow:"hidden",
-                borderRadius:2 }}>
-                <div style={{ position:"absolute", left:0, top:0, height:"100%",
-                  borderRadius:2, transition:"width .4s ease", background:"#1a4d2e",
+              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18,
+                background: "#e5e7eb", position: "relative", overflow: "hidden",
+                borderRadius: 2 }}>
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%",
+                  borderRadius: 2, transition: "width .4s ease", background: "#1a4d2e",
                   width: i < step ? "100%" : "0%",
                 }}/>
                 {i >= step && (
-                  <div style={{ position:"absolute", left:0, top:0,
-                    width:"100%", height:"100%",
-                    backgroundImage:"repeating-linear-gradient(90deg, #d1d5db 0px, #d1d5db 6px, transparent 6px, transparent 12px)",
+                  <div style={{ position: "absolute", left: 0, top: 0,
+                    width: "100%", height: "100%",
+                    backgroundImage: "repeating-linear-gradient(90deg, #d1d5db 0px, #d1d5db 6px, transparent 6px, transparent 12px)",
                   }}/>
                 )}
               </div>
@@ -457,7 +481,7 @@ export default function PublishCar() {
           </div>
 
           <LocationPicker
-            value={form.lat ? { lat:form.lat, lng:form.lng, address:form.location } : null}
+            value={form.lat ? { lat: form.lat, lng: form.lng, address: form.location } : null}
             onChange={(loc) => {
               set("location", loc.address);
               set("lat", loc.lat);
@@ -466,18 +490,18 @@ export default function PublishCar() {
           />
 
           <div style={{ marginTop: 16 }}>
-            <div style={{ display:"flex", justifyContent:"space-between",
-              alignItems:"center", marginBottom:14, flexWrap:"wrap", gap:8 }}>
-              <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>
+            <div style={{ display: "flex", justifyContent: "space-between",
+              alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
                 Especificaciones técnicas
               </div>
               <button
-                style={{ padding:"8px 16px",
+                style={{ padding: "8px 16px",
                   background: aiLoading ? "#e5e7eb" : "#111827",
                   color: aiLoading ? "#9ca3af" : "#fff",
-                  border:"none", borderRadius:8, fontSize:13,
-                  fontWeight:600, cursor: aiLoading ? "not-allowed" : "pointer",
-                  display:"flex", alignItems:"center", gap:6 }}
+                  border: "none", borderRadius: 8, fontSize: 13,
+                  fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", gap: 6 }}
                 onClick={fetchSpecs} disabled={aiLoading}>
                 {aiLoading ? <><span style={s.spinner}/> Completando...</> : "Autocompletar"}
               </button>
@@ -501,7 +525,7 @@ export default function PublishCar() {
       {step === 1 && (
         <div style={cardStyle}>
           <div style={s.sectionTitle}>Fotos del vehículo</div>
-          <p style={{ fontSize:13, color:"#6b7280", marginBottom:16 }}>
+          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
             Subí hasta 6 fotos. La primera será la foto principal.
           </p>
           <div
@@ -510,10 +534,10 @@ export default function PublishCar() {
             onMouseLeave={() => setUploadHover(false)}
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple
-              style={{ display:"none" }} onChange={handlePhotos} />
-            <div style={{ fontSize:13, fontWeight:600, color:"#374151",
-              marginBottom:4 }}>Hacé clic para subir fotos</div>
-            <div style={{ fontSize:12, color:"#9ca3af" }}>JPG, PNG — máximo 6 fotos</div>
+              style={{ display: "none" }} onChange={handlePhotos} />
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#374151",
+              marginBottom: 4 }}>Hacé clic para subir fotos</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — máximo 6 fotos</div>
           </div>
           {photos.length > 0 && (
             <div style={s.photoGrid}>
@@ -521,9 +545,9 @@ export default function PublishCar() {
                 <div key={i} style={s.photoItem}>
                   <img src={p.url} alt="" style={s.photoImg} />
                   {i === 0 && (
-                    <div style={{ position:"absolute", bottom:6, left:6,
-                      background:"#1a4d2e", color:"#fff", fontSize:10,
-                      padding:"2px 8px", borderRadius:20, fontWeight:600 }}>
+                    <div style={{ position: "absolute", bottom: 6, left: 6,
+                      background: "#1a4d2e", color: "#fff", fontSize: 10,
+                      padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
                       Principal
                     </div>
                   )}
@@ -598,8 +622,8 @@ export default function PublishCar() {
             <div style={s.termsCheck}>
               <input type="checkbox" checked={ownerTerms}
                 onChange={e => setOwnerTerms(e.target.checked)}
-                style={{ flexShrink:0 }} />
-              <span style={{ fontSize:13, color:"#92400e" }}>
+                style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: "#92400e" }}>
                 Acepto estas condiciones como dueño del vehículo
               </span>
             </div>
@@ -616,8 +640,8 @@ export default function PublishCar() {
           <div style={s.sectionTitle}>Revisá tu publicación</div>
           {photos.length > 0 && (
             <img src={photos[0].url} alt="principal"
-              style={{ width:"100%", height: isMobile ? 160 : 200,
-                objectFit:"cover", borderRadius:10, marginBottom:20 }} />
+              style={{ width: "100%", height: isMobile ? 160 : 200,
+                objectFit: "cover", borderRadius: 10, marginBottom: 20 }} />
           )}
           {[
             ["Vehículo", `${form.brand} ${form.model} ${form.year}`],
@@ -631,15 +655,15 @@ export default function PublishCar() {
             ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
             ["Specs", specs ? "Completadas" : "No obtenidas"],
           ].map(([k, v]) => (
-            <div key={k} style={{ display:"flex", justifyContent:"space-between",
-              padding:"9px 0", borderBottom:"1px solid #f3f4f6",
+            <div key={k} style={{ display: "flex", justifyContent: "space-between",
+              padding: "9px 0", borderBottom: "1px solid #f3f4f6",
               fontSize: isMobile ? 13 : 14 }}>
-              <span style={{ color:"#6b7280" }}>{k}</span>
-              <span style={{ fontWeight:500 }}>{v}</span>
+              <span style={{ color: "#6b7280" }}>{k}</span>
+              <span style={{ fontWeight: 500 }}>{v}</span>
             </div>
           ))}
-          <div style={{ marginTop:16, padding:12, background:"#f0f7f2",
-            borderRadius:8, fontSize:13, color:"#1a4d2e" }}>
+          <div style={{ marginTop: 16, padding: 12, background: "#f0f7f2",
+            borderRadius: 8, fontSize: 13, color: "#1a4d2e" }}>
             Tu auto quedará pendiente de aprobación por el equipo de Freewheel.
           </div>
           <div style={s.btnRow}>
