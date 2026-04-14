@@ -183,27 +183,33 @@ export default function PublishCar() {
   };
 
   const fetchSpecs = async () => {
-    if (!form.brand || !form.model || !form.year) {
-      setError("Completá marca, modelo y año antes de autocompletar.");
-      return;
-    }
-    setError("");
-    setAiLoading(true);
-    try {
-      const res = await fetch("http://localhost:3001/api/specs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand: form.brand, model: form.model, year: form.year }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setSpecs(data);
-    } catch {
-      setError("No se pudieron obtener las especificaciones.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  if (!form.brand || !form.model || !form.year) {
+    setError("Completá marca, modelo y año antes de autocompletar.");
+    return;
+  }
+  setError("");
+  setAiLoading(true);
+  try {
+    const res = await fetch("https://freewheel.app.n8n.cloud/webhook/freewheel-specs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `${form.brand} ${form.model} ${form.year}`
+      }),
+    });
+    const data = await res.json();
+    const raw = Array.isArray(data) ? data[0]?.output : data?.output;
+    if (!raw) throw new Error("Sin respuesta");
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("JSON no encontrado");
+    const parsed = JSON.parse(match[0]);
+    setSpecs(parsed);
+  } catch {
+    setError("No se pudieron obtener las especificaciones.");
+  } finally {
+    setAiLoading(false);
+  }
+};
 
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
@@ -614,23 +620,47 @@ export default function PublishCar() {
               <div style={s.hint}>Entre 50 y 2000 km</div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Transmisión</label>
-              <select style={s.select} value={form.transmission}
-                onChange={e => set("transmission", e.target.value)}>
-                <option>Manual</option>
-                <option>Automático</option>
-              </select>
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Combustible</label>
-              <select style={s.select} value={form.fuel}
-                onChange={e => set("fuel", e.target.value)}>
-                <option>Nafta</option>
-                <option>Diesel</option>
-                <option>Eléctrico</option>
-                <option>GNC</option>
-              </select>
-            </div>
+  <label style={s.label}>Transmisión</label>
+  <button
+    onClick={() => {
+      const opts = ["Manual", "Automático"];
+      const idx = opts.indexOf(form.transmission);
+      set("transmission", opts[(idx + 1) % opts.length]);
+    }}
+    style={{
+      width: "100%", padding: "11px 14px", borderRadius: 8,
+      border: "1.5px solid #e5e7eb", fontSize: 14, background: "#e8f5ee",
+      color: "#1a4d2e", fontWeight: 700, cursor: "pointer", textAlign: "left",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    }}
+  >
+    <span>{form.transmission}</span>
+    <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 400 }}>
+      {["Manual", "Automático"].indexOf(form.transmission) + 1} / 2
+    </span>
+  </button>
+</div>
+<div style={s.field}>
+  <label style={s.label}>Combustible</label>
+  <button
+    onClick={() => {
+      const opts = ["Nafta", "Diesel", "Eléctrico", "GNC"];
+      const idx = opts.indexOf(form.fuel);
+      set("fuel", opts[(idx + 1) % opts.length]);
+    }}
+    style={{
+      width: "100%", padding: "11px 14px", borderRadius: 8,
+      border: "1.5px solid #e5e7eb", fontSize: 14, background: "#e8f5ee",
+      color: "#1a4d2e", fontWeight: 700, cursor: "pointer", textAlign: "left",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    }}
+  >
+    <span>{form.fuel}</span>
+    <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 400 }}>
+      {["Nafta", "Diesel", "Eléctrico", "GNC"].indexOf(form.fuel) + 1} / 4
+    </span>
+  </button>
+</div>
           </div>
           <div style={s.termsBox}>
             <div style={s.termsTitle}>Condiciones para dueños</div>
