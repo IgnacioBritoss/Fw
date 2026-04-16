@@ -190,13 +190,20 @@ export default function PublishCar() {
   setError("");
   setAiLoading(true);
   try {
-    const res = await fetch("https://freewheel.app.n8n.cloud/webhook/freewheel-specs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: `${form.brand} ${form.model} ${form.year}`
-      }),
-    });
+    const res = await fetch(import.meta.env.VITE_N8N_SPECS_URL, {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "X-Freewheel-Key": import.meta.env.VITE_N8N_KEY,
+  },
+  body: JSON.stringify({
+    message: `${form.brand} ${form.model} ${form.year}`
+  }),
+});
+
+if (res.status === 429) {
+  throw new Error("Demasiadas consultas, esperá un minuto");
+}
     const data = await res.json();
     const raw = Array.isArray(data) ? data[0]?.output : data?.output;
     if (!raw) throw new Error("Sin respuesta");

@@ -60,6 +60,15 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const [viewport, setViewport] = useState(getViewportData());
 
+  const [sessionId] = useState(() => {
+    let sid = sessionStorage.getItem('fw_session');
+    if (!sid) {
+      sid = crypto.randomUUID();
+      sessionStorage.setItem('fw_session', sid);
+    }
+    return sid;
+  });
+
   const messagesRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -140,14 +149,27 @@ export default function ChatBot() {
     });
 
     try {
-  const res = await fetch("https://freewheel.app.n8n.cloud/webhook/FreeWheel-chat", {
+  const res = await fetch(import.meta.env.VITE_N8N_CHAT_URL, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { 
+    "Content-Type": "application/json",
+    "X-Freewheel-Key": import.meta.env.VITE_N8N_KEY,
+  },
   body: JSON.stringify({
     message: newMessages[newMessages.length - 1].text,
-    sessionId: "guest",
+    sessionId: sessionId,
   }),
 });
+
+if (res.status === 429) {
+  setMessages((prev) => [...prev, {
+    role: "assistant",
+    text: "Estás enviando muchos mensajes muy rápido. Esperá un momento antes de seguir.",
+  }]);
+  return;
+}
+
+if (!res.ok) throw new Error("Request falló");
 
 const data = await res.json();
 
