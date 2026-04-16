@@ -172,12 +172,22 @@ if (res.status === 429) {
 if (!res.ok) throw new Error("Request falló");
 
 const data = await res.json();
+console.log("Respuesta de n8n:", data); // ← para debuggear
+
+// Intenta extraer la respuesta de distintas estructuras posibles
+const responseText = 
+  (Array.isArray(data) && data[0]?.output) ||
+  data?.output ||
+  data?.message ||
+  data?.text ||
+  data?.response ||
+  "No pude generar una respuesta en este momento.";
 
 setMessages((prev) => [
   ...prev,
   {
     role: "assistant",
-    text: data[0]?.output || "No pude generar una respuesta en este momento.",
+    text: responseText,
   },
 ]);
     } catch {
