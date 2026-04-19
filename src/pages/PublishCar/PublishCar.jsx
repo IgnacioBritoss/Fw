@@ -215,8 +215,10 @@ export default function PublishCar() {
       });
       if (res.status === 429) throw new Error("Demasiadas consultas");
       const data = await res.json();
-      const raw = Array.isArray(data) ? data[0]?.output : data?.output;
-      if (!raw) throw new Error("Sin respuesta del agente");
+      const raw = Array.isArray(data)
+  ? data[0]?.output ?? JSON.stringify(data[0])
+  : data?.output ?? JSON.stringify(data);
+if (!raw) throw new Error("Sin respuesta del agente");
       const match = raw.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("JSON no encontrado");
       setPricingSuggestion(JSON.parse(match[0]));
@@ -464,7 +466,7 @@ export default function PublishCar() {
                 <label style={s.label}>Precio por día ($ARS) *</label>
                 <button onClick={fetchPricing} disabled={pricingLoading}
                   style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#1a4d2e", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                  {pricingLoading ? <><span style={s.spinner}/> Analizando...</> : "✦ Sugerir precio"}
+                  {pricingLoading ? <><span style={s.spinner}/> Analizando...</> : " Sugerir precio"}
                 </button>
               </div>
               <input style={s.input} type="number" placeholder="8500" min="1000" max="500000" value={form.price_per_day}
@@ -474,7 +476,7 @@ export default function PublishCar() {
                 <div style={{ marginTop: 12, background: "#f0f7f2", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
                     <div>
-                      <div style={{ fontSize: 11, color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>✦ Recomendación IA</div>
+                      <div style={{ fontSize: 11, color: "#16a34a", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 4 }}>Recomendación</div>
                       <div style={{ fontSize: 22, fontWeight: 800, color: "#14532d" }}>
                         ${Number(pricingSuggestion.precio_sugerido).toLocaleString("es-AR")}
                         <span style={{ fontSize: 13, fontWeight: 500, color: "#16a34a", marginLeft: 6 }}>/día</span>
