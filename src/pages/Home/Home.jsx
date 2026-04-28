@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { getListings } from "../../services/api";
 
 const CATEGORIES = [
   { id: "Todos", label: "Todos" },
@@ -15,19 +16,25 @@ export default function Home() {
   const { isMobile } = useIsMobile();
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Todos");
-  const [maxPrice, setMaxPrice] = useState(100000);
   const [view, setView] = useState("lista");
   const [mapLoaded, setMapLoaded] = useState(false);
   const [hoveredCar, setHoveredCar] = useState(null);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
+  const [listings, setListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(true);
 
-  const allCars = [
-    ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-    ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]")
-      .filter(c => c.approved && !c.banned),
-  ];
+   useEffect(() => {
+    getListings()
+      .then((data) => {
+        setListings(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setListings([]))
+      .finally(() => setLoadingListings(false));
+  }, []);
+
+  const allCars = listings;
 
   const filtered = allCars.filter(c => {
     const matchSearch = !search ||
@@ -35,10 +42,10 @@ export default function Home() {
       c.brand?.toLowerCase().includes(search.toLowerCase()) ||
       c.model?.toLowerCase().includes(search.toLowerCase());
     const matchCat = cat === "Todos" || c.category === cat;
-    const matchPrice = maxPrice >= 100000 || Number(c.price_per_day) <= maxPrice;
-    return matchSearch && matchCat && matchPrice && c.available !== false;
+    return matchSearch && matchCat && c.available !== false;
   });
 
+  // Cargar Leaflet
   useEffect(() => {
     if (window.L) { setMapLoaded(true); return; }
     const link = document.createElement("link");
@@ -51,6 +58,7 @@ export default function Home() {
     document.head.appendChild(script);
   }, []);
 
+  // Destruir mapa al cambiar a lista
   useEffect(() => {
     if (view === "lista" && mapInstanceRef.current) {
       mapInstanceRef.current.remove();
@@ -59,6 +67,7 @@ export default function Home() {
     }
   }, [view]);
 
+  // Inicializar mapa al cambiar a mapa
   useEffect(() => {
     if (view !== "mapa") return;
     const init = () => {
@@ -73,6 +82,8 @@ export default function Home() {
         attribution: "© OpenStreetMap",
       }).addTo(map);
       mapInstanceRef.current = map;
+
+      // Agregar markers inmediatamente después de inicializar
       addMarkers(map, L);
     };
     if (window.L) setTimeout(init, 150);
@@ -83,32 +94,51 @@ export default function Home() {
     }
   }, [view, mapLoaded]);
 
+  // Función para agregar markers
   const addMarkers = useCallback((map, L) => {
     if (!map || !L) return;
     Object.values(markersRef.current).forEach(m => {
       try { map.removeLayer(m); } catch {}
     });
     markersRef.current = {};
+
     filtered.forEach(car => {
       if (!car.lat || !car.lng) return;
       const icon = L.divIcon({
         className: "",
-        html: `<div style="width:14px;height:14px;background:#e00;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
+        html: `<div style="width:14px;height:14px;
+          background:#e00;border:2px solid #fff;border-radius:50%;
+          box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
         iconAnchor: [7, 7],
       });
       const marker = L.marker([car.lat, car.lng], { icon });
       marker.bindPopup(L.popup({ closeButton: false, maxWidth: 220 }).setContent(`
-        <div style="cursor:pointer;font-family:sans-serif" onclick="window.__fwOpen('${car.id}')">
-          <div style="width:100%;height:120px;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#e5e7eb;">
+        <div style="cursor:pointer;font-family:sans-serif"
+          onclick="window.__fwOpen('${car.id}')">
+          <div style="width:100%;height:120px;border-radius:10px;overflow:hidden;
+            margin-bottom:10px;background:#e5e7eb;">
             ${car.photos?.length > 0
               ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
-              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
+              : `<div style="width:100%;height:100%;display:flex;align-items:center;
+                  justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
           </div>
-          <div style="font-size:11px;color:#6b7280;margin-bottom:4px">${car.category} · ${car.transmission}</div>
-          <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">${car.brand} ${car.model} ${car.year}</div>
-          <div style="font-size:12px;color:#6b7280;margin-bottom:8px">${car.location}</div>
-          <div style="font-weight:700;font-size:15px;color:#1a4d2e">$${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">/día</span></div>
-          <div style="margin-top:8px;padding:7px;background:#1a4d2e;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">Ver auto</div>
+          <div style="font-size:11px;color:#6b7280;margin-bottom:4px">
+            ${car.category} · ${car.transmission}
+          </div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">
+            ${car.brand} ${car.model} ${car.year}
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:8px">
+            ${car.location}
+          </div>
+          <div style="font-weight:700;font-size:15px;color:#1a4d2e">
+            $${Number(car.price_per_day).toLocaleString()}
+            <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
+          </div>
+          <div style="margin-top:8px;padding:7px;background:#1a4d2e;color:#fff;
+            border-radius:8px;text-align:center;font-size:12px;font-weight:600;">
+            Ver auto
+          </div>
         </div>
       `));
       marker.addTo(map);
@@ -117,12 +147,15 @@ export default function Home() {
     window.__fwOpen = (id) => navigate(`/cars/${id}`);
   }, [filtered, navigate]);
 
+  // Actualizar markers cuando cambian los filtros
   useEffect(() => {
     if (view !== "mapa" || !mapInstanceRef.current || !window.L) return;
     addMarkers(mapInstanceRef.current, window.L);
   }, [filtered, addMarkers, view]);
 
-  const handleViewChange = (newView) => setView(newView);
+  const handleViewChange = (newView) => {
+    setView(newView);
+  };
 
   const CarCard = ({ car }) => (
     <div
@@ -135,7 +168,8 @@ export default function Home() {
         position:"relative" }}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt=""
-              style={{ width:"100%", height:"100%", objectFit:"cover", transition:"transform .3s" }}
+              style={{ width:"100%", height:"100%", objectFit:"cover",
+                transition:"transform .3s" }}
               onMouseEnter={e => !isMobile && (e.target.style.transform="scale(1.03)")}
               onMouseLeave={e => !isMobile && (e.target.style.transform="scale(1)")} />
           : <div style={{ width:"100%", height:"100%", display:"flex",
@@ -148,11 +182,11 @@ export default function Home() {
             fontWeight:600 }}>Verificado</div>
         )}
       </div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+      <div style={{ display:"flex", justifyContent:"space-between",
+        alignItems:"flex-start" }}>
         <div style={{ flex:1 }}>
-          <div style={{ fontWeight:600, fontSize:14, color:"#111827", marginBottom:2 }}>
-            {car.location}
-          </div>
+          <div style={{ fontWeight:600, fontSize:14, color:"#111827",
+            marginBottom:2 }}>{car.location}</div>
           <div style={{ fontSize:13, color:"#6b7280", marginBottom:2 }}>
             {car.brand} {car.model} {car.year}
           </div>
@@ -195,7 +229,8 @@ export default function Home() {
           boxShadow:"0 8px 32px rgba(0,0,0,.15)" }}>
           <input
             style={{ flex:1, border:"none", outline:"none",
-              fontSize: isMobile ? 14 : 15, color:"#111827", background:"transparent" }}
+              fontSize: isMobile ? 14 : 15,
+              color:"#111827", background:"transparent" }}
             placeholder="Ciudad, zona o modelo..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -213,7 +248,6 @@ export default function Home() {
       <div style={{ maxWidth:1280, margin:"0 auto",
         padding: isMobile ? "14px 16px 10px" : "20px 24px 10px",
         borderBottom:"1px solid #f3f4f6" }}>
-
         <div style={{ display:"flex", justifyContent:"space-between",
           alignItems:"center", flexWrap:"wrap", gap:8 }}>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
@@ -241,50 +275,9 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-        {/* Slider de precio */}
-        <div style={{ marginTop:14, paddingBottom:4 }}>
-          <div style={{ display:"flex", justifyContent:"space-between",
-            alignItems:"center", marginBottom:8 }}>
-            <span style={{ fontSize:12, fontWeight:600, color:"#374151" }}>
-              Precio máximo por día
-            </span>
-            <span style={{ fontSize:13, fontWeight:700, color:"#1a4d2e" }}>
-              {maxPrice >= 100000 ? "Sin límite" : `$${maxPrice.toLocaleString()}`}
-            </span>
-          </div>
-          <div style={{ position:"relative", height:20, display:"flex", alignItems:"center" }}>
-            <div style={{ position:"absolute", left:0, right:0, height:4,
-              background:"#e5e7eb", borderRadius:4 }} />
-            <div style={{ position:"absolute", left:0, height:4,
-              background:"#1a4d2e", borderRadius:4,
-              width:`${((maxPrice - 1000) / (100000 - 1000)) * 100}%`,
-              transition:"width .1s" }} />
-            <input
-              type="range" min={1000} max={100000} step={1000}
-              value={maxPrice}
-              onChange={e => setMaxPrice(Number(e.target.value))}
-              style={{ position:"absolute", left:0, right:0, width:"100%",
-                opacity:0, cursor:"pointer", height:20, margin:0 }}
-            />
-            <div style={{
-              position:"absolute",
-              left:`calc(${((maxPrice - 1000) / (100000 - 1000)) * 100}% - 10px)`,
-              width:20, height:20, borderRadius:"50%",
-              background:"#1a4d2e", border:"3px solid #fff",
-              boxShadow:"0 2px 8px rgba(26,77,46,.35)",
-              pointerEvents:"none", transition:"left .1s"
-            }} />
-          </div>
-          <div style={{ display:"flex", justifyContent:"space-between",
-            marginTop:6, fontSize:10, color:"#9ca3af" }}>
-            <span>$1.000</span>
-            <span>Sin límite</span>
-          </div>
-        </div>
       </div>
 
-      {/* Lista */}
+      {/* Contenido — lista siempre montada, mapa se muestra/oculta */}
       <div style={{ display: view === "lista" ? "block" : "none",
         maxWidth:1280, margin:"0 auto",
         padding: isMobile ? "20px 16px" : "32px 24px" }}>
@@ -306,10 +299,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Mapa */}
       <div style={{ display: view === "mapa" ? "block" : "none" }}>
         {isMobile ? (
-          <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 180px)" }}>
+          <div style={{ display:"flex", flexDirection:"column",
+            height:"calc(100vh - 180px)" }}>
             <div style={{ fontSize:13, color:"#6b7280", padding:"10px 16px" }}>
               {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
             </div>
@@ -318,12 +311,14 @@ export default function Home() {
         ) : (
           <div style={{ display:"grid", gridTemplateColumns:"1fr 45%",
             maxWidth:1280, margin:"0 auto", padding:"24px", gap:24 }}>
-            <div style={{ overflowY:"auto", maxHeight:"calc(100vh - 200px)", paddingRight:8 }}>
+            <div style={{ overflowY:"auto",
+              maxHeight:"calc(100vh - 200px)", paddingRight:8 }}>
               <div style={{ fontSize:13, color:"#6b7280", marginBottom:20 }}>
                 {filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles
               </div>
               <div style={{ display:"grid",
-                gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:"0 20px" }}>
+                gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",
+                gap:"0 20px" }}>
                 {filtered.map(car => <CarCard key={car.id} car={car} />)}
               </div>
             </div>
