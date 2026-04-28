@@ -25,11 +25,9 @@ const s = {
   btn: { width:"100%", padding:13, background:"#1a4d2e", color:"#fff",
     border:"none", borderRadius:10, fontSize:15, fontWeight:700,
     cursor:"pointer", letterSpacing:"-.2px" },
+  btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8,
     padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-  adminHint: { background:"#f0f7f2", border:"1.5px solid #bbf7d0",
-    borderRadius:8, padding:"10px 14px", fontSize:12,
-    color:"#1a4d2e", marginBottom:16 },
   footer: { textAlign:"center", marginTop:18, fontSize:13, color:"#6b7280" },
   divider: { display:"flex", alignItems:"center", gap:12, margin:"20px 0" },
   dividerLine: { flex:1, height:1, background:"#f3f4f6" },
@@ -40,19 +38,29 @@ export default function Login() {
   const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const [form, setForm] = useState({ email:"", password:"" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.email || !form.password) {
       setError("Completá todos los campos.");
       return;
     }
-    const result = loginWithCredentials(form.email, form.password);
-    if (!result.success) { setError(result.error); return; }
-    const savedUser = JSON.parse(localStorage.getItem("fw_user"));
-    if (savedUser?.role === "admin") navigate("/admin");
-    else navigate("/");
+
+    setLoading(true);
+    setError("");
+
+    const result = await loginWithCredentials(form.email, form.password);
+
+    setLoading(false);
+
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+
+    navigate("/");
   };
 
   return (
@@ -63,53 +71,48 @@ export default function Login() {
         </div>
         <div style={s.sub}>Iniciá sesión en Freewheel</div>
 
-        <div style={s.adminHint}>
-  Acceso admin: <strong>admin@freewheel.com</strong> / <strong>admin123</strong>
-</div>
-
-<div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-  <button onClick={() => setForm({ email:"admin@freewheel.com", password:"admin123" })}
-    style={{ flex:1, padding:"8px 12px", background:"#1a4d2e", color:"#fff",
-      border:"none", borderRadius:8, fontSize:12, fontWeight:600,
-      cursor:"pointer" }}>
-    Entrar como Admin
-  </button>
-  <button onClick={() => setForm({ email:"ignacio@test.com", password:"test12345" })}
-    style={{ flex:1, padding:"8px 12px", background:"#f0f7f2",
-      color:"#1a4d2e", border:"1.5px solid #bbf7d0", borderRadius:8,
-      fontSize:12, fontWeight:600, cursor:"pointer" }}>
-    Entrar como Usuario
-  </button>
-</div>
-
         {error && <div style={s.error}>{error}</div>}
 
         <div style={s.field}>
           <label style={s.label}>Email</label>
-          <input style={s.input} type="email" placeholder="tu@email.com"
+          <input
+            style={s.input}
+            type="email"
+            placeholder="tu@email.com"
             value={form.email}
-            onChange={e => setForm(f => ({...f, email:e.target.value}))}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
         </div>
         <div style={s.field}>
           <label style={s.label}>Contraseña</label>
-          <input style={s.input} type="password" placeholder="Tu contraseña"
+          <input
+            style={s.input}
+            type="password"
+            placeholder="Tu contraseña"
             value={form.password}
-            onChange={e => setForm(f => ({...f, password:e.target.value}))}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()} />
+            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
         </div>
 
-        <button style={s.btn} onClick={handleSubmit}>Iniciar sesión</button>
+        <button
+          style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Ingresando..." : "Iniciar sesión"}
+        </button>
 
         <div style={s.divider}>
-          <div style={s.dividerLine}/>
+          <div style={s.dividerLine} />
           <span style={s.dividerText}>o</span>
-          <div style={s.dividerLine}/>
+          <div style={s.dividerLine} />
         </div>
 
         <div style={s.footer}>
           ¿No tenés cuenta?{" "}
-          <Link to="/register" style={{ color:"#1a4d2e", fontWeight:600 }}>
+          <Link to="/register" style={{ color: "#1a4d2e", fontWeight: 600 }}>
             Registrate gratis
           </Link>
         </div>

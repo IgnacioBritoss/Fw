@@ -1,15 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { loginUser, registerUser, getMe } from "../services/api";
 import { initMockCars } from "../data/mockData";
 
 const AuthContext = createContext(null);
-
-const ADMIN_USER = {
-  id: "admin",
-  name: "Admin",
-  email: "admin@freewheel.com",
-  password: "admin123",
-  role: "admin",
-};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -18,11 +11,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     initMockCars();
     const saved = localStorage.getItem("fw_user");
-    if (saved) setUser(JSON.parse(saved));
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem("fw_user");
+      }
+    }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const saveUser = (userData) => {
     localStorage.setItem("fw_user", JSON.stringify(userData));
     setUser(userData);
   };
@@ -32,29 +31,55 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const register = (userData) => {
-    const users = JSON.parse(localStorage.getItem("fw_users") || "[]");
-    const newUser = { ...userData, id: Date.now().toString(), role: "user" };
-    users.push(newUser);
-    localStorage.setItem("fw_users", JSON.stringify(users));
-    login(newUser);
+  // Login con la API real
+  const loginWithCredentials = async (email, password) => {
+    try {
+      const data = await loginUser({ email, password });
+      // data = { user: {...}, accessToken: "jwt" }
+      const userData = { ...data.user, accessToken: data.accessToken };
+      saveUser(userData);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message || "Email o contraseña incorrectos." };
+    }
   };
 
-  const loginWithCredentials = (email, password) => {
-    if (email === ADMIN_USER.email && password === ADMIN_USER.password) {
-      login(ADMIN_USER);
+  // Registro con la API real
+  const register = async (formData) => {
+    // Adaptar campos del form al schema de la API
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.name?.split(" ")[0] || formData.name || "",
+      lastName: formData.name?.split(" ").slice(1).join(" ") || "",
+    };
+
+    try {
+      const data = await registerUser(payload);
+      const userData = { ...data.user, accessToken: data.accessToken };
+      saveUser(userData);
       return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message || "Error al registrarse." };
     }
-    const users = JSON.parse(localStorage.getItem("fw_users") || "[]");
-    const found = users.find(u => u.email === email && u.password === password);
-    if (!found) return { success: false, error: "Email o contraseña incorrectos." };
-    if (found.suspended) return { success: false, error: "Tu cuenta fue suspendida por violar las normas de Freewheel." };
-    login(found);
-    return { success: true };
+  };
+
+  // Refrescar datos del usuario desde la API
+  const refreshUser = async () => {
+    try {
+      const freshUser = await getMe();
+      const token = user?.accessToken;
+      saveUser({ ...freshUser, accessToken: token });
+    } catch {
+      // Si falla (token expirado), hacer logout
+      logout();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loginWithCredentials, loading }}>
+    <AuthContext.Provider
+      value={{ user, login: saveUser, logout, register, loginWithCredentials, refreshUser, loading }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );
