@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://freewheel-2pty.onrender.com";
 
 function getToken() {
   const user = localStorage.getItem("fw_user");
