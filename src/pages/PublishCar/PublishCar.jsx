@@ -222,8 +222,11 @@ export default function PublishCar() {
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
-      <style>{`@keyframes spin input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } { to { transform: rotate(360deg); } }`}</style>
+     <style>{`
+  @keyframes spin { to { transform: rotate(360deg); } }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+`}</style>
       <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Publicar mi auto</div>
       <div style={s.sub}>Completá los datos del vehículo</div>
 
