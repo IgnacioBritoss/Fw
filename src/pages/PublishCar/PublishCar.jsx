@@ -280,28 +280,41 @@ export default function PublishCar() {
 
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
-              <label style={s.label}>Transmisión</label>
-              <select style={s.select} value={vehicleForm.transmission}
-                onChange={(e) => setV("transmission", e.target.value)}>
-                <option>Manual</option><option>Automático</option>
-              </select>
-            </div>
+  <label style={s.label}>Transmisión</label>
+  <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+    {["Manual","Automático"].map((opt) => (
+      <button key={opt} type="button"
+        onClick={() => setV("transmission", opt)}
+        style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.transmission===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.transmission===opt ? "#1a4d2e" : "#fff", color: vehicleForm.transmission===opt ? "#fff" : "#374151" }}>
+        {opt}
+      </button>
+    ))}
+  </div>
+</div>
+           <div style={s.field}>
+  <label style={s.label}>Combustible</label>
+  <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+    {["Nafta","Diesel","Eléctrico","GNC"].map((opt) => (
+      <button key={opt} type="button"
+        onClick={() => setV("fuel", opt)}
+        style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.fuel===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.fuel===opt ? "#1a4d2e" : "#fff", color: vehicleForm.fuel===opt ? "#fff" : "#374151" }}>
+        {opt}
+      </button>
+    ))}
+  </div>
+</div>
             <div style={s.field}>
-              <label style={s.label}>Combustible</label>
-              <select style={s.select} value={vehicleForm.fuel}
-                onChange={(e) => setV("fuel", e.target.value)}>
-                <option>Nafta</option><option>Diesel</option>
-                <option>Eléctrico</option><option>GNC</option>
-              </select>
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Tracción</label>
-              <select style={s.select} value={vehicleForm.drivetrain}
-                onChange={(e) => setV("drivetrain", e.target.value)}>
-                <option>Delantera</option><option>Trasera</option>
-                <option>4x4</option><option>AWD</option>
-              </select>
-            </div>
+  <label style={s.label}>Tracción</label>
+  <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+    {["Delantera","Trasera","4x4","AWD"].map((opt) => (
+      <button key={opt} type="button"
+        onClick={() => setV("drivetrain", opt)}
+        style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.drivetrain===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.drivetrain===opt ? "#1a4d2e" : "#fff", color: vehicleForm.drivetrain===opt ? "#fff" : "#374151" }}>
+        {opt}
+      </button>
+    ))}
+  </div>
+</div>
             <div style={s.field}>
               <label style={s.label}>Asientos</label>
               <input style={s.input} type="number"
@@ -319,15 +332,21 @@ export default function PublishCar() {
             </div>
           </div>
 
-          <div style={{ marginBottom: 14, display: "flex", gap: 20, flexWrap: "wrap" }}>
-            {[["bluetooth", "Bluetooth"], ["rearCamera", "Cámara de reversa"], ["parkingSensors", "Sensores de estacionamiento"]].map(([key, label]) => (
-              <label key={key} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
-                <input type="checkbox" checked={vehicleForm[key]}
-                  onChange={(e) => setV(key, e.target.checked)} />
-                {label}
-              </label>
-            ))}
-          </div>
+          <div style={{ marginBottom:16 }}>
+  <label style={s.label}>Características</label>
+  <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:4 }}>
+    {[["bluetooth","Bluetooth"],["rearCamera","Cámara de reversa"],["parkingSensors","Sensores de estac."]].map(([key, label]) => (
+      <button key={key} type="button"
+        onClick={() => setV(key, !vehicleForm[key])}
+        style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm[key] ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#f0f7f2" : "#fff", color: vehicleForm[key] ? "#1a4d2e" : "#374151" }}>
+        {vehicleForm[key]
+          ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#1a4d2e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5"/></svg>}
+        {label}
+      </button>
+    ))}
+  </div>
+</div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Especificaciones técnicas</div>
