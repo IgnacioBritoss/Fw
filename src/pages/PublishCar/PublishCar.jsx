@@ -222,7 +222,8 @@ export default function PublishCar() {
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } { to { transform: rotate(360deg); } }`}</style>
       <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Publicar mi auto</div>
       <div style={s.sub}>Completá los datos del vehículo</div>
 
@@ -316,10 +317,10 @@ export default function PublishCar() {
   </div>
 </div>
             <div style={s.field}>
-              <label style={s.label}>Asientos</label>
-              <input style={s.input} type="number"
-                value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)} />
-            </div>
+  <label style={s.label}>Asientos</label>
+  <input style={{ ...s.input, appearance:"none", MozAppearance:"textfield" }} type="number"
+    value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)} />
+</div>
             <div style={s.field}>
               <label style={s.label}>Color</label>
               <input style={s.input} placeholder="Blanco"
