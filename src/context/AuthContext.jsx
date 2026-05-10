@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { loginUser, registerUser, getMe } from "../services/api";
+import {
+  loginUser, registerUser, getMe,
+  verifyEmail as apiVerifyEmail,
+  resendVerification as apiResendVerification,
+  forgotPassword as apiForgotPassword,
+  resetPassword as apiResetPassword,
+} from "../services/api";
 import { initMockCars } from "../data/mockData";
 
 const AuthContext = createContext(null);
@@ -12,11 +18,7 @@ export function AuthProvider({ children }) {
     initMockCars();
     const saved = localStorage.getItem("fw_user");
     if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {
-        localStorage.removeItem("fw_user");
-      }
+      try { setUser(JSON.parse(saved)); } catch { localStorage.removeItem("fw_user"); }
     }
     setLoading(false);
   }, []);
@@ -31,57 +33,98 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Login con la API real
   const loginWithCredentials = async (email, password) => {
     try {
       const data = await loginUser({ email, password });
-      // data = { user: {...}, accessToken: "jwt" }
-      const userData = { ...data.user, accessToken: data.accessToken };
-      saveUser(userData);
+      saveUser({ ...data.user, accessToken: data.accessToken });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message || "Email o contraseña incorrectos." };
     }
   };
 
-  // Registro con la API real
   const register = async (formData) => {
-    // Adaptar campos del form al schema de la API
     const payload = {
       email: formData.email,
       password: formData.password,
       firstName: formData.name?.split(" ")[0] || formData.name || "",
       lastName: formData.name?.split(" ").slice(1).join(" ") || "",
-          acceptedTerms: formData.acceptedTerms ?? false,  
-
+      acceptedTerms: formData.acceptedTerms ?? false,
     };
-
     try {
       const data = await registerUser(payload);
-      const userData = { ...data.user, accessToken: data.accessToken };
-      saveUser(userData);
-      return { success: true };
+      saveUser({ ...data.user, accessToken: data.accessToken });
+      return { success: true, emailVerificationRequired: data.emailVerificationRequired };
     } catch (err) {
       return { success: false, error: err.message || "Error al registrarse." };
     }
   };
 
-  // Refrescar datos del usuario desde la API
-  const refreshUser = async () => {
+  const loginWithGoogleToken = async (token) => {
     try {
-      const freshUser = await getMe();
-      const token = user?.accessToken;
-      saveUser({ ...freshUser, accessToken: token });
-    } catch {
-      // Si falla (token expirado), hacer logout
-      logout();
+      localStorage.setItem("fw_user", JSON.stringify({ accessToken: token }));
+      const userData = await getMe();
+      saveUser({ ...userData, accessToken: token });
+      return { success: true };
+    } catch (err) {
+      localStorage.removeItem("fw_user");
+      return { success: false, error: err.message || "Error al iniciar sesión con Google." };
     }
   };
 
+  const verifyEmail = async (code) => {
+    try {
+      await apiVerifyEmail({ code });
+      const fresh = await getMe();
+      saveUser({ ...fresh, accessToken: user?.accessToken });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message || "Código incorrecto." };
+    }
+  };
+
+  const resendVerification = async () => {
+    try {
+      await apiResendVerification();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      await apiForgotPassword({ email });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const resetPassword = async ({ token, userId, newPassword }) => {
+    try {
+      await apiResetPassword({ token, userId, newPassword });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const fresh = await getMe();
+      saveUser({ ...fresh, accessToken: user?.accessToken });
+    } catch { logout(); }
+  };
+
   return (
-    <AuthContext.Provider
-      value={{ user, login: saveUser, logout, register, loginWithCredentials, refreshUser, loading }}
-    >
+    <AuthContext.Provider value={{
+      user, login: saveUser, logout, register,
+      loginWithCredentials, loginWithGoogleToken,
+      verifyEmail, resendVerification,
+      forgotPassword, resetPassword,
+      refreshUser, loading,
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

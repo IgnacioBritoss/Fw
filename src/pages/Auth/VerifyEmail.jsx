@@ -1,0 +1,90 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const s = {
+  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
+  card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)", textAlign:"center" },
+  icon: { fontSize:48, marginBottom:12 },
+  title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
+  sub: { color:"#6b7280", fontSize:14, marginBottom:28, lineHeight:1.6 },
+  input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:28, fontWeight:700, letterSpacing:12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20 },
+  btn: { width:"100%", padding:13, background:"#1a4d2e", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
+  btnDisabled: { opacity:0.6, cursor:"not-allowed" },
+  btnLink: { background:"none", border:"none", color:"#1a4d2e", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
+  error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
+  success: { background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:8, padding:"10px 14px", color:"#166534", fontSize:13, marginBottom:16 },
+};
+
+export default function VerifyEmail() {
+  const { verifyEmail, resendVerification, user } = useAuth();
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleVerify = async () => {
+    if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
+    setLoading(true);
+    setError("");
+    const result = await verifyEmail(code);
+    setLoading(false);
+    if (!result.success) { setError(result.error); return; }
+    navigate("/");
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setError("");
+    setInfo("");
+    const result = await resendVerification();
+    setResending(false);
+    if (result.success) {
+      setInfo("Te enviamos un nuevo código. Revisá tu bandeja.");
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.icon}>📧</div>
+        <div style={s.title}>Verificá tu email</div>
+        <div style={s.sub}>
+          Te enviamos un código de 6 dígitos a <strong>{user?.email}</strong>.<br />
+          Ingresalo para activar tu cuenta.
+        </div>
+
+        {error && <div style={s.error}>{error}</div>}
+        {info && <div style={s.success}>{info}</div>}
+
+        <input
+          style={s.input}
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="000000"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+        />
+
+        <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
+          onClick={handleVerify} disabled={loading}>
+          {loading ? "Verificando..." : "Verificar código"}
+        </button>
+
+        <div style={{ fontSize:13, color:"#6b7280" }}>
+          ¿No te llegó?{" "}
+          <button style={{ ...s.btnLink, opacity: resending ? 0.5 : 1 }}
+            onClick={handleResend} disabled={resending}>
+            {resending ? "Enviando..." : "Reenviar código"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
