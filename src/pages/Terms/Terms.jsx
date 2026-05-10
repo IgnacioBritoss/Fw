@@ -1,0 +1,122 @@
+import { Link } from "react-router-dom";
+import { useIsMobile } from "../../hooks/useIsMobile";
+
+const s = {
+  page: { minHeight:"100vh", background:"#f9fafb", padding:"40px 24px" },
+  container: { maxWidth:760, margin:"0 auto", background:"#fff", borderRadius:16, padding:"40px 48px", boxShadow:"0 4px 24px rgba(0,0,0,.07)" },
+  containerMobile: { maxWidth:"100%", background:"#fff", borderRadius:12, padding:"24px 20px" },
+  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#1a4d2e", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
+  h1: { fontSize:28, fontWeight:800, color:"#111827", marginBottom:6, letterSpacing:"-0.5px" },
+  date: { fontSize:13, color:"#9ca3af", marginBottom:36 },
+  h2: { fontSize:17, fontWeight:700, color:"#111827", marginTop:32, marginBottom:10 },
+  p: { fontSize:14, color:"#374151", lineHeight:1.8, marginBottom:12 },
+  ul: { fontSize:14, color:"#374151", lineHeight:1.8, paddingLeft:20, marginBottom:12 },
+  divider: { border:"none", borderTop:"1px solid #f3f4f6", margin:"32px 0" },
+  highlight: { background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px 16px", fontSize:14, color:"#166534", marginBottom:16 },
+};
+
+export default function Terms() {
+  const { isMobile } = useIsMobile();
+
+  return (
+    <div style={s.page}>
+      <div style={isMobile ? s.containerMobile : s.container}>
+        <Link to="/register" style={s.back}>← Volver al registro</Link>
+
+        <h1 style={s.h1}>Términos y Condiciones</h1>
+        <div style={s.date}>Última actualización: mayo 2026</div>
+
+        <div style={s.highlight}>
+          Al crear una cuenta en Freewheel, aceptás estos términos en su totalidad.
+          Leelos con atención antes de registrarte.
+        </div>
+
+        <h2 style={s.h2}>1. Aceptación de los términos</h2>
+        <p style={s.p}>
+          Al registrarte y usar Freewheel, aceptás quedar vinculado por estos Términos y Condiciones.
+          Si no estás de acuerdo con alguna parte, no podés usar el servicio.
+        </p>
+
+        <h2 style={s.h2}>2. Descripción del servicio</h2>
+        <p style={s.p}>
+          Freewheel es una plataforma que conecta personas que quieren alquilar su auto
+          con personas que necesitan uno. Freewheel actúa como intermediario y no es
+          propietario de los vehículos publicados.
+        </p>
+
+        <h2 style={s.h2}>3. Registro y cuenta</h2>
+        <ul style={s.ul}>
+          <li>Debés tener al menos 18 años para registrarte.</li>
+          <li>La información que proporcionás debe ser veraz y actualizada.</li>
+          <li>Sos responsable de mantener la confidencialidad de tu contraseña.</li>
+          <li>No podés crear más de una cuenta personal.</li>
+          <li>Freewheel puede suspender o eliminar cuentas que violen estos términos.</li>
+        </ul>
+
+        <h2 style={s.h2}>4. Publicación de vehículos</h2>
+        <ul style={s.ul}>
+          <li>El vehículo debe estar en condiciones aptas para circular.</li>
+          <li>Debés tener el seguro vigente y la documentación en regla.</li>
+          <li>La información del vehículo (fotos, descripción, precio) debe ser precisa.</li>
+          <li>Freewheel puede moderar o eliminar publicaciones que incumplan las normas.</li>
+        </ul>
+
+        <h2 style={s.h2}>5. Reservas y pagos</h2>
+        <p style={s.p}>
+          Las reservas son acuerdos entre el propietario y el arrendatario.
+          Freewheel facilita la transacción pero no garantiza el cumplimiento de ninguna de las partes.
+          Los precios son fijados por los propietarios y pueden variar.
+        </p>
+
+        <h2 style={s.h2}>6. Responsabilidades</h2>
+        <ul style={s.ul}>
+          <li>El propietario es responsable del estado del vehículo al momento de la entrega.</li>
+          <li>El arrendatario es responsable por daños ocurridos durante el período de alquiler.</li>
+          <li>Freewheel no es responsable por accidentes, robos o daños a terceros.</li>
+          <li>Cada parte debe contar con los seguros correspondientes.</li>
+        </ul>
+
+        <h2 style={s.h2}>7. Verificación de identidad</h2>
+        <p style={s.p}>
+          Para garantizar la seguridad de la plataforma, podemos solicitarte verificar tu
+          identidad mediante DNI y licencia de conducir. La no verificación puede limitar
+          ciertas funcionalidades.
+        </p>
+
+        <h2 style={s.h2}>8. Privacidad y datos personales</h2>
+        <p style={s.p}>
+          Tus datos son tratados conforme a nuestra política de privacidad. No vendemos
+          tu información a terceros. Usamos tus datos únicamente para operar el servicio,
+          enviarte notificaciones relacionadas y mejorar la plataforma.
+        </p>
+
+        <h2 style={s.h2}>9. Conducta prohibida</h2>
+        <ul style={s.ul}>
+          <li>Usar la plataforma para actividades ilegales.</li>
+          <li>Publicar información falsa o engañosa.</li>
+          <li>Acosar o amenazar a otros usuarios.</li>
+          <li>Intentar evadir comisiones realizando acuerdos fuera de la plataforma.</li>
+          <li>Crear cuentas falsas o hacerse pasar por otra persona.</li>
+        </ul>
+
+        <h2 style={s.h2}>10. Modificaciones</h2>
+        <p style={s.p}>
+          Freewheel puede actualizar estos términos en cualquier momento. Te notificaremos
+          por email ante cambios significativos. El uso continuado de la plataforma tras
+          los cambios implica aceptación de los nuevos términos.
+        </p>
+
+        <h2 style={s.h2}>11. Contacto</h2>
+        <p style={s.p}>
+          Para cualquier consulta sobre estos términos podés escribirnos a{" "}
+          <strong>soporte@freewheel.app</strong>.
+        </p>
+
+        <hr style={s.divider} />
+        <p style={{ ...s.p, color:"#9ca3af", fontSize:13 }}>
+          © 2026 Freewheel. Todos los derechos reservados.
+        </p>
+      </div>
+    </div>
+  );
+}

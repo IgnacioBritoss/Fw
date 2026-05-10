@@ -13,6 +13,7 @@ import Chat from "./pages/Chat/Chat";
 import Admin from "./pages/Admin/Admin";
 import Booking from "./pages/Booking/Booking";
 import MyBookings from "./pages/MyBookings/MyBookings";
+import Terms from "./pages/Terms/Terms";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/cars/:id" element={<CarDetail />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
           <Route path="/publish" element={
             <PrivateRoute><PublishCar /></PrivateRoute>
