@@ -28,6 +28,8 @@ const s = {
   termsRow: { display:"flex", alignItems:"flex-start", gap:10, marginBottom:20, marginTop:8 },
   termsCheck: { marginTop:3, width:16, height:16, accentColor:"#1a4d2e", cursor:"pointer", flexShrink:0 },
   termsText: { fontSize:13, color:"#374151", lineHeight:1.6 },
+  passwordWrapper: { position:"relative" },
+  eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
 };
 
 const GoogleIcon = () => (
@@ -39,6 +41,21 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const EyeOpen = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+const EyeClosed = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +63,8 @@ export default function Register() {
   const [form, setForm] = useState({
     firstName:"", lastName:"", email:"", password:"", confirmPassword:"", acceptedTerms:false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,26 +72,32 @@ export default function Register() {
 
   const handleSubmit = async () => {
     if (!form.firstName || !form.email || !form.password) {
-      setError("Completá todos los campos obligatorios."); return;
+      setError("Completá todos los campos obligatorios.");
+      return;
     }
     if (form.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres."); return;
+      setError("La contraseña debe tener al menos 6 caracteres.");
+      return;
     }
     if (form.password !== form.confirmPassword) {
-      setError("Las contraseñas no coinciden."); return;
+      setError("Las contraseñas no coinciden.");
+      return;
     }
     if (!form.acceptedTerms) {
-      setError("Debés aceptar los términos y condiciones para continuar."); return;
+      setError("Debés aceptar los términos y condiciones para continuar.");
+      return;
     }
 
     setLoading(true);
     setError("");
+
     const result = await register({
       name: `${form.firstName} ${form.lastName}`.trim(),
       email: form.email,
       password: form.password,
       acceptedTerms: form.acceptedTerms,
     });
+
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
 
@@ -127,14 +152,33 @@ export default function Register() {
         <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Contraseña * (mín. 6 caracteres)</label>
-            <input style={s.input} type="password" placeholder="••••••"
-              value={form.password} onChange={(e) => set("password", e.target.value)} />
+            <div style={s.passwordWrapper}>
+              <input
+                style={{ ...s.input, paddingRight:40 }}
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••"
+                value={form.password}
+                onChange={(e) => set("password", e.target.value)}
+              />
+              <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
+                {showPassword ? <EyeClosed /> : <EyeOpen />}
+              </button>
+            </div>
           </div>
           <div style={s.field}>
             <label style={s.label}>Confirmar contraseña *</label>
-            <input style={s.input} type="password" placeholder="••••••"
-              value={form.confirmPassword}
-              onChange={(e) => set("confirmPassword", e.target.value)} />
+            <div style={s.passwordWrapper}>
+              <input
+                style={{ ...s.input, paddingRight:40 }}
+                type={showConfirm ? "text" : "password"}
+                placeholder="••••••"
+                value={form.confirmPassword}
+                onChange={(e) => set("confirmPassword", e.target.value)}
+              />
+              <button type="button" style={s.eyeBtn} onClick={() => setShowConfirm(v => !v)}>
+                {showConfirm ? <EyeClosed /> : <EyeOpen />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -153,7 +197,8 @@ export default function Register() {
 
         <button
           style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-          onClick={handleSubmit} disabled={loading}
+          onClick={handleSubmit}
+          disabled={loading}
         >
           {loading ? "Creando cuenta..." : "Crear mi cuenta"}
         </button>
