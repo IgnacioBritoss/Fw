@@ -78,7 +78,7 @@ export default function Terms() {
         <p style={s.p}>Freewheel puede actualizar estos términos en cualquier momento. Te notificaremos por email ante cambios significativos.</p>
 
         <h2 style={s.h2}>10. Contacto</h2>
-        <p style={s.p}>Para consultas sobre estos términos escribinos a <strong>soporte@freewheel.app</strong>.</p>
+        <p style={s.p}>Para consultas sobre estos términos escribinos a <strong>britosignacio106@gmail.com</strong>.</p>
 
         <hr style={s.divider} />
         <p style={{ ...s.p, color:"#9ca3af", fontSize:13 }}>© 2026 Freewheel. Todos los derechos reservados.</p>
