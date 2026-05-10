@@ -23,6 +23,8 @@ const s = {
   divider: { display:"flex", alignItems:"center", gap:12, margin:"16px 0" },
   dividerLine: { flex:1, height:1, background:"#f3f4f6" },
   dividerText: { fontSize:12, color:"#9ca3af" },
+  passwordWrapper: { position:"relative" },
+  eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
 };
 
 const GoogleIcon = () => (
@@ -34,11 +36,27 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const EyeOpen = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+const EyeClosed = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
 export default function Login() {
   const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [form, setForm] = useState({ email:"", password:"" });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -74,18 +92,31 @@ export default function Login() {
 
         <div style={s.field}>
           <label style={s.label}>Email</label>
-          <input style={s.input} type="email" placeholder="tu@email.com"
+          <input
+            style={s.input}
+            type="email"
+            placeholder="tu@email.com"
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
         </div>
 
         <div style={s.field}>
           <label style={s.label}>Contraseña</label>
-          <input style={s.input} type="password" placeholder="Tu contraseña"
-            value={form.password}
-            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
+          <div style={s.passwordWrapper}>
+            <input
+              style={{ ...s.input, paddingRight:40 }}
+              type={showPassword ? "text" : "password"}
+              placeholder="Tu contraseña"
+              value={form.password}
+              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
+            <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
+              {showPassword ? <EyeClosed /> : <EyeOpen />}
+            </button>
+          </div>
           <Link to="/forgot-password" style={s.forgotLink}>
             ¿Olvidaste tu contraseña?
           </Link>
@@ -93,7 +124,8 @@ export default function Login() {
 
         <button
           style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-          onClick={handleSubmit} disabled={loading}
+          onClick={handleSubmit}
+          disabled={loading}
         >
           {loading ? "Ingresando..." : "Iniciar sesión"}
         </button>
