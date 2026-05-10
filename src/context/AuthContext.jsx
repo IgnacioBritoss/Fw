@@ -52,6 +52,8 @@ export function AuthProvider({ children }) {
       password: formData.password,
       firstName: formData.name?.split(" ")[0] || formData.name || "",
       lastName: formData.name?.split(" ").slice(1).join(" ") || "",
+          acceptedTerms: formData.acceptedTerms ?? false,  
+
     };
 
     try {
