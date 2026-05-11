@@ -14,12 +14,12 @@ const s = {
   field: { marginBottom:16 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
   input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827" },
-  btn: { width:"100%", padding:13, background:"#1a4d2e", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
+  btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   btnGoogle: { width:"100%", padding:"11px", background:"#fff", color:"#374151", border:"1.5px solid #e5e7eb", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:16 },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   footer: { textAlign:"center", marginTop:18, fontSize:13, color:"#6b7280" },
-  forgotLink: { display:"block", textAlign:"right", fontSize:12, color:"#1a4d2e", marginTop:4, marginBottom:4, textDecoration:"none" },
+  forgotLink: { display:"block", textAlign:"right", fontSize:12, color:"#2563eb", marginTop:4, marginBottom:4, textDecoration:"none" },
   divider: { display:"flex", alignItems:"center", gap:12, margin:"16px 0" },
   dividerLine: { flex:1, height:1, background:"#f3f4f6" },
   dividerText: { fontSize:12, color:"#9ca3af" },
@@ -35,14 +35,11 @@ const GoogleIcon = () => (
     <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
   </svg>
 );
-
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
   </svg>
 );
-
 const EyeClosed = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
@@ -62,8 +59,7 @@ export default function Login() {
 
   const handleSubmit = async () => {
     if (!form.email || !form.password) { setError("Completá todos los campos."); return; }
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     const result = await loginWithCredentials(form.email, form.password);
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
@@ -73,9 +69,7 @@ export default function Login() {
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={isMobile ? s.cardMobile : s.card}>
-        <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
-          Bienvenido de vuelta
-        </div>
+        <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Bienvenido de vuelta</div>
         <div style={s.sub}>Iniciá sesión en Freewheel</div>
 
         {error && <div style={s.error}>{error}</div>}
@@ -92,49 +86,32 @@ export default function Login() {
 
         <div style={s.field}>
           <label style={s.label}>Email</label>
-          <input
-            style={s.input}
-            type="email"
-            placeholder="tu@email.com"
-            value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          />
+          <input style={s.input} type="email" placeholder="tu@email.com"
+            value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
         </div>
 
         <div style={s.field}>
           <label style={s.label}>Contraseña</label>
           <div style={s.passwordWrapper}>
-            <input
-              style={{ ...s.input, paddingRight:40 }}
-              type={showPassword ? "text" : "password"}
-              placeholder="Tu contraseña"
-              value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            />
+            <input style={{ ...s.input, paddingRight:40 }}
+              type={showPassword ? "text" : "password"} placeholder="Tu contraseña"
+              value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
             <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
               {showPassword ? <EyeClosed /> : <EyeOpen />}
             </button>
           </div>
-          <Link to="/forgot-password" style={s.forgotLink}>
-            ¿Olvidaste tu contraseña?
-          </Link>
+          <Link to="/forgot-password" style={s.forgotLink}>¿Olvidaste tu contraseña?</Link>
         </div>
 
-        <button
-          style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
+        <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handleSubmit} disabled={loading}>
           {loading ? "Ingresando..." : "Iniciar sesión"}
         </button>
 
         <div style={s.footer}>
           ¿No tenés cuenta?{" "}
-          <Link to="/register" style={{ color:"#1a4d2e", fontWeight:600 }}>
-            Registrate gratis
-          </Link>
+          <Link to="/register" style={{ color:"#2563eb", fontWeight:600 }}>Registrate gratis</Link>
         </div>
       </div>
     </div>

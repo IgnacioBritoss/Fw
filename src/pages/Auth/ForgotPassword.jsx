@@ -9,10 +9,10 @@ const s = {
   sub: { color:"#6b7280", fontSize:14, marginBottom:24, lineHeight:1.6 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
   input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", marginBottom:16 },
-  btn: { width:"100%", padding:13, background:"#1a4d2e", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
+  btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-  success: { background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:8, padding:"12px 16px", color:"#166534", fontSize:14, marginBottom:16, lineHeight:1.6 },
+  success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"12px 16px", color:"#1e40af", fontSize:14, marginBottom:16, lineHeight:1.6 },
   back: { textAlign:"center", fontSize:13 },
 };
 
@@ -61,7 +61,7 @@ export default function ForgotPassword() {
         )}
 
         <div style={s.back}>
-          <Link to="/login" style={{ color:"#1a4d2e", fontWeight:600, fontSize:13 }}>
+          <Link to="/login" style={{ color:"#2563eb", fontWeight:600, fontSize:13 }}>
             ← Volver al inicio de sesión
           </Link>
         </div>
