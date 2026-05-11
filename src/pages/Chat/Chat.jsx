@@ -28,7 +28,7 @@ function ContactInfoModal({ contact, onClose }) {
         width:"90%", maxWidth:340, boxShadow:"0 8px 32px rgba(0,0,0,.15)" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-          <div style={{ width:48, height:48, borderRadius:"50%", background:"#1a4d2e",
+          <div style={{ width:48, height:48, borderRadius:"50%", background:"#2563eb",
             display:"flex", alignItems:"center", justifyContent:"center",
             fontWeight:800, fontSize:20, color:"#fff" }}>
             {contact.initial}
@@ -159,7 +159,7 @@ export default function Chat() {
     width: small ? 36 : 42,
     height: small ? 36 : 42,
     borderRadius: "50%",
-    background: "#1a4d2e",
+    background: "#2563eb",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontWeight: 700, color: "#fff",
     fontSize: small ? 14 : 16,
@@ -170,7 +170,7 @@ export default function Chat() {
     <div style={{
       alignSelf: m.from === "current_user" ? "flex-end" : "flex-start",
       maxWidth: "78%",
-      background: m.from === "current_user" ? "#1a4d2e" : "#fff",
+      background: m.from === "current_user" ? "#2563eb" : "#fff",
       color: m.from === "current_user" ? "#fff" : "#111827",
       borderRadius: m.from === "current_user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
       border: m.from === "current_user" ? "none" : "1px solid #e5e7eb",
@@ -196,7 +196,7 @@ export default function Chat() {
           style={{ display:"flex", gap:12, alignItems:"center",
             padding:"14px 18px", cursor:"pointer",
             borderBottom:"1px solid #f9fafb",
-            background: active?.id === c.id ? "#f0f7f2" : "transparent" }}
+            background: active?.id === c.id ? "#eff6ff" : "transparent" }}
           onClick={() => setActive(c)}>
           <div style={avatarStyle(false)}>{c.initial}</div>
           <div>
@@ -215,7 +215,7 @@ export default function Chat() {
       {isMobile && (
         <button onClick={() => setActive(null)}
           style={{ background:"none", border:"none", cursor:"pointer",
-            color:"#1a4d2e", fontSize:22, fontWeight:700,
+            color:"#2563eb", fontSize:22, fontWeight:700,
             padding:"0 8px 0 0", flexShrink:0 }}>
           ‹
         </button>
@@ -226,7 +226,7 @@ export default function Chat() {
         <div style={{ fontWeight:700, fontSize: isMobile ? 14 : 15, color:"#111827" }}>
           {active.name}
         </div>
-        <div style={{ fontSize:12, color:"#1a4d2e", fontWeight:500 }}>
+        <div style={{ fontSize:12, color:"#2563eb", fontWeight:500 }}>
           Ver contacto
         </div>
       </div>
@@ -271,7 +271,7 @@ export default function Chat() {
         enterKeyHint="send"
       />
       <button onClick={send}
-        style={{ width:40, height:40, borderRadius:"50%", background:"#1a4d2e",
+        style={{ width:40, height:40, borderRadius:"50%", background:"#2563eb",
           color:"#fff", border:"none", cursor:"pointer", display:"flex",
           alignItems:"center", justifyContent:"center", flexShrink:0 }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">

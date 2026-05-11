@@ -7,7 +7,7 @@ const s = {
   searchRow: { display: "flex", gap: 8, marginBottom: 10 },
   input: { flex: 1, padding: "11px 14px", borderRadius: 8,
     border: "1px solid #d1d5db", fontSize: 14, outline: "none" },
-  searchBtn: { padding: "11px 16px", background: "#1a4d2e", color: "#fff",
+  searchBtn: { padding: "11px 16px", background: "#2563eb", color: "#fff",
   border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
   cursor: "pointer", whiteSpace: "nowrap" },
   suggestions: { background: "#fff", border: "1px solid #e5e7eb",
@@ -18,9 +18,9 @@ const s = {
   mapWrap: { borderRadius: 10, overflow: "hidden",
     border: "1px solid #e5e7eb", height: 260 },
   hint: { fontSize: 12, color: "#6b7280", marginTop: 8 },
-  selectedBox: { background: "#f0fdf4", border: "1px solid #86efac",
+  selectedBox: { background: "#eff6ff", border: "1px solid #86efac",
     borderRadius: 8, padding: "10px 14px", fontSize: 13,
-    color: "#166534", marginTop: 8, display: "flex",
+    color: "#1e40af", marginTop: 8, display: "flex",
     alignItems: "center", gap: 6 },
 };
 

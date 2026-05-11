@@ -13,10 +13,10 @@ const s = {
   title: { fontSize:24, fontWeight:800, color:"#111827", letterSpacing:"-.5px" },
   titleMobile: { fontSize:20, fontWeight:800, color:"#111827", letterSpacing:"-.5px" },
   sub: { color:"#6b7280", fontSize:14, marginTop:2 },
-  btn: { padding:"10px 20px", background:"#1a4d2e", color:"#fff",
+  btn: { padding:"10px 20px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:8, fontSize:14, fontWeight:600,
     cursor:"pointer", whiteSpace:"nowrap" },
-  btnMobile: { padding:"8px 14px", background:"#1a4d2e", color:"#fff",
+  btnMobile: { padding:"8px 14px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:8, fontSize:13, fontWeight:600,
     cursor:"pointer", whiteSpace:"nowrap" },
   tabs: { display:"flex", gap:4, marginBottom:24,
@@ -29,7 +29,7 @@ const s = {
     cursor:"pointer", border:"none", background:"transparent",
     color:"#6b7280", borderBottom:"3px solid transparent",
     whiteSpace:"nowrap" },
-  tabActive: { color:"#1a4d2e", borderBottom:"3px solid #1a4d2e" },
+  tabActive: { color:"#2563eb", borderBottom:"3px solid #2563eb" },
   statsRow: { display:"grid", gridTemplateColumns:"repeat(3,1fr)",
     gap:14, marginBottom:28 },
   statsRowMobile: { display:"grid", gridTemplateColumns:"repeat(3,1fr)",
@@ -40,8 +40,8 @@ const s = {
   statMobile: { background:"#fff", borderRadius:10, padding:"12px 8px",
     boxShadow:"0 1px 4px rgba(0,0,0,.06)", textAlign:"center",
     border:"1px solid #f3f4f6" },
-  statNum: { fontSize:28, fontWeight:800, color:"#1a4d2e" },
-  statNumMobile: { fontSize:20, fontWeight:800, color:"#1a4d2e" },
+  statNum: { fontSize:28, fontWeight:800, color:"#2563eb" },
+  statNumMobile: { fontSize:20, fontWeight:800, color:"#2563eb" },
   statLabel: { fontSize:13, color:"#6b7280", marginTop:4 },
   statLabelMobile: { fontSize:10, color:"#6b7280", marginTop:2 },
   card: { background:"#fff", borderRadius:12, padding:20,
@@ -58,7 +58,7 @@ const s = {
     borderRadius:20, fontSize:12, fontWeight:600 },
   statusBadgeMobile: { display:"inline-block", padding:"3px 8px",
     borderRadius:20, fontSize:11, fontWeight:600 },
-  verified: { background:"#dcfce7", color:"#166534" },
+  verified: { background:"#dbeafe", color:"#1e40af" },
   pending: { background:"#fef9c3", color:"#854d0e" },
   solicitud: { background:"#fff", borderRadius:12, padding:20,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
@@ -71,7 +71,7 @@ const s = {
   solName: { fontWeight:600, fontSize:15 },
   solDates: { fontSize:13, color:"#6b7280" },
   btnRow: { display:"flex", gap:8, marginTop:12 },
-  btnAccept: { padding:"8px 18px", background:"#1a4d2e", color:"#fff",
+  btnAccept: { padding:"8px 18px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:8, fontSize:13, fontWeight:600,
     cursor:"pointer" },
   btnReject: { padding:"8px 18px", background:"transparent",
@@ -178,7 +178,7 @@ export default function Dashboard() {
               </div>
               <div style={{ display:"flex", justifyContent:"space-between",
                 alignItems:"center" }}>
-                <div style={{ fontSize:13, color:"#1a4d2e", fontWeight:600 }}>
+                <div style={{ fontSize:13, color:"#2563eb", fontWeight:600 }}>
                   ${Number(car.price_per_day).toLocaleString()}/día
                 </div>
                 <span style={{
@@ -233,7 +233,7 @@ export default function Dashboard() {
             </div>
             <div style={{ textAlign:"right" }}>
               <div style={{ fontWeight:700, fontSize: isMobile ? 14 : 16,
-                color:"#1a4d2e" }}>{r.price}</div>
+                color:"#2563eb" }}>{r.price}</div>
               <div style={{ fontSize:12, color:"#6b7280" }}>
                 {r.rating} pts
               </div>
@@ -256,7 +256,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div style={{ marginTop:8, fontSize:13, fontWeight:600,
-              color: r.status==="accepted" ? "#16a34a" : "#dc2626" }}>
+              color: r.status==="accepted" ? "#1d4ed8" : "#dc2626" }}>
               {r.status === "accepted" ? "Aceptada" : "Rechazada"}
             </div>
           )}

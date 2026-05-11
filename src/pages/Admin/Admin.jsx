@@ -17,7 +17,7 @@ const s = {
   tab: { padding:"10px 18px", fontSize:14, fontWeight:500,
     cursor:"pointer", border:"none", background:"transparent",
     color:"#6b7280", borderBottom:"3px solid transparent" },
-  tabActive: { color:"#1a4d2e", borderBottom:"3px solid #1a4d2e" },
+  tabActive: { color:"#2563eb", borderBottom:"3px solid #2563eb" },
   statsRow: { display:"grid", gridTemplateColumns:"repeat(4,1fr)",
     gap:14, marginBottom:28 },
   stat: { background:"#fff", borderRadius:12, padding:"16px 20px",
@@ -42,11 +42,11 @@ const s = {
   statusBadge: { padding:"4px 12px", borderRadius:20,
     fontSize:12, fontWeight:600 },
   pending: { background:"#fef9c3", color:"#854d0e" },
-  resolved: { background:"#dcfce7", color:"#166534" },
+  resolved: { background:"#dbeafe", color:"#1e40af" },
   dismissed: { background:"#f3f4f6", color:"#6b7280" },
   banned: { background:"#fef2f2", color:"#b91c1c" },
   btnRow: { display:"flex", gap:8, flexWrap:"wrap" },
-  btnResolve: { padding:"8px 18px", background:"#1a4d2e", color:"#fff",
+  btnResolve: { padding:"8px 18px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:8, fontSize:13, fontWeight:600,
     cursor:"pointer" },
   btnDismiss: { padding:"8px 18px", background:"transparent",
@@ -71,9 +71,9 @@ const s = {
   carInfo: { flex:1 },
   carTitle: { fontWeight:700, fontSize:15, marginBottom:4, color:"#111827" },
   carMeta: { fontSize:13, color:"#6b7280", marginBottom:6 },
-  alertBox: { background:"#f0fdf4", border:"1px solid #86efac",
+  alertBox: { background:"#eff6ff", border:"1px solid #86efac",
     borderRadius:8, padding:"10px 14px", fontSize:13,
-    color:"#166534", marginBottom:16 },
+    color:"#1e40af", marginBottom:16 },
   empty: { textAlign:"center", padding:"40px 0", color:"#9ca3af" },
   accessDenied: { textAlign:"center", padding:"80px 24px" },
 };
@@ -108,7 +108,7 @@ export default function Admin() {
         <div style={{ color:"#6b7280", marginBottom:24 }}>
           No tenés permisos para ver esta página.
         </div>
-        <button style={{ padding:"10px 24px", background:"#1a4d2e",
+        <button style={{ padding:"10px 24px", background:"#2563eb",
           color:"#fff", border:"none", borderRadius:8,
           cursor:"pointer", fontWeight:600 }}
           onClick={() => navigate("/")}>Volver al inicio</button>
@@ -367,7 +367,7 @@ export default function Admin() {
                     fontWeight:600 }}>· Dado de baja</span>
                 )}
                 {car.approved && (
-                  <span style={{ color:"#16a34a", marginLeft:8,
+                  <span style={{ color:"#1d4ed8", marginLeft:8,
                     fontWeight:600 }}>· Aprobado</span>
                 )}
               </div>

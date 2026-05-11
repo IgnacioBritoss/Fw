@@ -28,7 +28,7 @@ const s = {
   photoImg: { width: "100%", height: "100%", objectFit: "cover" },
   photoRemove: { position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, lineHeight: "22px", textAlign: "center" },
   btnRow: { display: "flex", gap: 10, marginTop: 8 },
-  btn: { flex: 1, padding: "13px", background: "#1a4d2e", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
+  btn: { flex: 1, padding: "13px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
   btnDisabled: { opacity: 0.6, cursor: "not-allowed" },
   btnBack: { flex: 1, padding: "13px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" },
   error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
@@ -39,11 +39,11 @@ const s = {
   specItem: { background: "#f9fafb", border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "10px 14px" },
   specLabel: { fontSize: 11, color: "#6b7280", marginBottom: 4 },
   spinner: { display: "inline-block", width: 14, height: 14, border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin .7s linear infinite" },
-  aiBox: { background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 10, padding: "14px 16px", marginBottom: 16 },
-  aiBoxTitle: { fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 8 },
+  aiBox: { background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 10, padding: "14px 16px", marginBottom: 16 },
+  aiBoxTitle: { fontSize: 13, fontWeight: 700, color: "#1e40af", marginBottom: 8 },
   aiBoxRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   aiBoxLabel: { fontSize: 13, color: "#374151" },
-  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#1a4d2e" },
+  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#2563eb" },
   aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
 };
 
@@ -242,9 +242,9 @@ Devolvé SOLO un JSON válido sin texto adicional:
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#f0f7f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M20 6L9 17L4 12" stroke="#1a4d2e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
         <div style={s.successTitle}>Auto publicado correctamente</div>
@@ -273,19 +273,19 @@ Devolvé SOLO un JSON válido sin texto adicional:
         {STEPS.map((st, i) => (
           <div key={st} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : "none" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <div style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, transition: "all .3s", background: i < step ? "#16a34a" : i === step ? "#1a4d2e" : "#e5e7eb", color: i <= step ? "#fff" : "#9ca3af", boxShadow: i === step ? "0 0 0 4px #dcfce7" : "none" }}>
+              <div style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, transition: "all .3s", background: i < step ? "#1d4ed8" : i === step ? "#2563eb" : "#e5e7eb", color: i <= step ? "#fff" : "#9ca3af", boxShadow: i === step ? "0 0 0 4px #dbeafe" : "none" }}>
                 {i < step ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                     <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : i + 1}
               </div>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 500, whiteSpace: "nowrap", color: i === step ? "#1a4d2e" : i < step ? "#16a34a" : "#9ca3af" }}>
+              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 500, whiteSpace: "nowrap", color: i === step ? "#2563eb" : i < step ? "#1d4ed8" : "#9ca3af" }}>
                 {st}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "#1a4d2e" : "#e5e7eb", borderRadius: 2 }} />
+              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "#2563eb" : "#e5e7eb", borderRadius: 2 }} />
             )}
           </div>
         ))}
@@ -318,7 +318,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
               <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
                 {["Manual","Automático"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("transmission", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.transmission===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.transmission===opt ? "#1a4d2e" : "#fff", color: vehicleForm.transmission===opt ? "#fff" : "#374151" }}>
+                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.transmission===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.transmission===opt ? "#2563eb" : "#fff", color: vehicleForm.transmission===opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
@@ -329,7 +329,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
               <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
                 {["Nafta","Diesel","Eléctrico","GNC"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("fuel", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.fuel===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.fuel===opt ? "#1a4d2e" : "#fff", color: vehicleForm.fuel===opt ? "#fff" : "#374151" }}>
+                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.fuel===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.fuel===opt ? "#2563eb" : "#fff", color: vehicleForm.fuel===opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
@@ -340,7 +340,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
               <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
                 {["Delantera","Trasera","4x4","AWD"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("drivetrain", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.drivetrain===opt ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm.drivetrain===opt ? "#1a4d2e" : "#fff", color: vehicleForm.drivetrain===opt ? "#fff" : "#374151" }}>
+                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.drivetrain===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.drivetrain===opt ? "#2563eb" : "#fff", color: vehicleForm.drivetrain===opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
@@ -365,9 +365,9 @@ Devolvé SOLO un JSON válido sin texto adicional:
             <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:4 }}>
               {[["bluetooth","Bluetooth"],["rearCamera","Cámara de reversa"],["parkingSensors","Sensores de estac."]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
-                  style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm[key] ? "1.5px solid #1a4d2e" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#f0f7f2" : "#fff", color: vehicleForm[key] ? "#1a4d2e" : "#374151" }}>
+                  style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
                   {vehicleForm[key]
-                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#1a4d2e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5"/></svg>}
                   {label}
                 </button>
@@ -420,7 +420,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
             Subí hasta 6 fotos. La primera será la principal.
           </p>
           <div
-            style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#1a4d2e", background: "#f0f7f2" } : {}) }}
+            style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
             onMouseLeave={() => setUploadHover(false)}
             onClick={() => document.getElementById("car-photos").click()}>
@@ -434,7 +434,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
                 <div key={i} style={s.photoItem}>
                   <img src={p.url} alt="" style={s.photoImg} />
                   {i === 0 && (
-                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#1a4d2e", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
                       Principal
                     </div>
                   )}
@@ -544,7 +544,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
               <span style={{ fontWeight: 500 }}>{v}</span>
             </div>
           ))}
-          <div style={{ marginTop: 16, padding: 12, background: "#f0f7f2", borderRadius: 8, fontSize: 13, color: "#1a4d2e" }}>
+          <div style={{ marginTop: 16, padding: 12, background: "#eff6ff", borderRadius: 8, fontSize: 13, color: "#2563eb" }}>
             Se creará el vehículo y el listing activo en la plataforma.
           </div>
           <div style={s.btnRow}>
