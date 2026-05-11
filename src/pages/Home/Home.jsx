@@ -131,11 +131,11 @@ export default function Home() {
           <div style="font-size:12px;color:#6b7280;margin-bottom:8px">
             ${car.location}
           </div>
-          <div style="font-weight:700;font-size:15px;color:#1a4d2e">
+          <div style="font-weight:700;font-size:15px;color:#2563eb">
             $${Number(car.price_per_day).toLocaleString()}
             <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
           </div>
-          <div style="margin-top:8px;padding:7px;background:#1a4d2e;color:#fff;
+          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;
             border-radius:8px;text-align:center;font-size:12px;font-weight:600;">
             Ver auto
           </div>
@@ -177,7 +177,7 @@ export default function Home() {
               color:"#9ca3af", fontSize:14 }}>Sin foto</div>}
         {car.is_verified && (
           <div style={{ position:"absolute", top:10, left:10,
-            background:"rgba(26,77,46,.9)", color:"#fff",
+            background:"rgba(37,99,235,.9)", color:"#fff",
             padding:"3px 10px", borderRadius:20, fontSize:11,
             fontWeight:600 }}>Verificado</div>
         )}
@@ -201,7 +201,7 @@ export default function Home() {
         )}
       </div>
       <div style={{ marginTop:6, fontSize:14, color:"#111827" }}>
-        <strong style={{ color:"#1a4d2e" }}>
+        <strong style={{ color:"#2563eb" }}>
           ${Number(car.price_per_day).toLocaleString()}
         </strong>
         <span style={{ color:"#6b7280" }}> /día</span>
@@ -212,7 +212,7 @@ export default function Home() {
   return (
     <div style={{ minHeight:"100vh", background:"#fff" }}>
       {/* Hero */}
-      <div style={{ background:"linear-gradient(135deg,#1a4d2e 0%,#2d6e47 100%)",
+      <div style={{ background:"linear-gradient(160deg, #0d0f14 0%, #111827 55%, #0f1a2e 100%)",
         padding: isMobile ? "40px 20px" : "64px 32px",
         textAlign:"center", color:"#fff" }}>
         <div style={{ fontSize: isMobile ? 28 : 42, fontWeight:800,
@@ -236,7 +236,7 @@ export default function Home() {
             onChange={e => setSearch(e.target.value)}
           />
           <button style={{ padding: isMobile ? "10px 16px" : "12px 24px",
-            background:"#1a4d2e", color:"#fff", border:"none",
+            background:"#2563eb", color:"#fff", border:"none",
             borderRadius:10, fontSize: isMobile ? 14 : 15,
             fontWeight:700, cursor:"pointer" }}>
             Buscar
@@ -256,8 +256,8 @@ export default function Home() {
                 padding: isMobile ? "5px 12px" : "8px 18px",
                 borderRadius:20, fontSize: isMobile ? 11 : 13,
                 cursor:"pointer", fontWeight:500, transition:"all .15s",
-                border: cat === c.id ? "2px solid #1a4d2e" : "1.5px solid #e5e7eb",
-                background: cat === c.id ? "#1a4d2e" : "#fff",
+                border: cat === c.id ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
+                background: cat === c.id ? "#2563eb" : "#fff",
                 color: cat === c.id ? "#fff" : "#374151",
               }}>{c.label}</button>
             ))}
@@ -268,8 +268,8 @@ export default function Home() {
                 padding: isMobile ? "5px 12px" : "8px 18px",
                 borderRadius:20, fontSize: isMobile ? 11 : 13,
                 cursor:"pointer", fontWeight:500,
-                border: view === k ? "2px solid #1a4d2e" : "1.5px solid #e5e7eb",
-                background: view === k ? "#1a4d2e" : "#fff",
+                border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
+                background: view === k ? "#2563eb" : "#fff",
                 color: view === k ? "#fff" : "#374151",
               }}>{l}</button>
             ))}
