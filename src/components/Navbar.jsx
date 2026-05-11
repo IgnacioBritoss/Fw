@@ -6,19 +6,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 const Logo = () => (
   <Link to="/" style={{ display:"flex", alignItems:"center",
     gap:10, textDecoration:"none" }}>
-    <svg width="34" height="34" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="16" stroke="#1a4d2e" strokeWidth="2.5" fill="none"/>
-      <circle cx="18" cy="18" r="5.5" fill="#1a4d2e"/>
-      <circle cx="18" cy="18" r="2.5" fill="#fff"/>
-      {[0,45,90,135,180,225,270,315].map((angle, i) => {
-        const rad = angle * Math.PI / 180;
-        return <line key={i}
-          x1={18 + 7*Math.cos(rad)} y1={18 + 7*Math.sin(rad)}
-          x2={18 + 14*Math.cos(rad)} y2={18 + 14*Math.sin(rad)}
-          stroke="#1a4d2e" strokeWidth="1.8" strokeLinecap="round"/>;
-      })}
-    </svg>
-    <span style={{ fontWeight:800, fontSize:20, color:"#1a4d2e",
+    <span style={{ fontWeight:800, fontSize:20, color:"#2563eb",
       letterSpacing:"-0.5px" }}>Freewheel</span>
   </Link>
 );
@@ -86,7 +74,7 @@ function ProfileModal({ user, onClose }) {
             </div>
           </div>
           <div style={{ width:44, height:44, borderRadius:"50%",
-            background:"#1a4d2e", display:"flex", alignItems:"center",
+            background:"#2563eb", display:"flex", alignItems:"center",
             justifyContent:"center", fontWeight:800, fontSize:18, color:"#fff" }}>
             {rawUser.name?.[0]?.toUpperCase()}
           </div>
@@ -115,7 +103,7 @@ function ProfileModal({ user, onClose }) {
             <div>
               <input value={email} onChange={e => setEmail(e.target.value)}
                 style={{ width:"100%", padding:"10px 14px", borderRadius:8,
-                  border:"1.5px solid #1a4d2e", fontSize:14, outline:"none",
+                  border:"1.5px solid #2563eb", fontSize:14, outline:"none",
                   color:"#111827", marginBottom:8 }} />
               {!codeSent ? (
                 <button onClick={handleSendCode}
@@ -131,7 +119,7 @@ function ProfileModal({ user, onClose }) {
                     style={{ flex:1, padding:"9px 12px", borderRadius:8,
                       border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
                   <button onClick={handleVerify}
-                    style={{ padding:"9px 16px", background:"#1a4d2e",
+                    style={{ padding:"9px 16px", background:"#2563eb",
                       color:"#fff", border:"none", borderRadius:8, fontSize:13,
                       fontWeight:600, cursor:"pointer" }}>
                     Verificar
@@ -150,7 +138,7 @@ function ProfileModal({ user, onClose }) {
               background:"#f9fafb", borderRadius:8, border:"1.5px solid #f3f4f6" }}>
               <span style={{ fontSize:14, color:"#111827" }}>{rawUser.email}</span>
               <button onClick={() => handleEdit("email")}
-                style={{ background:"none", border:"none", color:"#1a4d2e",
+                style={{ background:"none", border:"none", color:"#2563eb",
                   fontSize:12, fontWeight:600, cursor:"pointer" }}>
                 Cambiar
               </button>
@@ -169,7 +157,7 @@ function ProfileModal({ user, onClose }) {
               <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,""))}
                 maxLength={11} placeholder="1134567890"
                 style={{ width:"100%", padding:"10px 14px", borderRadius:8,
-                  border:"1.5px solid #1a4d2e", fontSize:14, outline:"none",
+                  border:"1.5px solid #2563eb", fontSize:14, outline:"none",
                   color:"#111827", marginBottom:8 }} />
               {!codeSent ? (
                 <button onClick={handleSendCode}
@@ -185,7 +173,7 @@ function ProfileModal({ user, onClose }) {
                     style={{ flex:1, padding:"9px 12px", borderRadius:8,
                       border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
                   <button onClick={handleVerify}
-                    style={{ padding:"9px 16px", background:"#1a4d2e",
+                    style={{ padding:"9px 16px", background:"#2563eb",
                       color:"#fff", border:"none", borderRadius:8, fontSize:13,
                       fontWeight:600, cursor:"pointer" }}>
                     Verificar
@@ -204,7 +192,7 @@ function ProfileModal({ user, onClose }) {
               background:"#f9fafb", borderRadius:8, border:"1.5px solid #f3f4f6" }}>
               <span style={{ fontSize:14, color:"#111827" }}>{rawUser.phone}</span>
               <button onClick={() => handleEdit("phone")}
-                style={{ background:"none", border:"none", color:"#1a4d2e",
+                style={{ background:"none", border:"none", color:"#2563eb",
                   fontSize:12, fontWeight:600, cursor:"pointer" }}>
                 Cambiar
               </button>
@@ -218,8 +206,8 @@ function ProfileModal({ user, onClose }) {
             fontSize:12, marginBottom:10 }}>{error}</div>
         )}
         {success && (
-          <div style={{ background:"#f0f7f2", border:"1.5px solid #bbf7d0",
-            borderRadius:8, padding:"8px 12px", color:"#1a4d2e",
+          <div style={{ background:"#eff6ff", border:"1.5px solid #bfdbfe",
+            borderRadius:8, padding:"8px 12px", color:"#2563eb",
             fontSize:12, marginBottom:10 }}>{success}</div>
         )}
 
@@ -236,26 +224,26 @@ function ProfileModal({ user, onClose }) {
 
 const styles = {
   nav: { display:"flex", alignItems:"center", justifyContent:"space-between",
-    padding:"14px 40px", borderBottom:"1px solid #e5e7eb", background:"#fff",
+    padding:"14px 40px", borderBottom:"1px solid #1e2433", background:"#0d0d0d",
     position:"sticky", top:0, zIndex:100,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
   navMobile: { display:"flex", alignItems:"center", justifyContent:"space-between",
-    padding:"14px 20px", borderBottom:"1px solid #e5e7eb", background:"#fff",
+    padding:"14px 20px", borderBottom:"1px solid #1e2433", background:"#0d0d0d",
     position:"sticky", top:0, zIndex:100,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
   links: { display:"flex", gap:24, alignItems:"center" },
-  link: { color:"#374151", textDecoration:"none", fontSize:14, fontWeight:500 },
+  link: { color:"rgba(255,255,255,.75)", textDecoration:"none", fontSize:14, fontWeight:500 },
   linkMobile: { color:"#374151", textDecoration:"none", fontSize:15,
     fontWeight:500, padding:"14px 0", borderBottom:"1px solid #f3f4f6",
     display:"block" },
   btn: { padding:"9px 20px", borderRadius:8, fontSize:14,
     cursor:"pointer", fontWeight:600, border:"none" },
-  btnPrimary: { background:"#1a4d2e", color:"#fff" },
-  btnOutline: { background:"transparent", border:"1.5px solid #d1d5db",
-    color:"#374151" },
+  btnPrimary: { background:"#2563eb", color:"#fff" },
+  btnOutline: { background:"transparent", border:"1.5px solid rgba(255,255,255,.3)",
+    color:"#fff" },
   btnMobile: { width:"100%", padding:"13px", borderRadius:8, fontSize:15,
     cursor:"pointer", fontWeight:600, border:"none", marginTop:8 },
-  avatar: { width:36, height:36, borderRadius:"50%", background:"#1a4d2e",
+  avatar: { width:36, height:36, borderRadius:"50%", background:"#2563eb",
     display:"flex", alignItems:"center", justifyContent:"center",
     fontWeight:700, fontSize:14, color:"#fff", cursor:"pointer",
     position:"relative" },
@@ -304,12 +292,12 @@ export default function Navbar() {
       <nav style={styles.navMobile}>
         <Logo />
         <button style={styles.hamburger} onClick={() => setMenuOpen(o => !o)}>
-          <span style={{ display:"block", width:22, height:2, background:"#374151",
+          <span style={{ display:"block", width:22, height:2, background:"#fff",
             borderRadius:2, transition:"all .2s",
             transform: menuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }}/>
-          <span style={{ display:"block", width:22, height:2, background:"#374151",
+          <span style={{ display:"block", width:22, height:2, background:"#fff",
             borderRadius:2, transition:"all .2s", opacity: menuOpen ? 0 : 1 }}/>
-          <span style={{ display:"block", width:22, height:2, background:"#374151",
+          <span style={{ display:"block", width:22, height:2, background:"#fff",
             borderRadius:2, transition:"all .2s",
             transform: menuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }}/>
         </button>
@@ -336,7 +324,7 @@ export default function Navbar() {
                   onClick={() => { setProfileOpen(true); close(); }}>
                   Mi perfil
                 </div>
-                <button style={{...styles.btnMobile, background:"#1a4d2e", color:"#fff"}}
+                <button style={{...styles.btnMobile, background:"#2563eb", color:"#fff"}}
                   onClick={handleLogout}>Salir</button>
               </>
             )
@@ -347,7 +335,7 @@ export default function Navbar() {
                   border:"1.5px solid #d1d5db", color:"#374151"}}>Iniciar sesión</button>
               </Link>
               <Link to="/register" onClick={close}>
-                <button style={{...styles.btnMobile, background:"#1a4d2e",
+                <button style={{...styles.btnMobile, background:"#2563eb",
                   color:"#fff"}}>Registrarse</button>
               </Link>
             </>
