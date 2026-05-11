@@ -22,17 +22,16 @@ export default function Home() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
-  const [listings, setListings] = useState([]);
-  const [loadingListings, setLoadingListings] = useState(true);
+  const [listings, setListings] = useState(mockCars);
+  const [loadingListings, setLoadingListings] = useState(false);
 
-  useEffect(() => {
-    getListings()
-      .then((data) => {
-        setListings(Array.isArray(data) && data.length > 0 ? data : mockCars);
-      })
-      .catch(() => setListings(mockCars))
-      .finally(() => setLoadingListings(false));
-  }, []);
+ useEffect(() => {
+  getListings()
+    .then((data) => {
+      if (Array.isArray(data) && data.length > 0) setListings(data);
+    })
+    .catch(() => {});
+}, []);
 
   const filtered = listings.filter(c => {
     const matchSearch = !search ||
