@@ -139,68 +139,34 @@ export default function ChatBot() {
     if (!userText || loading) return;
 
     const newMessages = [...messages, { role: "user", text: userText }];
-
     setMessages(newMessages);
     setInput("");
     setLoading(true);
-
-    requestAnimationFrame(() => {
-      scrollToBottom("auto");
-    });
+    requestAnimationFrame(() => scrollToBottom("auto"));
 
     try {
-  const res = await fetch(import.meta.env.VITE_N8N_CHAT_URL, {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    "X-Freewheel-Key": import.meta.env.VITE_N8N_KEY,
-  },
-  body: JSON.stringify({
-    message: newMessages[newMessages.length - 1].text,
-    sessionId: sessionId,
-  }),
-});
+      const groqMessages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...newMessages.map((m) => ({ role: m.role, content: m.text })),
+      ];
 
-if (res.status === 429) {
-  setMessages((prev) => [...prev, {
-    role: "assistant",
-    text: "Estás enviando muchos mensajes muy rápido. Esperá un momento antes de seguir.",
-  }]);
-  return;
-}
+      const { groqChat } = await import("../services/groq");
+      const responseText = await groqChat(groqMessages);
 
-if (!res.ok) throw new Error("Request falló");
-
-const data = await res.json();
-console.log("Respuesta de n8n:", data); // ← para debuggear
-
-// Intenta extraer la respuesta de distintas estructuras posibles
-const responseText = 
-  (Array.isArray(data) && data[0]?.output) ||
-  data?.output ||
-  data?.message ||
-  data?.text ||
-  data?.response ||
-  "No pude generar una respuesta en este momento.";
-
-setMessages((prev) => [
-  ...prev,
-  {
-    role: "assistant",
-    text: responseText,
-  },
-]);
-    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", text: responseText }]);
+    } catch (err) {
+      const isRateLimit = err.message?.includes("429") || err.message?.toLowerCase().includes("rate");
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          text: "Hubo un problema al conectarme. Intentá de nuevo en un momento.",
+          text: isRateLimit
+            ? "Estás enviando muchos mensajes muy rápido. Esperá un momento antes de seguir."
+            : "Hubo un problema al conectarme. Intentá de nuevo en un momento.",
         },
       ]);
     } finally {
       setLoading(false);
-
       requestAnimationFrame(() => {
         inputRef.current?.focus?.({ preventScroll: true });
         scrollToBottom("auto");
