@@ -31,14 +31,14 @@ const s = {
   carBodyMobile: { padding:12 },
   carTitle: { fontWeight:700, fontSize:15, marginBottom:4, color:"#111827" },
   carMeta: { fontSize:13, color:"#6b7280", marginBottom:6 },
-  carPrice: { fontWeight:800, fontSize:18, color:"#1a4d2e" },
+  carPrice: { fontWeight:800, fontSize:18, color:"#2563eb" },
   infoBox: { background:"#fffbeb", border:"1px solid #fde68a",
     borderRadius:10, padding:14, fontSize:13, color:"#92400e",
     lineHeight:1.6 },
   confirmed: { textAlign:"center", padding:"60px 20px" },
   confirmedMobile: { textAlign:"center", padding:"40px 16px" },
   confirmedIcon: { width:72, height:72, borderRadius:"50%",
-    background:"#f0f7f2", display:"flex", alignItems:"center",
+    background:"#eff6ff", display:"flex", alignItems:"center",
     justifyContent:"center", margin:"0 auto 20px" },
   confirmedTitle: { fontSize:22, fontWeight:800, marginBottom:8,
     color:"#111827" },
@@ -53,10 +53,10 @@ const s = {
     fontSize:13, color:"#374151", marginBottom:8 },
   btnRow: { display:"flex", gap:10, justifyContent:"center",
     flexWrap:"wrap" },
-  btn: { padding:"12px 28px", background:"#1a4d2e", color:"#fff",
+  btn: { padding:"12px 28px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:10, fontSize:14, fontWeight:700,
     cursor:"pointer" },
-  btnMobile: { flex:1, padding:"12px 16px", background:"#1a4d2e",
+  btnMobile: { flex:1, padding:"12px 16px", background:"#2563eb",
     color:"#fff", border:"none", borderRadius:10, fontSize:14,
     fontWeight:700, cursor:"pointer" },
   btnOutline: { padding:"12px 28px", background:"transparent",
@@ -121,7 +121,7 @@ export default function Booking() {
         <div style={isMobile ? s.confirmedMobile : s.confirmed}>
           <div style={s.confirmedIcon}>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17L4 12" stroke="#1a4d2e" strokeWidth="2.5"
+              <path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5"
                 strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
@@ -143,7 +143,7 @@ export default function Booking() {
             ].map(([k, v]) => (
               <div key={k} style={isMobile ? s.detailRowMobile : s.detailRow}>
                 <span style={{ color:"#6b7280" }}>{k}</span>
-                <strong style={k === "Total" ? { color:"#1a4d2e" } : {}}>
+                <strong style={k === "Total" ? { color:"#2563eb" } : {}}>
                   {v}
                 </strong>
               </div>

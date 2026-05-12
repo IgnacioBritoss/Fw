@@ -5,14 +5,14 @@ const s = {
   page: { minHeight:"100vh", background:"#f9fafb", padding:"40px 24px" },
   container: { maxWidth:760, margin:"0 auto", background:"#fff", borderRadius:16, padding:"40px 48px", boxShadow:"0 4px 24px rgba(0,0,0,.07)" },
   containerMobile: { background:"#fff", borderRadius:12, padding:"24px 20px" },
-  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#1a4d2e", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
+  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#2563eb", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
   h1: { fontSize:28, fontWeight:800, color:"#111827", marginBottom:6 },
   date: { fontSize:13, color:"#9ca3af", marginBottom:36 },
   h2: { fontSize:17, fontWeight:700, color:"#111827", marginTop:32, marginBottom:10 },
   p: { fontSize:14, color:"#374151", lineHeight:1.8, marginBottom:12 },
   ul: { fontSize:14, color:"#374151", lineHeight:1.8, paddingLeft:20, marginBottom:12 },
   divider: { border:"none", borderTop:"1px solid #f3f4f6", margin:"32px 0" },
-  highlight: { background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"12px 16px", fontSize:14, color:"#166534", marginBottom:16 },
+  highlight: { background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:8, padding:"12px 16px", fontSize:14, color:"#1e40af", marginBottom:16 },
 };
 
 export default function Terms() {

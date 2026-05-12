@@ -8,8 +8,8 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 const s = {
   page: { maxWidth:860, margin:"0 auto", padding:"32px 24px" },
   pageMobile: { padding:"16px" },
-  badge: { display:"inline-block", padding:"3px 12px", background:"#dcfce7",
-    color:"#166534", borderRadius:20, fontSize:12, fontWeight:600, marginRight:8 },
+  badge: { display:"inline-block", padding:"3px 12px", background:"#dbeafe",
+    color:"#1e40af", borderRadius:20, fontSize:12, fontWeight:600, marginRight:8 },
   pendingBadge: { display:"inline-block", padding:"3px 12px",
     background:"#fef9c3", color:"#854d0e", borderRadius:20,
     fontSize:12, fontWeight:600, marginRight:8 },
@@ -27,20 +27,20 @@ const s = {
     borderRadius:14, padding:24, position:"sticky", top:80 },
   priceCardMobile: { background:"#fff", border:"1px solid #e5e7eb",
     borderRadius:14, padding:20, marginTop:24 },
-  price: { fontSize:28, fontWeight:800, color:"#1a4d2e", marginBottom:4 },
+  price: { fontSize:28, fontWeight:800, color:"#2563eb", marginBottom:4 },
   priceSub: { fontSize:13, color:"#6b7280", marginBottom:20 },
   ownerBox: { display:"flex", alignItems:"center", gap:12,
     padding:"14px 0", borderTop:"1px solid #f3f4f6", marginTop:14 },
   ownerAvatar: { width:44, height:44, borderRadius:"50%",
-    background:"#f0f7f2", display:"flex", alignItems:"center",
-    justifyContent:"center", fontWeight:700, fontSize:18, color:"#1a4d2e" },
+    background:"#eff6ff", display:"flex", alignItems:"center",
+    justifyContent:"center", fontWeight:700, fontSize:18, color:"#2563eb" },
   ownerName: { fontWeight:700, fontSize:14, color:"#111827" },
   ownerMeta: { fontSize:12, color:"#6b7280" },
-  btn: { width:"100%", padding:"14px", background:"#1a4d2e", color:"#fff",
+  btn: { width:"100%", padding:"14px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:10, fontSize:15, fontWeight:700,
     cursor:"pointer", marginBottom:10 },
   chatBtn: { width:"100%", padding:"11px", background:"transparent",
-    border:"2px solid #1a4d2e", color:"#1a4d2e", borderRadius:10,
+    border:"2px solid #2563eb", color:"#2563eb", borderRadius:10,
     fontSize:14, fontWeight:600, cursor:"pointer" },
   row: { display:"flex", justifyContent:"space-between", fontSize:13,
     color:"#6b7280", marginBottom:6 },
@@ -190,7 +190,7 @@ export default function CarDetail() {
                 onClick={() => setCurrentPhoto(i)}
                 style={{ ...s.thumbnail,
                   border: i === currentPhoto
-                    ? "2px solid #1a4d2e" : "2px solid transparent",
+                    ? "2px solid #2563eb" : "2px solid transparent",
                   opacity: i === currentPhoto ? 1 : 0.6 }} />
             ))}
           </div>
