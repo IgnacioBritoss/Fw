@@ -101,11 +101,7 @@ export default function Register() {
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
 
-    if (result.emailVerificationRequired) {
-      navigate("/verify-email");
-    } else {
-      navigate("/");
-    }
+    navigate("/complete-profile");
   };
 
   return (

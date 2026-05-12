@@ -22,48 +22,72 @@ const Logo = () => (
   </Link>
 );
 
-function ProfileModal({ user, onClose }) {
+const userInitial = (u) =>
+  (u?.name?.[0] || u?.email?.[0] || "?").toUpperCase();
+
+function ProfileModal({ onClose }) {
   const rawUser = JSON.parse(localStorage.getItem("fw_user") || "{}");
-  const [email, setEmail] = useState(rawUser.email || "");
-  const [phone, setPhone] = useState(rawUser.phone || "");
-  const [editing, setEditing] = useState(null); // "email" | "phone" | null
+  const [editing, setEditing] = useState(null);
+  const [nameVal, setNameVal] = useState(rawUser.name || "");
+  const [emailVal, setEmailVal] = useState(rawUser.email || "");
+  const [phoneVal, setPhoneVal] = useState(rawUser.phone || "");
   const [code, setCode] = useState("");
-  const [sentCode] = useState("1234"); // simulado
   const [codeSent, setCodeSent] = useState(false);
-  const [verified, setVerified] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleEdit = (field) => {
+  const saveToStorage = (patch) => {
+    const updated = { ...rawUser, ...patch };
+    localStorage.setItem("fw_user", JSON.stringify(updated));
+  };
+
+  const startEdit = (field) => {
     setEditing(field);
     setCode("");
     setCodeSent(false);
-    setVerified(false);
     setError("");
     setSuccess("");
   };
 
-  const handleSendCode = () => {
-    setCodeSent(true);
+  const cancelEdit = () => {
+    setEditing(null);
+    setCode("");
+    setCodeSent(false);
     setError("");
-    setSuccess(`Código enviado (simulado). Usá: 1234`);
   };
 
-  const handleVerify = () => {
-    if (code === sentCode) {
-      const updated = { ...rawUser,
-        email: editing === "email" ? email : rawUser.email,
-        phone: editing === "phone" ? phone : rawUser.phone,
-      };
-      localStorage.setItem("fw_user", JSON.stringify(updated));
-      setVerified(true);
-      setSuccess("Dato actualizado correctamente.");
-      setEditing(null);
-      setCodeSent(false);
-    } else {
-      setError("Código incorrecto. Intentá con 1234.");
-    }
+  const saveName = () => {
+    if (!nameVal.trim()) { setError("Ingresá un nombre."); return; }
+    saveToStorage({ name: nameVal });
+    setSuccess("Nombre actualizado.");
+    setEditing(null);
   };
+
+  const savePhone = () => {
+    if (phoneVal.length > 0 && phoneVal.length < 8) { setError("Número inválido."); return; }
+    saveToStorage({ phone: phoneVal });
+    setSuccess("Teléfono actualizado.");
+    setEditing(null);
+  };
+
+  const sendEmailCode = () => {
+    if (!emailVal.includes("@")) { setError("Ingresá un email válido."); return; }
+    setCodeSent(true);
+    setError("");
+    setSuccess("Código enviado al nuevo email (simulado). Usá: 1234");
+  };
+
+  const verifyEmailCode = () => {
+    if (code !== "1234") { setError("Código incorrecto."); return; }
+    saveToStorage({ email: emailVal });
+    setSuccess("Email actualizado.");
+    setEditing(null);
+    setCodeSent(false);
+  };
+
+  const fieldBox = { background:"#f9fafb", borderRadius:8, border:"1px solid #f3f4f6" };
+  const inputStyle = { width:"100%", padding:"10px 14px", borderRadius:8, border:"1.5px solid #2563eb", fontSize:14, outline:"none", color:"#111827", marginBottom:8 };
+  const labelStyle = { fontSize:11, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:".06em", marginBottom:4 };
 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.45)",
@@ -74,158 +98,134 @@ function ProfileModal({ user, onClose }) {
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div style={{ display:"flex", justifyContent:"space-between",
-          alignItems:"center", marginBottom:20 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
           <div>
-            <div style={{ fontSize:18, fontWeight:800, color:"#111827" }}>
-              Mi perfil
-            </div>
+            <div style={{ fontSize:18, fontWeight:800, color:"#111827" }}>Mi perfil</div>
             <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>
-              {rawUser.role === "owner" ? "Dueño" : "Conductor"} · DNI {rawUser.dni}
+              {rawUser.role === "owner" ? "Dueño" : "Conductor"}
             </div>
           </div>
-          <div style={{ width:44, height:44, borderRadius:"50%",
-            background:"#2563eb", display:"flex", alignItems:"center",
-            justifyContent:"center", fontWeight:800, fontSize:18, color:"#fff" }}>
-            {rawUser.name?.[0]?.toUpperCase()}
+          <div style={{ width:44, height:44, borderRadius:"50%", background:"#2563eb",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontWeight:800, fontSize:18, color:"#fff" }}>
+            {userInitial(rawUser)}
           </div>
         </div>
 
-        {/* Nombre (solo lectura) */}
+        {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"8px 12px", color:"#b91c1c", fontSize:12, marginBottom:10 }}>{error}</div>}
+        {success && <div style={{ background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"8px 12px", color:"#2563eb", fontSize:12, marginBottom:10 }}>{success}</div>}
+
+        {/* Nombre */}
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"#9ca3af",
-            textTransform:"uppercase", letterSpacing:".06em", marginBottom:4 }}>
-            Nombre
-          </div>
-          <div style={{ fontSize:14, color:"#111827", fontWeight:600,
-            padding:"10px 14px", background:"#f9fafb", borderRadius:8,
-            border:"1.5px solid #f3f4f6" }}>
-            {rawUser.name}
-          </div>
+          <div style={labelStyle}>Nombre</div>
+          {editing === "name" ? (
+            <div>
+              <input value={nameVal} onChange={e => setNameVal(e.target.value)}
+                style={inputStyle} placeholder="Tu nombre completo" />
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={saveName}
+                  style={{ flex:1, padding:"9px", background:"#2563eb", color:"#fff",
+                    border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                  Guardar
+                </button>
+                <button onClick={cancelEdit}
+                  style={{ padding:"9px 14px", background:"#f3f4f6", border:"none",
+                    borderRadius:8, fontSize:13, color:"#374151", cursor:"pointer" }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"10px 14px", ...fieldBox }}>
+              <span style={{ fontSize:14, color:"#111827" }}>{rawUser.name || "Sin nombre"}</span>
+              <button onClick={() => startEdit("name")}
+                style={{ background:"none", border:"none", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer" }}>
+                Cambiar
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Email */}
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"#9ca3af",
-            textTransform:"uppercase", letterSpacing:".06em", marginBottom:4 }}>
-            Email
-          </div>
+          <div style={labelStyle}>Email</div>
           {editing === "email" ? (
             <div>
-              <input value={email} onChange={e => setEmail(e.target.value)}
-                style={{ width:"100%", padding:"10px 14px", borderRadius:8,
-                  border:"1.5px solid #2563eb", fontSize:14, outline:"none",
-                  color:"#111827", marginBottom:8 }} />
+              <input value={emailVal} onChange={e => setEmailVal(e.target.value)}
+                style={inputStyle} placeholder="nuevo@email.com" />
               {!codeSent ? (
-                <button onClick={handleSendCode}
-                  style={{ width:"100%", padding:"9px", background:"#111827",
-                    color:"#fff", border:"none", borderRadius:8, fontSize:13,
-                    fontWeight:600, cursor:"pointer" }}>
-                  Enviar código de verificación
+                <button onClick={sendEmailCode}
+                  style={{ width:"100%", padding:"9px", background:"#111827", color:"#fff",
+                    border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer", marginBottom:6 }}>
+                  Verificar nuevo email
                 </button>
               ) : (
-                <div style={{ display:"flex", gap:8 }}>
+                <div style={{ display:"flex", gap:8, marginBottom:6 }}>
                   <input value={code} onChange={e => setCode(e.target.value)}
                     placeholder="Código de 4 dígitos"
-                    style={{ flex:1, padding:"9px 12px", borderRadius:8,
-                      border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
-                  <button onClick={handleVerify}
-                    style={{ padding:"9px 16px", background:"#2563eb",
-                      color:"#fff", border:"none", borderRadius:8, fontSize:13,
-                      fontWeight:600, cursor:"pointer" }}>
+                    style={{ flex:1, padding:"9px 12px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
+                  <button onClick={verifyEmailCode}
+                    style={{ padding:"9px 16px", background:"#2563eb", color:"#fff",
+                      border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer" }}>
                     Verificar
                   </button>
                 </div>
               )}
-              <button onClick={() => setEditing(null)}
-                style={{ marginTop:6, background:"none", border:"none",
-                  color:"#9ca3af", fontSize:12, cursor:"pointer" }}>
+              <button onClick={cancelEdit}
+                style={{ background:"none", border:"none", color:"#9ca3af", fontSize:12, cursor:"pointer" }}>
                 Cancelar
               </button>
             </div>
           ) : (
-            <div style={{ display:"flex", alignItems:"center",
-              justifyContent:"space-between", padding:"10px 14px",
-              background:"#f9fafb", borderRadius:8, border:"1.5px solid #f3f4f6" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"10px 14px", ...fieldBox }}>
               <span style={{ fontSize:14, color:"#111827" }}>{rawUser.email}</span>
-              <button onClick={() => handleEdit("email")}
-                style={{ background:"none", border:"none", color:"#2563eb",
-                  fontSize:12, fontWeight:600, cursor:"pointer" }}>
+              <button onClick={() => { setEmailVal(rawUser.email); startEdit("email"); }}
+                style={{ background:"none", border:"none", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer" }}>
                 Cambiar
               </button>
             </div>
           )}
         </div>
 
-        {/* Teléfono */}
-        <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"#9ca3af",
-            textTransform:"uppercase", letterSpacing:".06em", marginBottom:4 }}>
-            Teléfono
-          </div>
+        {/* Teléfono — sin verificación */}
+        <div style={{ marginBottom:20 }}>
+          <div style={labelStyle}>Teléfono</div>
           {editing === "phone" ? (
             <div>
-              <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,""))}
+              <input value={phoneVal}
+                onChange={e => setPhoneVal(e.target.value.replace(/\D/g,""))}
                 maxLength={11} placeholder="1134567890"
-                style={{ width:"100%", padding:"10px 14px", borderRadius:8,
-                  border:"1.5px solid #2563eb", fontSize:14, outline:"none",
-                  color:"#111827", marginBottom:8 }} />
-              {!codeSent ? (
-                <button onClick={handleSendCode}
-                  style={{ width:"100%", padding:"9px", background:"#111827",
-                    color:"#fff", border:"none", borderRadius:8, fontSize:13,
-                    fontWeight:600, cursor:"pointer" }}>
-                  Enviar código de verificación
+                style={inputStyle} />
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={savePhone}
+                  style={{ flex:1, padding:"9px", background:"#2563eb", color:"#fff",
+                    border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                  Guardar
                 </button>
-              ) : (
-                <div style={{ display:"flex", gap:8 }}>
-                  <input value={code} onChange={e => setCode(e.target.value)}
-                    placeholder="Código de 4 dígitos"
-                    style={{ flex:1, padding:"9px 12px", borderRadius:8,
-                      border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
-                  <button onClick={handleVerify}
-                    style={{ padding:"9px 16px", background:"#2563eb",
-                      color:"#fff", border:"none", borderRadius:8, fontSize:13,
-                      fontWeight:600, cursor:"pointer" }}>
-                    Verificar
-                  </button>
-                </div>
-              )}
-              <button onClick={() => setEditing(null)}
-                style={{ marginTop:6, background:"none", border:"none",
-                  color:"#9ca3af", fontSize:12, cursor:"pointer" }}>
-                Cancelar
-              </button>
+                <button onClick={cancelEdit}
+                  style={{ padding:"9px 14px", background:"#f3f4f6", border:"none",
+                    borderRadius:8, fontSize:13, color:"#374151", cursor:"pointer" }}>
+                  Cancelar
+                </button>
+              </div>
             </div>
           ) : (
-            <div style={{ display:"flex", alignItems:"center",
-              justifyContent:"space-between", padding:"10px 14px",
-              background:"#f9fafb", borderRadius:8, border:"1.5px solid #f3f4f6" }}>
-              <span style={{ fontSize:14, color:"#111827" }}>{rawUser.phone}</span>
-              <button onClick={() => handleEdit("phone")}
-                style={{ background:"none", border:"none", color:"#2563eb",
-                  fontSize:12, fontWeight:600, cursor:"pointer" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"10px 14px", ...fieldBox }}>
+              <span style={{ fontSize:14, color:"#111827" }}>{rawUser.phone || "Sin teléfono"}</span>
+              <button onClick={() => { setPhoneVal(rawUser.phone || ""); startEdit("phone"); }}
+                style={{ background:"none", border:"none", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer" }}>
                 Cambiar
               </button>
             </div>
           )}
         </div>
 
-        {error && (
-          <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca",
-            borderRadius:8, padding:"8px 12px", color:"#b91c1c",
-            fontSize:12, marginBottom:10 }}>{error}</div>
-        )}
-        {success && (
-          <div style={{ background:"#eff6ff", border:"1.5px solid #bfdbfe",
-            borderRadius:8, padding:"8px 12px", color:"#2563eb",
-            fontSize:12, marginBottom:10 }}>{success}</div>
-        )}
-
         <button onClick={onClose}
-          style={{ width:"100%", padding:"11px", background:"#f3f4f6",
-            color:"#374151", border:"none", borderRadius:10, fontSize:14,
-            fontWeight:600, cursor:"pointer", marginTop:4 }}>
+          style={{ width:"100%", padding:"11px", background:"#f3f4f6", color:"#374151",
+            border:"none", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer" }}>
           Cerrar
         </button>
       </div>
@@ -236,37 +236,29 @@ function ProfileModal({ user, onClose }) {
 const styles = {
   nav: { display:"flex", alignItems:"center", justifyContent:"space-between",
     padding:"14px 40px", borderBottom:"1px solid #1e2433", background:"#0d0d0d",
-    position:"sticky", top:0, zIndex:100,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
+    position:"sticky", top:0, zIndex:100, boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
   navMobile: { display:"flex", alignItems:"center", justifyContent:"space-between",
     padding:"14px 20px", borderBottom:"1px solid #1e2433", background:"#0d0d0d",
-    position:"sticky", top:0, zIndex:100,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
+    position:"sticky", top:0, zIndex:100, boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
   links: { display:"flex", gap:24, alignItems:"center" },
   link: { color:"rgba(255,255,255,.75)", textDecoration:"none", fontSize:14, fontWeight:500 },
   linkMobile: { color:"#374151", textDecoration:"none", fontSize:15,
-    fontWeight:500, padding:"14px 0", borderBottom:"1px solid #f3f4f6",
-    display:"block" },
-  btn: { padding:"9px 20px", borderRadius:8, fontSize:14,
-    cursor:"pointer", fontWeight:600, border:"none" },
+    fontWeight:500, padding:"14px 0", borderBottom:"1px solid #f3f4f6", display:"block" },
+  btn: { padding:"9px 20px", borderRadius:8, fontSize:14, cursor:"pointer", fontWeight:600, border:"none" },
   btnPrimary: { background:"#2563eb", color:"#fff" },
-  btnOutline: { background:"transparent", border:"1.5px solid rgba(255,255,255,.3)",
-    color:"#fff" },
+  btnOutline: { background:"transparent", border:"1.5px solid rgba(255,255,255,.3)", color:"#fff" },
   btnMobile: { width:"100%", padding:"13px", borderRadius:8, fontSize:15,
     cursor:"pointer", fontWeight:600, border:"none", marginTop:8 },
   avatar: { width:36, height:36, borderRadius:"50%", background:"#2563eb",
     display:"flex", alignItems:"center", justifyContent:"center",
-    fontWeight:700, fontSize:14, color:"#fff", cursor:"pointer",
-    position:"relative" },
+    fontWeight:700, fontSize:14, color:"#fff", cursor:"pointer" },
   adminBadge: { background:"#fef2f2", color:"#dc2626", padding:"6px 14px",
     borderRadius:20, fontSize:13, fontWeight:700, textDecoration:"none",
     border:"1.5px solid #fecaca" },
   hamburger: { background:"none", border:"none", cursor:"pointer",
-    padding:4, display:"flex", flexDirection:"column",
-    gap:5, alignItems:"center" },
-  menuOverlay: { position:"fixed", top:62, left:0, right:0,
-    background:"#fff", borderBottom:"1px solid #e5e7eb",
-    zIndex:99, padding:"8px 24px 20px",
+    padding:4, display:"flex", flexDirection:"column", gap:5, alignItems:"center" },
+  menuOverlay: { position:"fixed", top:62, left:0, right:0, background:"#fff",
+    borderBottom:"1px solid #e5e7eb", zIndex:99, padding:"8px 24px 20px",
     boxShadow:"0 8px 24px rgba(0,0,0,.1)" },
 };
 
@@ -299,21 +291,15 @@ export default function Navbar() {
 
   if (isMobile) return (
     <>
-      {profileOpen && <ProfileModal user={user} onClose={() => setProfileOpen(false)} />}
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
       <nav style={styles.navMobile}>
         <Logo />
         <button style={styles.hamburger} onClick={() => setMenuOpen(o => !o)}>
-          <span style={{ display:"block", width:22, height:2, background:"#fff",
-            borderRadius:2, transition:"all .2s",
-            transform: menuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }}/>
-          <span style={{ display:"block", width:22, height:2, background:"#fff",
-            borderRadius:2, transition:"all .2s", opacity: menuOpen ? 0 : 1 }}/>
-          <span style={{ display:"block", width:22, height:2, background:"#fff",
-            borderRadius:2, transition:"all .2s",
-            transform: menuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }}/>
+          <span style={{ display:"block", width:22, height:2, background:"#fff", borderRadius:2, transition:"all .2s", transform: menuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }}/>
+          <span style={{ display:"block", width:22, height:2, background:"#fff", borderRadius:2, transition:"all .2s", opacity: menuOpen ? 0 : 1 }}/>
+          <span style={{ display:"block", width:22, height:2, background:"#fff", borderRadius:2, transition:"all .2s", transform: menuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }}/>
         </button>
       </nav>
-
       {menuOpen && (
         <div style={styles.menuOverlay}>
           <Link to="/" style={styles.linkMobile} onClick={close}>Explorar</Link>
@@ -321,8 +307,7 @@ export default function Navbar() {
             user.role === "admin" ? (
               <>
                 <Link to="/admin" style={styles.linkMobile} onClick={close}>Panel Admin</Link>
-                <button style={{...styles.btnMobile, background:"#dc2626", color:"#fff"}}
-                  onClick={handleLogout}>Salir</button>
+                <button style={{...styles.btnMobile, background:"#dc2626", color:"#fff"}} onClick={handleLogout}>Salir</button>
               </>
             ) : (
               <>
@@ -330,24 +315,20 @@ export default function Navbar() {
                 <Link to="/my-bookings" style={styles.linkMobile} onClick={close}>Mis reservas</Link>
                 <Link to="/chat" style={styles.linkMobile} onClick={close}>Mensajes</Link>
                 <Link to="/dashboard" style={styles.linkMobile} onClick={close}>Mi panel</Link>
-                <div style={{ padding:"14px 0", borderBottom:"1px solid #f3f4f6",
-                  fontSize:15, fontWeight:500, color:"#374151", cursor:"pointer" }}
+                <div style={{ padding:"14px 0", borderBottom:"1px solid #f3f4f6", fontSize:15, fontWeight:500, color:"#374151", cursor:"pointer" }}
                   onClick={() => { setProfileOpen(true); close(); }}>
                   Mi perfil
                 </div>
-                <button style={{...styles.btnMobile, background:"#2563eb", color:"#fff"}}
-                  onClick={handleLogout}>Salir</button>
+                <button style={{...styles.btnMobile, background:"#2563eb", color:"#fff"}} onClick={handleLogout}>Salir</button>
               </>
             )
           ) : (
             <>
               <Link to="/login" onClick={close}>
-                <button style={{...styles.btnMobile, background:"transparent",
-                  border:"1.5px solid #d1d5db", color:"#374151"}}>Iniciar sesión</button>
+                <button style={{...styles.btnMobile, background:"transparent", border:"1.5px solid #d1d5db", color:"#374151"}}>Iniciar sesión</button>
               </Link>
               <Link to="/register" onClick={close}>
-                <button style={{...styles.btnMobile, background:"#2563eb",
-                  color:"#fff"}}>Registrarse</button>
+                <button style={{...styles.btnMobile, background:"#2563eb", color:"#fff"}}>Registrarse</button>
               </Link>
             </>
           )}
@@ -358,7 +339,7 @@ export default function Navbar() {
 
   return (
     <>
-      {profileOpen && <ProfileModal user={user} onClose={() => setProfileOpen(false)} />}
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
       <nav style={styles.nav}>
         <Logo />
         <div style={styles.links}>
@@ -367,7 +348,7 @@ export default function Navbar() {
             user.role === "admin" ? (
               <>
                 <Link to="/admin" style={styles.adminBadge}>Panel Admin</Link>
-                <div style={styles.avatar}>{user.name?.[0]?.toUpperCase()}</div>
+                <div style={styles.avatar}>{userInitial(user)}</div>
                 <button style={{...styles.btn,...styles.btnOutline}}
                   onClick={() => { logout(); navigate("/"); }}>Salir</button>
               </>
@@ -377,76 +358,50 @@ export default function Navbar() {
                 <Link to="/my-bookings" style={styles.link}>Mis reservas</Link>
                 <Link to="/chat" style={styles.link}>Mensajes</Link>
                 <Link to="/dashboard" style={styles.link}>Mi panel</Link>
-
-                {/* Avatar con dropdown */}
                 <div style={{ position:"relative" }} ref={dropdownRef}>
-                  <div style={styles.avatar}
-                    onClick={() => setDropdownOpen(o => !o)}>
-                    {user.name?.[0]?.toUpperCase()}
+                  <div style={styles.avatar} onClick={() => setDropdownOpen(o => !o)}>
+                    {userInitial(user)}
                   </div>
-
                   {dropdownOpen && (
-                    <div style={{ position:"absolute", top:44, right:0,
-                      background:"#fff", borderRadius:12, minWidth:180,
-                      boxShadow:"0 8px 32px rgba(0,0,0,.12)",
+                    <div style={{ position:"absolute", top:44, right:0, background:"#fff",
+                      borderRadius:12, minWidth:180, boxShadow:"0 8px 32px rgba(0,0,0,.12)",
                       border:"1px solid #f3f4f6", zIndex:200, overflow:"hidden" }}>
                       <div style={{ padding:"12px 16px", borderBottom:"1px solid #f3f4f6" }}>
-                        <div style={{ fontSize:13, fontWeight:700, color:"#111827" }}>
-                          {user.name}
-                        </div>
-                        <div style={{ fontSize:11, color:"#6b7280", marginTop:1 }}>
-                          {user.email}
-                        </div>
+                        <div style={{ fontSize:13, fontWeight:700, color:"#111827" }}>{user.name || user.email}</div>
+                        <div style={{ fontSize:11, color:"#6b7280", marginTop:1 }}>{user.email}</div>
                       </div>
                       <div style={{ padding:"6px 0" }}>
-                        <div
-                          onClick={() => { setProfileOpen(true); setDropdownOpen(false); }}
-                          style={{ padding:"10px 16px", fontSize:13, color:"#374151",
-                            cursor:"pointer", fontWeight:500,
-                            display:"flex", alignItems:"center", gap:8 }}
+                        <div onClick={() => { setProfileOpen(true); setDropdownOpen(false); }}
+                          style={{ padding:"10px 16px", fontSize:13, color:"#374151", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:8 }}
                           onMouseEnter={e => e.currentTarget.style.background="#f9fafb"}
                           onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                              stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
                             <circle cx="12" cy="7" r="4" stroke="#374151" strokeWidth="2"/>
                           </svg>
                           Ver perfil
                         </div>
-                        <div
-                          onClick={() => { navigate("/dashboard"); setDropdownOpen(false); }}
-                          style={{ padding:"10px 16px", fontSize:13, color:"#374151",
-                            cursor:"pointer", fontWeight:500,
-                            display:"flex", alignItems:"center", gap:8 }}
+                        <div onClick={() => { navigate("/dashboard"); setDropdownOpen(false); }}
+                          style={{ padding:"10px 16px", fontSize:13, color:"#374151", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:8 }}
                           onMouseEnter={e => e.currentTarget.style.background="#f9fafb"}
                           onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <rect x="3" y="3" width="7" height="7" rx="1"
-                              stroke="#374151" strokeWidth="2"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1"
-                              stroke="#374151" strokeWidth="2"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1"
-                              stroke="#374151" strokeWidth="2"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1"
-                              stroke="#374151" strokeWidth="2"/>
+                            <rect x="3" y="3" width="7" height="7" rx="1" stroke="#374151" strokeWidth="2"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1" stroke="#374151" strokeWidth="2"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1" stroke="#374151" strokeWidth="2"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1" stroke="#374151" strokeWidth="2"/>
                           </svg>
                           Mi panel
                         </div>
                         <div style={{ height:1, background:"#f3f4f6", margin:"4px 0" }}/>
-                        <div
-                          onClick={handleLogout}
-                          style={{ padding:"10px 16px", fontSize:13, color:"#dc2626",
-                            cursor:"pointer", fontWeight:500,
-                            display:"flex", alignItems:"center", gap:8 }}
+                        <div onClick={handleLogout}
+                          style={{ padding:"10px 16px", fontSize:13, color:"#dc2626", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:8 }}
                           onMouseEnter={e => e.currentTarget.style.background="#fef2f2"}
                           onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
-                              stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
-                            <polyline points="16 17 21 12 16 7"
-                              stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
-                            <line x1="21" y1="12" x2="9" y2="12"
-                              stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                            <polyline points="16 17 21 12 16 7" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
+                            <line x1="21" y1="12" x2="9" y2="12" stroke="#dc2626" strokeWidth="2" strokeLinecap="round"/>
                           </svg>
                           Salir
                         </div>

@@ -34,35 +34,35 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithCredentials = async (email, password) => {
-    try {
-      const data = await loginUser({ email, password });
-      const name = data.user?.name ||
-        `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
-      saveUser({ ...data.user, name, accessToken: data.accessToken });
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message || "Email o contraseña incorrectos." };
-    }
-  };
+  try {
+    const data = await loginUser({ email, password });
+    const name = data.user?.name ||
+      `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
+    saveUser({ ...data.user, name, accessToken: data.accessToken });
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message || "Email o contraseña incorrectos." };
+  }
+};
 
-  const register = async (formData) => {
-    const payload = {
-      email: formData.email,
-      password: formData.password,
-      firstName: formData.name?.split(" ")[0] || formData.name || "",
-      lastName: formData.name?.split(" ").slice(1).join(" ") || "",
-      acceptedTerms: formData.acceptedTerms ?? false,
-    };
-    try {
-      const data = await registerUser(payload);
-      const name = data.user?.name ||
-        `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
-      saveUser({ ...data.user, name, accessToken: data.accessToken });
-      return { success: true, emailVerificationRequired: data.emailVerificationRequired };
-    } catch (err) {
-      return { success: false, error: err.message || "Error al registrarse." };
-    }
+ const register = async (formData) => {
+  const payload = {
+    email: formData.email,
+    password: formData.password,
+    firstName: formData.name?.split(" ")[0] || formData.name || "",
+    lastName: formData.name?.split(" ").slice(1).join(" ") || "",
+    acceptedTerms: formData.acceptedTerms ?? false,
   };
+  try {
+    const data = await registerUser(payload);
+    const name = data.user?.name ||
+      `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
+    saveUser({ ...data.user, name, accessToken: data.accessToken });
+    return { success: true, emailVerificationRequired: data.emailVerificationRequired };
+  } catch (err) {
+    return { success: false, error: err.message || "Error al registrarse." };
+  }
+};
 
   const loginWithGoogleToken = async (token) => {
     try {

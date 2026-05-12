@@ -18,6 +18,7 @@ import Chat from "./pages/Chat/Chat";
 import Admin from "./pages/Admin/Admin";
 import Booking from "./pages/Booking/Booking";
 import MyBookings from "./pages/MyBookings/MyBookings";
+import CompleteProfile from "./pages/Auth/CompleteProfile";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/terms" element={<Terms />} />
