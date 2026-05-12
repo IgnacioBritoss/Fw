@@ -4,10 +4,21 @@ import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 const Logo = () => (
-  <Link to="/" style={{ display:"flex", alignItems:"center",
-    gap:10, textDecoration:"none" }}>
-    <span style={{ fontWeight:800, fontSize:20, color:"#2563eb",
-      letterSpacing:"-0.5px" }}>Freewheel</span>
+  <Link to="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
+      <circle cx="16" cy="16" r="4" fill="#2563eb"/>
+      {[0,60,120,180,240,300].map((a,i) => {
+        const rad = a*Math.PI/180;
+        return <line key={i}
+          x1={16+5*Math.cos(rad)} y1={16+5*Math.sin(rad)}
+          x2={16+11*Math.cos(rad)} y2={16+11*Math.sin(rad)}
+          stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>;
+      })}
+    </svg>
+    <span style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.5px" }}>
+      <span style={{ color:"#fff" }}>Free</span><span style={{ color:"#2563eb" }}>wheel</span>
+    </span>
   </Link>
 );
 

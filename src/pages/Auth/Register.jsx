@@ -11,13 +11,13 @@ const s = {
   cardMobile: { background:"#fff", borderRadius:16, padding:"24px 20px", width:"100%", boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   title: { fontSize:24, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:20 },
-  section: { fontSize:12, fontWeight:700, color:"#1a4d2e", textTransform:"uppercase", letterSpacing:".06em", marginBottom:12, marginTop:20 },
+  section: { fontSize:12, fontWeight:700, color:"#2563eb", textTransform:"uppercase", letterSpacing:".06em", marginBottom:12, marginTop:20 },
   field: { marginBottom:14 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
   input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827" },
   grid2: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
   grid2Mobile: { display:"grid", gridTemplateColumns:"1fr", gap:0 },
-  btn: { width:"100%", padding:"13px", background:"#1a4d2e", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
+  btn: { width:"100%", padding:"13px", background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   btnGoogle: { width:"100%", padding:"11px", background:"#fff", color:"#374151", border:"1.5px solid #e5e7eb", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:16 },
   loginLink: { textAlign:"center", marginTop:18, fontSize:13, color:"#6b7280" },
@@ -26,7 +26,7 @@ const s = {
   dividerLine: { flex:1, height:1, background:"#f3f4f6" },
   dividerText: { fontSize:12, color:"#9ca3af" },
   termsRow: { display:"flex", alignItems:"flex-start", gap:10, marginBottom:20, marginTop:8 },
-  termsCheck: { marginTop:3, width:16, height:16, accentColor:"#1a4d2e", cursor:"pointer", flexShrink:0 },
+  termsCheck: { marginTop:3, width:16, height:16, accentColor:"#2563eb", cursor:"pointer", flexShrink:0 },
   termsText: { fontSize:13, color:"#374151", lineHeight:1.6 },
   passwordWrapper: { position:"relative" },
   eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
@@ -188,7 +188,7 @@ export default function Register() {
             onChange={(e) => set("acceptedTerms", e.target.checked)} />
           <label htmlFor="terms" style={s.termsText}>
             Acepto los{" "}
-            <Link to="/terms" target="_blank" style={{ color:"#1a4d2e", fontWeight:600 }}>
+            <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600 }}>
               términos y condiciones
             </Link>{" "}
             y la política de privacidad de Freewheel *
@@ -205,7 +205,7 @@ export default function Register() {
 
         <div style={s.loginLink}>
           ¿Ya tenés cuenta?{" "}
-          <Link to="/login" style={{ color:"#1a4d2e", fontWeight:600 }}>Iniciá sesión</Link>
+          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>Iniciá sesión</Link>
         </div>
       </div>
     </div>

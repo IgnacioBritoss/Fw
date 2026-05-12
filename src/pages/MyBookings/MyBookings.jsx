@@ -25,7 +25,7 @@ const s = {
     cursor:"pointer", border:"none", background:"transparent",
     color:"#6b7280", borderBottom:"3px solid transparent",
     whiteSpace:"nowrap" },
-  tabActive: { color:"#1a4d2e", borderBottom:"3px solid #1a4d2e" },
+  tabActive: { color:"#2563eb", borderBottom:"3px solid #2563eb" },
   card: { background:"#fff", borderRadius:12, padding:20,
     boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
     display:"flex", gap:16, border:"1px solid #f3f4f6" },
@@ -43,15 +43,15 @@ const s = {
   dates: { fontSize:13, color:"#6b7280", marginBottom:4 },
   datesMobile: { fontSize:12, color:"#6b7280", marginBottom:4 },
   renterName: { fontSize:13, color:"#374151", marginBottom:4 },
-  total: { fontSize:14, fontWeight:700, color:"#1a4d2e", marginBottom:8 },
+  total: { fontSize:14, fontWeight:700, color:"#2563eb", marginBottom:8 },
   statusBadge: { display:"inline-block", padding:"3px 12px",
     borderRadius:20, fontSize:12, fontWeight:600 },
   pending: { background:"#fef9c3", color:"#854d0e" },
-  confirmed: { background:"#dcfce7", color:"#166534" },
+  confirmed: { background:"#dbeafe", color:"#1e40af" },
   cancelled: { background:"#f3f4f6", color:"#6b7280" },
   completed: { background:"#dbeafe", color:"#1e40af" },
   btnRow: { display:"flex", gap:8, marginTop:10, flexWrap:"wrap" },
-  btnConfirm: { padding:"7px 16px", background:"#1a4d2e", color:"#fff",
+  btnConfirm: { padding:"7px 16px", background:"#2563eb", color:"#fff",
     border:"none", borderRadius:8, fontSize:12, fontWeight:600,
     cursor:"pointer" },
   btnCancel: { padding:"7px 16px", background:"transparent",
@@ -180,7 +180,7 @@ export default function MyBookings() {
         )}
         <div style={{ display:"flex", justifyContent:"space-between",
           alignItems:"center", marginTop:6 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:"#1a4d2e" }}>
+          <div style={{ fontSize:13, fontWeight:700, color:"#2563eb" }}>
             ${b.total_final?.toLocaleString()}
           </div>
           <span style={{ ...s.statusBadge, ...s[b.status], fontSize:11 }}>
@@ -269,7 +269,7 @@ export default function MyBookings() {
             <div style={{ fontSize:13, marginBottom:16 }}>
               Todavía no hiciste ninguna reserva.
             </div>
-            <button style={{ padding:"10px 24px", background:"#1a4d2e",
+            <button style={{ padding:"10px 24px", background:"#2563eb",
               color:"#fff", border:"none", borderRadius:8,
               cursor:"pointer", fontWeight:600 }}
               onClick={() => navigate("/")}>Explorar autos</button>
@@ -313,13 +313,13 @@ export default function MyBookings() {
             </div>
             <div style={s.legend}>
               <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#1a4d2e" }}/> Disponible
+                <div style={{ ...s.dot, background:"#2563eb" }}/> Disponible
               </div>
               <div style={s.legendItem}>
                 <div style={{ ...s.dot, background:"#fca5a5" }}/> Ocupado
               </div>
               <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#bbf7d0" }}/> Seleccionado
+                <div style={{ ...s.dot, background:"#bfdbfe" }}/> Seleccionado
               </div>
             </div>
             <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
