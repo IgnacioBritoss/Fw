@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { requestEmailChange, confirmEmailChange } from "../services/api";
 
 const Logo = () => (
   <Link to="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
@@ -70,19 +71,30 @@ function ProfileModal({ onClose }) {
     setEditing(null);
   };
 
-  const sendEmailCode = () => {
+  const sendEmailCode = async () => {
     if (!emailVal.includes("@")) { setError("Ingresá un email válido."); return; }
-    setCodeSent(true);
-    setError("");
-    setSuccess("Código enviado al nuevo email (simulado). Usá: 1234");
+    try {
+      await requestEmailChange(emailVal);
+      setCodeSent(true);
+      setError("");
+      setSuccess("Código enviado al nuevo email. Revisá tu bandeja.");
+    } catch (err) {
+      setError(err.message || "Error al enviar el código.");
+    }
   };
 
-  const verifyEmailCode = () => {
-    if (code !== "1234") { setError("Código incorrecto."); return; }
-    saveToStorage({ email: emailVal });
-    setSuccess("Email actualizado.");
-    setEditing(null);
-    setCodeSent(false);
+  const verifyEmailCode = async () => {
+    if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
+    try {
+      await confirmEmailChange(code, emailVal);
+      saveToStorage({ email: emailVal });
+      setSuccess("Email actualizado correctamente.");
+      setEditing(null);
+      setCodeSent(false);
+      setCode("");
+    } catch (err) {
+      setError(err.message || "Código incorrecto o expirado.");
+    }
   };
 
   const fieldBox = { background:"#f9fafb", borderRadius:8, border:"1px solid #f3f4f6" };
@@ -97,7 +109,6 @@ function ProfileModal({ onClose }) {
         width:"90%", maxWidth:420, boxShadow:"0 8px 40px rgba(0,0,0,.15)" }}
         onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
           <div>
             <div style={{ fontSize:18, fontWeight:800, color:"#111827" }}>Mi perfil</div>
@@ -163,7 +174,8 @@ function ProfileModal({ onClose }) {
               ) : (
                 <div style={{ display:"flex", gap:8, marginBottom:6 }}>
                   <input value={code} onChange={e => setCode(e.target.value)}
-                    placeholder="Código de 4 dígitos"
+                    placeholder="Código de 6 dígitos"
+                    maxLength={6}
                     style={{ flex:1, padding:"9px 12px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none" }} />
                   <button onClick={verifyEmailCode}
                     style={{ padding:"9px 16px", background:"#2563eb", color:"#fff",
@@ -189,7 +201,7 @@ function ProfileModal({ onClose }) {
           )}
         </div>
 
-        {/* Teléfono — sin verificación */}
+        {/* Teléfono */}
         <div style={{ marginBottom:20 }}>
           <div style={labelStyle}>Teléfono</div>
           {editing === "phone" ? (
