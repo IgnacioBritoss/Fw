@@ -1,4 +1,4 @@
-const BASE_URL = "https://free-wheel-back-vercel.app";
+const BASE_URL = "https://free-wheel-back.vercel.app";
 
 export const GOOGLE_AUTH_URL = `${BASE_URL}/auth/google`;
 
