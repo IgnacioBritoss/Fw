@@ -2,18 +2,33 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+const EyeOpen = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const EyeClosed = () => (
+  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
 const s = {
   page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
   card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:24 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
-  input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", marginBottom:14 },
+  input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827" },
   btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"12px 16px", color:"#1e40af", fontSize:14, marginBottom:16 },
   back: { textAlign:"center", fontSize:13 },
+  wrapper: { position:"relative", marginBottom:14 },
+  eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
 };
 
 export default function ResetPassword() {
@@ -24,6 +39,8 @@ export default function ResetPassword() {
   const userId = params.get("uid") ?? "";
 
   const [form, setForm] = useState({ password:"", confirm:"" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -45,7 +62,6 @@ export default function ResetPassword() {
     if (!form.password) { setError("Ingresá una nueva contraseña."); return; }
     if (form.password.length < 6) { setError("Mínimo 6 caracteres."); return; }
     if (form.password !== form.confirm) { setError("Las contraseñas no coinciden."); return; }
-
     setLoading(true);
     setError("");
     const result = await resetPassword({ token, userId, newPassword: form.password });
@@ -64,18 +80,34 @@ export default function ResetPassword() {
         {error && <div style={s.error}>{error}</div>}
 
         {done ? (
-          <div style={s.success}>✅ Contraseña actualizada. Redirigiendo al login...</div>
+          <div style={s.success}>Contraseña actualizada. Redirigiendo al login...</div>
         ) : (
           <>
             <label style={s.label}>Nueva contraseña</label>
-            <input style={s.input} type="password" placeholder="Mínimo 6 caracteres"
-              value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+            <div style={s.wrapper}>
+              <input style={{ ...s.input, paddingRight:40 }}
+                type={showPassword ? "text" : "password"}
+                placeholder="Mínimo 6 caracteres"
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+              <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
+                {showPassword ? <EyeClosed /> : <EyeOpen />}
+              </button>
+            </div>
+
             <label style={s.label}>Confirmar contraseña</label>
-            <input style={s.input} type="password" placeholder="Repetí la contraseña"
-              value={form.confirm}
-              onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
+            <div style={s.wrapper}>
+              <input style={{ ...s.input, paddingRight:40 }}
+                type={showConfirm ? "text" : "password"}
+                placeholder="Repetí la contraseña"
+                value={form.confirm}
+                onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
+              <button type="button" style={s.eyeBtn} onClick={() => setShowConfirm(v => !v)}>
+                {showConfirm ? <EyeClosed /> : <EyeOpen />}
+              </button>
+            </div>
+
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
               onClick={handleSubmit} disabled={loading}>
               {loading ? "Guardando..." : "Cambiar contraseña"}
