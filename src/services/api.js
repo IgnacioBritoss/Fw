@@ -28,7 +28,7 @@ async function apiFetch(path, options = {}) {
 }
 
 // Auth
-export async function registerUser({ emai., password, firstName, lastName, acceptedTerms }) {
+export async function registerUser({ email, password, firstName, lastName, acceptedTerms }) {
   return apiFetch("/auth/register", {
     method: "POST",
     body: JSON.stringify({ email, password, firstName, lastName, acceptedTerms }),
