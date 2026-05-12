@@ -133,7 +133,7 @@ export default function Register() {
         <div style={isMobile ? s.grid2Mobile : s.grid2}>
           <div style={s.field}>
             <label style={s.label}>Nombre *</label>
-            <input style={s.input} placeholder="Juan" value={form.firstName}
+            <input style={s.input} placeholder="Martin" value={form.firstName}
               onChange={(e) => set("firstName", e.target.value)} />
           </div>
           <div style={s.field}>
