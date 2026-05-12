@@ -36,7 +36,9 @@ export function AuthProvider({ children }) {
   const loginWithCredentials = async (email, password) => {
     try {
       const data = await loginUser({ email, password });
-      saveUser({ ...data.user, accessToken: data.accessToken });
+      const name = data.user?.name ||
+        `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
+      saveUser({ ...data.user, name, accessToken: data.accessToken });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message || "Email o contraseña incorrectos." };
@@ -53,7 +55,9 @@ export function AuthProvider({ children }) {
     };
     try {
       const data = await registerUser(payload);
-      saveUser({ ...data.user, accessToken: data.accessToken });
+      const name = data.user?.name ||
+        `${data.user?.firstName || ""} ${data.user?.lastName || ""}`.trim();
+      saveUser({ ...data.user, name, accessToken: data.accessToken });
       return { success: true, emailVerificationRequired: data.emailVerificationRequired };
     } catch (err) {
       return { success: false, error: err.message || "Error al registrarse." };
