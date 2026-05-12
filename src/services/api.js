@@ -52,6 +52,18 @@ export async function resetPassword({ token, userId, newPassword }) {
     body: JSON.stringify({ token, userId, newPassword }),
   });
 }
+export async function requestEmailChange(newEmail) {
+  return apiFetch("/auth/request-email-change", {
+    method: "POST",
+    body: JSON.stringify({ newEmail }),
+  });
+}
+export async function confirmEmailChange(code, newEmail) {
+  return apiFetch("/auth/confirm-email-change", {
+    method: "POST",
+    body: JSON.stringify({ code, newEmail }),
+  });
+}
 
 // Users
 export async function getMe() { return apiFetch("/users/me"); }

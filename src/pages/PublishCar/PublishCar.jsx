@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing } from "../../services/api";
+import { groqChat, extractJSON } from "../../services/groq";
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
