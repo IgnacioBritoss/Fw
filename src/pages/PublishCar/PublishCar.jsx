@@ -164,29 +164,56 @@ Si no sabés un dato, usá null.`;
 };
 
   const fetchPricing = async () => {
-    setPricingLoading(true);
-    setPricingSuggestion(null);
+  setPricingLoading(true);
+  setPricingSuggestion(null);
+  setError("");
+
+  const location = listingForm.locationText || "Argentina";
+  const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.transmission}_${vehicleForm.fuel}`;
+
+  let data;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try { data = JSON.parse(cached); } catch { data = null; }
+  }
+
+  if (!data) {
     try {
-      const location = listingForm.locationText || "Argentina";
-      const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina.
+      const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina en 2025.
+Los precios de alquiler diario en Argentina rondan entre $30.000 y $150.000 ARS por día dependiendo del vehículo.
+Un auto compacto cuesta alrededor de $35.000-$50.000 ARS/día. Un SUV o pickup $60.000-$100.000 ARS/día. Autos premium $100.000-$150.000 ARS/día.
+
 Recomendá un precio por día en ARS para: ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}, transmisión ${vehicleForm.transmission}, combustible ${vehicleForm.fuel}, ubicado en ${location}.
+
 Devolvé SOLO un JSON válido sin texto adicional:
 {
-  "precio_min": número,
-  "precio_max": número,
-  "precio_recomendado": número,
+  "precio_min": número entero en ARS,
+  "precio_max": número entero en ARS,
+  "precio_recomendado": número entero en ARS,
   "justificacion": "texto breve de 1-2 oraciones"
-}`;
-      const response = await groqChat([{ role: "user", content: prompt }], 0.3);
-      const data = extractJSON(response);
-      setPricingSuggestion(data);
-      if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
+}
+
+Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
+
+      const response = await groqChat([{ role: "user", content: prompt }], 0);
+      data = extractJSON(response);
+
+      if (!data.precio_recomendado || data.precio_recomendado < 5000) {
+        throw new Error("Precio inválido recibido");
+      }
+
+      localStorage.setItem(cacheKey, JSON.stringify(data));
     } catch {
-      setError("No se pudo obtener la sugerencia de precio.");
-    } finally {
+      setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
       setPricingLoading(false);
+      return;
     }
-  };
+  }
+
+  setPricingSuggestion(data);
+  if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
+  setPricingLoading(false);
+};
 
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
