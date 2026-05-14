@@ -1,6 +1,7 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const VISION_MODEL = "llama-3.2-90b-vision-preview";
+
 export async function groqChat(messages, temperature = 0.7) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("VITE_GROQ_API_KEY no configurada");
