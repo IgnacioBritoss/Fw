@@ -1,6 +1,6 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
-const VISION_MODEL = "llama-3.2-90b-vision-preview";
+const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 export async function groqChat(messages, temperature = 0.7) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
@@ -44,7 +44,7 @@ async function resizeImage(dataUrl, maxPx = 512) {
 
 export async function groqVision(imageDataUrl) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (!apiKey) return true;
+  if (!apiKey) return null;
   try {
     const resized = await resizeImage(imageDataUrl);
     const res = await fetch(GROQ_URL, {
@@ -59,14 +59,20 @@ export async function groqVision(imageDataUrl) {
             { type: "text", text: "¿Esta imagen muestra un automóvil, camioneta, SUV, moto u otro vehículo de motor? Respondé únicamente SI o NO." },
           ],
         }],
-        temperature: 0.1,
+        temperature: 0,
         max_tokens: 5,
       }),
     });
-    if (!res.ok) return true;
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.error("Groq vision error:", res.status, errBody);
+      return null;
+    }
     const data = await res.json();
-    return (data.choices?.[0]?.message?.content || "SI").trim().toUpperCase().startsWith("SI");
-  } catch {
-    return true;
+    const answer = (data.choices?.[0]?.message?.content || "").trim().toUpperCase();
+    return answer.startsWith("SI") ? true : answer.startsWith("NO") ? false : null;
+  } catch (err) {
+    console.error("Groq vision exception:", err);
+    return null;
   }
 }
