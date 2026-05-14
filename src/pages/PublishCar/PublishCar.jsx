@@ -199,8 +199,13 @@ Devolvé SOLO un JSON válido sin texto adicional:
         setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
         setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
         groqVision(ev.target.result)
-          .then(isVehicle => setPhotoValidations(v => ({ ...v, [photoIdx]: isVehicle ? "ok" : "invalid" })))
-          .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: "ok" })));
+      .then(isVehicle =>
+     setPhotoValidations(v => ({
+      ...v,
+      [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
+     }))
+    )
+  .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
       };
       reader.readAsDataURL(file);
     });
