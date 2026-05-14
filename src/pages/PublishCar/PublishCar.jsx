@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing } from "../../services/api";
-import { groqChat, extractJSON } from "../../services/groq";
+import { groqChat, extractJSON, groqVision } from "../../services/groq";
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
@@ -32,6 +32,7 @@ const s = {
   btnDisabled: { opacity: 0.6, cursor: "not-allowed" },
   btnBack: { flex: 1, padding: "13px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" },
   error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
+  warning: { background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 8, padding: "10px 14px", color: "#92400e", fontSize: 13, marginBottom: 16 },
   success: { textAlign: "center", padding: "60px 20px" },
   successTitle: { fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" },
   successSub: { color: "#6b7280", marginBottom: 24, lineHeight: 1.6 },
@@ -46,6 +47,23 @@ const s = {
   aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#2563eb" },
   aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
 };
+
+function getSpecWarnings(form) {
+  const checks = [
+    ["doors", 2, 7, "Puertas"],
+    ["seats", 2, 9, "Asientos"],
+    ["horsePower", 40, 1500, "Potencia (HP)"],
+    ["engineDisplacementCC", 400, 8000, "Cilindrada (cc)"],
+    ["trunkCapacityLiters", 50, 3000, "Baúl (litros)"],
+    ["fuelConsumptionLitersPer100Km", 2, 35, "Consumo (l/100km)"],
+    ["weightKg", 500, 6000, "Peso (kg)"],
+    ["widthMm", 1200, 3000, "Ancho (mm)"],
+    ["lengthMm", 2500, 7000, "Largo (mm)"],
+  ];
+  return checks
+    .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
+    .map(([, , , label, , ], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
+}
 
 const STEPS = ["Vehículo", "Fotos", "Listing", "Confirmar"];
 const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
@@ -64,6 +82,7 @@ export default function PublishCar() {
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingSuggestion, setPricingSuggestion] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [photoValidations, setPhotoValidations] = useState({});
   const [uploadHover, setUploadHover] = useState(false);
 
   const [vehicleForm, setVehicleForm] = useState({
@@ -72,6 +91,7 @@ export default function PublishCar() {
     seats: "5", doors: "4", color: "", plate: "",
     bluetooth: false, rearCamera: false, parkingSensors: false,
     trunkCapacityLiters: "", fuelConsumptionLitersPer100Km: "",
+    horsePower: "", engineDisplacementCC: "",
     widthMm: "", lengthMm: "", weightKg: "", observations: "",
   });
 
@@ -82,6 +102,8 @@ export default function PublishCar() {
 
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
   const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));
+
+  const specWarnings = getSpecWarnings(vehicleForm);
 
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
@@ -99,17 +121,15 @@ export default function PublishCar() {
   "ancho_mm": número,
   "largo_mm": número,
   "consumo_l100km": número,
+  "hp": número,
+  "cilindrada_cc": número,
   "bluetooth": "Sí" o "No",
   "camara_reversa": "Sí" o "No",
   "sensor_estacionamiento": "Sí" o "No"
 }
 Si no sabés un dato, usá null.`;
 
-      const response = await groqChat(
-        [{ role: "user", content: prompt }],
-        0.1
-      );
-
+      const response = await groqChat([{ role: "user", content: prompt }], 0.1);
       const data = extractJSON(response);
       if (data.puertas) setV("doors", String(data.puertas));
       if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
@@ -117,6 +137,8 @@ Si no sabés un dato, usá null.`;
       if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
       if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
       if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
+      if (data.hp) setV("horsePower", String(data.hp));
+      if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
       if (data.bluetooth === "Sí") setV("bluetooth", true);
       if (data.camara_reversa === "Sí") setV("rearCamera", true);
       if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
@@ -141,17 +163,10 @@ Devolvé SOLO un JSON válido sin texto adicional:
   "precio_recomendado": número,
   "justificacion": "texto breve de 1-2 oraciones"
 }`;
-
-      const response = await groqChat(
-        [{ role: "user", content: prompt }],
-        0.3
-      );
-
+      const response = await groqChat([{ role: "user", content: prompt }], 0.3);
       const data = extractJSON(response);
       setPricingSuggestion(data);
-      if (data.precio_recomendado) {
-        setL("pricePerDay", String(data.precio_recomendado));
-      }
+      if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
     } catch {
       setError("No se pudo obtener la sugerencia de precio.");
     } finally {
@@ -162,21 +177,49 @@ Devolvé SOLO un JSON válido sin texto adicional:
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     if (photos.length + files.length > 6) { setError("Podés subir hasta 6 fotos."); return; }
-    files.forEach((file) => {
+    const startIdx = photos.length;
+    files.forEach((file, fileIdx) => {
+      const photoIdx = startIdx + fileIdx;
       const reader = new FileReader();
-      reader.onload = (ev) => setPhotos((prev) => [...prev, { url: ev.target.result, name: file.name }]);
+      reader.onload = (ev) => {
+        setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
+        setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
+        groqVision(ev.target.result)
+          .then(isVehicle => setPhotoValidations(v => ({ ...v, [photoIdx]: isVehicle ? "ok" : "invalid" })))
+          .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: "ok" })));
+      };
       reader.readAsDataURL(file);
     });
   };
 
-  const removePhoto = (idx) => setPhotos((p) => p.filter((_, i) => i !== idx));
+  const removePhoto = (idx) => {
+    setPhotos(p => p.filter((_, i) => i !== idx));
+    setPhotoValidations(v => {
+      const updated = {};
+      Object.entries(v).forEach(([k, val]) => {
+        const ki = Number(k);
+        if (ki < idx) updated[ki] = val;
+        else if (ki > idx) updated[ki - 1] = val;
+      });
+      return updated;
+    });
+  };
 
   const validateStep = () => {
-    if (step === 0 && (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year)) {
-      setError("Completá marca, modelo y año."); return false;
+    if (step === 0) {
+      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
+        setError("Completá marca, modelo y año."); return false;
+      }
+      if (!vehicleForm.color) {
+        setError("Indicá el color del vehículo."); return false;
+      }
     }
-    if (step === 1 && photos.length === 0) {
-      setError("Subí al menos una foto."); return false;
+    if (step === 1) {
+      if (photos.length === 0) { setError("Subí al menos una foto."); return false; }
+      const hasLoading = photos.some((_, i) => photoValidations[i] === "loading");
+      if (hasLoading) { setError("Esperá a que terminen de validarse las fotos."); return false; }
+      const hasInvalid = photos.some((_, i) => photoValidations[i] === "invalid");
+      if (hasInvalid) { setError("Hay fotos que no parecen mostrar un vehículo. Reemplazalas o eliminalas."); return false; }
     }
     if (step === 2) {
       if (!listingForm.title) { setError("Ingresá un título para el listing."); return false; }
@@ -207,6 +250,8 @@ Devolvé SOLO un JSON válido sin texto adicional:
         bluetooth: vehicleForm.bluetooth,
         rearCamera: vehicleForm.rearCamera,
         parkingSensors: vehicleForm.parkingSensors,
+        ...(vehicleForm.horsePower && { horsePower: Number(vehicleForm.horsePower) }),
+        ...(vehicleForm.engineDisplacementCC && { engineDisplacementCC: Number(vehicleForm.engineDisplacementCC) }),
         ...(vehicleForm.trunkCapacityLiters && { trunkCapacityLiters: Number(vehicleForm.trunkCapacityLiters) }),
         ...(vehicleForm.fuelConsumptionLitersPer100Km && { fuelConsumptionLitersPer100Km: Number(vehicleForm.fuelConsumptionLitersPer100Km) }),
         ...(vehicleForm.widthMm && { widthMm: Number(vehicleForm.widthMm) }),
@@ -228,7 +273,39 @@ Devolvé SOLO un JSON válido sin texto adicional:
         status: "ACTIVE",
       };
 
-      await createListing(listingPayload);
+      const listing = await createListing(listingPayload);
+
+      const savedCar = {
+        id: listing?.id || `local_${Date.now()}`,
+        brand: vehicleForm.brand,
+        model: vehicleForm.model,
+        year: Number(vehicleForm.year),
+        price_per_day: Number(listingForm.pricePerDay),
+        locationText: listingForm.locationText,
+        location: listingForm.locationText,
+        lat: listingForm.latitude,
+        lng: listingForm.longitude,
+        transmission: vehicleForm.transmission,
+        fuel: vehicleForm.fuel,
+        seats: Number(vehicleForm.seats),
+        doors: Number(vehicleForm.doors),
+        color: vehicleForm.color,
+        photos: photos.map(p => p.url),
+        available: true,
+        owner_id: user?.id,
+        description: listingForm.description,
+        bluetooth: vehicleForm.bluetooth,
+        rearCamera: vehicleForm.rearCamera,
+        parkingSensors: vehicleForm.parkingSensors,
+        horsePower: vehicleForm.horsePower ? Number(vehicleForm.horsePower) : null,
+        engineDisplacementCC: vehicleForm.engineDisplacementCC ? Number(vehicleForm.engineDisplacementCC) : null,
+        trunkCapacityLiters: vehicleForm.trunkCapacityLiters ? Number(vehicleForm.trunkCapacityLiters) : null,
+        fuelConsumptionLitersPer100Km: vehicleForm.fuelConsumptionLitersPer100Km ? Number(vehicleForm.fuelConsumptionLitersPer100Km) : null,
+        weightKg: vehicleForm.weightKg ? Number(vehicleForm.weightKg) : null,
+      };
+      const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
+      localStorage.setItem("fw_my_cars", JSON.stringify([...myCars, savedCar]));
+
       setDone(true);
     } catch (err) {
       setError(err.message || "Error al publicar.");
@@ -244,7 +321,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
       <div style={s.success}>
         <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
         <div style={s.successTitle}>Auto publicado correctamente</div>
@@ -252,8 +329,8 @@ Devolvé SOLO un JSON válido sin texto adicional:
           Tu vehículo y listing fueron creados en la plataforma.<br />
           Ya está activo y visible para otros usuarios.
         </div>
-        <button style={{ ...s.btn, maxWidth: 200, margin: "0 auto" }} onClick={() => navigate("/dashboard")}>
-          Ver mi panel
+        <button style={{ ...s.btn, maxWidth: 200, margin: "0 auto" }} onClick={() => navigate("/")}>
+          Ver publicaciones
         </button>
       </div>
     </div>
@@ -276,7 +353,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
               <div style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, transition: "all .3s", background: i < step ? "#1d4ed8" : i === step ? "#2563eb" : "#e5e7eb", color: i <= step ? "#fff" : "#9ca3af", boxShadow: i === step ? "0 0 0 4px #dbeafe" : "none" }}>
                 {i < step ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ) : i + 1}
               </div>
@@ -315,10 +392,10 @@ Devolvé SOLO un JSON válido sin texto adicional:
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
               <label style={s.label}>Transmisión</label>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
-                {["Manual","Automático"].map((opt) => (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {["Manual", "Automático"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("transmission", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.transmission===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.transmission===opt ? "#2563eb" : "#fff", color: vehicleForm.transmission===opt ? "#fff" : "#374151" }}>
+                    style={{ padding: "7px 14px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm.transmission === opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.transmission === opt ? "#2563eb" : "#fff", color: vehicleForm.transmission === opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
@@ -326,10 +403,10 @@ Devolvé SOLO un JSON válido sin texto adicional:
             </div>
             <div style={s.field}>
               <label style={s.label}>Combustible</label>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
-                {["Nafta","Diesel","Eléctrico","GNC"].map((opt) => (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {["Nafta", "Diesel", "Eléctrico", "GNC"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("fuel", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.fuel===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.fuel===opt ? "#2563eb" : "#fff", color: vehicleForm.fuel===opt ? "#fff" : "#374151" }}>
+                    style={{ padding: "7px 14px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm.fuel === opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.fuel === opt ? "#2563eb" : "#fff", color: vehicleForm.fuel === opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
@@ -337,21 +414,21 @@ Devolvé SOLO un JSON válido sin texto adicional:
             </div>
             <div style={s.field}>
               <label style={s.label}>Tracción</label>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
-                {["Delantera","Trasera","4x4","AWD"].map((opt) => (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {["Delantera", "Trasera", "4x4", "AWD"].map((opt) => (
                   <button key={opt} type="button" onClick={() => setV("drivetrain", opt)}
-                    style={{ padding:"7px 14px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm.drivetrain===opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.drivetrain===opt ? "#2563eb" : "#fff", color: vehicleForm.drivetrain===opt ? "#fff" : "#374151" }}>
+                    style={{ padding: "7px 14px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm.drivetrain === opt ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm.drivetrain === opt ? "#2563eb" : "#fff", color: vehicleForm.drivetrain === opt ? "#fff" : "#374151" }}>
                     {opt}
                   </button>
                 ))}
               </div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Asientos</label>
-              <input style={{ ...s.input, appearance:"none", MozAppearance:"textfield" }} type="number" value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)} />
+              <label style={s.label}>Asientos *</label>
+              <input style={{ ...s.input, appearance: "none", MozAppearance: "textfield" }} type="number" value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Color</label>
+              <label style={s.label}>Color *</label>
               <input style={s.input} placeholder="Blanco" value={vehicleForm.color} onChange={(e) => setV("color", e.target.value)} />
             </div>
             <div style={s.field}>
@@ -360,15 +437,15 @@ Devolvé SOLO un JSON válido sin texto adicional:
             </div>
           </div>
 
-          <div style={{ marginBottom:16 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={s.label}>Características</label>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:4 }}>
-              {[["bluetooth","Bluetooth"],["rearCamera","Cámara de reversa"],["parkingSensors","Sensores de estac."]].map(([key, label]) => (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+              {[["bluetooth", "Bluetooth"], ["rearCamera", "Cámara de reversa"], ["parkingSensors", "Sensores de estac."]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
-                  style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:20, fontSize:13, fontWeight:500, cursor:"pointer", transition:"all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
                   {vehicleForm[key]
-                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5"/></svg>}
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5" /></svg>}
                   {label}
                 </button>
               ))}
@@ -386,17 +463,25 @@ Devolvé SOLO un JSON válido sin texto adicional:
 
           <div style={s.specGrid}>
             {[
-              ["doors","Puertas"], ["trunkCapacityLiters","Baúl (litros)"],
-              ["fuelConsumptionLitersPer100Km","Consumo (l/100km)"],
-              ["widthMm","Ancho (mm)"], ["lengthMm","Largo (mm)"], ["weightKg","Peso (kg)"],
+              ["doors", "Puertas"], ["seats", "Asientos"],
+              ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
+              ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
+              ["widthMm", "Ancho (mm)"], ["lengthMm", "Largo (mm)"], ["weightKg", "Peso (kg)"],
             ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
                 <div style={s.specLabel}>{label}</div>
-                <input style={{ width:"100%", border:"none", outline:"none", fontSize:14, fontWeight:600, color:"#111827", background:"transparent" }}
+                <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent" }}
                   placeholder="—" value={vehicleForm[key] || ""} onChange={(e) => setV(key, e.target.value)} />
               </div>
             ))}
           </div>
+
+          {specWarnings.length > 0 && (
+            <div style={{ ...s.warning, marginTop: 12 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠ Revisá estas especificaciones:</div>
+              {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
+            </div>
+          )}
 
           <div style={{ ...s.field, marginTop: 16 }}>
             <label style={s.label}>Observaciones</label>
@@ -417,7 +502,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
         <div style={cardStyle}>
           <div style={s.sectionTitle}>Fotos del vehículo</div>
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-            Subí hasta 6 fotos. La primera será la principal.
+            Subí hasta 6 fotos del auto. La IA verifica que sean fotos de un vehículo.
           </p>
           <div
             style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
@@ -433,10 +518,22 @@ Devolvé SOLO un JSON válido sin texto adicional:
               {photos.map((p, i) => (
                 <div key={i} style={s.photoItem}>
                   <img src={p.url} alt="" style={s.photoImg} />
-                  {i === 0 && (
-                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
-                      Principal
+                  {photoValidations[i] === "loading" && (
+                    <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.5)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ ...s.spinner, width: 10, height: 10 }} />
+                      <span style={{ fontSize: 10, color: "#fff" }}>Validando</span>
                     </div>
+                  )}
+                  {photoValidations[i] === "ok" && (
+                    <div style={{ position: "absolute", top: 6, left: 6, background: "#16a34a", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 600 }}>✓ Auto</div>
+                  )}
+                  {photoValidations[i] === "invalid" && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.15)", border: "2px solid #dc2626", borderRadius: 8, display: "flex", alignItems: "flex-end" }}>
+                      <div style={{ width: "100%", background: "rgba(220,38,38,.9)", color: "#fff", fontSize: 10, padding: "4px 6px", textAlign: "center", fontWeight: 600 }}>No parece un auto — reemplazá</div>
+                    </div>
+                  )}
+                  {i === 0 && photoValidations[i] !== "invalid" && (
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>Principal</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
@@ -473,16 +570,26 @@ Devolvé SOLO un JSON válido sin texto adicional:
 
           <LocationPicker
             value={listingForm.latitude ? { lat: listingForm.latitude, lng: listingForm.longitude, address: listingForm.locationText } : null}
-            onChange={(loc) => { setL("locationText", loc.address); setL("latitude", loc.lat); setL("longitude", loc.lng); }}
+            onChange={(loc) => {
+              const approxLat = Math.round(loc.lat * 100) / 100 + (Math.random() - 0.5) * 0.008;
+              const approxLng = Math.round(loc.lng * 100) / 100 + (Math.random() - 0.5) * 0.008;
+              setL("locationText", loc.address);
+              setL("latitude", approxLat);
+              setL("longitude", approxLng);
+            }}
           />
+          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            La ubicación se muestra como zona aproximada para proteger tu privacidad
+          </div>
 
-          <div style={{ ...s.field, marginTop: 16 }}>
+          <div style={{ ...s.field, marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <label style={{ ...s.label, marginBottom: 0 }}>Precio por día ($ARS) *</label>
               <button
                 style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
                 onClick={fetchPricing} disabled={pricingLoading}>
-                {pricingLoading ? <><span style={{ ...s.spinner, width:11, height:11 }} /> Analizando...</> : "✦ Sugerir precio con IA"}
+                {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "✦ Sugerir precio con IA"}
               </button>
             </div>
 
@@ -504,9 +611,7 @@ Devolvé SOLO un JSON válido sin texto adicional:
                 {pricingSuggestion.justificacion && (
                   <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>
                 )}
-                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>
-                  El precio fue cargado automáticamente. Podés modificarlo abajo.
-                </div>
+                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>El precio fue cargado automáticamente. Podés modificarlo abajo.</div>
               </div>
             )}
 
@@ -532,8 +637,11 @@ Devolvé SOLO un JSON válido sin texto adicional:
           )}
           {[
             ["Vehículo", `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
+            ["Color", vehicleForm.color],
             ["Transmisión", vehicleForm.transmission],
             ["Combustible", vehicleForm.fuel],
+            ...(vehicleForm.horsePower ? [["Potencia", `${vehicleForm.horsePower} HP`]] : []),
+            ...(vehicleForm.engineDisplacementCC ? [["Cilindrada", `${vehicleForm.engineDisplacementCC} cc`]] : []),
             ["Título listing", listingForm.title || "(se usará marca + modelo)"],
             ["Ubicación", listingForm.locationText || "No especificada"],
             ["Precio/día", `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
