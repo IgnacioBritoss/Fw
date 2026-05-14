@@ -106,11 +106,21 @@ export default function PublishCar() {
   const specWarnings = getSpecWarnings(vehicleForm);
 
   const fetchSpecs = async () => {
-    if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
-      setError("Completá marca, modelo y año antes de autocompletar.");
-      return;
-    }
-    setError("");
+  if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
+    setError("Completá marca, modelo y año antes de autocompletar.");
+    return;
+  }
+  setError("");
+
+  const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
+  let data;
+
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try { data = JSON.parse(cached); } catch { data = null; }
+  }
+
+  if (!data) {
     setAiLoading(true);
     try {
       const prompt = `Devolvé SOLO un objeto JSON válido, sin texto adicional, con las especificaciones técnicas del ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}. Formato exacto:
@@ -129,25 +139,29 @@ export default function PublishCar() {
 }
 Si no sabés un dato, usá null.`;
 
-      const response = await groqChat([{ role: "user", content: prompt }], 0.1);
-      const data = extractJSON(response);
-      if (data.puertas) setV("doors", String(data.puertas));
-      if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
-      if (data.peso_kg) setV("weightKg", String(data.peso_kg));
-      if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
-      if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
-      if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
-      if (data.hp) setV("horsePower", String(data.hp));
-      if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
-      if (data.bluetooth === "Sí") setV("bluetooth", true);
-      if (data.camara_reversa === "Sí") setV("rearCamera", true);
-      if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
+      const response = await groqChat([{ role: "user", content: prompt }], 0);
+      data = extractJSON(response);
+      localStorage.setItem(cacheKey, JSON.stringify(data));
     } catch {
       setError("No se pudieron obtener las especificaciones. Completalas manualmente.");
-    } finally {
       setAiLoading(false);
+      return;
     }
-  };
+    setAiLoading(false);
+  }
+
+  if (data.puertas) setV("doors", String(data.puertas));
+  if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
+  if (data.peso_kg) setV("weightKg", String(data.peso_kg));
+  if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
+  if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
+  if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
+  if (data.hp) setV("horsePower", String(data.hp));
+  if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
+  if (data.bluetooth === "Sí") setV("bluetooth", true);
+  if (data.camara_reversa === "Sí") setV("rearCamera", true);
+  if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
+};
 
   const fetchPricing = async () => {
     setPricingLoading(true);
