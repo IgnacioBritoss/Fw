@@ -64,17 +64,20 @@ export function AuthProvider({ children }) {
   }
 };
 
-  const loginWithGoogleToken = async (token) => {
-    try {
-      localStorage.setItem("fw_user", JSON.stringify({ accessToken: token }));
-      const userData = await getMe();
-      saveUser({ ...userData, accessToken: token });
-      return { success: true };
-    } catch (err) {
-      localStorage.removeItem("fw_user");
-      return { success: false, error: err.message || "Error al iniciar sesión con Google." };
-    }
-  };
+const loginWithGoogleToken = async (token) => {
+  try {
+    localStorage.setItem("fw_user", JSON.stringify({ accessToken: token }));
+    const userData = await getMe();
+    const name = userData.displayName ||
+      `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+      userData.email;
+    saveUser({ ...userData, name, accessToken: token });
+    return { success: true };
+  } catch (err) {
+    localStorage.removeItem("fw_user");
+    return { success: false, error: err.message || "Error al iniciar sesión con Google." };
+  }
+};
 
   const verifyEmail = async (code) => {
     try {
@@ -115,9 +118,12 @@ export function AuthProvider({ children }) {
   };
 
   const refreshUser = async () => {
-    try {
-      const fresh = await getMe();
-      saveUser({ ...fresh, accessToken: user?.accessToken });
+  try {
+    const fresh = await getMe();
+    const name = fresh.displayName ||
+      `${fresh.firstName || ""} ${fresh.lastName || ""}`.trim() ||
+      fresh.email;
+    saveUser({ ...fresh, name, accessToken: user?.accessToken });
     } catch { logout(); }
   };
 
