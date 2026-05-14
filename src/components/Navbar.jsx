@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { requestEmailChange, confirmEmailChange } from "../services/api";
+import { requestEmailChange, confirmEmailChange, updateMe } from "../services/api";
 
 const Logo = () => (
   <Link to="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
@@ -57,19 +57,32 @@ function ProfileModal({ onClose }) {
     setError("");
   };
 
-  const saveName = () => {
-    if (!nameVal.trim()) { setError("Ingresá un nombre."); return; }
-    saveToStorage({ name: nameVal });
+  const saveName = async () => {
+  if (!nameVal.trim()) { setError("Ingresá un nombre."); return; }
+  const parts = nameVal.trim().split(" ");
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(" ") || "-";
+  try {
+    await updateMe({ firstName, lastName, displayName: nameVal.trim() });
+    saveToStorage({ name: nameVal.trim() });
     setSuccess("Nombre actualizado.");
     setEditing(null);
-  };
+  } catch (err) {
+    setError(err.message || "Error al guardar el nombre.");
+  }
+};
 
-  const savePhone = () => {
-    if (phoneVal.length > 0 && phoneVal.length < 8) { setError("Número inválido."); return; }
+  const savePhone = async () => {
+  if (phoneVal.length > 0 && phoneVal.length < 6) { setError("Número inválido."); return; }
+  try {
+    await updateMe({ phone: phoneVal || undefined });
     saveToStorage({ phone: phoneVal });
     setSuccess("Teléfono actualizado.");
     setEditing(null);
-  };
+  } catch (err) {
+    setError(err.message || "Error al guardar el teléfono.");
+  }
+};
 
   const sendEmailCode = async () => {
     if (!emailVal.includes("@")) { setError("Ingresá un email válido."); return; }
