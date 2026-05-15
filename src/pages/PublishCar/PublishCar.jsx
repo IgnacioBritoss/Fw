@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -62,8 +62,10 @@ function getSpecWarnings(form) {
   ];
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
-    .map(([, , , label, , ], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
+    .map(([, , , label, ,], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
 }
+
+const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
 const STEPS = ["Vehículo", "Fotos", "Listing", "Confirmar"];
 const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
@@ -103,27 +105,39 @@ export default function PublishCar() {
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
   const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));
 
+  const prevLocationRef = useRef("");
+
+  useEffect(() => {
+    const prev = prevLocationRef.current;
+    const curr = listingForm.locationText;
+    if (pricingSuggestion && normalizeLoc(curr) !== normalizeLoc(prev)) {
+      setPricingSuggestion(null);
+      setL("pricePerDay", "");
+    }
+    prevLocationRef.current = curr;
+  }, [listingForm.locationText]);
+
   const specWarnings = getSpecWarnings(vehicleForm);
 
   const fetchSpecs = async () => {
-  if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
-    setError("Completá marca, modelo y año antes de autocompletar.");
-    return;
-  }
-  setError("");
+    if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
+      setError("Completá marca, modelo y año antes de autocompletar.");
+      return;
+    }
+    setError("");
 
-  const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
-  let data;
+    const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
+    let data;
 
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    try { data = JSON.parse(cached); } catch { data = null; }
-  }
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try { data = JSON.parse(cached); } catch { data = null; }
+    }
 
-  if (!data) {
-    setAiLoading(true);
-    try {
-      const prompt = `Devolvé SOLO un objeto JSON válido, sin texto adicional, con las especificaciones técnicas del ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}. Formato exacto:
+    if (!data) {
+      setAiLoading(true);
+      try {
+        const prompt = `Devolvé SOLO un objeto JSON válido, sin texto adicional, con las especificaciones técnicas del ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}. Formato exacto:
 {
   "puertas": número,
   "baul_litros": número,
@@ -139,47 +153,47 @@ export default function PublishCar() {
 }
 Si no sabés un dato, usá null.`;
 
-      const response = await groqChat([{ role: "user", content: prompt }], 0);
-      data = extractJSON(response);
-      localStorage.setItem(cacheKey, JSON.stringify(data));
-    } catch {
-      setError("No se pudieron obtener las especificaciones. Completalas manualmente.");
+        const response = await groqChat([{ role: "user", content: prompt }], 0);
+        data = extractJSON(response);
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch {
+        setError("No se pudieron obtener las especificaciones. Completalas manualmente.");
+        setAiLoading(false);
+        return;
+      }
       setAiLoading(false);
-      return;
     }
-    setAiLoading(false);
-  }
 
-  if (data.puertas) setV("doors", String(data.puertas));
-  if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
-  if (data.peso_kg) setV("weightKg", String(data.peso_kg));
-  if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
-  if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
-  if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
-  if (data.hp) setV("horsePower", String(data.hp));
-  if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
-  if (data.bluetooth === "Sí") setV("bluetooth", true);
-  if (data.camara_reversa === "Sí") setV("rearCamera", true);
-  if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
-};
+    if (data.puertas) setV("doors", String(data.puertas));
+    if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
+    if (data.peso_kg) setV("weightKg", String(data.peso_kg));
+    if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
+    if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
+    if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
+    if (data.hp) setV("horsePower", String(data.hp));
+    if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
+    if (data.bluetooth === "Sí") setV("bluetooth", true);
+    if (data.camara_reversa === "Sí") setV("rearCamera", true);
+    if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
+  };
 
   const fetchPricing = async () => {
-  setPricingLoading(true);
-  setPricingSuggestion(null);
-  setError("");
+    setPricingLoading(true);
+    setPricingSuggestion(null);
+    setError("");
 
-  const location = listingForm.locationText || "Argentina";
-  const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.transmission}_${vehicleForm.fuel}`;
+    const location = listingForm.locationText || "Argentina";
+    const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
 
-  let data;
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    try { data = JSON.parse(cached); } catch { data = null; }
-  }
+    let data;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try { data = JSON.parse(cached); } catch { data = null; }
+    }
 
-  if (!data) {
-    try {
-      const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina en 2025.
+    if (!data) {
+      try {
+        const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina en 2025.
 Los precios de alquiler diario en Argentina rondan entre $30.000 y $150.000 ARS por día dependiendo del vehículo.
 Un auto compacto cuesta alrededor de $35.000-$50.000 ARS/día. Un SUV o pickup $60.000-$100.000 ARS/día. Autos premium $100.000-$150.000 ARS/día.
 
@@ -195,25 +209,25 @@ Devolvé SOLO un JSON válido sin texto adicional:
 
 Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
 
-      const response = await groqChat([{ role: "user", content: prompt }], 0);
-      data = extractJSON(response);
+        const response = await groqChat([{ role: "user", content: prompt }], 0);
+        data = extractJSON(response);
 
-      if (!data.precio_recomendado || data.precio_recomendado < 5000) {
-        throw new Error("Precio inválido recibido");
+        if (!data.precio_recomendado || data.precio_recomendado < 5000) {
+          throw new Error("Precio inválido recibido");
+        }
+
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch {
+        setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
+        setPricingLoading(false);
+        return;
       }
-
-      localStorage.setItem(cacheKey, JSON.stringify(data));
-    } catch {
-      setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
-      setPricingLoading(false);
-      return;
     }
-  }
 
-  setPricingSuggestion(data);
-  if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
-  setPricingLoading(false);
-};
+    setPricingSuggestion(data);
+    if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
+    setPricingLoading(false);
+  };
 
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
@@ -226,13 +240,13 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
         setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
         groqVision(ev.target.result)
-      .then(isVehicle =>
-     setPhotoValidations(v => ({
-      ...v,
-      [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
-     }))
-    )
-  .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
+          .then(isVehicle =>
+            setPhotoValidations(v => ({
+              ...v,
+              [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
+            }))
+          )
+          .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
       };
       reader.readAsDataURL(file);
     });
