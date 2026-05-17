@@ -4,8 +4,23 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing, createMediaAsset } from "../../services/api";
-import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
+import { groqChat, extractJSON, groqVision } from "../../services/groq";
+
+const PRESET_COLORS = [
+  { name: "Blanco", hex: "#F5F5F5" },
+  { name: "Negro", hex: "#1a1a1a" },
+  { name: "Gris", hex: "#808080" },
+  { name: "Plata", hex: "#C0C0C0" },
+  { name: "Rojo", hex: "#CC2222" },
+  { name: "Azul", hex: "#1B4FA0" },
+  { name: "Marino", hex: "#0a1f5c" },
+  { name: "Verde", hex: "#2D7A2D" },
+  { name: "Naranja", hex: "#E87722" },
+  { name: "Bordo", hex: "#6B2737" },
+  { name: "Beige", hex: "#D4B896" },
+  { name: "Amarillo", hex: "#EAC300" },
+];
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
@@ -49,6 +64,14 @@ const s = {
   aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
 };
 
+function validateArgentinePlate(plate) {
+  if (!plate) return true;
+  const clean = plate.replace(/[\s\-\.]/g, "").toUpperCase();
+  const oldFormat = /^[A-Z]{3}[0-9]{3}$/.test(clean);
+  const mercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/.test(clean);
+  return oldFormat || mercosur;
+}
+
 function getSpecWarnings(form) {
   const checks = [
     ["doors", 2, 7, "Puertas"],
@@ -64,14 +87,6 @@ function getSpecWarnings(form) {
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
     .map(([, , , label, ,], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
-}
-
-function validateArgentinePlate(plate) {
-  if (!plate) return true;
-  const clean = plate.replace(/[\s\-\.]/g, "").toUpperCase();
-  const oldFormat = /^[A-Z]{3}[0-9]{3}$/.test(clean);
-  const mercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/.test(clean);
-  return oldFormat || mercosur;
 }
 
 const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
@@ -134,15 +149,10 @@ export default function PublishCar() {
       return;
     }
     setError("");
-
     const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
     let data;
-
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try { data = JSON.parse(cached); } catch { data = null; }
-    }
-
+    if (cached) { try { data = JSON.parse(cached); } catch { data = null; } }
     if (!data) {
       setAiLoading(true);
       try {
@@ -161,7 +171,6 @@ export default function PublishCar() {
   "sensor_estacionamiento": "Sí" o "No"
 }
 Si no sabés un dato, usá null.`;
-
         const response = await groqChat([{ role: "user", content: prompt }], 0);
         data = extractJSON(response);
         localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -172,7 +181,6 @@ Si no sabés un dato, usá null.`;
       }
       setAiLoading(false);
     }
-
     if (data.puertas) setV("doors", String(data.puertas));
     if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
     if (data.peso_kg) setV("weightKg", String(data.peso_kg));
@@ -190,16 +198,11 @@ Si no sabés un dato, usá null.`;
     setPricingLoading(true);
     setPricingSuggestion(null);
     setError("");
-
     const location = listingForm.locationText || "Argentina";
     const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
-
     let data;
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try { data = JSON.parse(cached); } catch { data = null; }
-    }
-
+    if (cached) { try { data = JSON.parse(cached); } catch { data = null; } }
     if (!data) {
       try {
         const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina en 2025.
@@ -217,14 +220,9 @@ Devolvé SOLO un JSON válido sin texto adicional:
 }
 
 Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
-
         const response = await groqChat([{ role: "user", content: prompt }], 0);
         data = extractJSON(response);
-
-        if (!data.precio_recomendado || data.precio_recomendado < 5000) {
-          throw new Error("Precio inválido recibido");
-        }
-
+        if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error("Precio inválido");
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
         setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
@@ -232,7 +230,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         return;
       }
     }
-
     setPricingSuggestion(data);
     if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
     setPricingLoading(false);
@@ -249,12 +246,10 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
         setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
         groqVision(ev.target.result)
-          .then(isVehicle =>
-            setPhotoValidations(v => ({
-              ...v,
-              [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
-            }))
-          )
+          .then(isVehicle => setPhotoValidations(v => ({
+            ...v,
+            [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
+          })))
           .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
       };
       reader.readAsDataURL(file);
@@ -280,7 +275,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         setError("Completá marca, modelo y año."); return false;
       }
       if (!vehicleForm.color) {
-        setError("Indicá el color del vehículo."); return false;
+        setError("Seleccioná el color del vehículo."); return false;
       }
       if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) {
         setError("Ingresá la cantidad de asientos."); return false;
@@ -353,22 +348,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
       const listing = await createListing(listingPayload);
 
-      // Subir fotos a Cloudinary y registrar en backend
-      let photoUrls = [];
+      let photoUrls = photos.map(p => p.url);
       try {
-        photoUrls = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
+        const uploaded = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
+        photoUrls = uploaded;
         await Promise.all(
           photoUrls.map(url =>
-            createMediaAsset({
-              entityType: "vehicle",
-              entityId: vehicle.id,
-              kind: "VEHICLE_PHOTO",
-              url,
-            })
+            createMediaAsset({ entityType: "vehicle", entityId: vehicle.id, kind: "VEHICLE_PHOTO", url })
           )
         );
       } catch {
-        photoUrls = photos.map(p => p.url);
+        // fallback: urls base64 localmente
       }
 
       const savedCar = {
@@ -411,6 +401,10 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   };
 
   const cardStyle = isMobile ? s.cardMobile : s.card;
+
+  const colorHex = vehicleForm.color?.startsWith("#")
+    ? vehicleForm.color
+    : PRESET_COLORS.find(c => c.name === vehicleForm.color)?.hex;
 
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
@@ -529,23 +523,67 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 onBlur={(e) => { const v = parseInt(e.target.value); if (isNaN(v) || v < 1) setV("seats", ""); }}
               />
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Color *</label>
-              <input style={s.input} placeholder="Blanco" value={vehicleForm.color} onChange={(e) => setV("color", e.target.value)} />
+          </div>
+
+          {/* ── COLOR PICKER ── */}
+          <div style={s.field}>
+            <label style={s.label}>Color *</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+              {PRESET_COLORS.map(({ name, hex }) => {
+                const sel = vehicleForm.color === name;
+                return (
+                  <button key={name} type="button" title={name} onClick={() => setV("color", name)}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
+                    <div style={{
+                      width: 30, height: 30, borderRadius: "50%", background: hex,
+                      border: sel ? "3px solid #2563eb" : "2px solid #d1d5db",
+                      boxShadow: sel ? "0 0 0 2px #bfdbfe" : "inset 0 0 0 1px rgba(0,0,0,.08)",
+                      transition: "all .15s",
+                    }} />
+                    <span style={{ fontSize: 10, color: sel ? "#2563eb" : "#6b7280", fontWeight: sel ? 700 : 400 }}>{name}</span>
+                  </button>
+                );
+              })}
+              <button type="button" title="Otro color"
+                onClick={() => document.getElementById("fw-color-picker").click()}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: "50%",
+                  background: vehicleForm.color?.startsWith("#")
+                    ? vehicleForm.color
+                    : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)",
+                  border: vehicleForm.color?.startsWith("#") ? "3px solid #2563eb" : "2px solid #d1d5db",
+                  boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none",
+                  transition: "all .15s",
+                }} />
+                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "#2563eb" : "#6b7280", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>
+                  Otro
+                </span>
+              </button>
+              <input id="fw-color-picker" type="color" style={{ display: "none" }}
+                value={vehicleForm.color?.startsWith("#") ? vehicleForm.color : "#ffffff"}
+                onChange={(e) => setV("color", e.target.value)} />
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Patente</label>
-              <input
-                style={s.input}
-                placeholder="AB123CD"
-                value={vehicleForm.plate}
-                onChange={(e) => setV("plate", e.target.value.toUpperCase())}
-                onBlur={(e) => {
-                  const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase();
-                  setV("plate", clean);
-                }}
-              />
-            </div>
+            {vehicleForm.color && (
+              <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db", flexShrink: 0 }} />
+                <span>Color: <strong style={{ color: "#111827" }}>{vehicleForm.color}</strong></span>
+              </div>
+            )}
+          </div>
+
+          <div style={s.field}>
+            <label style={s.label}>Patente</label>
+            <input
+              style={s.input}
+              placeholder="AB123CD"
+              value={vehicleForm.plate}
+              onChange={(e) => setV("plate", e.target.value.toUpperCase())}
+              onBlur={(e) => {
+                const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase();
+                setV("plate", clean);
+              }}
+            />
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -587,7 +625,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ))}
           </div>
 
-                    {specWarnings.length > 0 && (
+          {specWarnings.length > 0 && (
             <div style={{ ...s.warning, marginTop: 12 }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠ Revisá estas especificaciones:</div>
               {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
@@ -667,7 +705,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {step === 2 && (
         <div style={cardStyle}>
           <div style={s.sectionTitle}>Datos del listing</div>
-
           <div style={s.field}>
             <label style={s.label}>Título del anuncio *</label>
             <input style={s.input}
@@ -675,7 +712,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               value={listingForm.title}
               onChange={(e) => setL("title", e.target.value)} />
           </div>
-
           <div style={s.field}>
             <label style={s.label}>Descripción *</label>
             <textarea style={{ ...s.input, height: 90, resize: "none" }}
@@ -683,7 +719,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               value={listingForm.description}
               onChange={(e) => setL("description", e.target.value)} />
           </div>
-
           <LocationPicker
             value={listingForm.latitude ? { lat: listingForm.latitude, lng: listingForm.longitude, address: listingForm.locationText } : null}
             onChange={(loc) => {
@@ -698,7 +733,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             La ubicación se muestra como zona aproximada para proteger tu privacidad
           </div>
-
           <div style={{ ...s.field, marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <label style={{ ...s.label, marginBottom: 0 }}>Precio por día ($ARS) *</label>
@@ -708,34 +742,25 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "✦ Sugerir precio con IA"}
               </button>
             </div>
-
             {pricingSuggestion && (
               <div style={s.aiBox}>
                 <div style={s.aiBoxTitle}>✦ Sugerencia de precio</div>
                 <div style={s.aiBoxRow}>
                   <span style={s.aiBoxLabel}>Rango sugerido</span>
-                  <span style={s.aiBoxValue}>
-                    ${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS/día
-                  </span>
+                  <span style={s.aiBoxValue}>${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS/día</span>
                 </div>
                 <div style={s.aiBoxRow}>
                   <span style={s.aiBoxLabel}>Precio recomendado</span>
-                  <span style={{ ...s.aiBoxValue, fontSize: 16 }}>
-                    ${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS/día
-                  </span>
+                  <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS/día</span>
                 </div>
-                {pricingSuggestion.justificacion && (
-                  <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>
-                )}
+                {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
                 <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>El precio fue cargado automáticamente. Podés modificarlo abajo.</div>
               </div>
             )}
-
             <input style={s.input} type="number" placeholder="45000"
               value={listingForm.pricePerDay}
               onChange={(e) => setL("pricePerDay", e.target.value)} />
           </div>
-
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>Atrás</button>
             <button style={s.btn} onClick={next}>Siguiente</button>
@@ -765,9 +790,14 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ["Precio/día", `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
             ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
           ].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid #f3f4f6", fontSize: isMobile ? 13 : 14 }}>
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #f3f4f6", fontSize: isMobile ? 13 : 14 }}>
               <span style={{ color: "#6b7280" }}>{k}</span>
-              <span style={{ fontWeight: 500 }}>{v}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {k === "Color" && colorHex && (
+                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db" }} />
+                )}
+                <span style={{ fontWeight: 500 }}>{v}</span>
+              </div>
             </div>
           ))}
           <div style={{ marginTop: 16, padding: 12, background: "#eff6ff", borderRadius: 8, fontSize: 13, color: "#2563eb" }}>
