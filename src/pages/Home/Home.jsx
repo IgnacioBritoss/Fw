@@ -57,19 +57,20 @@ export default function Home() {
     const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
 
     getListings()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const normalized = data.map(normalizeListing);
-          const apiIds = new Set(normalized.map(c => c.id));
-          const extra = myCars.filter(c => !apiIds.has(c.id));
-          setListings([...normalized, ...extra]);
-        } else {
-          setListings(prev => {
-            const existingIds = new Set(prev.map(c => c.id));
-            return [...prev, ...myCars.filter(c => !existingIds.has(c.id))];
-          });
-        }
-      })
+  .then((data) => {
+    const items = Array.isArray(data) ? data : (data?.data ?? []);
+    if (items.length > 0) {
+      const normalized = items.map(normalizeListing);
+      const apiIds = new Set(normalized.map(c => c.id));
+      const extra = myCars.filter(c => !apiIds.has(c.id));
+      setListings([...normalized, ...extra]);
+    } else {
+      setListings(prev => {
+        const existingIds = new Set(prev.map(c => c.id));
+        return [...prev, ...myCars.filter(c => !existingIds.has(c.id))];
+      });
+    }
+  })
       .catch(() => {
         setListings(prev => {
           const existingIds = new Set(prev.map(c => c.id));
