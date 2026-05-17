@@ -17,6 +17,11 @@ async function apiFetch(path, options = {}) {
   };
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("fw_user");
+      window.location.href = "/login";
+      return;
+    }
     let errorMessage = `Error ${res.status}`;
     try { const data = await res.json(); errorMessage = data.message || errorMessage; } catch { }
     const err = new Error(errorMessage);
@@ -96,4 +101,9 @@ export async function updateListing(id, data) {
 }
 export async function deleteListing(id) {
   return apiFetch(`/listings/${id}`, { method: "DELETE" });
+}
+
+// Media
+export async function createMediaAsset(data) {
+  return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
 }

@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
-import { createVehicle, createListing } from "../../services/api";
+import { createVehicle, createListing, createMediaAsset } from "../../services/api";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
+import { uploadImageToCloudinary } from "../../services/cloudinary";
 
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "40px 24px" },
@@ -63,6 +64,14 @@ function getSpecWarnings(form) {
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
     .map(([, , , label, ,], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
+}
+
+function validateArgentinePlate(plate) {
+  if (!plate) return true;
+  const clean = plate.replace(/[\s\-\.]/g, "").toUpperCase();
+  const oldFormat = /^[A-Z]{3}[0-9]{3}$/.test(clean);
+  const mercosur = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/.test(clean);
+  return oldFormat || mercosur;
 }
 
 const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
@@ -266,22 +275,25 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   };
 
   const validateStep = () => {
-  if (step === 0) {
-    if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
-      setError("Completá marca, modelo y año."); return false;
+    if (step === 0) {
+      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
+        setError("Completá marca, modelo y año."); return false;
+      }
+      if (!vehicleForm.color) {
+        setError("Indicá el color del vehículo."); return false;
+      }
+      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) {
+        setError("Ingresá la cantidad de asientos."); return false;
+      }
+      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) {
+        setError("Patente inválida. Formato: ABC123 (viejo) o AB123CD (Mercosur)."); return false;
+      }
+      if (specWarnings.length > 0) {
+        setError("Corregí las especificaciones fuera de rango antes de continuar."); return false;
+      }
     }
-    if (!vehicleForm.color) {
-      setError("Indicá el color del vehículo."); return false;
-    }
-    if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) {
-      setError("Ingresá la cantidad de asientos."); return false;
-    }
-    if (specWarnings.length > 0) {
-      setError("Corregí las especificaciones fuera de rango antes de continuar."); return false;
-    }
-  }
-  if (step === 1) {
-    if (photos.length < 4) { setError("Subí al menos 4 fotos del vehículo."); return false; }
+    if (step === 1) {
+      if (photos.length < 4) { setError("Subí al menos 4 fotos del vehículo."); return false; }
       const hasLoading = photos.some((_, i) => photoValidations[i] === "loading");
       if (hasLoading) { setError("Esperá a que terminen de validarse las fotos."); return false; }
       const hasInvalid = photos.some((_, i) => photoValidations[i] === "invalid");
@@ -341,6 +353,24 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
       const listing = await createListing(listingPayload);
 
+      // Subir fotos a Cloudinary y registrar en backend
+      let photoUrls = [];
+      try {
+        photoUrls = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
+        await Promise.all(
+          photoUrls.map(url =>
+            createMediaAsset({
+              entityType: "vehicle",
+              entityId: vehicle.id,
+              kind: "VEHICLE_PHOTO",
+              url,
+            })
+          )
+        );
+      } catch {
+        photoUrls = photos.map(p => p.url);
+      }
+
       const savedCar = {
         id: listing?.id || `local_${Date.now()}`,
         brand: vehicleForm.brand,
@@ -356,7 +386,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         seats: Number(vehicleForm.seats),
         doors: Number(vehicleForm.doors),
         color: vehicleForm.color,
-        photos: photos.map(p => p.url),
+        photos: photoUrls,
         available: true,
         owner_id: user?.id,
         description: listingForm.description,
@@ -490,22 +520,31 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               </div>
             </div>
             <div style={s.field}>
-  <label style={s.label}>Asientos *</label>
-  <input
-    style={{ ...s.input, appearance: "none", MozAppearance: "textfield" }}
-    type="number" min="1" max="12"
-    value={vehicleForm.seats}
-    onChange={(e) => setV("seats", e.target.value)}
-    onBlur={(e) => { const v = parseInt(e.target.value); if (isNaN(v) || v < 1) setV("seats", ""); }}
-  />
-</div>
+              <label style={s.label}>Asientos *</label>
+              <input
+                style={{ ...s.input, appearance: "none", MozAppearance: "textfield" }}
+                type="number" min="1" max="12"
+                value={vehicleForm.seats}
+                onChange={(e) => setV("seats", e.target.value)}
+                onBlur={(e) => { const v = parseInt(e.target.value); if (isNaN(v) || v < 1) setV("seats", ""); }}
+              />
+            </div>
             <div style={s.field}>
               <label style={s.label}>Color *</label>
               <input style={s.input} placeholder="Blanco" value={vehicleForm.color} onChange={(e) => setV("color", e.target.value)} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Patente</label>
-              <input style={s.input} placeholder="AB123CD" value={vehicleForm.plate} onChange={(e) => setV("plate", e.target.value)} />
+              <input
+                style={s.input}
+                placeholder="AB123CD"
+                value={vehicleForm.plate}
+                onChange={(e) => setV("plate", e.target.value.toUpperCase())}
+                onBlur={(e) => {
+                  const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase();
+                  setV("plate", clean);
+                }}
+              />
             </div>
           </div>
 
@@ -534,12 +573,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.specGrid}>
-  {[
-    ["doors", "Puertas"],
-    ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
-    ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
-    ["widthMm", "Ancho (mm)"], ["lengthMm", "Largo (mm)"], ["weightKg", "Peso (kg)"],
-  ].map(([key, label]) => (
+            {[
+              ["doors", "Puertas"],
+              ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
+              ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
+              ["widthMm", "Ancho (mm)"], ["lengthMm", "Largo (mm)"], ["weightKg", "Peso (kg)"],
+            ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
                 <div style={s.specLabel}>{label}</div>
                 <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent" }}
@@ -548,7 +587,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ))}
           </div>
 
-          {specWarnings.length > 0 && (
+                    {specWarnings.length > 0 && (
             <div style={{ ...s.warning, marginTop: 12 }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠ Revisá estas especificaciones:</div>
               {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
@@ -574,7 +613,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         <div style={cardStyle}>
           <div style={s.sectionTitle}>Fotos del vehículo</div>
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-          Subí entre 4 y 6 fotos del auto. La IA verifica que sean fotos de un vehículo. Se requieren mínimo 4.
+            Subí entre 4 y 6 fotos del auto. La IA verifica que sean fotos de un vehículo. Se requieren mínimo 4.
           </p>
           <div
             style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
@@ -583,7 +622,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
             <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Hacé clic para subir fotos</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — máximo 6 fotos</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
           {photos.length > 0 && (
             <div style={s.photoGrid}>
@@ -610,6 +649,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
               ))}
+            </div>
+          )}
+          {photos.length < 4 && photos.length > 0 && (
+            <div style={{ marginTop: 10, fontSize: 12, color: "#92400e", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
+              Necesitás {4 - photos.length} foto{4 - photos.length !== 1 ? "s" : ""} más para continuar.
             </div>
           )}
           <div style={s.btnRow}>
@@ -712,6 +756,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ["Color", vehicleForm.color],
             ["Transmisión", vehicleForm.transmission],
             ["Combustible", vehicleForm.fuel],
+            ["Asientos", vehicleForm.seats],
+            ...(vehicleForm.plate ? [["Patente", vehicleForm.plate]] : []),
             ...(vehicleForm.horsePower ? [["Potencia", `${vehicleForm.horsePower} HP`]] : []),
             ...(vehicleForm.engineDisplacementCC ? [["Cilindrada", `${vehicleForm.engineDisplacementCC} cc`]] : []),
             ["Título listing", listingForm.title || "(se usará marca + modelo)"],
