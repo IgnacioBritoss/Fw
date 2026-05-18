@@ -23,7 +23,7 @@ async function apiFetch(path, options = {}) {
       return;
     }
     let errorMessage = `Error ${res.status}`;
-    try { const data = await res.json(); errorMessage = data.message || errorMessage; } catch { }
+    try { const data = await res.json(); errorMessage = data.message || errorMessage; } catch {}
     const err = new Error(errorMessage);
     err.status = res.status;
     throw err;
@@ -93,7 +93,10 @@ export async function deleteVehicle(id) {
 export async function createListing(data) {
   return apiFetch("/listings", { method: "POST", body: JSON.stringify(data) });
 }
-export async function getListings() { return apiFetch("/listings"); }
+export async function getListings(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return apiFetch(`/listings${qs ? `?${qs}` : ""}`);
+}
 export async function getMyListings() { return apiFetch("/listings/me"); }
 export async function getListingById(id) { return apiFetch(`/listings/${id}`); }
 export async function updateListing(id, data) {
@@ -106,4 +109,45 @@ export async function deleteListing(id) {
 // Media
 export async function createMediaAsset(data) {
   return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
+}
+
+// Conversations
+export async function startConversation(listingId) {
+  return apiFetch("/conversations", {
+    method: "POST",
+    body: JSON.stringify({ listingId }),
+  });
+}
+export async function getMyConversations() { return apiFetch("/conversations/me"); }
+export async function getConversation(id) { return apiFetch(`/conversations/${id}`); }
+export async function getConversationMessages(id) {
+  return apiFetch(`/conversations/${id}/messages`);
+}
+export async function sendMessage(id, data) {
+  return apiFetch(`/conversations/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+export async function markConversationRead(id) {
+  return apiFetch(`/conversations/${id}/read`, { method: "PATCH" });
+}
+
+// Admin
+export async function adminGetListings() { return apiFetch("/admin/listings"); }
+export async function adminDeleteListing(id) {
+  return apiFetch(`/admin/listings/${id}`, { method: "DELETE" });
+}
+export async function adminGetUsers() { return apiFetch("/admin/users"); }
+export async function adminUpdateUserStatus(id, status) {
+  return apiFetch(`/admin/users/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+export async function adminUpdateUserRole(id, role) {
+  return apiFetch(`/admin/users/${id}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
 }
