@@ -342,10 +342,12 @@ export default function Chat() {
           style={{ display: "none" }}
           onChange={handleFileSelect} />
         <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-          title="Adjuntar"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          📎
-        </button>
+  title="Adjuntar"
+  style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+  </svg>
+</button>
         <input
           ref={inputRef}
           value={text}
@@ -356,9 +358,14 @@ export default function Chat() {
           style={{ flex: 1, padding: isMobile ? "10px 14px" : "10px 16px", borderRadius: 24, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13, outline: "none", color: "#111827" }}
         />
         <button onClick={startRecording} title="Grabar audio"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          🎤
-        </button>
+  style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+    <line x1="12" y1="19" x2="12" y2="23"/>
+    <line x1="8" y1="23" x2="16" y2="23"/>
+  </svg>
+</button>
         <button onClick={handleSend} disabled={sending || !text.trim()}
           style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "#2563eb" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
