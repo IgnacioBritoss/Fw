@@ -26,3 +26,18 @@ export async function uploadAudioToCloudinary(audioBlob) {
   const data = await res.json();
   return data.secure_url;
 }
+
+export async function uploadFileToCloudinary(file) {
+  const isImage = file.type.startsWith("image/");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+  const endpoint = isImage ? "image/upload" : "raw/upload";
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}`,
+    { method: "POST", body: formData }
+  );
+  if (!res.ok) throw new Error("Error subiendo archivo a Cloudinary");
+  const data = await res.json();
+  return { url: data.secure_url, isImage, name: file.name };
+}
