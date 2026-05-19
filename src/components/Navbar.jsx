@@ -329,7 +329,7 @@ export default function Navbar() {
         <div style={styles.menuOverlay}>
           <Link to="/" style={styles.linkMobile} onClick={close}>Explorar</Link>
           {user ? (
-            user.role === "admin" ? (
+            user.role === "ADMIN" ? (
               <>
                 <Link to="/admin" style={styles.linkMobile} onClick={close}>Panel Admin</Link>
                 <button style={{...styles.btnMobile, background:"#dc2626", color:"#fff"}} onClick={handleLogout}>Salir</button>
@@ -370,7 +370,7 @@ export default function Navbar() {
         <div style={styles.links}>
           <Link to="/" style={styles.link}>Explorar</Link>
           {user ? (
-            user.role === "admin" ? (
+            user.role === "ADMIN" ? (
               <>
                 <Link to="/admin" style={styles.adminBadge}>Panel Admin</Link>
                 <div style={styles.avatar}>{userInitial(user)}</div>
