@@ -151,3 +151,6 @@ export async function adminUpdateUserRole(id, role) {
     body: JSON.stringify({ role }),
   });
 }
+export async function adminDeleteUser(id) {
+  return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
+}

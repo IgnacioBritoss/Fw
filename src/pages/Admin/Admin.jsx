@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   adminGetListings, adminDeleteListing,
-  adminGetUsers, adminUpdateUserStatus, adminUpdateUserRole,
+  adminGetUsers, adminDeleteUser, adminUpdateUserRole,
 } from "../../services/api";
 
 const s = {
@@ -78,16 +78,16 @@ export default function Admin() {
     }
   };
 
-  const handleSuspendUser = async (id, name) => {
-    if (!confirm(`¿Suspender a "${name}"?`)) return;
-    try {
-      await adminUpdateUserStatus(id, "SUSPENDED");
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "SUSPENDED" } : u));
-      showAlert(`Usuario "${name}" suspendido.`);
-    } catch (err) {
-      showAlert("Error: " + (err.message || ""));
-    }
-  };
+  const handleDeleteUser = async (id, name) => {
+  if (!confirm(`¿Eliminar permanentemente a "${name}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
+  try {
+    await adminDeleteUser(id);
+    setUsers(prev => prev.filter(u => u.id !== id));
+    showAlert(`Usuario "${name}" eliminado permanentemente.`);
+  } catch (err) {
+    showAlert("Error: " + (err.message || ""));
+  }
+};
 
   const handleMakeAdmin = async (id, name) => {
     if (!confirm(`¿Dar rol ADMIN a "${name}"?`)) return;
@@ -203,12 +203,12 @@ export default function Admin() {
               Registrado: {new Date(u.createdAt).toLocaleDateString("es-AR")}
             </div>
             <div style={s.btnRow}>
-              {u.status !== "SUSPENDED" && u.id !== user.id && (
-                <button style={s.btnSuspend}
-                  onClick={() => handleSuspendUser(u.id, `${u.firstName} ${u.lastName}`)}>
-                  Suspender
-                </button>
-              )}
+             {u.id !== user.id && (
+  <button style={s.btnDelete}
+    onClick={() => handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`)}>
+    Eliminar usuario
+  </button>
+)}
               {u.role !== "ADMIN" && (
                 <button style={s.btnAdmin}
                   onClick={() => handleMakeAdmin(u.id, `${u.firstName} ${u.lastName}`)}>
