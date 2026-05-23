@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   adminGetListings, adminDeleteListing,
-  adminGetUsers, adminDeleteUser, adminUpdateUserRole,
+  adminGetUsers, adminDeleteUser,
 } from "../../services/api";
 
 const s = {
@@ -17,13 +17,13 @@ const s = {
   card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
   carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
   btnDelete: { padding: "8px 18px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  btnSuspend: { padding: "8px 18px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  btnAdmin: { padding: "8px 18px", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRow: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
   alertBox: { background: "#eff6ff", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 },
   empty: { textAlign: "center", padding: "40px 0", color: "#9ca3af" },
   accessDenied: { textAlign: "center", padding: "80px 24px" },
   badge: { padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 },
+  detailRow: { display: "flex", gap: 8, fontSize: 12, color: "#374151", marginBottom: 4 },
+  detailLabel: { fontWeight: 700, color: "#9ca3af", minWidth: 120 },
 };
 
 export default function Admin() {
@@ -35,8 +35,8 @@ export default function Admin() {
   const [loadingListings, setLoadingListings] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [alert, setAlert] = useState("");
+  const [expandedUser, setExpandedUser] = useState(null);
 
-  // Fix: role is "ADMIN" (uppercase) from Prisma enum
   if (!user || user.role !== "ADMIN") {
     return (
       <div style={s.accessDenied}>
@@ -67,34 +67,26 @@ export default function Admin() {
     }
   }, [tab]);
 
-  const handleDeleteListing = async (id, label) => {
+  const handleDeleteListing = async (e, id, label) => {
+    e.stopPropagation();
     if (!confirm(`¿Eliminar permanentemente "${label}"? Esta acción no se puede deshacer.`)) return;
     try {
       await adminDeleteListing(id);
       setListings(prev => prev.filter(l => l.id !== id));
-      showAlert(`Publicación "${label}" eliminada de la base de datos.`);
+      showAlert(`Publicación "${label}" eliminada.`);
     } catch (err) {
       showAlert("Error al eliminar: " + (err.message || ""));
     }
   };
 
-  const handleDeleteUser = async (id, name) => {
-  if (!confirm(`¿Eliminar permanentemente a "${name}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
-  try {
-    await adminDeleteUser(id);
-    setUsers(prev => prev.filter(u => u.id !== id));
-    showAlert(`Usuario "${name}" eliminado permanentemente.`);
-  } catch (err) {
-    showAlert("Error: " + (err.message || ""));
-  }
-};
-
-  const handleMakeAdmin = async (id, name) => {
-    if (!confirm(`¿Dar rol ADMIN a "${name}"?`)) return;
+  const handleDeleteUser = async (e, id, name) => {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar permanentemente a "${name}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
     try {
-      await adminUpdateUserRole(id, "ADMIN");
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, role: "ADMIN" } : u));
-      showAlert(`${name} ahora es ADMIN.`);
+      await adminDeleteUser(id);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      if (expandedUser === id) setExpandedUser(null);
+      showAlert(`Usuario "${name}" eliminado permanentemente.`);
     } catch (err) {
       showAlert("Error: " + (err.message || ""));
     }
@@ -105,6 +97,18 @@ export default function Admin() {
     if (status === "SUSPENDED") return { background: "#fef9c3", color: "#854d0e" };
     if (status === "DELETED") return { background: "#fee2e2", color: "#991b1b" };
     return { background: "#f3f4f6", color: "#374151" };
+  };
+
+  const verificationLabel = (v) => {
+    const map = {
+      UNVERIFIED: "Sin verificar",
+      EMAIL_VERIFIED: "Email verificado",
+      PHONE_VERIFIED: "Teléfono verificado",
+      ID_SUBMITTED: "Doc. enviado",
+      VERIFIED: "Verificado",
+      REJECTED: "Rechazado",
+    };
+    return map[v] || v;
   };
 
   return (
@@ -119,17 +123,14 @@ export default function Admin() {
       {alert && <div style={s.alertBox}>{alert}</div>}
 
       <div style={s.tabs}>
-        {[
-          ["listings", "Publicaciones"],
-          ["users", "Usuarios"],
-        ].map(([k, l]) => (
+        {[["listings", "Publicaciones"], ["users", "Usuarios"]].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
             onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
 
-      {/* LISTINGS TAB */}
+      {/* LISTINGS */}
       {tab === "listings" && (
         loadingListings ? (
           <div style={s.empty}>Cargando...</div>
@@ -137,9 +138,7 @@ export default function Admin() {
           <div style={s.empty}>No hay publicaciones.</div>
         ) : listings.map(listing => {
           const v = listing.vehicle || {};
-          const owner = listing.owner || {};
-          const label = `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim();
-          const ownerName = owner.firstName ? `${owner.firstName} ${owner.lastName}` : owner.email || "—";
+          const label = `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim() || listing.title;
           const statusColors = {
             ACTIVE: { background: "#dcfce7", color: "#166534" },
             DRAFT: { background: "#f3f4f6", color: "#374151" },
@@ -147,7 +146,9 @@ export default function Admin() {
             DELETED: { background: "#fee2e2", color: "#991b1b" },
           };
           return (
-            <div key={listing.id} style={{ ...s.card, display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <div key={listing.id}
+              style={{ ...s.card, display: "flex", gap: 16, alignItems: "flex-start", cursor: "pointer" }}
+              onClick={() => navigate(`/cars/${listing.id}`)}>
               <div style={s.carImg}>
                 {listing.photos?.length > 0
                   ? <img src={listing.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -155,18 +156,18 @@ export default function Admin() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{label || listing.title}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{label}</span>
                   <span style={{ ...s.badge, ...(statusColors[listing.status] || {}) }}>{listing.status}</span>
                 </div>
                 <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 2 }}>
                   {listing.locationText} · ${Number(listing.pricePerDay).toLocaleString()}/día
                 </div>
                 <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
-                  Publicado por <strong>{ownerName}</strong> · {new Date(listing.createdAt).toLocaleDateString("es-AR")}
+                  {new Date(listing.createdAt).toLocaleDateString("es-AR")}
                 </div>
                 <div style={s.btnRow}>
                   <button style={s.btnDelete}
-                    onClick={() => handleDeleteListing(listing.id, label || listing.title)}>
+                    onClick={(e) => handleDeleteListing(e, listing.id, label)}>
                     Eliminar permanentemente
                   </button>
                 </div>
@@ -176,48 +177,77 @@ export default function Admin() {
         })
       )}
 
-      {/* USERS TAB */}
+      {/* USERS */}
       {tab === "users" && (
         loadingUsers ? (
           <div style={s.empty}>Cargando...</div>
         ) : users.length === 0 ? (
           <div style={s.empty}>No hay usuarios.</div>
-        ) : users.map(u => (
-          <div key={u.id} style={s.card}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#2563eb", fontSize: 16 }}>
-                {(u.firstName?.[0] || u.email[0]).toUpperCase()}
+        ) : users.map(u => {
+          const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email;
+          const isExpanded = expandedUser === u.id;
+          return (
+            <div key={u.id}
+              style={{ ...s.card, cursor: "pointer" }}
+              onClick={() => setExpandedUser(isExpanded ? null : u.id)}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#2563eb", fontSize: 16, flexShrink: 0 }}>
+                  {(u.firstName?.[0] || u.email[0]).toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
+                    {name}
+                    {u.role === "ADMIN" && (
+                      <span style={{ marginLeft: 8, ...s.badge, background: "#ede9fe", color: "#6d28d9" }}>ADMIN</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>{u.email}</div>
+                </div>
+                <span style={{ ...s.badge, ...statusColor(u.status) }}>{u.status}</span>
+                <span style={{ fontSize: 18, color: "#9ca3af", marginLeft: 4 }}>{isExpanded ? "▲" : "▼"}</span>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
-                  {u.firstName} {u.lastName}
-                  {u.role === "ADMIN" && (
-                    <span style={{ marginLeft: 8, ...s.badge, background: "#ede9fe", color: "#6d28d9" }}>ADMIN</span>
+
+              {isExpanded && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 0", marginBottom: 14 }}>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>ID</span>
+                      <span style={{ fontSize: 11, color: "#6b7280", wordBreak: "break-all" }}>{u.id}</span>
+                    </div>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>Teléfono</span>
+                      <span>{u.phone || "—"}</span>
+                    </div>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>Verificación</span>
+                      <span>{verificationLabel(u.verificationStatus)}</span>
+                    </div>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>Email verificado</span>
+                      <span>{u.emailVerifiedAt ? new Date(u.emailVerifiedAt).toLocaleDateString("es-AR") : "No"}</span>
+                    </div>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>Registrado</span>
+                      <span>{new Date(u.createdAt).toLocaleDateString("es-AR")}</span>
+                    </div>
+                    <div style={s.detailRow}>
+                      <span style={s.detailLabel}>Nombre display</span>
+                      <span>{u.displayName || "—"}</span>
+                    </div>
+                  </div>
+                  {u.id !== user.id && (
+                    <div style={s.btnRow}>
+                      <button style={s.btnDelete}
+                        onClick={(e) => handleDeleteUser(e, u.id, name)}>
+                        Eliminar usuario
+                      </button>
+                    </div>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>{u.email}</div>
-              </div>
-              <span style={{ ...s.badge, ...statusColor(u.status) }}>{u.status}</span>
-            </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
-              Registrado: {new Date(u.createdAt).toLocaleDateString("es-AR")}
-            </div>
-            <div style={s.btnRow}>
-             {u.id !== user.id && (
-  <button style={s.btnDelete}
-    onClick={() => handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`)}>
-    Eliminar usuario
-  </button>
-)}
-              {u.role !== "ADMIN" && (
-                <button style={s.btnAdmin}
-                  onClick={() => handleMakeAdmin(u.id, `${u.firstName} ${u.lastName}`)}>
-                  Hacer admin
-                </button>
               )}
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
