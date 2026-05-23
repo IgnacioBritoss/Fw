@@ -64,6 +64,81 @@ function Avatar({ name, size = 40 }) {
   );
 }
 
+function AudioMsg({ src, isMe }) {
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); setPlaying(false); }
+    else { audioRef.current.play(); setPlaying(true); }
+  };
+
+  const fmt = (s) => {
+    if (!s || isNaN(s)) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const progress = duration > 0 ? current / duration : 0;
+  const bars = [3, 5, 9, 14, 20, 18, 12, 8, 14, 18, 20, 16, 10, 7, 12, 18, 20, 14, 6, 4];
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 190, maxWidth: 220 }}>
+      <audio
+        ref={audioRef}
+        src={src}
+        onTimeUpdate={() => setCurrent(audioRef.current?.currentTime || 0)}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
+        onEnded={() => { setPlaying(false); setCurrent(0); }}
+      />
+      <button onClick={toggle} style={{
+        width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+        background: isMe ? "rgba(255,255,255,0.22)" : "#e9edef",
+        border: "none", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {playing ? (
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={isMe ? "#fff" : "#374151"}>
+            <rect x="5" y="4" width="4" height="16" rx="1" />
+            <rect x="15" y="4" width="4" height="16" rx="1" />
+          </svg>
+        ) : (
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={isMe ? "#fff" : "#374151"}>
+            <polygon points="6 3 20 12 6 21 6 3" />
+          </svg>
+        )}
+      </button>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2, height: 22 }}>
+          {bars.map((h, i) => {
+            const filled = i / bars.length <= progress;
+            return (
+              <div key={i} style={{
+                width: 3, height: h, borderRadius: 2, flexShrink: 0,
+                background: filled
+                  ? (isMe ? "#fff" : "#2563eb")
+                  : (isMe ? "rgba(255,255,255,0.35)" : "#d1d5db"),
+                transition: "background 0.1s",
+              }} />
+            );
+          })}
+        </div>
+        <span style={{
+          fontSize: 10.5,
+          color: isMe ? "rgba(255,255,255,0.7)" : "#8696a0",
+          lineHeight: 1,
+        }}>
+          {fmt(playing ? current : duration)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function Chat() {
   const { user } = useAuth();
   const { isMobile } = useIsMobile();
@@ -239,10 +314,7 @@ export default function Chat() {
     const kind = getMsgKind(msg);
     const isMe = msg.senderId === user?.id;
     if (kind === "audio") {
-      return (
-        <audio controls src={msg.content}
-          style={{ maxWidth: 220, height: 36, display: "block" }} />
-      );
+      return <AudioMsg src={msg.content} isMe={isMe} />;
     }
     if (kind === "image") {
       return (
@@ -436,7 +508,6 @@ export default function Chat() {
           style={{ display: "none" }}
           onChange={handleFileSelect} />
 
-        {/* Izquierda: imagen + archivo */}
         <button
           onClick={() => document.getElementById("fw-img-input")?.click()}
           disabled={uploading}
@@ -465,7 +536,6 @@ export default function Chat() {
           </svg>
         </button>
 
-        {/* Centro: textarea */}
         <div style={{ flex: 1 }}>
           <textarea
             ref={inputRef}
@@ -503,7 +573,6 @@ export default function Chat() {
           />
         </div>
 
-        {/* Derecha: audio + enviar */}
         <button
           onClick={startRecording}
           title="Grabar audio"
@@ -550,7 +619,6 @@ export default function Chat() {
     ? `${v.brand} ${v.model} ${v.year}`
     : activeConv?.listing?.title || "";
 
-  // ── SIDEBAR DE CONVERSACIONES ──
   const convListJSX = (
     <div style={{
       background: "#fff",
@@ -561,7 +629,6 @@ export default function Chat() {
       borderRight: "1px solid #e9edef",
       overflow: "hidden",
     }}>
-      {/* Header sidebar */}
       <div style={{
         padding: "14px 16px",
         background: "#f0f2f5",
@@ -578,7 +645,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Buscador placeholder */}
       <div style={{ padding: "8px 10px", background: "#f0f2f5", borderBottom: "1px solid #e9edef" }}>
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
@@ -592,7 +658,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Lista */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {loading && (
           <div style={{ padding: 24, textAlign: "center", color: "#8696a0", fontSize: 13 }}>
@@ -626,7 +691,7 @@ export default function Chat() {
           const lastMsg = conv.messages?.[0];
           const preview = lastMsg
             ? (lastMsg.type === "AUDIO"
-              ? "Audio"
+              ? "🎵 Audio"
               : lastMsg.content?.length > 45
                 ? lastMsg.content.slice(0, 45) + "…"
                 : lastMsg.content)
@@ -712,13 +777,11 @@ export default function Chat() {
     </div>
   );
 
-  // ── ÁREA DE CHAT ──
   const chatAreaJSX = (
     <div style={{
       flex: 1, display: "flex", flexDirection: "column", minHeight: 0,
       background: "#f1f4f9",
     }}>
-      {/* Header del chat */}
       <div style={{
         padding: isMobile ? "10px 14px" : "10px 16px",
         background: "#fff",
@@ -750,7 +813,6 @@ export default function Chat() {
             {listingLabel}
           </div>
         </div>
-        {/* Acciones header */}
         <div style={{ display: "flex", gap: 4 }}>
           {[
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8696a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
@@ -770,7 +832,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Mensajes */}
       <div
         ref={messagesRef}
         style={{
@@ -803,11 +864,9 @@ export default function Chat() {
           </div>
         )}
         {renderMessages()}
-        {/* Espacio final para que el último mensaje no quede pegado */}
         <div style={{ height: 8 }} />
       </div>
 
-      {/* Input */}
       {renderInput()}
     </div>
   );
