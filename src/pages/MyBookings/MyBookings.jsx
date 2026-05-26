@@ -1,85 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { format, parseISO, isWithinInterval } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { getMyBookings, cancelBooking, acceptBooking, rejectBooking } from "../../services/api";
+
+const STATUS_CONFIG = {
+  REQUESTED:           { label: "Pendiente",           bg: "#fef9c3", color: "#854d0e" },
+  ACCEPTED:            { label: "Aceptada",             bg: "#dbeafe", color: "#1e40af" },
+  REJECTED:            { label: "Rechazada",            bg: "#fef2f2", color: "#b91c1c" },
+  CANCELLED_BY_RENTER: { label: "Cancelada",            bg: "#f3f4f6", color: "#6b7280" },
+  CANCELLED_BY_OWNER:  { label: "Cancelada por dueño",  bg: "#f3f4f6", color: "#6b7280" },
+  READY_FOR_PICKUP:    { label: "Lista para retiro",    bg: "#fef3c7", color: "#92400e" },
+  IN_PROGRESS:         { label: "En curso",             bg: "#dcfce7", color: "#166534" },
+  RETURN_PENDING:      { label: "Devolución pendiente", bg: "#fef3c7", color: "#92400e" },
+  COMPLETED:           { label: "Completada",           bg: "#dbeafe", color: "#1e40af" },
+  DISPUTED:            { label: "En disputa",           bg: "#fef2f2", color: "#b91c1c" },
+};
 
 const s = {
-  page: { maxWidth:900, margin:"0 auto", padding:"40px 24px" },
-  pageMobile: { padding:"20px 16px" },
-  title: { fontSize:24, fontWeight:800, color:"#111827",
-    letterSpacing:"-.5px", marginBottom:6 },
-  titleMobile: { fontSize:20, fontWeight:800, color:"#111827",
-    letterSpacing:"-.5px", marginBottom:6 },
-  sub: { color:"#6b7280", fontSize:14, marginBottom:28 },
-  tabs: { display:"flex", gap:4, marginBottom:24,
-    borderBottom:"2px solid #f3f4f6", overflowX:"auto" },
-  tab: { padding:"10px 18px", fontSize:14, fontWeight:500,
-    cursor:"pointer", border:"none", background:"transparent",
-    color:"#6b7280", borderBottom:"3px solid transparent",
-    whiteSpace:"nowrap" },
-  tabMobile: { padding:"8px 10px", fontSize:12, fontWeight:500,
-    cursor:"pointer", border:"none", background:"transparent",
-    color:"#6b7280", borderBottom:"3px solid transparent",
-    whiteSpace:"nowrap" },
-  tabActive: { color:"#2563eb", borderBottom:"3px solid #2563eb" },
-  card: { background:"#fff", borderRadius:12, padding:20,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
-    display:"flex", gap:16, border:"1px solid #f3f4f6" },
-  cardMobile: { background:"#fff", borderRadius:12, padding:14,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:10,
-    border:"1px solid #f3f4f6" },
-  carImg: { width:100, height:76, borderRadius:8, background:"#f3f4f6",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    fontSize:28, flexShrink:0, overflow:"hidden" },
-  carImgMobile: { width:"100%", height:140, borderRadius:8,
-    background:"#f3f4f6", overflow:"hidden", marginBottom:10 },
-  info: { flex:1 },
-  carName: { fontWeight:700, fontSize:15, marginBottom:4, color:"#111827" },
-  carNameMobile: { fontWeight:700, fontSize:14, marginBottom:4, color:"#111827" },
-  dates: { fontSize:13, color:"#6b7280", marginBottom:4 },
-  datesMobile: { fontSize:12, color:"#6b7280", marginBottom:4 },
-  renterName: { fontSize:13, color:"#374151", marginBottom:4 },
-  total: { fontSize:14, fontWeight:700, color:"#2563eb", marginBottom:8 },
-  statusBadge: { display:"inline-block", padding:"3px 12px",
-    borderRadius:20, fontSize:12, fontWeight:600 },
-  pending: { background:"#fef9c3", color:"#854d0e" },
-  confirmed: { background:"#dbeafe", color:"#1e40af" },
-  cancelled: { background:"#f3f4f6", color:"#6b7280" },
-  completed: { background:"#dbeafe", color:"#1e40af" },
-  btnRow: { display:"flex", gap:8, marginTop:10, flexWrap:"wrap" },
-  btnConfirm: { padding:"7px 16px", background:"#2563eb", color:"#fff",
-    border:"none", borderRadius:8, fontSize:12, fontWeight:600,
-    cursor:"pointer" },
-  btnCancel: { padding:"7px 16px", background:"transparent",
-    border:"1.5px solid #fecaca", color:"#dc2626", borderRadius:8,
-    fontSize:12, cursor:"pointer" },
-  empty: { textAlign:"center", padding:"60px 0", color:"#9ca3af" },
-  calCard: { background:"#fff", borderRadius:12, padding:20,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:14,
-    border:"1px solid #f3f4f6" },
-  calCardMobile: { background:"#fff", borderRadius:12, padding:14,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)", marginBottom:10,
-    border:"1px solid #f3f4f6" },
-  calHeader: { display:"flex", justifyContent:"space-between",
-    alignItems:"center", marginBottom:8 },
-  calTitle: { fontWeight:700, fontSize:15, color:"#111827" },
-  calMeta: { fontSize:13, color:"#6b7280", marginBottom:14 },
-  legend: { display:"flex", gap:16, marginBottom:12, flexWrap:"wrap" },
-  legendItem: { display:"flex", alignItems:"center", gap:6,
-    fontSize:12, color:"#6b7280" },
-  dot: { width:10, height:10, borderRadius:"50%" },
+  page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
+  pageMobile: { padding: "20px 16px" },
+  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
+  titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { color: "#6b7280", fontSize: 14, marginBottom: 28 },
+  tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6", overflowX: "auto" },
+  tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
+  tabMobile: { padding: "8px 10px", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
+  tabActive: { color: "#2563eb", borderBottom: "3px solid #2563eb" },
+  card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, display: "flex", gap: 16, border: "1px solid #f3f4f6" },
+  cardMobile: { background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 10, border: "1px solid #f3f4f6" },
+  carImg: { width: 100, height: 76, borderRadius: 8, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  carImgMobile: { width: "100%", height: 140, borderRadius: 8, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
+  statusBadge: { display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
+  btnRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  btnAccept: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  btnReject: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
+  btnCancel: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
+  btnQR: { padding: "7px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  empty: { textAlign: "center", padding: "60px 0", color: "#9ca3af" },
+  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
 };
 
-const STATUS_LABELS = {
-  pending: "Pendiente",
-  confirmed: "Confirmada",
-  cancelled: "Cancelada",
-  completed: "Completada",
-};
+function getVehicleInfo(booking) {
+  const v = booking?.listing?.vehicle || booking?.vehicle || {};
+  const l = booking?.listing || {};
+  return {
+    brand: v.brand || "",
+    model: v.model || "",
+    year: v.year || "",
+    photos: l.photos || v.photos || [],
+    pricePerDay: l.pricePerDay || booking?.pricePerDaySnapshot || 0,
+  };
+}
+
+function getPersonName(person) {
+  if (!person) return "";
+  return person.displayName || `${person.firstName || ""} ${person.lastName || ""}`.trim() || person.email || "";
+}
 
 export default function MyBookings() {
   const { user } = useAuth();
@@ -87,156 +66,111 @@ export default function MyBookings() {
   const { isMobile } = useIsMobile();
   const [tab, setTab] = useState("mis-reservas");
   const [bookings, setBookings] = useState([]);
-  const [myCars, setMyCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
-  useEffect(() => {
-    const all = JSON.parse(localStorage.getItem("fw_bookings") || "[]");
-    setBookings(all);
-    const allCars = [
-      ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-      ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
-    ].filter(c => c.owner_id === user?.id || c.owner_name === user?.name);
-    setMyCars(allCars);
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    getMyBookings()
+      .then((data) => setBookings(Array.isArray(data) ? data : (data?.data ?? [])))
+      .catch((err) => setError(err.message || "Error al cargar reservas."))
+      .finally(() => setLoading(false));
   }, []);
 
-  const myRentals = bookings.filter(b => b.renter_id === user?.id);
-  const myCarBookings = bookings.filter(b =>
-    myCars.some(c => c.id === b.car_id)
-  );
+  useEffect(() => { load(); }, [load]);
 
-  const cancelBooking = (id) => {
-    const updated = bookings.map(b =>
-      b.id === id ? { ...b, status:"cancelled" } : b
-    );
-    setBookings(updated);
-    localStorage.setItem("fw_bookings", JSON.stringify(updated));
+  const myRentals = bookings.filter((b) => b.renterId === user?.id);
+  const myOwnerBookings = bookings.filter((b) => b.ownerId === user?.id);
+
+  const handleAccept = async (id) => {
+    setActionLoading(id + "-accept");
+    try { await acceptBooking(id); load(); }
+    catch (err) { setError(err.message); }
+    finally { setActionLoading(null); }
   };
 
-  const confirmBooking = (id) => {
-    const updated = bookings.map(b =>
-      b.id === id ? { ...b, status:"confirmed" } : b
-    );
-    setBookings(updated);
-    localStorage.setItem("fw_bookings", JSON.stringify(updated));
+  const handleReject = async (id) => {
+    setActionLoading(id + "-reject");
+    try { await rejectBooking(id); load(); }
+    catch (err) { setError(err.message); }
+    finally { setActionLoading(null); }
   };
 
-  const isOccupied = (date, carId) => {
-    return bookings.some(b => {
-      if (b.car_id !== carId || b.status === "cancelled") return false;
-      try {
-        return isWithinInterval(date, {
-          start: parseISO(b.start_date),
-          end: parseISO(b.end_date),
-        });
-      } catch { return false; }
-    });
-  };
-
-  const getOccupiedDates = (carId) => {
-    const dates = [];
-    bookings
-      .filter(b => b.car_id === carId && b.status !== "cancelled")
-      .forEach(b => {
-        try {
-          const start = parseISO(b.start_date);
-          const end = parseISO(b.end_date);
-          const current = new Date(start);
-          while (current <= end) {
-            dates.push(new Date(current));
-            current.setDate(current.getDate() + 1);
-          }
-        } catch {}
-      });
-    return dates;
+  const handleCancel = async (id) => {
+    if (!window.confirm("¿Cancelar esta reserva?")) return;
+    setActionLoading(id + "-cancel");
+    try { await cancelBooking(id); load(); }
+    catch (err) { setError(err.message); }
+    finally { setActionLoading(null); }
   };
 
   const BookingCard = ({ b, isOwner }) => {
-    const allCars = [
-      ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-      ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
-    ];
-    const car = allCars.find(c => c.id === b.car_id);
+    const vehicle = getVehicleInfo(b);
+    const statusCfg = STATUS_CONFIG[b.status] || { label: b.status, bg: "#f3f4f6", color: "#6b7280" };
+    const days = Math.max(Math.ceil((new Date(b.endDate) - new Date(b.startDate)) / 86400000), 1);
+    const total = b.totalPriceSnapshot || (days * Number(vehicle.pricePerDay));
+    const canCancelRenter = !isOwner && ["REQUESTED", "ACCEPTED"].includes(b.status);
+    const canAcceptOwner = isOwner && b.status === "REQUESTED";
+    const canRejectOwner = isOwner && b.status === "REQUESTED";
+    const canShowQR = ["ACCEPTED", "READY_FOR_PICKUP", "IN_PROGRESS"].includes(b.status);
 
-    if (isMobile) return (
-      <div style={s.cardMobile}>
-        <div style={s.carImgMobile}>
-          {car?.photos?.length > 0
-            ? <img src={car.photos[0]} alt=""
-                style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-            : <div style={{ width:"100%", height:"100%", display:"flex",
-                alignItems:"center", justifyContent:"center",
-                color:"#9ca3af", fontSize:12 }}>Sin foto</div>}
-        </div>
-        <div style={s.carNameMobile}>{b.car_name}</div>
-        <div style={s.datesMobile}>
-          {format(parseISO(b.start_date), "d MMM", { locale:es })} —{" "}
-          {format(parseISO(b.end_date), "d MMM yyyy", { locale:es })}
-          {" "}· {b.days} día{b.days !== 1 ? "s" : ""}
-        </div>
-        {isOwner && (
-          <div style={{ fontSize:12, color:"#374151", marginBottom:4 }}>
-            Conductor: <strong>{b.renter_name}</strong>
+    if (isMobile) {
+      return (
+        <div style={s.cardMobile}>
+          <div style={s.carImgMobile}>
+            {vehicle.photos?.length > 0
+              ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <div style={{ color: "#9ca3af", fontSize: 12 }}>Sin foto</div>}
           </div>
-        )}
-        <div style={{ display:"flex", justifyContent:"space-between",
-          alignItems:"center", marginTop:6 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:"#2563eb" }}>
-            ${b.total_final?.toLocaleString()}
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: "#111827" }}>
+            {vehicle.brand} {vehicle.model} {vehicle.year}
           </div>
-          <span style={{ ...s.statusBadge, ...s[b.status], fontSize:11 }}>
-            {STATUS_LABELS[b.status]}
-          </span>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+            {format(parseISO(b.startDate), "d MMM", { locale: es })} — {format(parseISO(b.endDate), "d MMM yyyy", { locale: es })} · {days} día{days !== 1 ? "s" : ""}
+          </div>
+          {isOwner && <div style={{ fontSize: 12, color: "#374151", marginBottom: 4 }}>Conductor: <strong>{getPersonName(b.renter)}</strong></div>}
+          {!isOwner && <div style={{ fontSize: 12, color: "#374151", marginBottom: 4 }}>Dueño: <strong>{getPersonName(b.owner)}</strong></div>}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#2563eb" }}>${Number(total).toLocaleString()}</div>
+            <span style={{ ...s.statusBadge, background: statusCfg.bg, color: statusCfg.color, fontSize: 11 }}>{statusCfg.label}</span>
+          </div>
+          <div style={s.btnRow}>
+            {canAcceptOwner && <button style={s.btnAccept} disabled={!!actionLoading} onClick={() => handleAccept(b.id)}>{actionLoading === b.id + "-accept" ? "..." : "Aceptar"}</button>}
+            {canRejectOwner && <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleReject(b.id)}>{actionLoading === b.id + "-reject" ? "..." : "Rechazar"}</button>}
+            {canCancelRenter && <button style={s.btnCancel} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>{actionLoading === b.id + "-cancel" ? "..." : "Cancelar"}</button>}
+            {canShowQR && <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}`)}>QR Retiro/Dev.</button>}
+          </div>
         </div>
-        <div style={s.btnRow}>
-          {isOwner && b.status === "pending" && (
-            <button style={s.btnConfirm} onClick={() => confirmBooking(b.id)}>
-              Confirmar
-            </button>
-          )}
-          {b.status === "pending" && (
-            <button style={s.btnCancel} onClick={() => cancelBooking(b.id)}>
-              Cancelar
-            </button>
-          )}
-        </div>
-      </div>
-    );
+      );
+    }
 
     return (
       <div style={s.card}>
         <div style={s.carImg}>
-          {car?.photos?.length > 0
-            ? <img src={car.photos[0]} alt=""
-                style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-            : <div style={{ color:"#9ca3af", fontSize:12 }}>Sin foto</div>}
+          {vehicle.photos?.length > 0
+            ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <div style={{ color: "#9ca3af", fontSize: 12 }}>Sin foto</div>}
         </div>
-        <div style={s.info}>
-          <div style={s.carName}>{b.car_name}</div>
-          <div style={s.dates}>
-            {format(parseISO(b.start_date), "d MMM yyyy", { locale:es })} —{" "}
-            {format(parseISO(b.end_date), "d MMM yyyy", { locale:es })}
-            {" "}· {b.days} día{b.days !== 1 ? "s" : ""}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: "#111827" }}>
+            {vehicle.brand} {vehicle.model} {vehicle.year}
           </div>
-          {isOwner && (
-            <div style={s.renterName}>
-              Conductor: <strong>{b.renter_name}</strong>
-            </div>
-          )}
-          <div style={s.total}>${b.total_final?.toLocaleString()} total</div>
-          <span style={{ ...s.statusBadge, ...s[b.status] }}>
-            {STATUS_LABELS[b.status]}
-          </span>
+          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+            {format(parseISO(b.startDate), "d MMM yyyy", { locale: es })} — {format(parseISO(b.endDate), "d MMM yyyy", { locale: es })} · {days} día{days !== 1 ? "s" : ""}
+          </div>
+          {isOwner && <div style={{ fontSize: 13, color: "#374151", marginBottom: 4 }}>Conductor: <strong>{getPersonName(b.renter)}</strong></div>}
+          {!isOwner && <div style={{ fontSize: 13, color: "#374151", marginBottom: 4 }}>Dueño: <strong>{getPersonName(b.owner)}</strong></div>}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#2563eb" }}>${Number(total).toLocaleString()} total</div>
+            <span style={{ ...s.statusBadge, background: statusCfg.bg, color: statusCfg.color }}>{statusCfg.label}</span>
+          </div>
           <div style={s.btnRow}>
-            {isOwner && b.status === "pending" && (
-              <button style={s.btnConfirm} onClick={() => confirmBooking(b.id)}>
-                Confirmar
-              </button>
-            )}
-            {b.status === "pending" && (
-              <button style={s.btnCancel} onClick={() => cancelBooking(b.id)}>
-                Cancelar
-              </button>
-            )}
+            {canAcceptOwner && <button style={s.btnAccept} disabled={!!actionLoading} onClick={() => handleAccept(b.id)}>{actionLoading === b.id + "-accept" ? "..." : "Aceptar"}</button>}
+            {canRejectOwner && <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleReject(b.id)}>{actionLoading === b.id + "-reject" ? "..." : "Rechazar"}</button>}
+            {canCancelRenter && <button style={s.btnCancel} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>{actionLoading === b.id + "-cancel" ? "..." : "Cancelar"}</button>}
+            {canShowQR && <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}`)}>QR Retiro / Devolución</button>}
           </div>
         </div>
       </div>
@@ -246,97 +180,29 @@ export default function MyBookings() {
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={isMobile ? s.titleMobile : s.title}>Mis reservas</div>
-      <div style={s.sub}>Gestioná tus alquileres y calendarios</div>
-
+      <div style={s.sub}>Gestioná tus alquileres y solicitudes</div>
+      {error && <div style={s.errorBox}>{error}</div>}
       <div style={s.tabs}>
         {[
           ["mis-reservas", isMobile ? `Alquileres (${myRentals.length})` : `Mis alquileres (${myRentals.length})`],
-          ["solicitudes", isMobile ? `Solicitudes (${myCarBookings.length})` : `Solicitudes recibidas (${myCarBookings.length})`],
-          ["calendarios", `Calendarios (${myCars.length})`],
+          ["solicitudes", isMobile ? `Solicitudes (${myOwnerBookings.length})` : `Solicitudes recibidas (${myOwnerBookings.length})`],
         ].map(([k, l]) => (
-          <button key={k}
-            style={{
-              ...(isMobile ? s.tabMobile : s.tab),
-              ...(tab === k ? s.tabActive : {})
-            }}
-            onClick={() => setTab(k)}>{l}</button>
+          <button key={k} style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
-
-      {tab === "mis-reservas" && (
+      {loading ? (
+        <div style={s.empty}><div style={{ color: "#9ca3af", fontSize: 13 }}>Cargando reservas...</div></div>
+      ) : tab === "mis-reservas" ? (
         myRentals.length === 0 ? (
           <div style={s.empty}>
-            <div style={{ fontSize:13, marginBottom:16 }}>
-              Todavía no hiciste ninguna reserva.
-            </div>
-            <button style={{ padding:"10px 24px", background:"#2563eb",
-              color:"#fff", border:"none", borderRadius:8,
-              cursor:"pointer", fontWeight:600 }}
-              onClick={() => navigate("/")}>Explorar autos</button>
+            <div style={{ fontSize: 13, marginBottom: 16 }}>Todavía no hiciste ninguna reserva.</div>
+            <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/")}>Explorar autos</button>
           </div>
-        ) : myRentals.map(b => (
-          <BookingCard key={b.id} b={b} isOwner={false} />
-        ))
-      )}
-
-      {tab === "solicitudes" && (
-        myCarBookings.length === 0 ? (
-          <div style={s.empty}>
-            <div style={{ fontSize:13 }}>
-              No hay solicitudes de reserva para tus autos.
-            </div>
-          </div>
-        ) : myCarBookings.map(b => (
-          <BookingCard key={b.id} b={b} isOwner={true} />
-        ))
-      )}
-
-      {tab === "calendarios" && (
-        myCars.length === 0 ? (
-          <div style={s.empty}>
-            <div style={{ fontSize:13 }}>No tenés autos publicados.</div>
-          </div>
-        ) : myCars.map(car => (
-          <div key={car.id} style={isMobile ? s.calCardMobile : s.calCard}>
-            <div style={s.calHeader}>
-              <div>
-                <div style={{ ...s.calTitle, fontSize: isMobile ? 14 : 15 }}>
-                  {car.brand} {car.model} {car.year}
-                </div>
-                <div style={s.calMeta}>{car.location}</div>
-              </div>
-              <div style={{ fontSize:13, color:"#6b7280" }}>
-                {bookings.filter(b =>
-                  b.car_id === car.id && b.status !== "cancelled"
-                ).length} reservas
-              </div>
-            </div>
-            <div style={s.legend}>
-              <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#2563eb" }}/> Disponible
-              </div>
-              <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#fca5a5" }}/> Ocupado
-              </div>
-              <div style={s.legendItem}>
-                <div style={{ ...s.dot, background:"#bfdbfe" }}/> Seleccionado
-              </div>
-            </div>
-            <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
-              <DatePicker
-                inline
-                monthsShown={isMobile ? 1 : 2}
-                locale={es}
-                filterDate={(date) => !isOccupied(date, car.id)}
-                highlightDates={[{
-                  "react-datepicker__day--highlighted-custom":
-                    getOccupiedDates(car.id),
-                }]}
-                onChange={() => {}}
-              />
-            </div>
-          </div>
-        ))
+        ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)
+      ) : (
+        myOwnerBookings.length === 0 ? (
+          <div style={s.empty}><div style={{ fontSize: 13 }}>No hay solicitudes para tus autos.</div></div>
+        ) : myOwnerBookings.map((b) => <BookingCard key={b.id} b={b} isOwner={true} />)
       )}
     </div>
   );
