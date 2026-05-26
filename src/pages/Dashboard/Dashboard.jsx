@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { getMyListings } from "../../services/api";
+import { getMyListings, getMyBookings, acceptBooking, rejectBooking } from "../../services/api";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
@@ -16,8 +18,8 @@ function normalizeListing(l) {
     year: v.year || l.year || "",
     price_per_day: l.pricePerDay || l.price_per_day || 0,
     location: l.locationText || l.location || "",
-    transmission: TRANSMISSION_LABELS[v.transmission] || v.transmission || l.transmission || "",
-    fuel: FUEL_LABELS[v.fuelType] || v.fuelType || l.fuel || "",
+    transmission: TRANSMISSION_LABELS[v.transmission] || v.transmission || "",
+    fuel: FUEL_LABELS[v.fuelType] || v.fuelType || "",
     seats: v.seats || l.seats,
     color: v.color || l.color,
     photos: l.photos || v.photos || [],
@@ -70,44 +72,60 @@ const s = {
   empty: { textAlign: "center", padding: "40px 0", color: "#9ca3af" },
 };
 
-const MOCK_REQUESTS = [
-  { id: "req1", renter: "Martina González", car: "Toyota Corolla 2021", dates: "15-18 Jun 2025", price: "$28.500", rating: 4.8, verified: true, status: "pending" },
-  { id: "req2", renter: "Lucas Pérez", car: "Toyota Corolla 2021", dates: "22-24 Jun 2025", price: "$19.000", rating: 4.2, verified: true, status: "pending" },
-];
-
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [tab, setTab] = useState("autos");
-  const [requests, setRequests] = useState(MOCK_REQUESTS);
+  const [requests, setRequests] = useState([]);
   const [myCars, setMyCars] = useState([]);
   const [loadingCars, setLoadingCars] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
     getMyListings()
-      .then(data => {
-        const items = Array.isArray(data) ? data : (data?.data ?? []);
-        if (items.length > 0) {
-          setMyCars(items.map(normalizeListing));
-        } else {
-          // fallback localStorage
-          const local = JSON.parse(localStorage.getItem("fw_my_cars") || "[]")
-            .filter(c => c.owner_id === user?.id);
-          setMyCars(local);
-        }
-      })
-      .catch(() => {
-        const local = JSON.parse(localStorage.getItem("fw_my_cars") || "[]")
-          .filter(c => c.owner_id === user?.id);
-        setMyCars(local);
-      })
+      .then(data => setMyCars((Array.isArray(data) ? data : (data?.data ?? [])).map(normalizeListing)))
+      .catch(() => {})
       .finally(() => setLoadingCars(false));
   }, [user?.id]);
 
-  const respond = (id, action) => {
-    setRequests(rs => rs.map(r => r.id === id ? { ...r, status: action } : r));
+  const loadRequests = useCallback(() => {
+    setLoadingRequests(true);
+    getMyBookings()
+      .then(data => {
+        const all = Array.isArray(data) ? data : (data?.data ?? []);
+        setRequests(all.filter(b => b.ownerId === user?.id && b.status === "REQUESTED"));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingRequests(false));
+  }, [user?.id]);
+
+  useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  const respond = async (id, action) => {
+    setActionLoading(id);
+    try {
+      if (action === "accepted") await acceptBooking(id);
+      else await rejectBooking(id);
+      loadRequests();
+    } catch {}
+    finally { setActionLoading(null); }
   };
+
+  function getVehicleLabel(b) {
+    const v = b?.listing?.vehicle || {};
+    return `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim();
+  }
+  function getRenterName(b) {
+    const r = b?.renter || {};
+    return r.displayName || `${r.firstName || ""} ${r.lastName || ""}`.trim() || r.email || "";
+  }
+  function getDateRange(b) {
+    try {
+      return `${format(parseISO(b.startDate), "d MMM", { locale: es })} - ${format(parseISO(b.endDate), "d MMM yyyy", { locale: es })}`;
+    } catch { return ""; }
+  }
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
@@ -118,15 +136,13 @@ export default function Dashboard() {
           </div>
           <div style={s.sub}>Panel de control</div>
         </div>
-        <button style={isMobile ? s.btnMobile : s.btn} onClick={() => navigate("/publish")}>
-          + Publicar
-        </button>
+        <button style={isMobile ? s.btnMobile : s.btn} onClick={() => navigate("/publish")}>+ Publicar</button>
       </div>
 
       <div style={isMobile ? s.statsRowMobile : s.statsRow}>
         {[
           [loadingCars ? "..." : myCars.length, "Autos publicados"],
-          [requests.filter(r => r.status === "pending").length, "Solicitudes"],
+          [loadingRequests ? "..." : requests.length, "Solicitudes"],
           ["$0", "Ganancias"],
         ].map(([num, label]) => (
           <div key={label} style={isMobile ? s.statMobile : s.stat}>
@@ -138,10 +154,7 @@ export default function Dashboard() {
 
       <div style={s.tabs}>
         {[["autos", "Mis autos"], ["solicitudes", "Solicitudes"], ["historial", "Historial"]].map(([k, l]) => (
-          <button key={k}
-            style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}) }}
-            onClick={() => setTab(k)}>{l}
-          </button>
+          <button key={k} style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
 
@@ -155,7 +168,7 @@ export default function Dashboard() {
           </div>
         ) : myCars.map(car => (
           isMobile ? (
-            <div key={car.id} style={s.cardMobile} onClick={() => navigate(`/cars/${car.id}`)} >
+            <div key={car.id} style={s.cardMobile} onClick={() => navigate(`/cars/${car.id}`)}>
               <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
                 <div style={{ width: 56, height: 42, borderRadius: 8, overflow: "hidden", background: "#f3f4f6", flexShrink: 0 }}>
                   {car.photos?.length > 0
@@ -168,12 +181,8 @@ export default function Dashboard() {
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600 }}>
-                  ${Number(car.price_per_day).toLocaleString()}/día
-                </div>
-                <span style={{ ...s.statusBadgeMobile, ...(car.approved ? s.verified : s.pending) }}>
-                  {car.approved ? "Activo" : "Pendiente"}
-                </span>
+                <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600 }}>${Number(car.price_per_day).toLocaleString()}/día</div>
+                <span style={{ ...s.statusBadgeMobile, ...(car.approved ? s.verified : s.pending) }}>{car.approved ? "Activo" : "Pendiente"}</span>
               </div>
             </div>
           ) : (
@@ -187,48 +196,38 @@ export default function Dashboard() {
                 <div style={s.carName}>{car.brand} {car.model} {car.year}</div>
                 <div style={s.carMeta}>{car.location} · ${Number(car.price_per_day).toLocaleString()}/día</div>
               </div>
-              <span style={{ ...s.statusBadge, ...(car.approved ? s.verified : s.pending) }}>
-                {car.approved ? "Activo" : "Pendiente verificación"}
-              </span>
+              <span style={{ ...s.statusBadge, ...(car.approved ? s.verified : s.pending) }}>{car.approved ? "Activo" : "Pendiente verificación"}</span>
             </div>
           )
         ))
       )}
 
-      {tab === "solicitudes" && requests.map(r => (
-        <div key={r.id} style={isMobile ? s.solicitudMobile : s.solicitud}>
-          <div style={s.solHeader}>
-            <div>
-              <div style={{ ...s.solName, fontSize: isMobile ? 14 : 15 }}>
-                {r.renter}
-                {r.verified && <span style={{ ...s.statusBadgeMobile, ...s.verified, marginLeft: 8 }}>Verificado</span>}
+      {tab === "solicitudes" && (
+        loadingRequests ? (
+          <div style={s.empty}><div style={{ fontSize: 13, color: "#9ca3af" }}>Cargando solicitudes...</div></div>
+        ) : requests.length === 0 ? (
+          <div style={s.empty}><div style={{ fontSize: 13, color: "#9ca3af" }}>No hay solicitudes pendientes.</div></div>
+        ) : requests.map(r => (
+          <div key={r.id} style={isMobile ? s.solicitudMobile : s.solicitud}>
+            <div style={s.solHeader}>
+              <div>
+                <div style={{ ...s.solName, fontSize: isMobile ? 14 : 15 }}>{getRenterName(r)}</div>
+                <div style={{ ...s.solDates, fontSize: isMobile ? 12 : 13 }}>{getVehicleLabel(r)} · {getDateRange(r)}</div>
               </div>
-              <div style={{ ...s.solDates, fontSize: isMobile ? 12 : 13 }}>{r.car} · {r.dates}</div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 16, color: "#2563eb" }}>${Number(r.totalPriceSnapshot || 0).toLocaleString()}</div>
+              </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 16, color: "#2563eb" }}>{r.price}</div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{r.rating} pts</div>
+            <div style={s.btnRow}>
+              <button style={{ ...s.btnAccept, padding: isMobile ? "7px 14px" : "8px 18px", fontSize: isMobile ? 12 : 13 }} disabled={actionLoading === r.id} onClick={() => respond(r.id, "accepted")}>{actionLoading === r.id ? "..." : "Aceptar"}</button>
+              <button style={{ ...s.btnReject, padding: isMobile ? "7px 14px" : "8px 18px", fontSize: isMobile ? 12 : 13 }} disabled={actionLoading === r.id} onClick={() => respond(r.id, "rejected")}>Rechazar</button>
             </div>
           </div>
-          {r.status === "pending" ? (
-            <div style={s.btnRow}>
-              <button style={{ ...s.btnAccept, padding: isMobile ? "7px 14px" : "8px 18px", fontSize: isMobile ? 12 : 13 }}
-                onClick={() => respond(r.id, "accepted")}>Aceptar</button>
-              <button style={{ ...s.btnReject, padding: isMobile ? "7px 14px" : "8px 18px", fontSize: isMobile ? 12 : 13 }}
-                onClick={() => respond(r.id, "rejected")}>Rechazar</button>
-            </div>
-          ) : (
-            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600, color: r.status === "accepted" ? "#1d4ed8" : "#dc2626" }}>
-              {r.status === "accepted" ? "Aceptada" : "Rechazada"}
-            </div>
-          )}
-        </div>
-      ))}
+        ))
+      )}
 
       {tab === "historial" && (
-        <div style={s.empty}>
-          <div style={{ fontSize: 13, color: "#9ca3af" }}>El historial de alquileres aparecerá acá.</div>
-        </div>
+        <div style={s.empty}><div style={{ fontSize: 13, color: "#9ca3af" }}>El historial aparecerá acá.</div></div>
       )}
     </div>
   );
