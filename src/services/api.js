@@ -111,6 +111,18 @@ export async function createMediaAsset(data) {
   return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
 }
 
+// Bookings
+export async function getMyBookings() { return apiFetch("/bookings/me"); }
+export async function cancelBooking(id) {
+  return apiFetch(`/bookings/${id}/cancel`, { method: "PATCH" });
+}
+export async function acceptBooking(id) {
+  return apiFetch(`/bookings/${id}/accept`, { method: "PATCH" });
+}
+export async function rejectBooking(id) {
+  return apiFetch(`/bookings/${id}/reject`, { method: "PATCH" });
+}
+
 // Conversations
 export async function startConversation(listingId) {
   return apiFetch("/conversations", {
@@ -139,6 +151,9 @@ export async function adminDeleteListing(id) {
   return apiFetch(`/admin/listings/${id}`, { method: "DELETE" });
 }
 export async function adminGetUsers() { return apiFetch("/admin/users"); }
+export async function adminDeleteUser(id) {
+  return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
+}
 export async function adminUpdateUserStatus(id, status) {
   return apiFetch(`/admin/users/${id}/status`, {
     method: "PATCH",
@@ -150,7 +165,4 @@ export async function adminUpdateUserRole(id, role) {
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
-}
-export async function adminDeleteUser(id) {
-  return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
 }
