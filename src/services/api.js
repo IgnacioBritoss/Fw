@@ -166,3 +166,9 @@ export async function adminUpdateUserRole(id, role) {
     body: JSON.stringify({ role }),
   });
 }
+export async function adminUpdateListingStatus(id, status) {
+  return apiFetch(`/admin/listings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}

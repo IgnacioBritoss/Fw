@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  adminGetListings, adminDeleteListing,
-  adminGetUsers, adminDeleteUser,
+  adminGetListings, adminUpdateListingStatus,
+  adminGetUsers, adminUpdateUserStatus,
 } from "../../services/api";
 
 const s = {
@@ -71,8 +71,8 @@ export default function Admin() {
     e.stopPropagation();
     if (!confirm(`¿Eliminar permanentemente "${label}"? Esta acción no se puede deshacer.`)) return;
     try {
-      await adminDeleteListing(id);
-      setListings(prev => prev.filter(l => l.id !== id));
+      await adminUpdateListingStatus(id, "DELETED");
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status: "DELETED" } : l));
       showAlert(`Publicación "${label}" eliminada.`);
     } catch (err) {
       showAlert("Error al eliminar: " + (err.message || ""));
