@@ -147,12 +147,12 @@ export async function markConversationRead(id) {
 
 // Admin
 export async function adminGetListings() { return apiFetch("/admin/listings"); }
-export async function adminDeleteListing(id) {
-  return apiFetch(`/admin/listings/${id}`, { method: "DELETE" });
-}
 export async function adminGetUsers() { return apiFetch("/admin/users"); }
-export async function adminDeleteUser(id) {
-  return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
+export async function adminUpdateListingStatus(id, status) {
+  return apiFetch(`/admin/listings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 export async function adminUpdateUserStatus(id, status) {
   return apiFetch(`/admin/users/${id}/status`, {
@@ -164,11 +164,5 @@ export async function adminUpdateUserRole(id, role) {
   return apiFetch(`/admin/users/${id}/role`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
-  });
-}
-export async function adminUpdateListingStatus(id, status) {
-  return apiFetch(`/admin/listings/${id}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
   });
 }
