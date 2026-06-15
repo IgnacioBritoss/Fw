@@ -1,24 +1,20 @@
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+import { BASE_URL } from "./api";
 
+// La API key de Groq vive SOLO en el backend. Acá pegamos al proxy /ai/*.
 export async function groqChat(messages, temperature = 0.7) {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (!apiKey) throw new Error("VITE_GROQ_API_KEY no configurada");
-
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(`${BASE_URL}/ai/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: MODEL, messages, temperature, max_tokens: 1024 }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, temperature }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Error ${res.status}`);
+    throw new Error(err.message || `Error ${res.status}`);
   }
 
   const data = await res.json();
-  return data.choices[0].message.content;
+  return data.content;
 }
 
 export function extractJSON(text) {
@@ -43,36 +39,21 @@ async function resizeImage(dataUrl, maxPx = 512) {
 }
 
 export async function groqVision(imageDataUrl) {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (!apiKey) return null;
   try {
     const resized = await resizeImage(imageDataUrl);
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(`${BASE_URL}/ai/vision`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: VISION_MODEL,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: resized } },
-            { type: "text", text: "¿Esta imagen muestra un automóvil, camioneta, SUV, moto u otro vehículo de motor? Respondé únicamente SI o NO." },
-          ],
-        }],
-        temperature: 0,
-        max_tokens: 5,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageDataUrl: resized }),
     });
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      console.error("Groq vision error:", res.status, errBody);
+      console.error("Vision proxy error:", res.status);
       return null;
     }
     const data = await res.json();
-    const answer = (data.choices?.[0]?.message?.content || "").trim().toUpperCase();
-    return answer.startsWith("SI") ? true : answer.startsWith("NO") ? false : null;
+    return data.isVehicle ?? null;
   } catch (err) {
-    console.error("Groq vision exception:", err);
+    console.error("Vision exception:", err);
     return null;
   }
 }

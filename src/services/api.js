@@ -1,4 +1,4 @@
-const BASE_URL = "https://free-wheel-back.vercel.app";
+export const BASE_URL = "https://free-wheel-back.vercel.app";
 
 export const GOOGLE_AUTH_URL = `${BASE_URL}/auth/google`;
 
@@ -109,6 +109,12 @@ export async function deleteListing(id) {
 // Media
 export async function createMediaAsset(data) {
   return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
+}
+export async function getCloudinarySignature(folder) {
+  return apiFetch("/media/cloudinary-signature", {
+    method: "POST",
+    body: JSON.stringify(folder ? { folder } : {}),
+  });
 }
 
 // Bookings

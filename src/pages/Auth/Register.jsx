@@ -71,7 +71,7 @@ export default function Register() {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-    if (!form.firstName || !form.email || !form.password) {
+    if (!form.firstName || !form.lastName || !form.email || !form.password) {
       setError("Completá todos los campos obligatorios.");
       return;
     }
@@ -133,7 +133,7 @@ export default function Register() {
               onChange={(e) => set("firstName", e.target.value)} />
           </div>
           <div style={s.field}>
-            <label style={s.label}>Apellido</label>
+            <label style={s.label}>Apellido *</label>
             <input style={s.input} placeholder="García" value={form.lastName}
               onChange={(e) => set("lastName", e.target.value)} />
           </div>
