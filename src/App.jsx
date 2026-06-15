@@ -18,6 +18,7 @@ import Chat from "./pages/Chat/Chat";
 import Admin from "./pages/Admin/Admin";
 import Booking from "./pages/Booking/Booking";
 import MyBookings from "./pages/MyBookings/MyBookings";
+import Payment from "./pages/Payment/Payment";
 import CompleteProfile from "./pages/Auth/CompleteProfile";
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
           <Route path="/booking/:id" element={<PrivateRoute><Booking /></PrivateRoute>} />
           <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
+          <Route path="/payment/:bookingId" element={<PrivateRoute><Payment /></PrivateRoute>} />
         </Routes>
         <ChatBot />
       </BrowserRouter>
