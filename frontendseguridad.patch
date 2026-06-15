@@ -1,0 +1,204 @@
+diff --git a/src/pages/Auth/Register.jsx b/src/pages/Auth/Register.jsx
+index 5061792..3d7e01c 100644
+--- a/src/pages/Auth/Register.jsx
++++ b/src/pages/Auth/Register.jsx
+@@ -71,7 +71,7 @@ export default function Register() {
+   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+ 
+   const handleSubmit = async () => {
+-    if (!form.firstName || !form.email || !form.password) {
++    if (!form.firstName || !form.lastName || !form.email || !form.password) {
+       setError("Completá todos los campos obligatorios.");
+       return;
+     }
+@@ -133,7 +133,7 @@ export default function Register() {
+               onChange={(e) => set("firstName", e.target.value)} />
+           </div>
+           <div style={s.field}>
+-            <label style={s.label}>Apellido</label>
++            <label style={s.label}>Apellido *</label>
+             <input style={s.input} placeholder="García" value={form.lastName}
+               onChange={(e) => set("lastName", e.target.value)} />
+           </div>
+diff --git a/src/services/api.js b/src/services/api.js
+index a7a166f..f5dbda4 100644
+--- a/src/services/api.js
++++ b/src/services/api.js
+@@ -1,4 +1,4 @@
+-const BASE_URL = "https://free-wheel-back.vercel.app";
++export const BASE_URL = "https://free-wheel-back.vercel.app";
+ 
+ export const GOOGLE_AUTH_URL = `${BASE_URL}/auth/google`;
+ 
+@@ -110,6 +110,12 @@ export async function deleteListing(id) {
+ export async function createMediaAsset(data) {
+   return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
+ }
++export async function getCloudinarySignature(folder) {
++  return apiFetch("/media/cloudinary-signature", {
++    method: "POST",
++    body: JSON.stringify(folder ? { folder } : {}),
++  });
++}
+ 
+ // Bookings
+ export async function createBooking({ listingId, startDate, endDate }) {
+diff --git a/src/services/cloudinary.js b/src/services/cloudinary.js
+index 4ec8f68..9b482a6 100644
+--- a/src/services/cloudinary.js
++++ b/src/services/cloudinary.js
+@@ -1,43 +1,44 @@
+-const CLOUD_NAME = "djvokvxt1";
+-const UPLOAD_PRESET = "freewheel";
++import { getCloudinarySignature } from "./api";
++
++// Subida FIRMADA: el backend genera la firma con su API secret (que nunca
++// sale del servidor). Ya no se usa el upload_preset unsigned.
++async function uploadSigned(file, { resourceType = "image", filename } = {}) {
++  const { cloudName, apiKey, timestamp, signature, folder } =
++    await getCloudinarySignature();
+ 
+-export async function uploadImageToCloudinary(base64DataUrl) {
+   const formData = new FormData();
+-  formData.append("file", base64DataUrl);
+-  formData.append("upload_preset", UPLOAD_PRESET);
++  if (filename) formData.append("file", file, filename);
++  else formData.append("file", file);
++  formData.append("api_key", apiKey);
++  formData.append("timestamp", timestamp);
++  formData.append("signature", signature);
++  formData.append("folder", folder);
++
+   const res = await fetch(
+-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
++    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+     { method: "POST", body: formData }
+   );
+-  if (!res.ok) throw new Error("Error subiendo imagen a Cloudinary");
+-  const data = await res.json();
++  if (!res.ok) throw new Error("Error subiendo archivo a Cloudinary");
++  return res.json();
++}
++
++export async function uploadImageToCloudinary(base64DataUrl) {
++  const data = await uploadSigned(base64DataUrl, { resourceType: "image" });
+   return data.secure_url;
+ }
+ 
+ export async function uploadAudioToCloudinary(audioBlob) {
+-  const formData = new FormData();
+-  formData.append("file", audioBlob, "audio.webm");
+-  formData.append("upload_preset", UPLOAD_PRESET);
+-  const res = await fetch(
+-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+-    { method: "POST", body: formData }
+-  );
+-  if (!res.ok) throw new Error("Error subiendo audio a Cloudinary");
+-  const data = await res.json();
++  const data = await uploadSigned(audioBlob, {
++    resourceType: "auto",
++    filename: "audio.webm",
++  });
+   return data.secure_url;
+ }
+ 
+ export async function uploadFileToCloudinary(file) {
+   const isImage = file.type.startsWith("image/");
+-  const formData = new FormData();
+-  formData.append("file", file);
+-  formData.append("upload_preset", UPLOAD_PRESET);
+-  const endpoint = isImage ? "image/upload" : "raw/upload";
+-  const res = await fetch(
+-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}`,
+-    { method: "POST", body: formData }
+-  );
+-  if (!res.ok) throw new Error("Error subiendo archivo a Cloudinary");
+-  const data = await res.json();
++  const data = await uploadSigned(file, {
++    resourceType: isImage ? "image" : "raw",
++  });
+   return { url: data.secure_url, isImage, name: file.name };
+-}
+\ No newline at end of file
++}
+diff --git a/src/services/groq.js b/src/services/groq.js
+index 64ca7a3..847592a 100644
+--- a/src/services/groq.js
++++ b/src/services/groq.js
+@@ -1,24 +1,20 @@
+-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+-const MODEL = "llama-3.3-70b-versatile";
+-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
++import { BASE_URL } from "./api";
+ 
++// La API key de Groq vive SOLO en el backend. Acá pegamos al proxy /ai/*.
+ export async function groqChat(messages, temperature = 0.7) {
+-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+-  if (!apiKey) throw new Error("VITE_GROQ_API_KEY no configurada");
+-
+-  const res = await fetch(GROQ_URL, {
++  const res = await fetch(`${BASE_URL}/ai/chat`, {
+     method: "POST",
+-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+-    body: JSON.stringify({ model: MODEL, messages, temperature, max_tokens: 1024 }),
++    headers: { "Content-Type": "application/json" },
++    body: JSON.stringify({ messages, temperature }),
+   });
+ 
+   if (!res.ok) {
+     const err = await res.json().catch(() => ({}));
+-    throw new Error(err.error?.message || `Error ${res.status}`);
++    throw new Error(err.message || `Error ${res.status}`);
+   }
+ 
+   const data = await res.json();
+-  return data.choices[0].message.content;
++  return data.content;
+ }
+ 
+ export function extractJSON(text) {
+@@ -43,36 +39,21 @@ async function resizeImage(dataUrl, maxPx = 512) {
+ }
+ 
+ export async function groqVision(imageDataUrl) {
+-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+-  if (!apiKey) return null;
+   try {
+     const resized = await resizeImage(imageDataUrl);
+-    const res = await fetch(GROQ_URL, {
++    const res = await fetch(`${BASE_URL}/ai/vision`, {
+       method: "POST",
+-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+-      body: JSON.stringify({
+-        model: VISION_MODEL,
+-        messages: [{
+-          role: "user",
+-          content: [
+-            { type: "image_url", image_url: { url: resized } },
+-            { type: "text", text: "¿Esta imagen muestra un automóvil, camioneta, SUV, moto u otro vehículo de motor? Respondé únicamente SI o NO." },
+-          ],
+-        }],
+-        temperature: 0,
+-        max_tokens: 5,
+-      }),
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ imageDataUrl: resized }),
+     });
+     if (!res.ok) {
+-      const errBody = await res.json().catch(() => ({}));
+-      console.error("Groq vision error:", res.status, errBody);
++      console.error("Vision proxy error:", res.status);
+       return null;
+     }
+     const data = await res.json();
+-    const answer = (data.choices?.[0]?.message?.content || "").trim().toUpperCase();
+-    return answer.startsWith("SI") ? true : answer.startsWith("NO") ? false : null;
++    return data.isVehicle ?? null;
+   } catch (err) {
+-    console.error("Groq vision exception:", err);
++    console.error("Vision exception:", err);
+     return null;
+   }
+-}
+\ No newline at end of file
++}
