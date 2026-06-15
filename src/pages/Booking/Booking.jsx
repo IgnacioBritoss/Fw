@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import BookingCalendar from "../../components/BookingCalendar";
+import { getListingById, createBooking } from "../../services/api";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -67,51 +67,84 @@ const s = {
     fontSize:14, cursor:"pointer" },
 };
 
+function apiListingToCar(listing) {
+  const v = listing.vehicle || {};
+  return {
+    id: listing.id,
+    brand: v.brand || "",
+    model: v.model || "",
+    year: v.year || "",
+    price_per_day: listing.pricePerDay || 0,
+    location: listing.locationText || "",
+    photos: listing.photos || [],
+  };
+}
+
 export default function Booking() {
   const { id } = useParams();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [confirmed, setConfirmed] = useState(false);
   const [bookingData, setBookingData] = useState(null);
+  const [car, setCar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const allCars = [
-    ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-    ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
-  ];
-  const car = allCars.find(c => c.id === id);
+  useEffect(() => {
+    const localCars = [
+      ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
+      ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
+    ];
+    const localCar = localCars.find((c) => c.id === id);
+    if (localCar) {
+      setCar(localCar);
+      setLoading(false);
+      return;
+    }
+    getListingById(id)
+      .then((listing) => { if (listing) setCar(apiListingToCar(listing)); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleConfirm = async (data) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const created = await createBooking({
+        listingId: car.id,
+        startDate: data.start.toISOString(),
+        endDate: data.end.toISOString(),
+      });
+      setBookingData({
+        id: created?.id,
+        car_name: `${car.brand} ${car.model} ${car.year}`.trim(),
+        start_date: data.start.toISOString(),
+        end_date: data.end.toISOString(),
+        days: data.days,
+        total_final: created?.totalPriceSnapshot ?? data.totalFinal,
+      });
+      setConfirmed(true);
+    } catch (err) {
+      setError(err.message || "No se pudo enviar la solicitud. Intentá de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return (
+    <div style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
+      Cargando...
+    </div>
+  );
 
   if (!car) return (
     <div style={{ padding:40, textAlign:"center", color:"#6b7280" }}>
       Auto no encontrado.
     </div>
   );
-
-  const handleConfirm = (data) => {
-    const booking = {
-      id: Date.now().toString(),
-      car_id: car.id,
-      car_name: `${car.brand} ${car.model} ${car.year}`,
-      car_owner_id: car.owner_id || car.id,
-      renter_id: user.id,
-      renter_name: user.name,
-      start_date: data.start.toISOString(),
-      end_date: data.end.toISOString(),
-      days: data.days,
-      price_per_day: car.price_per_day,
-      total: data.total,
-      commission: data.commission,
-      deposit: data.deposit,
-      total_final: data.totalFinal,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    };
-    const bookings = JSON.parse(localStorage.getItem("fw_bookings") || "[]");
-    bookings.push(booking);
-    localStorage.setItem("fw_bookings", JSON.stringify(bookings));
-    setBookingData(booking);
-    setConfirmed(true);
-  };
 
   if (confirmed && bookingData) {
     const start = new Date(bookingData.start_date);
@@ -170,6 +203,19 @@ export default function Booking() {
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={isMobile ? s.titleMobile : s.title}>Reservar auto</div>
       <div style={s.sub}>Elegí las fechas y confirmá tu reserva</div>
+
+      {error && (
+        <div style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:10,
+          padding:14, fontSize:13, color:"#b91c1c", marginBottom:16 }}>
+          {error}
+        </div>
+      )}
+      {submitting && (
+        <div style={{ background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:10,
+          padding:14, fontSize:13, color:"#1e40af", marginBottom:16 }}>
+          Enviando solicitud al dueño...
+        </div>
+      )}
 
       {/* En mobile el resumen del auto va arriba */}
       {isMobile && (

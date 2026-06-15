@@ -112,7 +112,14 @@ export async function createMediaAsset(data) {
 }
 
 // Bookings
+export async function createBooking({ listingId, startDate, endDate }) {
+  return apiFetch("/bookings", {
+    method: "POST",
+    body: JSON.stringify({ listingId, startDate, endDate }),
+  });
+}
 export async function getMyBookings() { return apiFetch("/bookings/me"); }
+export async function getBookingById(id) { return apiFetch(`/bookings/${id}`); }
 export async function cancelBooking(id) {
   return apiFetch(`/bookings/${id}/cancel`, { method: "PATCH" });
 }
@@ -121,6 +128,20 @@ export async function acceptBooking(id) {
 }
 export async function rejectBooking(id) {
   return apiFetch(`/bookings/${id}/reject`, { method: "PATCH" });
+}
+
+// Payments (mock)
+export async function createMockPaymentIntent(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/mock-intent`, { method: "POST" });
+}
+export async function confirmMockPayment(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/mock-confirm`, { method: "POST" });
+}
+export async function failMockPayment(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/mock-fail`, { method: "POST" });
+}
+export async function getBookingPaymentStatus(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/status`);
 }
 
 // Conversations
