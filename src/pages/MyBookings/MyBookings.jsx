@@ -39,6 +39,7 @@ const s = {
   btnReject: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
   btnCancel: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
   btnQR: { padding: "7px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  btnPay: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
   empty: { textAlign: "center", padding: "60px 0", color: "#9ca3af" },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
 };
@@ -114,6 +115,7 @@ export default function MyBookings() {
     const canCancelRenter = !isOwner && ["REQUESTED", "ACCEPTED"].includes(b.status);
     const canAcceptOwner = isOwner && b.status === "REQUESTED";
     const canRejectOwner = isOwner && b.status === "REQUESTED";
+    const canPayRenter = !isOwner && b.status === "ACCEPTED" && b.paymentStatus !== "PAID";
     const canShowQR = ["ACCEPTED", "READY_FOR_PICKUP", "IN_PROGRESS"].includes(b.status);
 
     if (isMobile) {
@@ -140,6 +142,7 @@ export default function MyBookings() {
             {canAcceptOwner && <button style={s.btnAccept} disabled={!!actionLoading} onClick={() => handleAccept(b.id)}>{actionLoading === b.id + "-accept" ? "..." : "Aceptar"}</button>}
             {canRejectOwner && <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleReject(b.id)}>{actionLoading === b.id + "-reject" ? "..." : "Rechazar"}</button>}
             {canCancelRenter && <button style={s.btnCancel} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>{actionLoading === b.id + "-cancel" ? "..." : "Cancelar"}</button>}
+            {canPayRenter && <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>Pagar</button>}
             {canShowQR && <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}`)}>QR Retiro/Dev.</button>}
           </div>
         </div>
@@ -170,6 +173,7 @@ export default function MyBookings() {
             {canAcceptOwner && <button style={s.btnAccept} disabled={!!actionLoading} onClick={() => handleAccept(b.id)}>{actionLoading === b.id + "-accept" ? "..." : "Aceptar"}</button>}
             {canRejectOwner && <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleReject(b.id)}>{actionLoading === b.id + "-reject" ? "..." : "Rechazar"}</button>}
             {canCancelRenter && <button style={s.btnCancel} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>{actionLoading === b.id + "-cancel" ? "..." : "Cancelar"}</button>}
+            {canPayRenter && <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>Pagar</button>}
             {canShowQR && <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}`)}>QR Retiro / Devolución</button>}
           </div>
         </div>
