@@ -45,7 +45,7 @@ export default function Register() {
     const result = await register({ name:`${form.firstName} ${form.lastName}`.trim(), email:form.email, password:form.password, acceptedTerms:form.acceptedTerms });
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-    navigate("/complete-profile");
+    navigate("/verify-email");
   };
 
   const inputStyle = {
@@ -169,14 +169,9 @@ export default function Register() {
           <h2 style={{ fontSize:36, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
             La plataforma para<br/>alquilar autos entre<br/>personas, verificada,<br/>segura y sin multas.
           </h2>
-          <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.7, marginBottom:40 }}>
+          <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.7 }}>
             Conectamos conductores con dueños de autos. Todo verificado, todo seguro.
           </p>
-          <div style={{ display:"flex", gap:40 }}>
-            {[["45.000+","Conductores"],["4.9 ★","Calificación"],["24/7","Soporte"]].map(([v,l]) => (
-              <div key={l}><div style={{ fontSize:20, fontWeight:800, color:"#fff" }}>{v}</div><div style={{ fontSize:11, color:"rgba(255,255,255,.45)", marginTop:2 }}>{l}</div></div>
-            ))}
-          </div>
         </div>
       </div>
     </div>

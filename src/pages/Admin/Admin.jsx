@@ -17,6 +17,7 @@ const s = {
   carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
   btnDelete: { padding: "8px 18px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnSuspend: { padding: "8px 18px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  btnActivate: { padding: "8px 18px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRow: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
   alertOk: { background: "#eff6ff", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 },
   alertErr: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#991b1b", marginBottom: 16 },
@@ -100,6 +101,17 @@ export default function Admin() {
       await adminUpdateUserStatus(id, "SUSPENDED");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "SUSPENDED" } : u));
       showAlert(`Usuario "${name}" suspendido.`);
+    } catch (err) {
+      showAlert("Error: " + (err.message || ""), "err");
+    }
+  };
+
+  const handleActivateUser = async (id, name) => {
+    if (!confirm(`¿Reactivar a "${name}" y devolverle el acceso?`)) return;
+    try {
+      await adminUpdateUserStatus(id, "ACTIVE");
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "ACTIVE" } : u));
+      showAlert(`Usuario "${name}" reactivado. Ya puede volver a entrar.`);
     } catch (err) {
       showAlert("Error: " + (err.message || ""), "err");
     }
@@ -202,18 +214,26 @@ export default function Admin() {
                 <div><strong>ID:</strong> {u.id}</div>
                 <div><strong>Teléfono:</strong> {u.phone || "—"}</div>
                 <div><strong>Registrado:</strong> {new Date(u.createdAt).toLocaleDateString("es-AR")}</div>
-                {u.id !== user.id && u.status !== "DELETED" && (
+                {u.id !== user.id && (
                   <div style={{ ...s.btnRow, marginTop: 8 }}>
-                    {u.status !== "SUSPENDED" && (
+                    {(u.status === "SUSPENDED" || u.status === "DELETED") && (
+                      <button style={s.btnActivate}
+                        onClick={e => { e.stopPropagation(); handleActivateUser(u.id, `${u.firstName} ${u.lastName}`); }}>
+                        Reactivar
+                      </button>
+                    )}
+                    {u.status === "ACTIVE" && (
                       <button style={s.btnSuspend}
                         onClick={e => { e.stopPropagation(); handleSuspendUser(u.id, `${u.firstName} ${u.lastName}`); }}>
                         Suspender
                       </button>
                     )}
-                    <button style={s.btnDelete}
-                      onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                      Eliminar
-                    </button>
+                    {u.status !== "DELETED" && (
+                      <button style={s.btnDelete}
+                        onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
+                        Eliminar
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

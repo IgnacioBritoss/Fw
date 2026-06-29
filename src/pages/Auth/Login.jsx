@@ -67,14 +67,9 @@ export default function Login() {
           <h1 style={{ fontSize:40, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
             Bienvenida<br/>de nuevo.
           </h1>
-          <p style={{ fontSize:15, color:"rgba(255,255,255,.6)", lineHeight:1.6, marginBottom:40, maxWidth:300 }}>
+          <p style={{ fontSize:15, color:"rgba(255,255,255,.6)", lineHeight:1.6, maxWidth:300 }}>
             La forma más simple de alquilar auto en Argentina. Sin complicaciones, seguro y rápido.
           </p>
-          <div style={{ display:"flex", gap:32 }}>
-            {[["45.000+","Conductores"],["4.9 ★","Calificación"],["24/7","Soporte"]].map(([v,l]) => (
-              <div key={l}><div style={{ fontSize:18, fontWeight:800, color:"#fff" }}>{v}</div><div style={{ fontSize:11, color:"rgba(255,255,255,.45)", marginTop:2 }}>{l}</div></div>
-            ))}
-          </div>
         </div>
 
         <div style={{ fontSize:12, color:"rgba(255,255,255,.25)", position:"relative" }}>© 2025 Freewheel</div>
