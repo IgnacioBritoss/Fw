@@ -216,7 +216,7 @@ export default function Navbar() {
                   {label}
                 </Link>
               ))}
-              <div onClick={() => { setProfileOpen(true); close(); }}
+              <div onClick={() => { navigate("/profile"); close(); }}
                 style={{ display:"block", padding:"12px 20px", fontSize:14, color:"rgba(255,255,255,.75)", fontWeight:500, cursor:"pointer" }}>
                 Mi perfil
               </div>
@@ -322,7 +322,7 @@ export default function Navbar() {
 
                     {/* Items */}
                     <div style={{ padding:"6px 0" }}>
-                      <div onClick={() => { setProfileOpen(true); setDropdownOpen(false); }}
+                      <div onClick={() => { navigate("/profile"); setDropdownOpen(false); }}
                         style={{ padding:"9px 16px", fontSize:13, color:"rgba(255,255,255,.7)", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:10 }}
                         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,.05)"}
                         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
