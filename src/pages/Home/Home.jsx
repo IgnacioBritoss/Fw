@@ -11,7 +11,7 @@ const CATEGORIES = [
   { id:"Todos", label:"Todos", icon:"" },
   { id:"Económico", label:"Económico", icon:"" },
   { id:"Berlina", label:"Berlina", icon:"" },
-  { id:"SUV", label:"SUV", icon:"🛻" },
+  { id:"SUV", label:"SUV", icon:"" },
   { id:"Pickup", label:"Pickup", icon:"" },
   { id:"Eléctrico", label:"Eléctrico", icon:"" },
   { id:"Premium", label:"Premium", icon:"" },
