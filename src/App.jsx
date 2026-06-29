@@ -21,6 +21,7 @@ import MyBookings from "./pages/MyBookings/MyBookings";
 import Payment from "./pages/Payment/Payment";
 import CompleteProfile from "./pages/Auth/CompleteProfile";
 import KYC from "./pages/KYC/KYC";
+import Profile from "./pages/Profile/Profile";
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/booking/:id" element={<PrivateRoute><Booking /></PrivateRoute>} />
           <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
           <Route path="/payment/:bookingId" element={<PrivateRoute><Payment /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         </Routes>
         <ChatBot />
       </BrowserRouter>
