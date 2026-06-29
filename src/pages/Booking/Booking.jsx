@@ -1,276 +1,119 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import BookingCalendar from "../../components/BookingCalendar";
 import { getListingById, createBooking } from "../../services/api";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 const s = {
-  page: { maxWidth:900, margin:"0 auto", padding:"40px 24px" },
-  pageMobile: { padding:"20px 16px" },
-  title: { fontSize:24, fontWeight:800, color:"#111827",
-    letterSpacing:"-.5px", marginBottom:6 },
-  titleMobile: { fontSize:20, fontWeight:800, color:"#111827",
-    letterSpacing:"-.5px", marginBottom:6 },
-  sub: { fontSize:14, color:"#6b7280", marginBottom:28 },
-  grid: { display:"grid", gridTemplateColumns:"1fr 340px", gap:32 },
-  carCard: { background:"#fff", borderRadius:12, overflow:"hidden",
-    border:"1px solid #f3f4f6", marginBottom:20,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
-  carCardMobile: { background:"#fff", borderRadius:12, overflow:"hidden",
-    border:"1px solid #f3f4f6", marginBottom:16,
-    boxShadow:"0 1px 4px rgba(0,0,0,.06)" },
-  carImg: { width:"100%", height:180, background:"#f3f4f6",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    overflow:"hidden" },
-  carImgMobile: { width:"100%", height:140, background:"#f3f4f6",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    overflow:"hidden" },
-  carBody: { padding:16 },
-  carBodyMobile: { padding:12 },
-  carTitle: { fontWeight:700, fontSize:15, marginBottom:4, color:"#111827" },
-  carMeta: { fontSize:13, color:"#6b7280", marginBottom:6 },
-  carPrice: { fontWeight:800, fontSize:18, color:"#2563eb" },
-  infoBox: { background:"#fffbeb", border:"1px solid #fde68a",
-    borderRadius:10, padding:14, fontSize:13, color:"#92400e",
-    lineHeight:1.6 },
-  confirmed: { textAlign:"center", padding:"60px 20px" },
-  confirmedMobile: { textAlign:"center", padding:"40px 16px" },
-  confirmedIcon: { width:72, height:72, borderRadius:"50%",
-    background:"#eff6ff", display:"flex", alignItems:"center",
-    justifyContent:"center", margin:"0 auto 20px" },
-  confirmedTitle: { fontSize:22, fontWeight:800, marginBottom:8,
-    color:"#111827" },
-  confirmedTitleMobile: { fontSize:18, fontWeight:800, marginBottom:8,
-    color:"#111827" },
-  confirmedSub: { color:"#6b7280", lineHeight:1.6, marginBottom:24 },
-  detailBox: { background:"#f9fafb", border:"1px solid #f3f4f6",
-    borderRadius:10, padding:16, marginBottom:20, textAlign:"left" },
-  detailRow: { display:"flex", justifyContent:"space-between",
-    fontSize:14, color:"#374151", marginBottom:8 },
-  detailRowMobile: { display:"flex", justifyContent:"space-between",
-    fontSize:13, color:"#374151", marginBottom:8 },
-  btnRow: { display:"flex", gap:10, justifyContent:"center",
-    flexWrap:"wrap" },
-  btn: { padding:"12px 28px", background:"#2563eb", color:"#fff",
-    border:"none", borderRadius:10, fontSize:14, fontWeight:700,
-    cursor:"pointer" },
-  btnMobile: { flex:1, padding:"12px 16px", background:"#2563eb",
-    color:"#fff", border:"none", borderRadius:10, fontSize:14,
-    fontWeight:700, cursor:"pointer" },
-  btnOutline: { padding:"12px 28px", background:"transparent",
-    border:"1.5px solid #e5e7eb", color:"#374151", borderRadius:10,
-    fontSize:14, cursor:"pointer" },
-  btnOutlineMobile: { flex:1, padding:"12px 16px", background:"transparent",
-    border:"1.5px solid #e5e7eb", color:"#374151", borderRadius:10,
-    fontSize:14, cursor:"pointer" },
+  page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
+  pageMobile: { padding: "20px 16px" },
+  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
+  titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { fontSize: 14, color: "#6b7280", marginBottom: 28 },
+  grid: { display: "grid", gridTemplateColumns: "1fr 340px", gap: 32 },
+  carCard: { background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #f3f4f6", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
+  carImg: { width: "100%", height: 180, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  carImgMobile: { width: "100%", height: 140, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  carBody: { padding: 16 },
+  carTitle: { fontWeight: 700, fontSize: 15, marginBottom: 4, color: "#111827" },
+  carMeta: { fontSize: 13, color: "#6b7280", marginBottom: 6 },
+  carPrice: { fontWeight: 800, fontSize: 18, color: "#2563eb" },
+  infoBox: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 14, fontSize: 13, color: "#1e40af", lineHeight: 1.6 },
+  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginTop: 12 },
 };
 
-function apiListingToCar(listing) {
-  const v = listing.vehicle || {};
-  return {
-    id: listing.id,
-    brand: v.brand || "",
-    model: v.model || "",
-    year: v.year || "",
-    price_per_day: listing.pricePerDay || 0,
-    location: listing.locationText || "",
-    photos: listing.photos || [],
-  };
+function CarSummaryCard({ car, mobile }) {
+  return (
+    <div style={s.carCard}>
+      <div style={mobile ? s.carImgMobile : s.carImg}>
+        {car.photos?.length > 0
+          ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
+      </div>
+      <div style={s.carBody}>
+        <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
+        <div style={s.carMeta}>{car.location}</div>
+        <div style={s.carPrice}>${Number(car.price_per_day).toLocaleString()}/día</div>
+      </div>
+    </div>
+  );
 }
 
 export default function Booking() {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const [confirmed, setConfirmed] = useState(false);
-  const [bookingData, setBookingData] = useState(null);
-  const [car, setCar] = useState(null);
+  const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const localCars = [
-      ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-      ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
-    ];
-    const localCar = localCars.find((c) => c.id === id);
-    if (localCar) {
-      setCar(localCar);
-      setLoading(false);
-      return;
-    }
     getListingById(id)
-      .then((listing) => { if (listing) setCar(apiListingToCar(listing)); })
-      .catch(() => {})
+      .then((data) => {
+        const v = data.vehicle || {};
+        setListing({
+          id: data.id,
+          brand: v.brand || "",
+          model: v.model || "",
+          year: v.year || "",
+          price_per_day: data.pricePerDay || 0,
+          location: data.locationText || "",
+          photos: data.photos || [],
+          ownerId: data.ownerId,
+        });
+      })
+      .catch(() => setError("No se pudo cargar el listing."))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleConfirm = async (data) => {
-    if (submitting) return;
+  const handleConfirm = async ({ start, end, days, total, commission, deposit, totalFinal }) => {
+    if (!user) { navigate("/login"); return; }
     setSubmitting(true);
-    setError("");
+    setError(null);
     try {
-      const created = await createBooking({
-        listingId: car.id,
-        startDate: data.start.toISOString(),
-        endDate: data.end.toISOString(),
+      const booking = await createBooking({
+        listingId: id,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
       });
-      setBookingData({
-        id: created?.id,
-        car_name: `${car.brand} ${car.model} ${car.year}`.trim(),
-        start_date: data.start.toISOString(),
-        end_date: data.end.toISOString(),
-        days: data.days,
-        total_final: created?.totalPriceSnapshot ?? data.totalFinal,
+      navigate(`/payment/${booking.id}`, {
+        state: { booking, car: listing, days, total, commission, deposit, totalFinal, startDate: start.toISOString(), endDate: end.toISOString() },
       });
-      setConfirmed(true);
     } catch (err) {
-      setError(err.message || "No se pudo enviar la solicitud. Intentá de nuevo.");
+      setError(err.message || "Error al crear la reserva.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return (
-    <div style={{ padding: 40, textAlign: "center", color: "#9ca3af" }}>
-      Cargando...
-    </div>
-  );
-
-  if (!car) return (
-    <div style={{ padding:40, textAlign:"center", color:"#6b7280" }}>
-      Auto no encontrado.
-    </div>
-  );
-
-  if (confirmed && bookingData) {
-    const start = new Date(bookingData.start_date);
-    const end = new Date(bookingData.end_date);
-    return (
-      <div style={isMobile ? s.pageMobile : s.page}>
-        <div style={isMobile ? s.confirmedMobile : s.confirmed}>
-          <div style={s.confirmedIcon}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5"
-                strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div style={isMobile ? s.confirmedTitleMobile : s.confirmedTitle}>
-            Solicitud enviada
-          </div>
-          <div style={s.confirmedSub}>
-            Tu solicitud fue enviada al dueño.<br/>
-            Te avisaremos cuando la confirme.
-          </div>
-          <div style={s.detailBox}>
-            {[
-              ["Vehículo", bookingData.car_name],
-              ["Desde", format(start, "d 'de' MMMM yyyy", { locale:es })],
-              ["Hasta", format(end, "d 'de' MMMM yyyy", { locale:es })],
-              ["Días", bookingData.days],
-              ["Total", `$${bookingData.total_final?.toLocaleString()}`],
-              ["Estado", "Pendiente de confirmación"],
-            ].map(([k, v]) => (
-              <div key={k} style={isMobile ? s.detailRowMobile : s.detailRow}>
-                <span style={{ color:"#6b7280" }}>{k}</span>
-                <strong style={k === "Total" ? { color:"#2563eb" } : {}}>
-                  {v}
-                </strong>
-              </div>
-            ))}
-          </div>
-          <div style={s.btnRow}>
-            <button
-              style={isMobile ? s.btnMobile : s.btn}
-              onClick={() => navigate("/my-bookings")}>
-              Ver mis reservas
-            </button>
-            <button
-              style={isMobile ? s.btnOutlineMobile : s.btnOutline}
-              onClick={() => navigate("/")}>
-              Volver al inicio
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#9ca3af" }}>Cargando...</div>;
+  if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>Listing no encontrado.</div>;
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={isMobile ? s.titleMobile : s.title}>Reservar auto</div>
       <div style={s.sub}>Elegí las fechas y confirmá tu reserva</div>
-
-      {error && (
-        <div style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:10,
-          padding:14, fontSize:13, color:"#b91c1c", marginBottom:16 }}>
-          {error}
-        </div>
-      )}
-      {submitting && (
-        <div style={{ background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:10,
-          padding:14, fontSize:13, color:"#1e40af", marginBottom:16 }}>
-          Enviando solicitud al dueño...
-        </div>
-      )}
-
-      {/* En mobile el resumen del auto va arriba */}
-      {isMobile && (
-        <div style={s.carCardMobile}>
-          <div style={s.carImgMobile}>
-            {car.photos?.length > 0
-              ? <img src={car.photos[0]} alt=""
-                  style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-              : <div style={{ color:"#9ca3af", fontSize:13 }}>Sin foto</div>}
-          </div>
-          <div style={s.carBodyMobile}>
-            <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
-            <div style={s.carMeta}>{car.location}</div>
-            <div style={s.carPrice}>
-              ${Number(car.price_per_day).toLocaleString()}/día
-            </div>
-          </div>
-        </div>
-      )}
-
+      {isMobile && <CarSummaryCard car={listing} mobile />}
       {isMobile ? (
         <div>
-          <BookingCalendar car={car} onConfirm={handleConfirm} />
-          <div style={{ ...s.infoBox, marginTop:16 }}>
-            <strong>Recordá:</strong> El pago se procesa solo cuando el dueño
-            confirma la reserva. El depósito de garantía se devuelve
-            automáticamente si no hay daños al finalizar.
-          </div>
+          <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
+          {error && <div style={s.errorBox}>{error}</div>}
+          {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
+          <div style={{ ...s.infoBox, marginTop: 16 }}><strong>Recordá:</strong> El pago se procesa solo cuando el dueño confirma la reserva.</div>
         </div>
       ) : (
         <div style={s.grid}>
           <div>
-            <BookingCalendar car={car} onConfirm={handleConfirm} />
+            <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
+            {error && <div style={s.errorBox}>{error}</div>}
+            {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
           </div>
           <div>
-            <div style={s.carCard}>
-              <div style={s.carImg}>
-                {car.photos?.length > 0
-                  ? <img src={car.photos[0]} alt=""
-                      style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                  : <div style={{ color:"#9ca3af", fontSize:13 }}>Sin foto</div>}
-              </div>
-              <div style={s.carBody}>
-                <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
-                <div style={s.carMeta}>{car.location}</div>
-                <div style={s.carPrice}>
-                  ${Number(car.price_per_day).toLocaleString()}/día
-                </div>
-              </div>
-            </div>
-            <div style={s.infoBox}>
-              <strong>Recordá:</strong> El pago se procesa solo cuando el dueño
-              confirma la reserva. El depósito de garantía se devuelve
-              automáticamente si no hay daños al finalizar.
-            </div>
+            <CarSummaryCard car={listing} />
+            <div style={s.infoBox}><strong>Recordá:</strong> El pago se procesa solo cuando el dueño confirma la reserva.</div>
           </div>
         </div>
       )}
