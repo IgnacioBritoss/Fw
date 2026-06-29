@@ -268,8 +268,7 @@ export default function Home() {
             <h2 style={{ fontSize:24, fontWeight:800, color:"#111827" }}>Autos destacados</h2>
             <div style={{ display:"flex", gap:8 }}>
               {[["lista","Lista"],["mapa","Mapa"]].map(([k,l]) => (
-                <button key={k} onClick={()=>setView(k)} style={{
-                  padding:"7px 16px", borderRadius:20, fontSize:13, cursor:"pointer", fontWeight:500,
+                <button key={k} onClick={()=>setView(k === view && k !== "lista" ? "lista" : k)} style={{                  padding:"7px 16px", borderRadius:20, fontSize:13, cursor:"pointer", fontWeight:500,
                   border:view===k?"2px solid #2563eb":"1.5px solid #e5e7eb",
                   background:view===k?"#2563eb":"#fff", color:view===k?"#fff":"#374151",
                 }}>{l}</button>
@@ -331,7 +330,7 @@ export default function Home() {
               </button>
             </div>
             <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize:48, fontWeight:900, color:"#fff", letterSpacing:"-2px" }}>$142.000</div>
+              <div style={{ fontSize:48, fontWeight:900, color:"#fff", letterSpacing:"-2px" }}>$1.420.000</div>
               <div style={{ fontSize:13, color:"rgba(255,255,255,.6)", marginTop:4 }}>Ganancia promedio mensual</div>
               <div style={{ marginTop:20, background:"rgba(255,255,255,.12)", borderRadius:12, padding:"12px 20px", display:"inline-block", textAlign:"left" }}>
                 <div style={{ display:"flex", gap:16 }}>
