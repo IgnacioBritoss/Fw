@@ -45,7 +45,7 @@ export default function Register() {
     const result = await register({ name:`${form.firstName} ${form.lastName}`.trim(), email:form.email, password:form.password, acceptedTerms:form.acceptedTerms });
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-    navigate("/kyc");  };
+    navigate("/kyc");};
 
   const inputStyle = {
     width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb",
