@@ -1,36 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useIsMobile } from "../../hooks/useIsMobile";
 import { GOOGLE_AUTH_URL } from "../../services/api";
-
-const s = {
-  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
-  pageMobile: { minHeight:"100vh", background:"#f9fafb", padding:"20px 16px" },
-  card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:520, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
-  cardMobile: { background:"#fff", borderRadius:16, padding:"24px 20px", width:"100%", boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
-  title: { fontSize:24, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 },
-  sub: { color:"#6b7280", fontSize:14, marginBottom:20 },
-  section: { fontSize:12, fontWeight:700, color:"#2563eb", textTransform:"uppercase", letterSpacing:".06em", marginBottom:12, marginTop:20 },
-  field: { marginBottom:14 },
-  label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
-  input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827" },
-  grid2: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
-  grid2Mobile: { display:"grid", gridTemplateColumns:"1fr", gap:0 },
-  btn: { width:"100%", padding:"13px", background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
-  btnDisabled: { opacity:0.6, cursor:"not-allowed" },
-  btnGoogle: { width:"100%", padding:"11px", background:"#fff", color:"#374151", border:"1.5px solid #e5e7eb", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:16 },
-  loginLink: { textAlign:"center", marginTop:18, fontSize:13, color:"#6b7280" },
-  error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-  divider: { display:"flex", alignItems:"center", gap:12, margin:"16px 0" },
-  dividerLine: { flex:1, height:1, background:"#f3f4f6" },
-  dividerText: { fontSize:12, color:"#9ca3af" },
-  termsRow: { display:"flex", alignItems:"flex-start", gap:10, marginBottom:20, marginTop:8 },
-  termsCheck: { marginTop:3, width:16, height:16, accentColor:"#2563eb", cursor:"pointer", flexShrink:0 },
-  termsText: { fontSize:13, color:"#374151", lineHeight:1.6 },
-  passwordWrapper: { position:"relative" },
-  eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
-};
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -42,14 +13,12 @@ const GoogleIcon = () => (
 );
 
 const EyeOpen = () => (
-  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
   </svg>
 );
-
 const EyeClosed = () => (
-  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
     <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
     <line x1="1" y1="1" x2="23" y2="23"/>
@@ -59,149 +28,155 @@ const EyeClosed = () => (
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const { isMobile } = useIsMobile();
-  const [form, setForm] = useState({
-    firstName:"", lastName:"", email:"", password:"", confirmPassword:"", acceptedTerms:false,
-  });
+  const [form, setForm] = useState({ firstName:"", lastName:"", email:"", phone:"", password:"", confirmPassword:"", acceptedTerms:false });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
 
   const handleSubmit = async () => {
-    if (!form.firstName || !form.email || !form.password) {
-      setError("Completá todos los campos obligatorios.");
-      return;
-    }
-    if (form.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError("Las contraseñas no coinciden.");
-      return;
-    }
-    if (!form.acceptedTerms) {
-      setError("Debés aceptar los términos y condiciones para continuar.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    const result = await register({
-      name: `${form.firstName} ${form.lastName}`.trim(),
-      email: form.email,
-      password: form.password,
-      acceptedTerms: form.acceptedTerms,
-    });
-
+    if (!form.firstName || !form.email || !form.password) { setError("Completá todos los campos obligatorios."); return; }
+    if (form.password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres."); return; }
+    if (form.password !== form.confirmPassword) { setError("Las contraseñas no coinciden."); return; }
+    if (!form.acceptedTerms) { setError("Debés aceptar los términos y condiciones."); return; }
+    setLoading(true); setError("");
+    const result = await register({ name:`${form.firstName} ${form.lastName}`.trim(), email:form.email, password:form.password, acceptedTerms:form.acceptedTerms });
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-
     navigate("/complete-profile");
   };
 
+  const inputStyle = {
+    width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb",
+    fontSize:14, outline:"none", color:"#111827", boxSizing:"border-box",
+  };
+  const labelStyle = { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 };
+
   return (
-    <div style={isMobile ? s.pageMobile : s.page}>
-      <div style={isMobile ? s.cardMobile : s.card}>
-        <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>
-          Crear cuenta en Freewheel
-        </div>
-        <div style={s.sub}>Completá tus datos para empezar</div>
+    <div style={{ display:"flex", minHeight:"100vh" }}>
+      {/* Left — form */}
+      <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 64px", background:"#fff", overflowY:"auto" }}>
+        <div style={{ width:"100%", maxWidth:480 }}>
+          <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none", marginBottom:32 }}>
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
+              <circle cx="16" cy="16" r="4" fill="#2563eb"/>
+              {[0,60,120,180,240,300].map((a,i) => { const r=a*Math.PI/180; return <line key={i} x1={16+5*Math.cos(r)} y1={16+5*Math.sin(r)} x2={16+11*Math.cos(r)} y2={16+11*Math.sin(r)} stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>; })}
+            </svg>
+            <span style={{ fontWeight:800, fontSize:18, color:"#111827" }}>Free<span style={{ color:"#2563eb" }}>wheel</span></span>
+          </Link>
 
-        {error && <div style={s.error}>{error}</div>}
-
-        <button style={s.btnGoogle} onClick={() => window.location.href = GOOGLE_AUTH_URL}>
-          <GoogleIcon /> Continuar con Google
-        </button>
-
-        <div style={s.divider}>
-          <div style={s.dividerLine} />
-          <span style={s.dividerText}>o registrate con email</span>
-          <div style={s.dividerLine} />
-        </div>
-
-        <div style={s.section}>Datos personales</div>
-
-        <div style={isMobile ? s.grid2Mobile : s.grid2}>
-          <div style={s.field}>
-            <label style={s.label}>Nombre *</label>
-            <input style={s.input} placeholder="Martin" value={form.firstName}
-              onChange={(e) => set("firstName", e.target.value)} />
+          <div style={{ marginBottom:28 }}>
+            <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>Creá tu cuenta<br/>en un minuto.</h2>
+            <p style={{ fontSize:14, color:"#6b7280" }}>
+              ¿Ya tenés cuenta?{" "}
+              <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>Iniciá sesión →</Link>
+            </p>
           </div>
-          <div style={s.field}>
-            <label style={s.label}>Apellido</label>
-            <input style={s.input} placeholder="García" value={form.lastName}
-              onChange={(e) => set("lastName", e.target.value)} />
+
+          {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 }}>{error}</div>}
+
+          <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
+            width:"100%", padding:"11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
+            borderRadius:10, fontSize:14, fontWeight:600, color:"#374151", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:20,
+          }}>
+            <GoogleIcon /> Continuar con Google
+          </button>
+
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+            <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>o registrate con email</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
           </div>
-        </div>
 
-        <div style={s.field}>
-          <label style={s.label}>Email *</label>
-          <input style={s.input} type="email" placeholder="juan@email.com"
-            value={form.email} onChange={(e) => set("email", e.target.value)} />
-        </div>
-
-        <div style={isMobile ? s.grid2Mobile : s.grid2}>
-          <div style={s.field}>
-            <label style={s.label}>Contraseña * (mín. 6 caracteres)</label>
-            <div style={s.passwordWrapper}>
-              <input
-                style={{ ...s.input, paddingRight:40 }}
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••"
-                value={form.password}
-                onChange={(e) => set("password", e.target.value)}
-              />
-              <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
-                {showPassword ? <EyeClosed /> : <EyeOpen />}
-              </button>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+            <div>
+              <label style={labelStyle}>Nombre *</label>
+              <input style={inputStyle} placeholder="Martin" value={form.firstName} onChange={e => set("firstName", e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Apellido</label>
+              <input style={inputStyle} placeholder="García" value={form.lastName} onChange={e => set("lastName", e.target.value)} />
             </div>
           </div>
-          <div style={s.field}>
-            <label style={s.label}>Confirmar contraseña *</label>
-            <div style={s.passwordWrapper}>
-              <input
-                style={{ ...s.input, paddingRight:40 }}
-                type={showConfirm ? "text" : "password"}
-                placeholder="••••••"
-                value={form.confirmPassword}
-                onChange={(e) => set("confirmPassword", e.target.value)}
-              />
-              <button type="button" style={s.eyeBtn} onClick={() => setShowConfirm(v => !v)}>
-                {showConfirm ? <EyeClosed /> : <EyeOpen />}
-              </button>
+
+          <div style={{ marginBottom:16 }}>
+            <label style={labelStyle}>Email *</label>
+            <input style={inputStyle} type="email" placeholder="martin@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
+          </div>
+
+          <div style={{ marginBottom:16 }}>
+            <label style={labelStyle}>Teléfono</label>
+            <input style={inputStyle} placeholder="+54 9 11 2345 6789" value={form.phone} onChange={e => set("phone", e.target.value)} />
+          </div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+            <div>
+              <label style={labelStyle}>Contraseña *</label>
+              <div style={{ position:"relative" }}>
+                <input type={showPassword?"text":"password"} placeholder="••••••" value={form.password}
+                  onChange={e => set("password", e.target.value)}
+                  style={{ ...inputStyle, paddingRight:40 }} />
+                <button type="button" onClick={() => setShowPassword(v => !v)}
+                  style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0 }}>
+                  {showPassword ? <EyeClosed/> : <EyeOpen/>}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Confirmar contraseña *</label>
+              <div style={{ position:"relative" }}>
+                <input type={showConfirm?"text":"password"} placeholder="••••••" value={form.confirmPassword}
+                  onChange={e => set("confirmPassword", e.target.value)}
+                  style={{ ...inputStyle, paddingRight:40 }} />
+                <button type="button" onClick={() => setShowConfirm(v => !v)}
+                  style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0 }}>
+                  {showConfirm ? <EyeClosed/> : <EyeOpen/>}
+                </button>
+              </div>
             </div>
           </div>
+
+          <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:24 }}>
+            <input type="checkbox" id="terms" checked={form.acceptedTerms} onChange={e => set("acceptedTerms", e.target.checked)}
+              style={{ marginTop:3, width:16, height:16, accentColor:"#2563eb", cursor:"pointer", flexShrink:0 }} />
+            <label htmlFor="terms" style={{ fontSize:13, color:"#374151", lineHeight:1.6, cursor:"pointer" }}>
+              Acepto los{" "}
+              <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>términos y condiciones</Link>
+              {" "}y la política de privacidad de Freewheel *
+            </label>
+          </div>
+
+          <button onClick={handleSubmit} disabled={loading} style={{
+            width:"100%", padding:13, background:"#2563eb", color:"#fff",
+            border:"none", borderRadius:10, fontSize:15, fontWeight:700,
+            cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
+          }}>
+            {loading ? "Creando cuenta..." : "Crear mi cuenta →"}
+          </button>
         </div>
+      </div>
 
-        <div style={s.termsRow}>
-          <input type="checkbox" style={s.termsCheck} id="terms"
-            checked={form.acceptedTerms}
-            onChange={(e) => set("acceptedTerms", e.target.checked)} />
-          <label htmlFor="terms" style={s.termsText}>
-            Acepto los{" "}
-            <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600 }}>
-              términos y condiciones
-            </Link>{" "}
-            y la política de privacidad de Freewheel *
-          </label>
-        </div>
-
-        <button
-          style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? "Creando cuenta..." : "Crear mi cuenta"}
-        </button>
-
-        <div style={s.loginLink}>
-          ¿Ya tenés cuenta?{" "}
-          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>Iniciá sesión</Link>
+      {/* Right — dark hero */}
+      <div style={{
+        flex:"0 0 42%", background:"linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)",
+        display:"flex", flexDirection:"column", justifyContent:"center",
+        padding:"48px 52px", position:"relative", overflow:"hidden",
+      }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(ellipse at 70% 40%,rgba(37,99,235,.18) 0%,transparent 60%)" }} />
+        <div style={{ position:"relative" }}>
+          <h2 style={{ fontSize:36, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
+            La plataforma para<br/>alquilar autos entre<br/>personas, verificada,<br/>segura y sin multas.
+          </h2>
+          <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.7, marginBottom:40 }}>
+            Conectamos conductores con dueños de autos. Todo verificado, todo seguro.
+          </p>
+          <div style={{ display:"flex", gap:40 }}>
+            {[["45.000+","Conductores"],["4.9 ★","Calificación"],["24/7","Soporte"]].map(([v,l]) => (
+              <div key={l}><div style={{ fontSize:20, fontWeight:800, color:"#fff" }}>{v}</div><div style={{ fontSize:11, color:"rgba(255,255,255,.45)", marginTop:2 }}>{l}</div></div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
