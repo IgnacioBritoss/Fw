@@ -99,6 +99,13 @@ export async function getListings(params = {}) {
 }
 export async function getMyListings() { return apiFetch("/listings/me"); }
 export async function getListingById(id) { return apiFetch(`/listings/${id}`); }
+export async function getListingAvailability(listingId, from, to) {
+  const params = new URLSearchParams();
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  const qs = params.toString();
+  return apiFetch(`/listings/${listingId}/availability${qs ? `?${qs}` : ""}`);
+}
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }
