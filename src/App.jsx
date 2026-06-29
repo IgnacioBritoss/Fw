@@ -20,6 +20,7 @@ import Booking from "./pages/Booking/Booking";
 import MyBookings from "./pages/MyBookings/MyBookings";
 import Payment from "./pages/Payment/Payment";
 import CompleteProfile from "./pages/Auth/CompleteProfile";
+import KYC from "./pages/KYC/KYC";
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/kyc" element={<PrivateRoute><KYC /></PrivateRoute>} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/terms" element={<Terms />} />
