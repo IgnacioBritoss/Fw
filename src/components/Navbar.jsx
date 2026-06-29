@@ -4,25 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { requestEmailChange, confirmEmailChange, updateMe } from "../services/api";
 
-const Logo = () => (
-  <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
-      <circle cx="16" cy="16" r="4" fill="#2563eb"/>
-      {[0,60,120,180,240,300].map((a,i) => {
-        const rad = a*Math.PI/180;
-        return <line key={i}
-          x1={16+5*Math.cos(rad)} y1={16+5*Math.sin(rad)}
-          x2={16+11*Math.cos(rad)} y2={16+11*Math.sin(rad)}
-          stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>;
-      })}
-    </svg>
-    <span style={{ fontWeight:800, fontSize:19, letterSpacing:"-0.5px" }}>
-      <span style={{ color:"#fff" }}>Free</span><span style={{ color:"#2563eb" }}>wheel</span>
-    </span>
-  </Link>
-);
-
 const userInitial = (u) =>
   (u?.name?.[0] || u?.email?.[0] || "?").toUpperCase();
 
@@ -120,7 +101,6 @@ function ProfileModal({ onClose }) {
       <div style={{ background:"#fff", borderRadius:20, padding:28, width:"90%", maxWidth:420, boxShadow:"0 20px 60px rgba(0,0,0,.2)" }}
         onClick={e => e.stopPropagation()}>
 
-        {/* Header del modal */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
           <div>
             <div style={{ fontSize:18, fontWeight:800, color:"#111827" }}>Mi perfil</div>
@@ -141,7 +121,6 @@ function ProfileModal({ onClose }) {
         {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"9px 12px", color:"#b91c1c", fontSize:12, marginBottom:12 }}>{error}</div>}
         {success && <div style={{ background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"9px 12px", color:"#2563eb", fontSize:12, marginBottom:12 }}>{success}</div>}
 
-        {/* Nombre */}
         <div style={{ marginBottom:14 }}>
           <label style={labelStyle}>Nombre</label>
           {editing === "name" ? (
@@ -160,7 +139,6 @@ function ProfileModal({ onClose }) {
           )}
         </div>
 
-        {/* Email */}
         <div style={{ marginBottom:14 }}>
           <label style={labelStyle}>Email</label>
           {editing === "email" ? (
@@ -187,7 +165,6 @@ function ProfileModal({ onClose }) {
           )}
         </div>
 
-        {/* Teléfono */}
         <div style={{ marginBottom:24 }}>
           <label style={labelStyle}>Teléfono</label>
           {editing === "phone" ? (
@@ -254,7 +231,6 @@ export default function Navbar() {
         borderBottom:"1px solid rgba(255,255,255,.08)",
         position:"sticky", top:0, zIndex:100,
       }}>
-        <Logo />
         <button
           onClick={() => setMenuOpen(o => !o)}
           style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex", flexDirection:"column", gap:5 }}>
@@ -322,8 +298,6 @@ export default function Navbar() {
         position:"sticky", top:0, zIndex:100,
         boxShadow:"0 1px 0 rgba(255,255,255,.04)",
       }}>
-        <Logo />
-
         <div style={{ display:"flex", gap:28, alignItems:"center" }}>
           <Link to="/" style={navLink}
             onMouseEnter={e => e.currentTarget.style.color="#fff"}
@@ -360,7 +334,6 @@ export default function Navbar() {
                   </Link>
                 ))}
 
-                {/* Avatar + dropdown */}
                 <div style={{ position:"relative" }} ref={dropdownRef}>
                   <div onClick={() => setDropdownOpen(o => !o)} style={{
                     width:36, height:36, borderRadius:"50%",
@@ -380,7 +353,6 @@ export default function Navbar() {
                       minWidth:200, boxShadow:"0 16px 48px rgba(0,0,0,.4)",
                       border:"1px solid rgba(255,255,255,.08)", zIndex:200, overflow:"hidden",
                     }}>
-                      {/* User info */}
                       <div style={{ padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,.07)" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                           <div style={{ width:32, height:32, borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700, color:"#fff", flexShrink:0 }}>
@@ -393,7 +365,6 @@ export default function Navbar() {
                         </div>
                       </div>
 
-                      {/* Items */}
                       <div style={{ padding:"6px 0" }}>
                         {[
                           {
@@ -408,7 +379,7 @@ export default function Navbar() {
                           },
                         ].map(({ label, icon, action }) => (
                           <div key={label} onClick={action}
-                            style={{ padding:"10px 16px", fontSize:13, color:"rgba(255,255,255,.75)", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:10, transition:"background .1s" }}
+                            style={{ padding:"10px 16px", fontSize:13, color:"rgba(255,255,255,.75)", cursor:"pointer", fontWeight:500, display:"flex", alignItems:"center", gap:10 }}
                             onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,.06)"}
                             onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                             {icon} {label}
@@ -437,7 +408,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/login">
-                <button style={{ padding:"8px 18px", background:"transparent", border:"1px solid rgba(255,255,255,.2)", color:"rgba(255,255,255,.85)", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer", transition:"border-color .15s" }}
+                <button style={{ padding:"8px 18px", background:"transparent", border:"1px solid rgba(255,255,255,.2)", color:"rgba(255,255,255,.85)", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer" }}
                   onMouseEnter={e => e.currentTarget.style.borderColor="rgba(255,255,255,.5)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor="rgba(255,255,255,.2)"}>
                   Iniciar sesión
