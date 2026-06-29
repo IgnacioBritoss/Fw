@@ -232,8 +232,7 @@ export default function Home() {
           <p style={{ fontSize:14, color:"#6b7280", marginBottom:28 }}>Seleccioná la categoría que mejor se adapte a lo que buscás</p>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))", gap:12 }}>
             {CATEGORIES.filter(c=>c.id!=="Todos").map(c => (
-              <div key={c.id} onClick={()=>setCat(c.id)}
-                style={{
+              <div key={c.id} onClick={()=>setCat(cat === c.id ? "Todos" : c.id)}                style={{
                   background:cat===c.id?"#eff6ff":"#fff", border:cat===c.id?"1.5px solid #2563eb":"1.5px solid #e5e7eb",
                   borderRadius:12, padding:"20px 16px", cursor:"pointer", textAlign:"center", transition:"all .15s",
                 }}
