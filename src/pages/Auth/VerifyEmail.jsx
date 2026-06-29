@@ -32,7 +32,7 @@ export default function VerifyEmail() {
     const result = await verifyEmail(code);
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-    navigate("/");
+    navigate("/complete-profile");
   };
 
   const handleResend = async () => {
