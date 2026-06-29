@@ -8,13 +8,13 @@ const TRANSMISSION_LABELS = { MANUAL:"Manual", AUTOMATIC:"Automático" };
 const FUEL_LABELS = { GASOLINE:"Nafta", DIESEL:"Diesel", ELECTRIC:"Eléctrico", OTHER:"GNC" };
 
 const CATEGORIES = [
-  { id:"Todos", label:"Todos", icon:"🚗" },
-  { id:"Económico", label:"Económico", icon:"💸" },
-  { id:"Berlina", label:"Berlina", icon:"🚙" },
+  { id:"Todos", label:"Todos", icon:"" },
+  { id:"Económico", label:"Económico", icon:"" },
+  { id:"Berlina", label:"Berlina", icon:"" },
   { id:"SUV", label:"SUV", icon:"🛻" },
-  { id:"Pickup", label:"Pickup", icon:"🚚" },
-  { id:"Eléctrico", label:"Eléctrico", icon:"⚡" },
-  { id:"Premium", label:"Premium", icon:"✨" },
+  { id:"Pickup", label:"Pickup", icon:"" },
+  { id:"Eléctrico", label:"Eléctrico", icon:"" },
+  { id:"Premium", label:"Premium", icon:"" },
 ];
 
 function normalizeListing(l) {
@@ -218,7 +218,7 @@ export default function Home() {
           {/* Price pill */}
           <div style={{ display:"inline-flex", alignItems:"center", background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.12)", borderRadius:10, padding:"8px 16px", gap:8 }}>
             <span style={{ fontSize:12, color:"rgba(255,255,255,.5)" }}>Desde</span>
-            <span style={{ fontSize:18, fontWeight:800, color:"#fff" }}>$3.200</span>
+            <span style={{ fontSize:18, fontWeight:800, color:"#fff" }}>$60.000</span>
             <span style={{ fontSize:12, color:"rgba(255,255,255,.5)" }}>/día</span>
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function Home() {
                 onMouseLeave={e=>{ if(cat!==c.id) e.currentTarget.style.borderColor="#e5e7eb"; }}>
                 <div style={{ fontSize:28, marginBottom:8 }}>{c.icon}</div>
                 <div style={{ fontSize:13, fontWeight:600, color:cat===c.id?"#2563eb":"#374151" }}>{c.label}</div>
-                <div style={{ fontSize:11, color:"#9ca3af", marginTop:2 }}>Desde $2.500</div>
+                <div style={{ fontSize:11, color:"#9ca3af", marginTop:2 }}>Desde $60.000</div>
               </div>
             ))}
           </div>
