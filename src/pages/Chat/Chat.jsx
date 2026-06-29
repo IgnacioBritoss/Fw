@@ -85,6 +85,16 @@ function getViewportData() {
   return { height: window.innerHeight, offsetTop: 0 };
 }
 
+function Avatar({ name, size = 40, fontSize = 15 }) {
+  const colors = ["#2563eb", "#7c3aed", "#059669", "#dc2626", "#d97706"];
+  const color = colors[(name.charCodeAt(0) || 0) % colors.length];
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fff", fontSize, flexShrink: 0 }}>
+      {name[0]?.toUpperCase()}
+    </div>
+  );
+}
+
 export default function Chat() {
   const { user } = useAuth();
   const { isMobile } = useIsMobile();
@@ -267,9 +277,7 @@ export default function Chat() {
   const renderMsgContent = (msg) => {
     const kind = getMsgKind(msg);
     const isMe = msg.senderId === user?.id;
-    if (kind === "audio") {
-      return <AudioMsg src={msg.content} />;
-    }
+    if (kind === "audio") return <AudioMsg src={msg.content} />;
     if (kind === "image") {
       return (
         <img src={msg.content} alt=""
@@ -285,11 +293,7 @@ export default function Chat() {
         </a>
       );
     }
-    return (
-      <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-        {msg.content}
-      </span>
-    );
+    return <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</span>;
   };
 
   const renderMessages = () => {
@@ -302,25 +306,26 @@ export default function Chat() {
       return (
         <div key={msg.id} style={{ display: "contents" }}>
           {showDate && (
-            <div style={{ textAlign: "center", margin: "8px 0" }}>
-              <span style={{ fontSize: 11, color: "#9ca3af", background: "#f3f4f6", borderRadius: 10, padding: "2px 10px" }}>
+            <div style={{ textAlign: "center", margin: "12px 0" }}>
+              <span style={{ fontSize: 11, color: "#6b7280", background: "#e5e7eb", borderRadius: 10, padding: "3px 12px", fontWeight: 500 }}>
                 {dateLabel}
               </span>
             </div>
           )}
           <div style={{
             alignSelf: isMe ? "flex-end" : "flex-start",
-            maxWidth: "75%",
-            background: isMe ? "#2563eb" : "#fff",
+            maxWidth: "72%",
+            background: isMe ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#fff",
             color: isMe ? "#fff" : "#111827",
-            borderRadius: isMe ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
+            borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
             border: isMe ? "none" : "1px solid #e5e7eb",
             padding: "10px 14px",
-            fontSize: 13, lineHeight: 1.5,
+            fontSize: 13.5, lineHeight: 1.5,
+            boxShadow: isMe ? "0 2px 8px rgba(37,99,235,.2)" : "0 1px 3px rgba(0,0,0,.06)",
           }}>
             {renderMsgContent(msg)}
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 4, gap: 2 }}>
-              <span style={{ fontSize: 10, opacity: 0.55 }}>{formatTime(msg.createdAt)}</span>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 4, gap: 3 }}>
+              <span style={{ fontSize: 10, opacity: 0.6 }}>{formatTime(msg.createdAt)}</span>
               {isMe && (
                 <span style={{ fontSize: 10, letterSpacing: -1, color: msg.readAt ? "#93c5fd" : "rgba(255,255,255,0.5)" }}>
                   {msg.readAt ? "✓✓" : "✓"}
@@ -337,8 +342,7 @@ export default function Chat() {
     if (pendingAudio) {
       return (
         <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
-          <audio controls src={pendingAudio.url}
-            style={{ flex: 1, height: 36, minWidth: 0 }} />
+          <audio controls src={pendingAudio.url} style={{ flex: 1, height: 36, minWidth: 0 }} />
           <button onClick={handleSendAudio} disabled={uploading}
             style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
             {uploading ? "..." : "Enviar ✓"}
@@ -356,9 +360,7 @@ export default function Chat() {
         <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "#fef2f2", borderRadius: 24, padding: "10px 16px", border: "1.5px solid #fecaca" }}>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#dc2626", animation: "pulse 1s infinite" }} />
-            <span style={{ color: "#dc2626", fontSize: 14, fontWeight: 500 }}>
-              Grabando... {recordingSeconds}s
-            </span>
+            <span style={{ color: "#dc2626", fontSize: 14, fontWeight: 500 }}>Grabando... {recordingSeconds}s</span>
           </div>
           <button onClick={stopRecording}
             style={{ padding: "9px 18px", background: "#374151", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
@@ -370,14 +372,10 @@ export default function Chat() {
 
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
-        <input ref={fileInputRef} type="file"
-          accept="image/*,.pdf,.doc,.docx,.zip"
-          style={{ display: "none" }}
-          onChange={handleFileSelect} />
-        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-          title="Adjuntar"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.zip" style={{ display: "none" }} onChange={handleFileSelect} />
+        <button onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Adjuntar"
+          style={{ width: 38, height: 38, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </button>
@@ -388,11 +386,11 @@ export default function Chat() {
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Escribí un mensaje..."
           enterKeyHint="send"
-          style={{ flex: 1, padding: isMobile ? "10px 14px" : "10px 16px", borderRadius: 24, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13, outline: "none", color: "#111827" }}
+          style={{ flex: 1, padding: isMobile ? "10px 16px" : "10px 18px", borderRadius: 24, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "#111827", background: "#f9fafb" }}
         />
         <button onClick={startRecording} title="Grabar audio"
-          style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          style={{ width: 38, height: 38, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
             <line x1="12" y1="19" x2="12" y2="23"/>
@@ -400,7 +398,7 @@ export default function Chat() {
           </svg>
         </button>
         <button onClick={handleSend} disabled={sending || !text.trim()}
-          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "#2563eb" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s" }}>
+          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M22 2L11 13" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -412,18 +410,15 @@ export default function Chat() {
 
   const otherName = getDisplayName(otherUser);
   const v = activeConv?.listing?.vehicle;
-  const listingLabel = v
-    ? `${v.brand} ${v.model} ${v.year}`
-    : activeConv?.listing?.title || "";
+  const listingLabel = v ? `${v.brand} ${v.model} ${v.year}` : activeConv?.listing?.title || "";
 
   const convListJSX = (
     <div style={{ background: "#fff", width: isMobile ? "100%" : 300, borderRight: "1px solid #f3f4f6", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto" }}>
-      <div style={{ padding: "18px 20px", fontWeight: 700, fontSize: 15, borderBottom: "1px solid #f3f4f6", color: "#111827" }}>
-        Mensajes
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid #f3f4f6" }}>
+        <div style={{ fontWeight: 800, fontSize: 17, color: "#111827", letterSpacing: "-.3px" }}>Mensajes</div>
       </div>
-      {/* Barra de búsqueda */}
-      <div style={{ padding: "8px 14px", borderBottom: "1px solid #f3f4f6" }}>
-        <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 20, padding: "6px 12px", gap: 6 }}>
+      <div style={{ padding: "10px 14px", borderBottom: "1px solid #f3f4f6" }}>
+        <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 22, padding: "8px 14px", gap: 8 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
@@ -435,17 +430,16 @@ export default function Chat() {
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14, padding: 0, lineHeight: 1 }}>
-              ✕
-            </button>
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
           )}
         </div>
       </div>
-      {loading && (
-        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Cargando...</div>
-      )}
+      {loading && <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Cargando...</div>}
       {!loading && conversations.length === 0 && (
-        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>No tenés conversaciones aún.</div>
+        <div style={{ padding: 32, textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
+          <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>No tenés conversaciones aún.</div>
+        </div>
       )}
       {!loading && filteredConversations.length === 0 && conversations.length > 0 && (
         <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Sin resultados.</div>
@@ -459,7 +453,7 @@ export default function Chat() {
         const preview = lastMsg
           ? (lastMsg.type === "AUDIO"
             ? <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                   <line x1="12" y1="19" x2="12" y2="23"/>
@@ -473,18 +467,18 @@ export default function Chat() {
         const unread = hasUnread(conv);
         return (
           <div key={conv.id} onClick={() => setActiveConvId(conv.id)}
-            style={{ padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid #f9fafb", background: isActive ? "#eff6ff" : "transparent", display: "flex", gap: 12, alignItems: "center" }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fff", fontSize: 16, flexShrink: 0 }}>
-              {name[0]?.toUpperCase()}
+            style={{ padding: "13px 18px", cursor: "pointer", borderBottom: "1px solid #f9fafb", background: isActive ? "#eff6ff" : "transparent", display: "flex", gap: 12, alignItems: "center", transition: "background .1s" }}>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <Avatar name={name} size={42} fontSize={16} />
+              {unread && (
+                <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: unread ? 700 : 600, fontSize: 14, color: "#111827", marginBottom: 1 }}>{name}</div>
-              <div style={{ fontSize: 11, color: "#2563eb", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
-              <div style={{ fontSize: 12, color: unread ? "#111827" : "#9ca3af", fontWeight: unread ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</div>
+              <div style={{ fontSize: 11, color: "#2563eb", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{label}</div>
+              <div style={{ fontSize: 12, color: unread ? "#374151" : "#9ca3af", fontWeight: unread ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</div>
             </div>
-            {unread && (
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#2563eb", flexShrink: 0 }} />
-            )}
           </div>
         );
       })}
@@ -500,18 +494,16 @@ export default function Chat() {
             ‹
           </button>
         )}
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fff", fontSize: 15, flexShrink: 0 }}>
-          {otherName[0]?.toUpperCase()}
-        </div>
-        <div>
+        <Avatar name={otherName} size={40} fontSize={15} />
+        <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
-          <div style={{ fontSize: 12, color: "#6b7280" }}>{listingLabel}</div>
+          {listingLabel && <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 500 }}>{listingLabel}</div>}
         </div>
       </div>
       <div ref={messagesRef}
-        style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "16px 20px", display: "flex", flexDirection: "column", gap: 6, background: "#f9fafb", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
+        style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "16px 24px", display: "flex", flexDirection: "column", gap: 6, background: "#f9fafb", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, marginTop: 20 }}>
+          <div style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, marginTop: 40 }}>
             Enviá un mensaje para empezar.
           </div>
         )}
@@ -542,12 +534,17 @@ export default function Chat() {
         {convListJSX}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {!activeConvId ? (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", flexDirection: "column", gap: 12 }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
-                  stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span style={{ fontSize: 14 }}>Seleccioná una conversación</span>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14, background: "#f9fafb" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
+                    stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", textAlign: "center" }}>Tus mensajes</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", marginTop: 4 }}>Seleccioná una conversación</div>
+              </div>
             </div>
           ) : chatAreaJSX}
         </div>
