@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { PrivateRoute } from "./components/PrivateRoute";
-import Navbar from "./components/Navbar";
+import Layout from "./components/Layout";
 import ChatBot from "./components/ChatBot";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login";
@@ -23,31 +23,38 @@ import CompleteProfile from "./pages/Auth/CompleteProfile";
 import KYC from "./pages/KYC/KYC";
 import Profile from "./pages/Profile/Profile";
 
+// Páginas de la app: se muestran dentro del Layout (con sidebar + topbar)
+const app = (el) => <Layout>{el}</Layout>;
+// Páginas privadas dentro del Layout
+const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Pantallas de autenticación / onboarding — sin Layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/kyc" element={<PrivateRoute><KYC /></PrivateRoute>} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/cars/:id" element={<CarDetail />} />
-          <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
-          <Route path="/publish" element={<PrivateRoute><PublishCar /></PrivateRoute>} />
-          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
-          <Route path="/booking/:id" element={<PrivateRoute><Booking /></PrivateRoute>} />
-          <Route path="/my-bookings" element={<PrivateRoute><MyBookings /></PrivateRoute>} />
-          <Route path="/payment/:bookingId" element={<PrivateRoute><Payment /></PrivateRoute>} />
-          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+
+          {/* Pantallas de la app — con Layout (sidebar en todas) */}
+          <Route path="/" element={app(<Home />)} />
+          <Route path="/cars/:id" element={app(<CarDetail />)} />
+          <Route path="/profile" element={priv(<Profile />)} />
+          <Route path="/admin" element={priv(<Admin />)} />
+          <Route path="/publish" element={priv(<PublishCar />)} />
+          <Route path="/dashboard" element={priv(<Dashboard />)} />
+          <Route path="/chat" element={priv(<Chat />)} />
+          <Route path="/booking/:id" element={priv(<Booking />)} />
+          <Route path="/my-bookings" element={priv(<MyBookings />)} />
+          <Route path="/payment/:bookingId" element={priv(<Payment />)} />
         </Routes>
         <ChatBot />
       </BrowserRouter>

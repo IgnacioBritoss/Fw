@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { mockReviews } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { getListingById, startConversation } from "../../services/api";
+import { getListingById, startConversation, updateListing, deleteListing } from "../../services/api";
 
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
@@ -144,6 +144,12 @@ export default function CarDetail() {
   const [showReport, setShowReport] = useState(false);
   const [showReportUser, setShowReportUser] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [editPrice, setEditPrice] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     const allCars = [
@@ -174,6 +180,40 @@ export default function CarDetail() {
       alert(err.message || "Error al iniciar la conversación");
       setContactLoading(false);
     }
+  };
+
+  const patchLocalCar = (patch) => {
+    ["fw_my_cars", "fw_all_cars"].forEach(key => {
+      const arr = JSON.parse(localStorage.getItem(key) || "[]");
+      const next = arr.map(c => c.id === id ? { ...c, ...patch } : c);
+      localStorage.setItem(key, JSON.stringify(next));
+    });
+  };
+
+  const startEdit = () => {
+    setEditPrice(String(car.price_per_day || ""));
+    setEditDesc(car.description || "");
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    const pricePerDay = Number(editPrice);
+    try { await updateListing(id, { pricePerDay, description: editDesc }); } catch { /* puede ser auto local */ }
+    patchLocalCar({ price_per_day: pricePerDay, pricePerDay, description: editDesc });
+    setCar(c => ({ ...c, price_per_day: pricePerDay, description: editDesc }));
+    setSavingEdit(false);
+    setEditing(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try { await deleteListing(id); } catch { /* puede ser auto local */ }
+    ["fw_my_cars", "fw_all_cars"].forEach(key => {
+      const arr = JSON.parse(localStorage.getItem(key) || "[]");
+      localStorage.setItem(key, JSON.stringify(arr.filter(c => c.id !== id)));
+    });
+    navigate("/dashboard");
   };
 
   if (loading) return (
@@ -230,21 +270,49 @@ export default function CarDetail() {
         </span>
       </div>
       <br />
-      <button
-        style={s.btn}
-        onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
-      >
-        {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
-      </button>
 
-      {!isOwner && (
-        <button
-          style={contactLoading ? s.chatBtnLoading : s.chatBtn}
-          onClick={handleContact}
-          disabled={contactLoading}
-        >
-          {contactLoading ? "Abriendo chat..." : "Contactar al dueño"}
-        </button>
+      {isOwner ? (
+        editing ? (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Precio por día ($)</div>
+            <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Descripción</div>
+            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
+              style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "none", marginBottom: 10 }} />
+            <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? "Guardando..." : "Guardar cambios"}
+            </button>
+            <button style={s.chatBtn} onClick={() => setEditing(false)}>Cancelar</button>
+          </div>
+        ) : (
+          <>
+            <button style={s.btn} onClick={startEdit}>Editar publicación</button>
+            <button
+              style={{ width: "100%", padding: "11px", background: "transparent", border: "2px solid #fecaca", color: "#dc2626", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleting}
+            >
+              {deleting ? "Eliminando..." : "Eliminar publicación"}
+            </button>
+          </>
+        )
+      ) : (
+        <>
+          <button
+            style={s.btn}
+            onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
+          >
+            {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
+          </button>
+          <button
+            style={contactLoading ? s.chatBtnLoading : s.chatBtn}
+            onClick={handleContact}
+            disabled={contactLoading}
+          >
+            {contactLoading ? "Abriendo chat..." : "Contactar al dueño"}
+          </button>
+        </>
       )}
 
       <div style={s.ownerBox}>
@@ -427,6 +495,32 @@ export default function CarDetail() {
           targetType="user"
           onClose={() => setShowReportUser(false)}
         />
+      )}
+
+      {confirmDelete && (
+        <div
+          onClick={() => !deleting && setConfirmDelete(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
+        >
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>🗑️</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>Eliminar publicación</div>
+            <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
+              ¿Seguro que querés eliminar <strong>{car.brand} {car.model} {car.year}</strong>? Esta acción no se puede deshacer.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmDelete(false)} disabled={deleting}
+                style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>
+                {deleting ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
