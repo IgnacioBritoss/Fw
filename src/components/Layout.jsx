@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { getMyConversations } from "../services/api";
 
 const NAV = [
   { group: "Navegación", items: [
@@ -41,6 +42,27 @@ export default function Layout({ children }) {
   const { isMobile } = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setHasUnread(false); return; }
+    let active = true;
+    const check = () => {
+      getMyConversations()
+        .then(data => {
+          const convs = Array.isArray(data) ? data : (data?.data ?? []);
+          const unread = convs.some(c => {
+            const last = c.messages?.[0];
+            return last && last.senderId !== user.id && !last.readAt;
+          });
+          if (active) setHasUnread(unread);
+        })
+        .catch(() => {});
+    };
+    check();
+    const iv = setInterval(check, 20000);
+    return () => { active = false; clearInterval(iv); };
+  }, [user]);
 
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
   const initials = `${(user?.firstName || user?.name || "U")[0] || "U"}`.toUpperCase();
@@ -76,7 +98,7 @@ export default function Layout({ children }) {
         <div style={{ fontSize: 12, opacity: .7, lineHeight: 1.5, marginBottom: 12 }}>Publicá tu vehículo y empezá a generar ingresos este mes.</div>
         <button style={{ background: "#fff", color: "#111827", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }} onClick={() => go("/publish")}>Publicar →</button>
       </div>
-      {user ? (
+      {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
           <div onClick={() => go("/profile")} style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
@@ -88,50 +110,28 @@ export default function Layout({ children }) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         </div>
-      ) : (
-        <button onClick={() => go("/login")} style={{ marginTop: 16, width: "100%", padding: "11px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Iniciar sesión</button>
       )}
     </>
   );
 
   const TopbarRight = () => (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      {/* Mensajes */}
-      <div style={t.iconBtn} onClick={() => navigate("/chat")} title="Mensajes"
-        onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
-        onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
-        <MessageIcon />
-      </div>
-      {/* Perfil */}
-      {!user ? (
-        <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Iniciar sesión</button>
-      ) : (
-      <div style={{ position: "relative" }}>
-        <div onClick={() => setMenuOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}>{initials}</div>
-          {!isMobile && (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
-              <div style={{ fontSize: 11, color: "#9ca3af" }}>Ver perfil</div>
-            </div>
+      {user ? (
+        /* Mensajes (con puntito azul si hay no leídos) */
+        <div style={t.iconBtn} onClick={() => navigate("/chat")} title="Mensajes"
+          onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
+          <MessageIcon />
+          {hasUnread && (
+            <span style={{ position: "absolute", top: 7, right: 7, width: 9, height: 9, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
           )}
         </div>
-        {menuOpen && (
-          <div style={{ position: "absolute", top: 48, right: 0, background: "#fff", borderRadius: 12, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid #f0f0f0", zIndex: 300, overflow: "hidden" }}
-            onMouseLeave={() => setMenuOpen(false)}>
-            <div onClick={() => { navigate("/profile"); setMenuOpen(false); }}
-              style={{ padding: "11px 16px", fontSize: 13, color: "#374151", cursor: "pointer", fontWeight: 500 }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              Ver perfil
-            </div>
-            <div onClick={() => { logout(); navigate("/"); setMenuOpen(false); }}
-              style={{ padding: "11px 16px", fontSize: 13, color: "#dc2626", cursor: "pointer", fontWeight: 500, borderTop: "1px solid #f3f4f6" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              Salir
-            </div>
-          </div>
-        )}
-      </div>
+      ) : (
+        /* Sin cuenta: registrarse / iniciar sesión */
+        <>
+          <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Iniciar sesión</button>
+          <button onClick={() => navigate("/register")} style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Registrarse</button>
+        </>
       )}
     </div>
   );
