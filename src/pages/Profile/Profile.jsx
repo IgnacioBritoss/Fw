@@ -4,16 +4,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { updateMe } from "../../services/api";
 
-const Logo = () => (
-  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 12px 8px" }}>
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2" />
-      <circle cx="16" cy="16" r="4" fill="#2563eb" />
-    </svg>
-    <span style={{ fontWeight: 800, fontSize: 17, color: "#111827" }}>Freewheel</span>
-  </div>
-);
-
 const Check = () => (
   <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, flexShrink: 0 }}>✓</div>
 );
@@ -59,12 +49,6 @@ export default function Profile() {
   };
 
   const t = {
-    shell: { minHeight: "100vh", background: "#f3f4f6", display: "flex" },
-    sidebar: { width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec", padding: "24px 16px", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh" },
-    navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
-    navItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 2, background: active ? "#111827" : "transparent", color: active ? "#fff" : "#374151" }),
-    navDot: (active) => ({ width: 18, height: 18, borderRadius: 5, background: active ? "#fff" : "#d1d5db", flexShrink: 0 }),
-    topbar: { display: "flex", alignItems: "center", gap: 16, padding: "16px 32px", background: "#fff", borderBottom: "1px solid #ececec" },
     card: { background: "#fff", borderRadius: 18, border: "1px solid #ececec", marginBottom: 20 },
     statCol: { flex: 1, padding: "24px 28px" },
     statNum: { fontSize: 26, fontWeight: 800, color: "#111827" },
@@ -74,21 +58,6 @@ export default function Profile() {
     btnPrimary: { padding: "10px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 24, fontSize: 14, fontWeight: 700, cursor: "pointer" },
     btnGhost: { padding: "10px 20px", background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
   };
-
-  const NAV = [
-    { group: "Navegación", items: [
-      { label: "Inicio", onClick: () => navigate("/") },
-      { label: "Buscar autos", onClick: () => navigate("/") },
-      { label: "Mis reservas", onClick: () => navigate("/my-bookings") },
-      { label: "Favoritos", onClick: () => navigate("/") },
-      { label: "Mensajes", onClick: () => navigate("/chat") },
-    ]},
-    { group: "Para dueños", items: [
-      { label: "Mis autos", onClick: () => navigate("/dashboard") },
-      { label: "Publicar auto", onClick: () => navigate("/publish") },
-      { label: "Panel dueño", onClick: () => navigate("/dashboard") },
-    ]},
-  ];
 
   const Verifications = () => (
     <div style={{ ...t.card, padding: 28, flex: 1 }}>
@@ -114,14 +83,14 @@ export default function Profile() {
     </div>
   );
 
-  const content = (
+  // El Layout provee el sidebar y la topbar; acá solo el contenido
+  return (
     <div style={{ padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
       {info && <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{info}</div>}
 
       {/* Portada + cabecera */}
       <div style={{ ...t.card, overflow: "hidden" }}>
         <div style={{ height: 140, background: "linear-gradient(90deg,#0a0f1e 0%,#1d4ed8 70%,#2563eb 100%)" }} />
-        {/* Avatar + botones, sobre la línea de la portada */}
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, padding: "0 32px", marginTop: -60 }}>
           <div style={{ width: 120, height: 120, borderRadius: "50%", background: "#ece9e3", border: "5px solid #fff", boxShadow: "0 4px 16px rgba(0,0,0,.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, fontWeight: 800, color: "#111827", flexShrink: 0 }}>{initials}</div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -131,14 +100,10 @@ export default function Profile() {
                 <button style={{ ...t.btnPrimary, opacity: saving ? 0.6 : 1 }} onClick={save} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</button>
               </>
             ) : (
-              <>
-                <button style={t.btnGhost} onClick={() => { setInfo(""); setEditing(true); }}>Editar perfil</button>
-                <button style={t.btnPrimary} onClick={() => navigate("/chat")}>✉ Enviar mensaje</button>
-              </>
+              <button style={t.btnGhost} onClick={() => { setInfo(""); setEditing(true); }}>Editar perfil</button>
             )}
           </div>
         </div>
-        {/* Nombre + datos, debajo, sobre el blanco */}
         <div style={{ padding: "16px 32px 28px" }}>
           {editing ? (
             <div style={{ maxWidth: 460, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -180,60 +145,6 @@ export default function Profile() {
 
       {/* Verificaciones */}
       <Verifications />
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>
-        <div style={{ ...t.topbar, padding: "14px 16px" }}><Logo /></div>
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <div style={t.shell}>
-      <aside style={t.sidebar}>
-        <Logo />
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {NAV.map((g, gi) => (
-            <div key={gi}>
-              <div style={t.navGroup}>{g.group}</div>
-              {g.items.map((it, ii) => (
-                <div key={ii} style={t.navItem(false)} onClick={it.onClick}>
-                  <span style={t.navDot(false)} />{it.label}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#ece9e3", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#111827" }}>{initials}</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
-            <div style={{ fontSize: 11, color: "#9ca3af" }}>Conductor verificado</div>
-          </div>
-        </div>
-      </aside>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={t.topbar}>
-          <div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>Comunidad</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>Perfil de {fullName}</div>
-          </div>
-          <div style={{ flex: 1 }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#111827", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}>{initials}</div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
-              <div style={{ fontSize: 11, color: "#9ca3af" }}>Ver perfil</div>
-            </div>
-          </div>
-        </div>
-        {content}
-      </div>
     </div>
   );
 }
