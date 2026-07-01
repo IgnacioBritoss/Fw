@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { updateMe } from "../../services/api";
+import { applyDarkMode } from "../../services/theme";
 
 /* ── Íconos SVG (sin emojis) ── */
 const I = {
@@ -47,6 +48,17 @@ export default function Settings() {
     const next = { ...prefs, [k]: v };
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+    // Efectos reales según la preferencia
+    if (k === "dark") applyDarkMode(v);
+    if (k === "pushNotif" && v) requestPushPermission();
+  };
+
+  // Pide permiso real de notificaciones del navegador y muestra una de prueba
+  const requestPushPermission = () => {
+    if (!("Notification" in window)) return;
+    Notification.requestPermission().then(p => {
+      if (p === "granted") new Notification("Freewheel", { body: "Las notificaciones están activadas." });
+    }).catch(() => {});
   };
 
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";

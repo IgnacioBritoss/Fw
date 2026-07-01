@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { initTheme } from "./services/theme";
 import { PrivateRoute } from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import ChatBot from "./components/ChatBot";
@@ -32,6 +34,7 @@ const app = (el) => <Layout>{el}</Layout>;
 const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
 
 export default function App() {
+  useEffect(() => { initTheme(); }, []);
   return (
     <AuthProvider>
       <BrowserRouter>
