@@ -70,6 +70,7 @@ export default function Layout({ children }) {
   const isActive = (item) => item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
 
   const go = (path) => { navigate(path); setDrawerOpen(false); };
+  const isAdmin = user?.role === "ADMIN";
 
   const t = {
     navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
@@ -98,6 +99,17 @@ export default function Layout({ children }) {
         <div style={{ fontSize: 12, opacity: .7, lineHeight: 1.5, marginBottom: 12 }}>Publicá tu vehículo y empezá a generar ingresos este mes.</div>
         <button style={{ background: "#fff", color: "#111827", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }} onClick={() => go("/publish")}>Publicar →</button>
       </div>
+
+      {isAdmin && (
+        <button onClick={() => go("/admin")}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 12, padding: "11px", background: "#ede9fe", color: "#6d28d9", border: "1px solid #ddd6fe", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.background = "#ddd6fe"}
+          onMouseLeave={e => e.currentTarget.style.background = "#ede9fe"}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#6d28d9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Panel Admin
+        </button>
+      )}
+
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
           <div onClick={() => go("/profile")} style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>{initials}</div>
