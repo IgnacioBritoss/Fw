@@ -7,9 +7,9 @@ import { getMyConversations } from "../services/api";
 const NAV = [
   { group: "Navegación", items: [
     { label: "Inicio", path: "/" },
+    { label: "Buscar autos", path: "/buscar" },
     { label: "Mis reservas", path: "/my-bookings" },
     { label: "Favoritos", path: "/favoritos" },
-    { label: "Mensajes", path: "/chat" },
   ]},
   { group: "Para dueños", items: [
     { label: "Mis autos", path: "/dashboard" },
