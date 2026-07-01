@@ -42,7 +42,7 @@ function normalizeListing(l) {
     seats: v.seats || l.seats,
     doors: v.doors || l.doors,
     photos: l.photos || v.photos || [],
-    available: l.status === "ACTIVE" || l.available !== false,
+    available: (l.status === "ACTIVE" || l.available !== false) && l.status !== "DELETED",
     is_verified: l.is_verified || false,
     rating: l.rating || 0,
     category: l.category || v.category || "",
