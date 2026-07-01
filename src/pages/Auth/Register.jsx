@@ -73,9 +73,18 @@ function PhotoCard({ label, hint, value, onChange }) {
 }
 
 export default function Register() {
-  const { register, verifyEmail, resendVerification } = useAuth();
+  const { register, verifyEmail, resendVerification, user, login } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0); // 0 = datos, 1 = verificar email, 2 = identidad, 3 = licencia, 4 = confirmación
+
+  // Guarda el estado de verificación (localStorage + contexto), tolerante a user null
+  const persistVerification = (patch) => {
+    let base = user;
+    if (!base) { try { base = JSON.parse(localStorage.getItem("fw_user") || "{}"); } catch { base = {}; } }
+    const updated = { ...base, ...patch };
+    localStorage.setItem("fw_user", JSON.stringify(updated));
+    if (login) login(updated);
+  };
   const [form, setForm] = useState({ firstName:"", lastName:"", email:"", phone:"", password:"", confirmPassword:"", acceptedTerms:false });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -349,8 +358,10 @@ export default function Register() {
               <div style={{ display:"flex", justifyContent:"flex-end", gap:12 }}>
                 <button style={btnGhost} onClick={() => navigate("/")}>Cancelar</button>
                 <button style={{ ...btnPrimary, opacity:(dniFront && dniBack) ? 1 : 0.5, cursor:(dniFront && dniBack) ? "pointer" : "not-allowed" }}
-                  disabled={!(dniFront && dniBack)} onClick={() => setStep(3)}>Continuar →</button>
+                  disabled={!(dniFront && dniBack)} onClick={() => { persistVerification({ dniVerified: true }); setStep(3); }}>Continuar →</button>
               </div>
+              <button style={{ display:"block", width:"100%", marginTop:16, padding:6, background:"none", border:"none", color:"#9ca3af", fontSize:13, fontWeight:500, cursor:"pointer", textAlign:"center", textDecoration:"underline" }}
+                onClick={() => setStep(3)}>Omitir este paso · verificar después desde Ajustes</button>
             </>
           )}
 
@@ -367,8 +378,10 @@ export default function Register() {
               <div style={{ display:"flex", justifyContent:"flex-end", gap:12 }}>
                 <button style={btnGhost} onClick={() => setStep(2)}>Atrás</button>
                 <button style={{ ...btnPrimary, opacity:(licFront && licBack) ? 1 : 0.5, cursor:(licFront && licBack) ? "pointer" : "not-allowed" }}
-                  disabled={!(licFront && licBack)} onClick={() => setStep(4)}>Finalizar →</button>
+                  disabled={!(licFront && licBack)} onClick={() => { persistVerification({ licenseVerified: true }); setStep(4); }}>Finalizar →</button>
               </div>
+              <button style={{ display:"block", width:"100%", marginTop:16, padding:6, background:"none", border:"none", color:"#9ca3af", fontSize:13, fontWeight:500, cursor:"pointer", textAlign:"center", textDecoration:"underline" }}
+                onClick={() => setStep(4)}>Omitir este paso · verificar después desde Ajustes</button>
             </>
           )}
 
@@ -379,10 +392,12 @@ export default function Register() {
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
               <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:6 }}>¡Todo listo{form.firstName ? `, ${form.firstName}` : ""}!</h2>
-              <p style={{ fontSize:14, color:"#6b7280", marginBottom:24 }}>Tu cuenta quedó verificada. Ya podés usar Freewheel.</p>
-              <div style={{ display:"flex", flexDirection:"column", gap:10, maxWidth:300, margin:"0 auto" }}>
-                {["✓ DNI validado", "✓ Licencia de conducir validada"].map(b => (
-                  <div key={b} style={{ fontSize:13, fontWeight:600, color:"#166534", background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"8px 12px" }}>{b}</div>
+              <p style={{ fontSize:14, color:"#6b7280", marginBottom:24 }}>{(user?.dniVerified && user?.licenseVerified) ? "Tu cuenta quedó verificada. Ya podés usar Freewheel." : "Ya podés usar Freewheel. Verificá lo que falte cuando quieras desde Ajustes."}</p>
+              <div style={{ display:"flex", flexDirection:"column", gap:10, maxWidth:320, margin:"0 auto" }}>
+                {[["DNI", user?.dniVerified], ["Licencia de conducir", user?.licenseVerified]].map(([lbl, ok]) => (
+                  <div key={lbl} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", fontSize:13, fontWeight:600, color: ok ? "#166534" : "#9a3412", background: ok ? "#f0fdf4" : "#fff7ed", border:`1px solid ${ok ? "#bbf7d0" : "#fed7aa"}`, borderRadius:8, padding:"8px 12px" }}>
+                    <span>{lbl}</span><span>{ok ? "Validado" : "Pendiente"}</span>
+                  </div>
                 ))}
               </div>
               <div style={{ display:"flex", gap:12, justifyContent:"center", marginTop:24 }}>

@@ -24,6 +24,7 @@ import KYC from "./pages/KYC/KYC";
 import Profile from "./pages/Profile/Profile";
 import Search from "./pages/Search/Search";
 import Settings from "./pages/Settings/Settings";
+import Notifications from "./pages/Notifications/Notifications";
 
 // Páginas de la app: se muestran dentro del Layout (con sidebar + topbar)
 const app = (el) => <Layout>{el}</Layout>;
@@ -46,11 +47,13 @@ export default function App() {
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/terms" element={<Terms />} />
 
+          {/* Pantallas de la app — con Layout (sidebar en todas) */}
           <Route path="/" element={app(<Home />)} />
           <Route path="/buscar" element={app(<Search />)} />
           <Route path="/cars/:id" element={app(<CarDetail />)} />
           <Route path="/profile" element={priv(<Profile />)} />
           <Route path="/ajustes" element={priv(<Settings />)} />
+          <Route path="/notificaciones" element={priv(<Notifications />)} />
           <Route path="/admin" element={priv(<Admin />)} />
           <Route path="/publish" element={priv(<PublishCar />)} />
           <Route path="/dashboard" element={priv(<Dashboard />)} />

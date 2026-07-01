@@ -1,13 +1,19 @@
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
-const Check = () => (
-  <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, flexShrink: 0 }}>✓</div>
+const StatusBadge = ({ ok }) => (
+  <div title={ok ? "Verificado" : "Pendiente"} style={{ width: 24, height: 24, borderRadius: "50%", background: ok ? "#16a34a" : "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    {ok
+      ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      : <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 8v5" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" /><circle cx="12" cy="16.5" r="1.2" fill="#fff" /></svg>}
+  </div>
 );
 
 export default function Profile() {
   const { user } = useAuth();
   const { isMobile } = useIsMobile();
+  const navigate = useNavigate();
 
   // Todo se deriva directamente del usuario: lo que se edita en Ajustes se ve acá al instante
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -18,6 +24,9 @@ export default function Profile() {
   const fullName = `${firstName} ${lastName}`.trim() || "Usuario";
   const initials = `${firstName[0] || "U"}${lastName[0] || ""}`.toUpperCase();
   const email = user?.email || "—";
+  const dniVerified = user?.dniVerified === true;
+  const licenseVerified = user?.licenseVerified === true;
+  const fullyVerified = dniVerified && licenseVerified;
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" })
     : "2025";
@@ -36,21 +45,27 @@ export default function Profile() {
       <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>Documentos validados por Freewheel</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
         {[
-          ["Identidad verificada", "DNI argentino"],
-          ["Licencia de conducir", "Vigente"],
-          ["Email verificado", email],
-          ["Teléfono verificado", phone ? `+54 ${phone.slice(0, 2)} ···· ····` : "No cargado"],
-        ].map(([ti, sub]) => (
+          ["Documento (DNI)", dniVerified ? "DNI argentino validado" : "Pendiente de verificación", dniVerified],
+          ["Licencia de conducir", licenseVerified ? "Licencia vigente validada" : "Pendiente de verificación", licenseVerified],
+          ["Email verificado", email, true],
+          ["Teléfono verificado", phone ? `+54 ${phone.slice(0, 2)} ···· ····` : "No cargado", !!phone],
+        ].map(([ti, sub, ok]) => (
           <div key={ti} style={t.verifyItem}>
             <div style={{ width: 40, height: 40, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb", flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{ti}</div>
-              <div style={{ fontSize: 12, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>
+              <div style={{ fontSize: 12, color: ok ? "#9ca3af" : "#ea580c", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>
             </div>
-            <Check />
+            <StatusBadge ok={ok} />
           </div>
         ))}
       </div>
+      {!fullyVerified && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18, padding: "14px 16px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
+          <div style={{ fontSize: 13, color: "#9a3412" }}>Te falta verificar {(!dniVerified && !licenseVerified) ? "tu DNI y tu licencia" : !dniVerified ? "tu DNI" : "tu licencia"}.</div>
+          <button onClick={() => navigate("/kyc")} style={{ background: "#ea580c", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Verificar ahora</button>
+        </div>
+      )}
     </div>
   );
 
@@ -66,7 +81,15 @@ export default function Profile() {
         <div style={{ padding: "16px 32px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 28, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" }}>{fullName}</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#dcfce7", color: "#166534", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>✓ Verificado</span>
+            {fullyVerified ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#dcfce7", color: "#166534", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#166534" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>Verificado
+              </span>
+            ) : (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#fff7ed", color: "#c2410c", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 20 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#c2410c" strokeWidth="2" /><path d="M12 8v4M12 16h.01" stroke="#c2410c" strokeWidth="2" strokeLinecap="round" /></svg>Verificación pendiente
+              </span>
+            )}
           </div>
           <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 3 }}>Miembro desde {memberSince} · {location}</div>
           <div style={{ fontSize: 14, color: "#374151" }}>Responde en menos de 1 hora · 98% de aceptación</div>

@@ -106,6 +106,25 @@ export default function Settings() {
     </button>
   );
 
+  const VerifRow = ({ title, desc, verified, onVerify, last }) => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 0", borderBottom: last ? "none" : "1px solid #f3f4f6" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 10, background: verified ? "#f0fdf4" : "#fff7ed", border: `1px solid ${verified ? "#bbf7d0" : "#fed7aa"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Svg d={verified ? <path d="M20 6L9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>} color={verified ? "#16a34a" : "#ea580c"} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</div>
+          <div style={{ fontSize: 13, color: "#9ca3af" }}>{desc}</div>
+        </div>
+      </div>
+      {verified ? (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#dcfce7", color: "#166534", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>Verificado</span>
+      ) : (
+        <button onClick={onVerify} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Verificar ahora</button>
+      )}
+    </div>
+  );
+
   const SwitchRow = ({ title, desc, on, onChange, last }) => (
     <div style={{ ...t.rowSwitch, ...(last ? { borderBottom: "none" } : {}) }}>
       <div>
@@ -168,6 +187,37 @@ export default function Settings() {
                 <SwitchRow title="Ofertas personalizadas" desc="Te mostramos autos similares a los que te interesan" on={prefs.offers} onChange={v => setPref("offers", v)} />
                 <SwitchRow title="Autenticación 2FA" desc="Agregá una capa extra de seguridad al iniciar sesión" on={prefs.twofa} onChange={v => setPref("twofa", v)} />
                 <SwitchRow title="Modo oscuro" desc="Usá la interfaz con colores oscuros" on={prefs.dark} onChange={v => setPref("dark", v)} last />
+              </div>
+            </>
+          ) : section === "seguridad" ? (
+            <>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>Seguridad y verificación</div>
+              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>Validá tu identidad para poder alquilar y publicar autos</div>
+
+              <div style={{ ...t.card, padding: 26 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Verificación de identidad</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 18 }}>Subí tu documentación para verificar tu cuenta</div>
+
+                <VerifRow
+                  title="Documento (DNI)"
+                  desc="Frente, dorso y selfie"
+                  verified={user?.dniVerified === true}
+                  onVerify={() => navigate("/kyc")}
+                />
+                <VerifRow
+                  title="Licencia de conducir"
+                  desc="Licencia vigente, ambos lados"
+                  verified={user?.licenseVerified === true}
+                  onVerify={() => navigate("/kyc")}
+                  last
+                />
+
+                {(user?.dniVerified === true && user?.licenseVerified === true) && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
+                    <Svg d={<path d="M20 6L9 17l-5-5" />} color="#16a34a" />
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>Tu cuenta está completamente verificada.</span>
+                  </div>
+                )}
               </div>
             </>
           ) : (
