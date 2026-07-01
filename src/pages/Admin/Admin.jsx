@@ -17,7 +17,7 @@ const s = {
   carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
   btnDelete: { padding: "8px 18px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnSuspend: { padding: "8px 18px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  btnActivate: { padding: "8px 18px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  btnRestore: { padding: "8px 18px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRow: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
   alertOk: { background: "#eff6ff", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 },
   alertErr: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#991b1b", marginBottom: 16 },
@@ -50,6 +50,7 @@ export default function Admin() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [alert, setAlert] = useState({ msg: "", type: "ok" });
   const [expandedUser, setExpandedUser] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   if (!user || user.role !== "ADMIN") {
     return (
@@ -84,49 +85,42 @@ export default function Admin() {
     }
   }, [tab]);
 
-  const handleDeleteListing = async (id, label) => {
-    if (!confirm(`¿Eliminar "${label}"?`)) return;
+  // Acciones reales
+  const doDeleteListing = async (id, label) => {
     try {
       await adminUpdateListingStatus(id, "DELETED");
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: "DELETED" } : l));
       showAlert(`Publicación "${label}" eliminada.`);
-    } catch (err) {
-      showAlert("Error: " + (err.message || ""), "err");
-    }
+    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
   };
-
-  const handleSuspendUser = async (id, name) => {
-    if (!confirm(`¿Suspender a "${name}"?`)) return;
+  const handleRestoreListing = async (id, label) => {
+    try {
+      await adminUpdateListingStatus(id, "ACTIVE");
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status: "ACTIVE" } : l));
+      showAlert(`Publicación "${label}" recuperada.`);
+    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
+  };
+  const doSuspendUser = async (id, name) => {
     try {
       await adminUpdateUserStatus(id, "SUSPENDED");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "SUSPENDED" } : u));
       showAlert(`Usuario "${name}" suspendido.`);
-    } catch (err) {
-      showAlert("Error: " + (err.message || ""), "err");
-    }
+    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
   };
-
-  const handleActivateUser = async (id, name) => {
-    if (!confirm(`¿Reactivar a "${name}" y devolverle el acceso?`)) return;
-    try {
-      await adminUpdateUserStatus(id, "ACTIVE");
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "ACTIVE" } : u));
-      showAlert(`Usuario "${name}" reactivado. Ya puede volver a entrar.`);
-    } catch (err) {
-      showAlert("Error: " + (err.message || ""), "err");
-    }
-  };
-
-  const handleDeleteUser = async (id, name) => {
-    if (!confirm(`¿Eliminar a "${name}"?`)) return;
+  const doDeleteUser = async (id, name) => {
     try {
       await adminUpdateUserStatus(id, "DELETED");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "DELETED" } : u));
       showAlert(`Usuario "${name}" eliminado.`);
-    } catch (err) {
-      showAlert("Error: " + (err.message || ""), "err");
-    }
+    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
   };
+
+  // Abren el modal de confirmación (en vez de alert nativo)
+  const handleDeleteListing = (id, label) => setConfirmModal({ title: "Eliminar publicación", msg: `¿Eliminar "${label}"? Dejará de verse en la plataforma. Podés recuperarla después desde acá.`, confirmLabel: "Eliminar", action: () => doDeleteListing(id, label) });
+  const handleSuspendUser = (id, name) => setConfirmModal({ title: "Suspender usuario", msg: `¿Querés suspender a "${name}"? No podrá operar hasta reactivarlo.`, confirmLabel: "Suspender", action: () => doSuspendUser(id, name) });
+  const handleDeleteUser = (id, name) => setConfirmModal({ title: "Eliminar usuario", msg: `¿Querés eliminar a "${name}"? Esta acción es delicada.`, confirmLabel: "Eliminar", action: () => doDeleteUser(id, name) });
+
+  const runConfirm = async () => { const m = confirmModal; setConfirmModal(null); if (m?.action) await m.action(); };
 
   return (
     <div style={s.page}>
@@ -172,14 +166,19 @@ export default function Admin() {
                 <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
                   {new Date(listing.createdAt).toLocaleDateString("es-AR")}
                 </div>
-                {listing.status !== "DELETED" && (
-                  <div style={s.btnRow}>
+                <div style={s.btnRow}>
+                  {listing.status !== "DELETED" ? (
                     <button style={s.btnDelete}
                       onClick={e => { e.stopPropagation(); handleDeleteListing(listing.id, label); }}>
                       Eliminar
                     </button>
-                  </div>
-                )}
+                  ) : (
+                    <button style={s.btnRestore}
+                      onClick={e => { e.stopPropagation(); handleRestoreListing(listing.id, label); }}>
+                      ↻ Recuperar
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -214,32 +213,46 @@ export default function Admin() {
                 <div><strong>ID:</strong> {u.id}</div>
                 <div><strong>Teléfono:</strong> {u.phone || "—"}</div>
                 <div><strong>Registrado:</strong> {new Date(u.createdAt).toLocaleDateString("es-AR")}</div>
-                {u.id !== user.id && (
+                {u.id !== user.id && u.status !== "DELETED" && (
                   <div style={{ ...s.btnRow, marginTop: 8 }}>
-                    {(u.status === "SUSPENDED" || u.status === "DELETED") && (
-                      <button style={s.btnActivate}
-                        onClick={e => { e.stopPropagation(); handleActivateUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                        Reactivar
-                      </button>
-                    )}
-                    {u.status === "ACTIVE" && (
+                    {u.status !== "SUSPENDED" && (
                       <button style={s.btnSuspend}
                         onClick={e => { e.stopPropagation(); handleSuspendUser(u.id, `${u.firstName} ${u.lastName}`); }}>
                         Suspender
                       </button>
                     )}
-                    {u.status !== "DELETED" && (
-                      <button style={s.btnDelete}
-                        onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                        Eliminar
-                      </button>
-                    )}
+                    <button style={s.btnDelete}
+                      onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
+                      Eliminar
+                    </button>
                   </div>
                 )}
               </div>
             )}
           </div>
         ))
+      )}
+
+      {confirmModal && (
+        <div onClick={() => setConfirmModal(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>⚠️</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{confirmModal.title}</div>
+            <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>{confirmModal.msg}</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmModal(null)}
+                style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={runConfirm}
+                style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                {confirmModal.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
