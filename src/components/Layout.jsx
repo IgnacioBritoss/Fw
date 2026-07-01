@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
+import { hasUnreadNotifications } from "../services/notifications";
 
 const NAV = [
   { group: "Navegación", items: [
@@ -35,6 +36,14 @@ const MessageIcon = ({ size = 18, color = "#374151" }) => (
   </svg>
 );
 
+// Ícono de notificaciones (campana) — profesional, sin emoji
+const BellIcon = ({ size = 18, color = "#374151" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M13.7 21a2 2 0 0 1-3.4 0" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 // Ícono de ajustes (engranaje) — profesional, sin emoji
 const GearIcon = ({ size = 18, color = "#374151" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -52,9 +61,10 @@ export default function Layout({ children }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [hasUnreadNotif, setHasUnreadNotif] = useState(false);
 
   useEffect(() => {
-    if (!user) { setHasUnread(false); return; }
+    if (!user) { setHasUnread(false); setHasUnreadNotif(false); return; }
     let active = true;
     const check = () => {
       getMyConversations()
@@ -67,11 +77,12 @@ export default function Layout({ children }) {
           if (active) setHasUnread(unread);
         })
         .catch(() => {});
+      hasUnreadNotifications(user.id).then(v => { if (active) setHasUnreadNotif(v); });
     };
     check();
     const iv = setInterval(check, 20000);
     return () => { active = false; clearInterval(iv); };
-  }, [user]);
+  }, [user, location.pathname]);
 
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
   const initials = `${(user?.firstName || user?.name || "U")[0] || "U"}`.toUpperCase();
@@ -149,6 +160,17 @@ export default function Layout({ children }) {
         </div>
       ) : null}
       {user && (
+        /* Notificaciones */
+        <div style={t.iconBtn} onClick={() => navigate("/notificaciones")} title="Notificaciones"
+          onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
+          <BellIcon />
+          {hasUnreadNotif && (
+            <span style={{ position: "absolute", top: 7, right: 7, width: 9, height: 9, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
+          )}
+        </div>
+      )}
+      {user && (
         /* Ajustes */
         <div style={t.iconBtn} onClick={() => navigate("/ajustes")} title="Ajustes"
           onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
@@ -166,7 +188,7 @@ export default function Layout({ children }) {
     </div>
   );
 
-  // ───────────── MOBILE ─────────────
+    // ───────────── MOBILE ─────────────
   if (isMobile) {
     return (
       <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>

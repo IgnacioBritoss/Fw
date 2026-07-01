@@ -1,0 +1,189 @@
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { buildNotifications, getReadIds, markRead, markAllRead } from "../../services/notifications";
+
+// ── Íconos SVG por categoría (sin emojis) ──
+const Icon = ({ name, color = "#374151" }) => {
+  const p = { fill: "none", stroke: color, strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
+  const paths = {
+    reserva: <><path d="M5 17H3v-5l2-5h11l3 5v5h-2" {...p} /><circle cx="7.5" cy="17" r="1.6" {...p} /><circle cx="16.5" cy="17" r="1.6" {...p} /></>,
+    mensaje: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" {...p} />,
+    sistema: <><rect x="2" y="6" width="20" height="13" rx="2" {...p} /><path d="M2 10h20" {...p} /></>,
+    promo: <><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z" {...p} /><circle cx="7.5" cy="7.5" r="1.2" {...p} /></>,
+    review: <path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1L12 2z" {...p} />,
+  };
+  return <svg width="18" height="18" viewBox="0 0 24 24">{paths[name] || paths.sistema}</svg>;
+};
+
+const CAT_META = {
+  reserva: { label: "Reservas", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
+  mensaje: { label: "Mensajes", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
+  sistema: { label: "Sistema", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
+  promo: { label: "Promos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },
+  review: { label: "Reseñas", icon: "review", bg: "#fff7ed", fg: "#ea580c" },
+};
+
+const TABS = [
+  { key: "todas", label: "Todas" },
+  { key: "reserva", label: "Reservas" },
+  { key: "mensaje", label: "Mensajes" },
+  { key: "promo", label: "Promos" },
+  { key: "sistema", label: "Sistema" },
+];
+
+function timeLabel(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (sameDay(d, now)) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  if (sameDay(d, yest)) return "Ayer";
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
+}
+function groupLabel(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (sameDay(d, now)) return "Hoy";
+  if (sameDay(d, yest)) return "Ayer";
+  return "Anteriores";
+}
+
+export default function Notifications() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
+  const [notifs, setNotifs] = useState([]);
+  const [readIds, setReadIds] = useState(getReadIds());
+  const [tab, setTab] = useState("todas");
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    buildNotifications(user?.id)
+      .then(list => { setNotifs(list); setReadIds(getReadIds()); })
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const isRead = (n) => readIds.has(n.id);
+  const unreadCount = notifs.filter(n => !isRead(n)).length;
+  const countFor = (key) => key === "todas" ? notifs.length : notifs.filter(n => n.cat === key).length;
+
+  const filtered = tab === "todas" ? notifs : notifs.filter(n => n.cat === tab);
+
+  const openNotif = (n) => {
+    markRead([n.id]);
+    setReadIds(getReadIds());
+    if (n.link) navigate(n.link);
+  };
+  const markOne = (e, n) => {
+    e.stopPropagation();
+    markRead([n.id]);
+    setReadIds(getReadIds());
+  };
+  const markAll = () => {
+    markAllRead(notifs);
+    setReadIds(getReadIds());
+  };
+
+  // Agrupar por día
+  const groups = [];
+  const seen = {};
+  filtered.forEach(n => {
+    const g = groupLabel(n.ts);
+    if (!seen[g]) { seen[g] = []; groups.push([g, seen[g]]); }
+    seen[g].push(n);
+  });
+
+  const s = {
+    wrap: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1000, margin: "0 auto" },
+    title: { fontSize: isMobile ? 26 : 32, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
+    sub: { fontSize: 14, color: "#9ca3af", marginTop: 4 },
+    btnGhost: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+    btnDark: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#111827", color: "#fff", border: "none", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+    tab: (active) => ({ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: 600, cursor: "pointer", border: "none", background: active ? "#111827" : "transparent", color: active ? "#fff" : "#6b7280" }),
+    tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "#fff" : "#9ca3af" }),
+    groupLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 4px 10px" },
+    row: (read) => ({ display: "flex", alignItems: "center", gap: 14, background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: "16px 18px", marginBottom: 10, cursor: "pointer", transition: "border-color .15s, box-shadow .15s", boxShadow: read ? "none" : "0 1px 0 rgba(0,0,0,0)" }),
+    dot: { width: 8, height: 8, borderRadius: "50%", background: "#2563eb", flexShrink: 0 },
+    dotGap: { width: 8, flexShrink: 0 },
+  };
+
+  return (
+    <div style={s.wrap}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={s.title}>Notificaciones</div>
+          <div style={s.sub}>{loading ? "Cargando…" : `${unreadCount} sin leer · ${notifs.length} en total`}</div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button style={s.btnGhost} onClick={markAll} disabled={unreadCount === 0}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#374151" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Marcar leídas
+          </button>
+          <button style={s.btnDark} onClick={() => navigate("/ajustes")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#fff" strokeWidth="2" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Preferencias
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 20, borderBottom: "1px solid #ececec", paddingBottom: 12 }}>
+        {TABS.map(t => (
+          <button key={t.key} style={s.tab(tab === t.key)} onClick={() => setTab(t.key)}>
+            {t.label}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Lista */}
+      {!loading && filtered.length === 0 && (
+        <div style={{ textAlign: "center", padding: "70px 20px", color: "#9ca3af" }}>
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 12 }}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" /></svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>No tenés notificaciones acá</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>Cuando pase algo con tus reservas o mensajes, aparecerá en esta sección.</div>
+        </div>
+      )}
+
+      {groups.map(([label, items]) => (
+        <div key={label}>
+          <div style={s.groupLabel}>{label}</div>
+          {items.map(n => {
+            const meta = CAT_META[n.cat] || CAT_META.sistema;
+            const read = isRead(n);
+            return (
+              <div key={n.id} style={s.row(read)} onClick={() => openNotif(n)}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,.05)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#ececec"; e.currentTarget.style.boxShadow = "none"; }}>
+                {read ? <span style={s.dotGap} /> : <span style={s.dot} />}
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon name={meta.icon} color={meta.fg} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.title}</div>
+                  <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.body}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts)}</span>
+                  {!read && (
+                    <button onClick={e => markOne(e, n)} title="Marcar como leída"
+                      style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#6b7280" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
