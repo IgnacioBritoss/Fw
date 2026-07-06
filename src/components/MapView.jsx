@@ -1,9 +1,21 @@
+// ============================================================================
+//  MapView — Mapa interactivo con los autos (usa Leaflet + OpenStreetMap)
+// ----------------------------------------------------------------------------
+//  Dibuja un mapa y coloca un "pin" con el precio sobre cada auto que tenga
+//  coordenadas. Al hacer clic en un pin se abre un globo (popup) con la foto y
+//  los datos; al clickearlo, se avisa al padre con onCarClick(id).
+//
+//  Leaflet no es de React: se maneja "a mano" con useRef y useEffect.
+//  Props: cars (lista de autos), onCarClick (callback), height (alto del mapa).
+// ============================================================================
 import { useEffect, useRef } from "react";
 
 export default function MapView({ cars, onCarClick, height = "500px" }) {
-  const mapRef = useRef(null);
-  const instanceRef = useRef(null);
+  const mapRef = useRef(null);       // el <div> donde se dibuja el mapa
+  const instanceRef = useRef(null);  // la instancia de Leaflet ya creada
 
+  // 1) Crea el mapa UNA sola vez (centrado en Buenos Aires) y agrega las
+  //    "baldosas" (tiles) de OpenStreetMap. Al desmontar, destruye el mapa.
   useEffect(() => {
     if (instanceRef.current) return;
 
@@ -28,6 +40,8 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
     };
   }, []);
 
+  // 2) Cada vez que cambia la lista de autos: borra los pines viejos y crea uno
+  //    nuevo por cada auto, con su precio visible y un popup con foto y datos.
   useEffect(() => {
     const L = window.L;
     if (!L || !instanceRef.current) return;
@@ -38,7 +52,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
     });
 
     cars.forEach(car => {
-      if (!car.lat || !car.lng) return;
+      if (!car.lat || !car.lng) return; // sin coordenadas no se puede ubicar
 
       const icon = L.divIcon({
         className: "",
@@ -92,6 +106,8 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
     });
   }, [cars]);
 
+  // 3) El popup del mapa es HTML "plano" (no React), así que exponemos una
+  //    función global window.fwOpenCar para que su onclick pueda avisar a React.
   useEffect(() => {
     window.fwOpenCar = (id) => {
       if (onCarClick) onCarClick(id);

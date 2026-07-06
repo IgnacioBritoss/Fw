@@ -1,15 +1,24 @@
+// ============================================================================
+//  Navbar — Barra superior con el botón "Volver" y el menú de perfil
+// ----------------------------------------------------------------------------
+//  Muestra a la izquierda un botón para volver atrás y a la derecha, según el
+//  usuario esté logueado o no, el menú desplegable del perfil (Ver perfil /
+//  Salir) o los botones de Iniciar sesión / Registrarse.
+// ============================================================================
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+// Devuelve la inicial del usuario (para el círculo del avatar). Ej: "Ana" → "A".
 const userInitial = (u) => (u?.name?.[0] || u?.email?.[0] || "?").toUpperCase();
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false); // ¿menú de perfil abierto?
+  const dropdownRef = useRef(null); // referencia al menú, para detectar clics afuera
 
+  // Cierra el menú desplegable si el usuario hace clic fuera de él.
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
@@ -18,6 +27,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Cierra sesión, vuelve al inicio y cierra el menú.
   const handleLogout = () => { logout(); navigate("/"); setDropdownOpen(false); };
 
   return (

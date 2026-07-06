@@ -1,7 +1,22 @@
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+// ============================================================================
+//  groq.js — Integración con INTELIGENCIA ARTIFICIAL (API de Groq)
+// ----------------------------------------------------------------------------
+//  Groq es un proveedor que corre modelos de lenguaje (LLM) tipo ChatGPT muy
+//  rápido. Lo usamos para dos cosas:
+//    1) groqChat  → el chatbot de ayuda y autocompletar specs del auto (texto).
+//    2) groqVision → verificar que una foto realmente sea de un vehículo (imagen).
+//
+//  La API key viaja en una variable de entorno (VITE_GROQ_API_KEY) para no
+//  dejarla escrita en el código.
+// ============================================================================
 
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama-3.3-70b-versatile";           // modelo de texto
+const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // modelo que "ve" imágenes
+
+// Envía una conversación al modelo de texto y devuelve la respuesta como string.
+// - messages: lista de mensajes con roles (system/user/assistant).
+// - temperature: qué tan "creativa" es la respuesta (0 = precisa, 1 = variada).
 export async function groqChat(messages, temperature = 0.7) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) throw new Error("VITE_GROQ_API_KEY no configurada");
@@ -21,12 +36,17 @@ export async function groqChat(messages, temperature = 0.7) {
   return data.choices[0].message.content;
 }
 
+// La IA a veces devuelve texto extra alrededor del JSON pedido. Esta función
+// recorta desde la primera "{" hasta la última "}" y lo convierte en objeto.
 export function extractJSON(text) {
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No se pudo parsear la respuesta de IA");
   return JSON.parse(match[0]);
 }
 
+// Achica una imagen antes de mandarla a la IA (máx. 512px de lado y calidad 65%).
+// Sirve para que el pedido pese menos y sea más rápido/barato. Usa un <canvas>
+// para redibujar la imagen más chica y la devuelve como dataURL JPEG.
 async function resizeImage(dataUrl, maxPx = 512) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -42,6 +62,9 @@ async function resizeImage(dataUrl, maxPx = 512) {
   });
 }
 
+// Verifica con IA si una foto muestra un vehículo. Se usa al publicar un auto
+// para evitar que suban fotos que no correspondan.
+// Devuelve: true (es vehículo), false (no lo es) o null (no se pudo verificar).
 export async function groqVision(imageDataUrl) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) return null;

@@ -1,3 +1,14 @@
+// ============================================================================
+//  Home — Pantalla de INICIO
+// ----------------------------------------------------------------------------
+//  Es la portada de la app. Muestra:
+//   - Un "hero" con buscador por ubicación.
+//   - Categorías de autos (Sedan, SUV, etc.) que actúan como filtros.
+//   - La grilla de autos destacados, con opción de verlos en Lista o en Mapa.
+//   - Una sección de "¿cómo funciona?".
+//  Trae las publicaciones del backend (getListings) y, si no hay, usa los
+//  autos de ejemplo (mockCars). También suma los autos publicados localmente.
+// ============================================================================
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -5,6 +16,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getListings } from "../../services/api";
 import { mockCars } from "../../data/mockData";
 
+// Categorías para el filtro rápido de arriba.
 const CATEGORIES = [
   { id: "Todos", label: "Todos" },
   { id: "Sedan", label: "Sedan" },
@@ -22,9 +34,13 @@ const CATEGORY_CARDS = [
   { id: "Premium", label: "Premium" },
 ];
 
+// Traducciones de los códigos del backend (en inglés) a texto para mostrar.
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
 
+// El backend y los datos de ejemplo tienen formatos distintos. Esta función
+// "normaliza" una publicación a un formato único que usa toda la pantalla,
+// tolerando nombres alternativos de cada campo (ej: pricePerDay o price_per_day).
 function normalizeListing(l) {
   const v = l.vehicle || {};
   return {
@@ -65,6 +81,9 @@ export default function Home() {
   const [listings, setListings] = useState(mockCars);
   const [loadingListings, setLoadingListings] = useState(false);
 
+  // Al cargar la pantalla: pide las publicaciones al backend. Si vienen datos,
+  // los normaliza y les suma los autos publicados localmente (sin duplicar).
+  // Si falla o no hay datos, se queda con los de ejemplo + los locales.
   useEffect(() => {
     const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
 
@@ -91,6 +110,8 @@ export default function Home() {
       });
   }, []);
 
+  // Lista final que se muestra: aplica el texto buscado, la categoría elegida
+  // y descarta los autos no disponibles.
   const filtered = listings.filter(c => {
     const matchSearch = !search ||
       c.location?.toLowerCase().includes(search.toLowerCase()) ||
@@ -101,6 +122,7 @@ export default function Home() {
     return matchSearch && matchCat && c.available !== false;
   });
 
+  // Carga la librería del mapa (Leaflet) una sola vez.
   useEffect(() => {
     if (window.L) { setMapLoaded(true); return; }
     const link = document.createElement("link");
@@ -113,6 +135,7 @@ export default function Home() {
     document.head.appendChild(script);
   }, []);
 
+  // Si el usuario vuelve a la vista de Lista, destruye el mapa para liberar memoria.
   useEffect(() => {
     if (view === "lista" && mapInstanceRef.current) {
       mapInstanceRef.current.remove();
@@ -121,6 +144,7 @@ export default function Home() {
     }
   }, [view]);
 
+  // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
   useEffect(() => {
     if (view !== "mapa") return;
     const init = () => {
@@ -138,6 +162,8 @@ export default function Home() {
     }
   }, [view, mapLoaded]);
 
+  // Dibuja en el mapa un pin + un círculo de "zona aproximada" por cada auto
+  // filtrado, con un popup que lleva al detalle. Borra los pines anteriores.
   const addMarkers = useCallback((map, L) => {
     if (!map || !L) return;
     Object.values(markersRef.current).forEach(m => {
@@ -191,8 +217,10 @@ export default function Home() {
     addMarkers(mapInstanceRef.current, window.L);
   }, [filtered, addMarkers, view]);
 
+  // Precio por día de un auto (tolerando los dos nombres de campo posibles).
   const price = (car) => car.price_per_day || car.pricePerDay || 0;
 
+  // Precio más barato dentro de una categoría (para mostrar "Desde $X").
   const minPriceFor = (catId) => {
     const inCat = listings.filter(c => c.category === catId && c.available !== false);
     if (!inCat.length) return null;
@@ -217,6 +245,7 @@ export default function Home() {
   };
 
   // ─────────────────────────────────────────── Subcomponentes
+  // Tarjeta individual de un auto en la grilla (foto, datos, precio y botón).
   const CarCard = ({ car }) => (
     <div style={t.carCard} onClick={() => navigate(`/cars/${car.id}`)}>
       <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "#e5e7eb" }}>
@@ -246,6 +275,7 @@ export default function Home() {
     </div>
   );
 
+  // Grilla de categorías: cada tarjeta filtra por ese tipo de auto al clickearla.
   const CategoriesSection = () => (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 16 }}>Explorá por categoría</div>
@@ -300,6 +330,7 @@ export default function Home() {
     </>
   );
 
+  // Encabezado de la grilla: cantidad de autos y botones Lista/Mapa.
   const CarsHeader = () => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
       <div>
@@ -318,6 +349,8 @@ export default function Home() {
     </div>
   );
 
+  // Cuerpo de resultados: la grilla de tarjetas (vista Lista) o el contenedor
+  // del mapa (vista Mapa), según lo que haya elegido el usuario.
   const CarsGrid = () => (
     loadingListings ? (
       <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando...</div>

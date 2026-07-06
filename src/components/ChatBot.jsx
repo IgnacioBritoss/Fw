@@ -1,7 +1,18 @@
+// ============================================================================
+//  ChatBot — Asistente virtual flotante (botón azul abajo a la derecha)
+// ----------------------------------------------------------------------------
+//  Es un chat con IA que aparece en TODAS las pantallas (se monta en App.jsx).
+//  Responde dudas sobre el funcionamiento de Freewheel usando el modelo de
+//  Groq (ver services/groq.js). Buena parte del código maneja que en el
+//  celular el teclado no tape la caja de texto (por eso tanto cálculo de
+//  "viewport"). En escritorio es un widget flotante de tamaño fijo.
+// ============================================================================
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 
+// "System prompt": instrucciones ocultas que definen la personalidad y los
+// límites del asistente. Se envían antes de cada conversación con la IA.
 const SYSTEM_PROMPT = `Sos el asistente virtual de Freewheel, una plataforma de alquiler de autos entre particulares en Argentina.
 Tu rol es ayudar a usuarios con dudas sobre:
 - Cómo funciona la plataforma
@@ -15,11 +26,13 @@ Tu rol es ayudar a usuarios con dudas sobre:
 
 Respondé siempre en español, de forma clara, profesional y sin emojis. Máximo 3 párrafos por respuesta. Si te preguntan algo que no tiene que ver con Freewheel o alquiler de autos, redirigí la conversación amablemente.`;
 
+// Primer mensaje de bienvenida que ve el usuario al abrir el chat.
 const INITIAL_MESSAGE = {
   role: "assistant",
   text: "Hola, soy el asistente de Freewheel. Puedo ayudarte con dudas sobre seguridad, pagos, cómo publicar tu auto, cancelaciones y más. ¿En qué puedo ayudarte?",
 };
 
+// Preguntas frecuentes que se ofrecen como botones al iniciar la conversación.
 const SUGGESTIONS = [
   "¿Cómo funciona la garantía?",
   "¿Qué pasa si hay un accidente?",
@@ -27,6 +40,9 @@ const SUGGESTIONS = [
   "¿Qué documentos necesito?",
 ];
 
+// Devuelve el alto y la posición del área visible de la pantalla. En el celular,
+// cuando aparece el teclado, "visualViewport" nos dice cuánto espacio queda
+// realmente libre, para poder acomodar el chat encima del teclado.
 function getViewportData() {
   if (typeof window === "undefined") {
     return {
@@ -51,15 +67,16 @@ function getViewportData() {
 export default function ChatBot() {
   const { isMobile } = useIsMobile();
   const location = useLocation();
-  const isChat = location.pathname === "/chat";
-  const hideFab = isMobile && isChat;
+  const isChat = location.pathname === "/chat";     // ¿estamos en la pantalla de chat?
+  const hideFab = isMobile && isChat;               // ocultar el botón para no tapar el chat real
 
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);              // ¿está abierto el asistente?
+  const [messages, setMessages] = useState([INITIAL_MESSAGE]); // historial de la charla
+  const [input, setInput] = useState("");               // texto que se está escribiendo
+  const [loading, setLoading] = useState(false);        // esperando respuesta de la IA
   const [viewport, setViewport] = useState(getViewportData());
 
+  // Genera (o reutiliza) un identificador único de sesión para esta charla.
   const [sessionId] = useState(() => {
     let sid = sessionStorage.getItem('fw_session');
     if (!sid) {
@@ -69,9 +86,10 @@ export default function ChatBot() {
     return sid;
   });
 
-  const messagesRef = useRef(null);
-  const inputRef = useRef(null);
+  const messagesRef = useRef(null); // contenedor de mensajes (para hacer scroll)
+  const inputRef = useRef(null);    // caja de texto (para enfocarla)
 
+  // Baja el scroll hasta el último mensaje.
   const scrollToBottom = (behavior = "auto") => {
     if (!messagesRef.current) return;
     messagesRef.current.scrollTo({
@@ -80,6 +98,8 @@ export default function ChatBot() {
     });
   };
 
+  // Escucha los cambios de tamaño/posición de la pantalla (teclado que aparece,
+  // rotación del celular, etc.) y recalcula el viewport para reacomodar el chat.
   useEffect(() => {
     const updateViewport = () => {
       setViewport(getViewportData());
@@ -134,9 +154,12 @@ export default function ChatBot() {
     scrollToBottom("auto");
   }, [messages, loading, open]);
 
+  // Envía un mensaje del usuario a la IA y agrega la respuesta al historial.
+  // Arma la conversación (system prompt + todos los mensajes) y llama a groqChat.
+  // Si falla, muestra un mensaje amable (distinto si es por exceso de pedidos).
   const send = async (text) => {
     const userText = (text || input).trim();
-    if (!userText || loading) return;
+    if (!userText || loading) return; // no manda vacío ni si ya está esperando
 
     const newMessages = [...messages, { role: "user", text: userText }];
     setMessages(newMessages);
@@ -145,6 +168,7 @@ export default function ChatBot() {
     requestAnimationFrame(() => scrollToBottom("auto"));
 
     try {
+      // Formato que espera la IA: primero las instrucciones, luego la charla.
       const groqMessages = [
         { role: "system", content: SYSTEM_PROMPT },
         ...newMessages.map((m) => ({ role: m.role, content: m.text })),
@@ -211,6 +235,7 @@ export default function ChatBot() {
     transition: "transform .15s, box-shadow .15s",
   };
 
+  // Encabezado del chat: logo, título "Asistente Freewheel" y botón de cerrar.
   const Header = (
     <div
       style={{
@@ -283,6 +308,8 @@ export default function ChatBot() {
     </div>
   );
 
+  // Lista de mensajes: los del asistente van a la izquierda y los del usuario a
+  // la derecha. Al final, si loading es true, muestra los 3 puntitos animados.
   const Messages = (
     <div
       ref={messagesRef}
@@ -378,6 +405,7 @@ export default function ChatBot() {
     </div>
   );
 
+  // Botones de preguntas sugeridas (solo se muestran al inicio de la charla).
   const Suggestions = messages.length <= 1 && (
     <div
       style={{
@@ -410,6 +438,7 @@ export default function ChatBot() {
     </div>
   );
 
+  // Barra inferior: caja de texto (envía con Enter) y botón de enviar.
   const InputBar = (
     <div
       style={{
@@ -512,6 +541,8 @@ export default function ChatBot() {
         .fw-dot-3 { animation: bounce .8s infinite .3s; }
       `}</style>
 
+      {/* Si está abierto: en celular ocupa toda la pantalla; en escritorio es
+          un widget flotante. En ambos casos arma Header + Messages + Sugerencias + Input. */}
       {open &&
         (isMobile ? (
           <div
@@ -551,6 +582,7 @@ export default function ChatBot() {
           </div>
         ))}
 
+      {/* Botón flotante (FAB) que abre/cierra el asistente. */}
       {!hideFab && (
         <button
           style={fabStyle}

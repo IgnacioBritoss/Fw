@@ -1,3 +1,13 @@
+// ============================================================================
+//  CarDetail — Pantalla de DETALLE de un auto (ruta /cars/:id)
+// ----------------------------------------------------------------------------
+//  Muestra toda la info de un auto: galería de fotos, descripción, specs,
+//  equipamiento, reseñas y una tarjeta lateral con el precio.
+//  - Si el que mira es el DUEÑO: puede editar el precio/descripción o eliminar.
+//  - Si es otro usuario: puede reservar o contactar al dueño por chat.
+//  Primero busca el auto en localStorage (autos locales) y, si no está, lo pide
+//  al backend con getListingById.
+// ============================================================================
 import { useState, useEffect } from "react";
 import ReportModal from "../../components/ReportModal";
 import { useParams, useNavigate } from "react-router-dom";
@@ -9,6 +19,7 @@ import { getListingById, startConversation, updateListing, deleteListing } from 
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
 
+// Arma el nombre visible del dueño a partir de sus datos.
 function getName(owner) {
   if (!owner) return "Dueño";
   return owner.displayName ||
@@ -16,6 +27,8 @@ function getName(owner) {
     "Dueño";
 }
 
+// Convierte una publicación del backend al formato "car" que usa esta pantalla,
+// juntando datos del vehículo, del listing y del dueño en un solo objeto plano.
 function apiListingToCar(listing) {
   const v = listing.vehicle || {};
   const owner = listing.owner || {};
@@ -151,6 +164,8 @@ export default function CarDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Al cargar: busca el auto primero entre los locales (localStorage). Si no lo
+  // encuentra completo, lo pide al backend por su id.
   useEffect(() => {
     const allCars = [
       ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
@@ -170,6 +185,7 @@ export default function CarDetail() {
       .catch(() => setLoading(false));
   }, [id]);
 
+  // "Contactar al dueño": abre (o reutiliza) una conversación y va al chat.
   const handleContact = async () => {
     if (!user) { navigate("/login"); return; }
     setContactLoading(true);
@@ -182,6 +198,7 @@ export default function CarDetail() {
     }
   };
 
+  // Aplica un cambio al auto también en las copias guardadas en localStorage.
   const patchLocalCar = (patch) => {
     ["fw_my_cars", "fw_all_cars"].forEach(key => {
       const arr = JSON.parse(localStorage.getItem(key) || "[]");
@@ -190,12 +207,14 @@ export default function CarDetail() {
     });
   };
 
+  // Abre el modo edición precargando el precio y la descripción actuales.
   const startEdit = () => {
     setEditPrice(String(car.price_per_day || ""));
     setEditDesc(car.description || "");
     setEditing(true);
   };
 
+  // Guarda los cambios de precio/descripción en el backend y en localStorage.
   const handleSaveEdit = async () => {
     setSavingEdit(true);
     const pricePerDay = Number(editPrice);
@@ -206,6 +225,7 @@ export default function CarDetail() {
     setEditing(false);
   };
 
+  // Elimina la publicación del backend y de localStorage, y vuelve al dashboard.
   const handleDelete = async () => {
     setDeleting(true);
     try { await deleteListing(id); } catch { /* puede ser auto local */ }
@@ -230,13 +250,15 @@ export default function CarDetail() {
 
   const reviews = mockReviews[id] || [];
   const photos = car.photos || [];
-  const isOwner = user?.id === car.ownerId;
+  const isOwner = user?.id === car.ownerId; // ¿el que mira es el dueño del auto?
 
+  // Navegación circular de la galería (anterior / siguiente foto).
   const prevPhoto = () =>
     setCurrentPhoto(p => (p === 0 ? photos.length - 1 : p - 1));
   const nextPhoto = () =>
     setCurrentPhoto(p => (p === photos.length - 1 ? 0 : p + 1));
 
+  // Lista de specs técnicas, descartando las que el auto no tenga cargadas.
   const techSpecs = [
     ["Color", car.color],
     ["Puertas", car.doors],
@@ -247,6 +269,8 @@ export default function CarDetail() {
     ["Peso", car.weightKg ? `${car.weightKg} kg` : null],
   ].filter(([, val]) => val);
 
+  // Tarjeta lateral de precio. Muestra el desglose (base + comisión + depósito)
+  // y, según sea dueño o no, los botones de editar/eliminar o reservar/contactar.
   const PriceCard = () => (
     <div style={isMobile ? s.priceCardMobile : s.priceCard}>
       <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>

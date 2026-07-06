@@ -1,3 +1,14 @@
+// ============================================================================
+//  MyBookings — MIS RESERVAS (dos roles en una pantalla)
+// ----------------------------------------------------------------------------
+//  Tiene dos pestañas:
+//   - "Mis alquileres": reservas donde el usuario es el INQUILINO (puede pagar,
+//     cancelar o mostrar el QR de retiro/devolución).
+//   - "Solicitudes recibidas": reservas de SUS autos, donde es el DUEÑO (puede
+//     aceptar o rechazar).
+//  Cada reserva tiene un estado (pendiente, aceptada, en curso, etc.) que define
+//  qué botones se muestran.
+// ============================================================================
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -6,6 +17,7 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { getMyBookings, cancelBooking, acceptBooking, rejectBooking } from "../../services/api";
 
+// Configuración visual (texto y colores) para cada estado posible de una reserva.
 const STATUS_CONFIG = {
   REQUESTED:           { label: "Pendiente",           bg: "#fef9c3", color: "#854d0e" },
   ACCEPTED:            { label: "Aceptada",             bg: "#dbeafe", color: "#1e40af" },
@@ -44,6 +56,7 @@ const s = {
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
 };
 
+// Extrae los datos del auto de una reserva (tolerando distintas formas del dato).
 function getVehicleInfo(booking) {
   const v = booking?.listing?.vehicle || booking?.vehicle || {};
   const l = booking?.listing || {};
@@ -56,6 +69,7 @@ function getVehicleInfo(booking) {
   };
 }
 
+// Arma el nombre visible de una persona (dueño o conductor).
 function getPersonName(person) {
   if (!person) return "";
   return person.displayName || `${person.firstName || ""} ${person.lastName || ""}`.trim() || person.email || "";
@@ -71,6 +85,8 @@ export default function MyBookings() {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Trae todas las reservas del usuario desde el backend. Se reutiliza tras
+  // cada acción (aceptar/rechazar/cancelar) para refrescar la lista.
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -82,9 +98,12 @@ export default function MyBookings() {
 
   useEffect(() => { load(); }, [load]);
 
-  const myRentals = bookings.filter((b) => b.renterId === user?.id);
-  const myOwnerBookings = bookings.filter((b) => b.ownerId === user?.id);
+  // Separa las reservas según el rol del usuario en cada una.
+  const myRentals = bookings.filter((b) => b.renterId === user?.id);       // soy inquilino
+  const myOwnerBookings = bookings.filter((b) => b.ownerId === user?.id);  // soy dueño
 
+  // Acciones del dueño (aceptar/rechazar) y del inquilino (cancelar). Todas
+  // llaman al backend y luego recargan la lista.
   const handleAccept = async (id) => {
     setActionLoading(id + "-accept");
     try { await acceptBooking(id); load(); }
@@ -107,6 +126,8 @@ export default function MyBookings() {
     finally { setActionLoading(null); }
   };
 
+  // Tarjeta de una reserva. Calcula días/total y decide qué botones habilitar
+  // según el estado y si el usuario es dueño o inquilino.
   const BookingCard = ({ b, isOwner }) => {
     const vehicle = getVehicleInfo(b);
     const statusCfg = STATUS_CONFIG[b.status] || { label: b.status, bg: "#f3f4f6", color: "#6b7280" };

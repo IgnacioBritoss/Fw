@@ -1,3 +1,12 @@
+// ============================================================================
+//  Admin — Panel de ADMINISTRACIÓN (moderación de la plataforma)
+// ----------------------------------------------------------------------------
+//  Solo accesible para usuarios con rol "ADMIN" (si no, muestra "Acceso
+//  restringido"). Tiene dos pestañas:
+//   - "Publicaciones": ver y eliminar/recuperar avisos.
+//   - "Usuarios": ver, suspender o eliminar cuentas.
+//  Las acciones sensibles piden confirmación con un modal antes de ejecutarse.
+// ============================================================================
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -52,6 +61,7 @@ export default function Admin() {
   const [expandedUser, setExpandedUser] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
 
+  // Portón de seguridad: si no es admin, no muestra el panel.
   if (!user || user.role !== "ADMIN") {
     return (
       <div style={s.accessDenied}>
@@ -63,11 +73,13 @@ export default function Admin() {
     );
   }
 
+  // Muestra un cartel de aviso (éxito o error) que se oculta solo a los 4s.
   const showAlert = (msg, type = "ok") => {
     setAlert({ msg, type });
     setTimeout(() => setAlert({ msg: "", type: "ok" }), 4000);
   };
 
+  // Al cambiar de pestaña, carga las publicaciones o los usuarios según corresponda.
   useEffect(() => {
     if (tab === "listings") {
       setLoadingListings(true);
@@ -85,7 +97,7 @@ export default function Admin() {
     }
   }, [tab]);
 
-  // Acciones reales
+  // Acciones reales: cambian el estado en el backend y actualizan la lista local.
   const doDeleteListing = async (id, label) => {
     try {
       await adminUpdateListingStatus(id, "DELETED");
@@ -115,11 +127,13 @@ export default function Admin() {
     } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
   };
 
-  // Abren el modal de confirmación (en vez de alert nativo)
+  // Abren el modal de confirmación (en vez de alert nativo). Guardan la acción
+  // a ejecutar; recién se corre cuando el usuario confirma en el modal.
   const handleDeleteListing = (id, label) => setConfirmModal({ title: "Eliminar publicación", msg: `¿Eliminar "${label}"? Dejará de verse en la plataforma. Podés recuperarla después desde acá.`, confirmLabel: "Eliminar", action: () => doDeleteListing(id, label) });
   const handleSuspendUser = (id, name) => setConfirmModal({ title: "Suspender usuario", msg: `¿Querés suspender a "${name}"? No podrá operar hasta reactivarlo.`, confirmLabel: "Suspender", action: () => doSuspendUser(id, name) });
   const handleDeleteUser = (id, name) => setConfirmModal({ title: "Eliminar usuario", msg: `¿Querés eliminar a "${name}"? Esta acción es delicada.`, confirmLabel: "Eliminar", action: () => doDeleteUser(id, name) });
 
+  // Ejecuta la acción guardada en el modal y lo cierra.
   const runConfirm = async () => { const m = confirmModal; setConfirmModal(null); if (m?.action) await m.action(); };
 
   return (

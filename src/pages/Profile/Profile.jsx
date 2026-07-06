@@ -1,7 +1,15 @@
+// ============================================================================
+//  Profile — Pantalla de PERFIL público del usuario
+// ----------------------------------------------------------------------------
+//  Muestra los datos del usuario logueado: nombre, foto (inicial), estadísticas
+//  y el estado de sus verificaciones (DNI, licencia, email, teléfono). Todo se
+//  deriva del objeto `user`, así que lo que se edita en Ajustes se refleja acá.
+// ============================================================================
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
+// Círculo verde (tilde) o naranja (signo) según algo esté verificado o pendiente.
 const StatusBadge = ({ ok }) => (
   <div title={ok ? "Verificado" : "Pendiente"} style={{ width: 24, height: 24, borderRadius: "50%", background: ok ? "#16a34a" : "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
     {ok
@@ -39,6 +47,8 @@ export default function Profile() {
     verifyItem: { display: "flex", alignItems: "center", gap: 14, background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 12, padding: 16 },
   };
 
+  // Bloque de verificaciones: una tarjeta por documento con su estado, y un
+  // aviso con botón "Verificar ahora" si falta completar el DNI o la licencia.
   const Verifications = () => (
     <div style={{ ...t.card, padding: 28, flex: 1 }}>
       <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>Identidad y verificaciones</div>

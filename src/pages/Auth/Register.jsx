@@ -1,3 +1,14 @@
+// ============================================================================
+//  Register — Registro en VARIOS PASOS (asistente / wizard)
+// ----------------------------------------------------------------------------
+//  Es una única pantalla que cambia de "paso" con la variable `step`:
+//    0 → datos de la cuenta (nombre, email, contraseña, términos)
+//    1 → verificar el email con el código de 6 dígitos
+//    2 → subir DNI (frente y dorso)   ┐
+//    3 → subir licencia (frente/dorso)├─ verificación de identidad (KYC)
+//    4 → confirmación final           ┘
+//  Los pasos de KYC se pueden omitir y completar después desde Ajustes.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -35,9 +46,12 @@ const Logo = () => (
   </div>
 );
 
+// Nombres de los pasos del verificador de identidad (para el "stepper" visual).
 const KYC_STEPS = ["Identidad", "Licencia", "Confirmación"];
 
-// Tarjeta de foto horizontal (estilo del diseño)
+// Tarjeta para subir una foto (DNI/licencia). Al hacer clic abre el selector de
+// archivos, lee la imagen como dataURL y la devuelve al padre con onChange().
+// Muestra una tilde verde cuando ya hay una foto cargada.
 function PhotoCard({ label, hint, value, onChange }) {
   const id = `reg-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -77,7 +91,8 @@ export default function Register() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0); // 0 = datos, 1 = verificar email, 2 = identidad, 3 = licencia, 4 = confirmación
 
-  // Guarda el estado de verificación (localStorage + contexto), tolerante a user null
+  // Guarda cambios del estado de verificación (ej: { dniVerified: true }) tanto
+  // en localStorage como en el contexto. Funciona aunque `user` sea null.
   const persistVerification = (patch) => {
     let base = user;
     if (!base) { try { base = JSON.parse(localStorage.getItem("fw_user") || "{}"); } catch { base = {}; } }
@@ -102,8 +117,10 @@ export default function Register() {
   const [licFront, setLicFront] = useState(null);
   const [licBack, setLicBack] = useState(null);
 
+  // Atajo para actualizar un campo del formulario por su nombre.
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
 
+  // Paso 0 → 1: valida los datos, crea la cuenta y pasa a verificar el email.
   const handleSubmit = async () => {
     if (!form.firstName || !form.email || !form.password) { setError("Completá todos los campos obligatorios."); return; }
     if (form.password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres."); return; }
@@ -126,6 +143,7 @@ export default function Register() {
     setStep(2); // ← email verificado, sigue el KYC (DNI / licencia)
   };
 
+  // Reenvía el código de verificación al email si el usuario no lo recibió.
   const handleResend = async () => {
     setResending(true); setError(""); setInfo("");
     const result = await resendVerification();

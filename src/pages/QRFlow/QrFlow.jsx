@@ -1,3 +1,11 @@
+// ============================================================================
+//  QRFlow — Retiro y devolución del auto con QR / token
+// ----------------------------------------------------------------------------
+//  Cuando se concreta un alquiler, el dueño y el conductor confirman la entrega
+//  (pickup) y la devolución (return) mediante un código QR / token. Esta
+//  pantalla muestra el QR a mostrar y un campo para ingresar el token del otro
+//  y confirmar la operación. Tiene dos modos: "pickup" (retiro) y "return".
+// ============================================================================
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -20,6 +28,8 @@ const s = {
   tab: { flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };
 
+// Dibuja el QR a partir del token, usando un servicio externo que genera la
+// imagen del código. Si falla la carga, oculta la imagen.
 function QRDisplay({ token }) {
   if (!token) return null;
   const size = 180;
@@ -47,6 +57,7 @@ export default function QRFlow() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState(null);
 
+  // Al cargar: trae la reserva y sus tokens de retiro/devolución en paralelo.
   useEffect(() => {
     Promise.all([getBookingById(bookingId), getBookingTokens(bookingId).catch(() => null)])
       .then(([b, t]) => { setBooking(b); setTokens(t); })
@@ -54,6 +65,7 @@ export default function QRFlow() {
       .finally(() => setLoading(false));
   }, [bookingId]);
 
+  // Confirma el retiro o la devolución (según el modo) con el token ingresado.
   const handleConfirm = async () => {
     if (!tokenInput.trim()) { setError("Ingresá el token."); return; }
     setConfirming(true);

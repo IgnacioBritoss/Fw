@@ -1,3 +1,13 @@
+// ============================================================================
+//  mockData.js — Datos de PRUEBA (autos, reseñas, dueños y mensajes de ejemplo)
+// ----------------------------------------------------------------------------
+//  Estos datos "de mentira" sirven para que la app tenga contenido de ejemplo
+//  aunque el backend no tenga autos cargados (útil para la demo y el desarrollo).
+//  Al arrancar, initMockCars() los deja guardados en localStorage bajo la clave
+//  "fw_all_cars", para que otras pantallas los puedan leer.
+// ============================================================================
+
+// Lista de autos de ejemplo con todos sus datos y especificaciones técnicas.
 export const mockCars = [
   {
     id: "1",
@@ -49,6 +59,7 @@ export const mockCars = [
   },
 ];
 
+// Reseñas de ejemplo, agrupadas por id de auto.
 export const mockReviews = {
   "1": [
     { id: "r1", author: "Martina G.", rating: 5, comment: "Excelente auto, llegó limpio y puntual. Lo recomiendo.", date: "2024-03-10" },
@@ -64,17 +75,21 @@ export const mockReviews = {
   ],
 };
 
+// Datos de ejemplo de los dueños, indexados por id de dueño.
 export const mockOwners = {
   "2": { name: "Roberto O.", rating: 4.9, rentals: 19, verified: true, since: "2023" },
   "3": { name: "Carmen V.", rating: 4.5, rentals: 8, verified: true, since: "2024" },
 };
 
+// Mensajes de ejemplo para mostrar una conversación en el chat.
 export const mockMessages = [
   { id: "msg1", from: "2", to: "current_user", text: "Hola! El auto estará listo a las 10am.", time: "10:32" },
   { id: "msg2", from: "current_user", to: "2", text: "Perfecto, ahí estaré. ¿Traigo algo en particular?", time: "10:35" },
   { id: "msg3", from: "2", to: "current_user", text: "No, solo el DNI y la licencia. Nos vemos!", time: "10:36" },
 ];
 
+// Guarda los autos de ejemplo en localStorage para que estén disponibles al
+// arrancar la app. Se llama una vez desde AuthProvider.
 export const initMockCars = () => {
   localStorage.setItem("fw_all_cars", JSON.stringify(mockCars));
 };

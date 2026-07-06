@@ -5,6 +5,8 @@
 
 const STYLE_ID = "fw-dark-style";
 
+// Inserta una sola vez en el <head> la etiqueta <style> con las reglas del modo
+// oscuro. Si ya existe, no hace nada (evita duplicados).
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
   const el = document.createElement("style");
@@ -23,6 +25,8 @@ function ensureStyle() {
   document.head.appendChild(el);
 }
 
+// Activa (on=true) o desactiva el modo oscuro agregando/quitando la clase
+// "fw-dark" en el <html>, que es la que dispara el filtro de inversión.
 export function applyDarkMode(on) {
   ensureStyle();
   const root = document.documentElement;

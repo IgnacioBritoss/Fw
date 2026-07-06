@@ -1,3 +1,9 @@
+// ============================================================================
+//  Terms — Términos y Condiciones
+// ----------------------------------------------------------------------------
+//  Página estática (solo texto) con los términos legales de uso de Freewheel.
+//  Se accede desde el checkbox del registro. No tiene lógica: solo contenido.
+// ============================================================================
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 

@@ -1,3 +1,10 @@
+// ============================================================================
+//  Booking — Pantalla de RESERVA (elegir fechas)
+// ----------------------------------------------------------------------------
+//  Muestra el resumen del auto y el calendario para elegir el rango de fechas.
+//  Al confirmar, crea la reserva en el backend y lleva a la pantalla de pago,
+//  pasándole todo el detalle (fechas y montos) por el "state" de la navegación.
+// ============================================================================
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -23,6 +30,7 @@ const s = {
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginTop: 12 },
 };
 
+// Tarjeta chica con la foto y datos del auto que se está por reservar.
 function CarSummaryCard({ car, mobile }) {
   return (
     <div style={s.carCard}>
@@ -50,6 +58,7 @@ export default function Booking() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // Al cargar: trae la publicación por su id y arma el objeto del auto.
   useEffect(() => {
     getListingById(id)
       .then((data) => {
@@ -69,6 +78,8 @@ export default function Booking() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Se llama desde el calendario al confirmar. Crea la reserva y navega al pago,
+  // llevando el detalle de fechas y montos por el state de la ruta.
   const handleConfirm = async ({ start, end, days, total, commission, deposit, totalFinal }) => {
     if (!user) { navigate("/login"); return; }
     setSubmitting(true);

@@ -1,3 +1,9 @@
+// ============================================================================
+//  CompleteProfile — Último paso del alta: agregar el teléfono (opcional)
+// ----------------------------------------------------------------------------
+//  Después de verificar el email, se le ofrece al usuario cargar su teléfono
+//  para coordinar reservas. Es opcional: si falla o lo deja vacío, igual entra.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -21,6 +27,7 @@ export default function CompleteProfile() {
     error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   };
 
+  // Guarda el teléfono (si se cargó), actualiza la sesión y entra a la app.
   const finish = async () => {
     setLoading(true);
     setError("");

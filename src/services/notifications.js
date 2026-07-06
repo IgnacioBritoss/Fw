@@ -2,26 +2,34 @@
 // de la app (reservas y conversaciones) y persiste el estado de "leído".
 import { getMyBookings, getMyConversations } from "./api";
 
+// Clave de localStorage donde guardamos los IDs de notificaciones ya leídas.
 const READ_KEY = "fw_notif_read";
 
+// Devuelve el conjunto (Set) de IDs de notificaciones que el usuario ya leyó.
 export function getReadIds() {
   try { return new Set(JSON.parse(localStorage.getItem(READ_KEY) || "[]")); }
   catch { return new Set(); }
 }
+// Guarda en localStorage el conjunto de IDs leídos.
 export function setReadIds(set) {
   localStorage.setItem(READ_KEY, JSON.stringify([...set]));
 }
+// Marca como leídas las notificaciones cuyos IDs se pasan.
 export function markRead(ids) {
   const s = getReadIds();
   ids.forEach(i => s.add(i));
   setReadIds(s);
 }
+// Marca TODAS las notificaciones de la lista como leídas.
 export function markAllRead(notifs) {
   markRead(notifs.map(n => n.id));
 }
 
+// El backend a veces devuelve un array directo y a veces { data: [...] }.
+// Esta función normaliza ambos casos a un array simple.
 const asArray = (d) => (Array.isArray(d) ? d : (d?.data ?? []));
 
+// Arma un nombre legible del auto de una reserva ("Toyota Corolla" o el título).
 function carLabel(b) {
   const v = b?.listing?.vehicle || b?.vehicle;
   if (v?.brand || v?.model) return `${v.brand || ""} ${v.model || ""}`.trim();

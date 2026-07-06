@@ -1,3 +1,12 @@
+// ============================================================================
+//  Chat — MENSAJERÍA entre usuarios (estilo WhatsApp)
+// ----------------------------------------------------------------------------
+//  Pantalla dividida en dos: la lista de conversaciones a la izquierda y la
+//  charla activa a la derecha (en celular se ve una u otra). Permite mandar
+//  texto, imágenes/archivos (a Cloudinary) y notas de voz grabadas con el
+//  micrófono. Para simular "tiempo real", cada 3 segundos vuelve a pedir los
+//  mensajes (polling) y marca la conversación como leída.
+// ============================================================================
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -8,6 +17,7 @@ import {
 } from "../../services/api";
 import { uploadAudioToCloudinary, uploadFileToCloudinary } from "../../services/cloudinary";
 
+// Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
 function AudioMsg({ src }) {
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -46,16 +56,19 @@ function AudioMsg({ src }) {
   );
 }
 
+// Nombre visible de un usuario.
 function getDisplayName(u) {
   if (!u) return "Usuario";
   return u.displayName || `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Usuario";
 }
 
+// Hora de un mensaje (HH:mm).
 function formatTime(dateStr) {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
 
+// Etiqueta del separador de fecha entre mensajes: "Hoy", "Ayer" o la fecha.
 function formatDateLabel(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -68,6 +81,8 @@ function formatDateLabel(dateStr) {
   return d.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
 }
 
+// Detecta el tipo de un mensaje (audio, imagen, archivo o texto) para saber
+// cómo mostrarlo. Se apoya en el type y en la URL de Cloudinary.
 function getMsgKind(msg) {
   if (msg.type === "AUDIO") return "audio";
   const c = msg.content || "";
@@ -85,6 +100,7 @@ function getViewportData() {
   return { height: window.innerHeight, offsetTop: 0 };
 }
 
+// Avatar circular con la inicial del nombre y un color elegido según la letra.
 function Avatar({ name, size = 40, fontSize = 15 }) {
   const colors = ["#2563eb", "#7c3aed", "#059669", "#dc2626", "#d97706"];
   const color = colors[(name.charCodeAt(0) || 0) % colors.length];
@@ -121,11 +137,14 @@ export default function Chat() {
   const audioChunksRef = useRef([]);
   const recordTimerRef = useRef(null);
 
+  // Conversación abierta y el "otro" participante (si soy el inquilino, el otro
+  // es el dueño, y viceversa).
   const activeConv = conversations.find(c => c.id === activeConvId);
   const otherUser = activeConv
     ? (activeConv.renterId === user?.id ? activeConv.owner : activeConv.renter)
     : null;
 
+  // Conversaciones que coinciden con el texto del buscador.
   const filteredConversations = conversations.filter(conv => {
     if (!searchQuery.trim()) return true;
     const other = conv.renterId === user?.id ? conv.owner : conv.renter;
@@ -133,6 +152,7 @@ export default function Chat() {
     return name.includes(searchQuery.toLowerCase().trim());
   });
 
+  // ¿La conversación tiene un mensaje sin leer del otro? (para el puntito azul).
   const hasUnread = (conv) => {
     const msgs = conv.messages;
     if (!msgs || msgs.length === 0) return false;
@@ -140,6 +160,7 @@ export default function Chat() {
     return last.senderId !== user?.id && !last.readAt;
   };
 
+  // Al cargar: trae todas las conversaciones del usuario.
   useEffect(() => {
     getMyConversations()
       .then(data => setConversations(data || []))
@@ -147,6 +168,8 @@ export default function Chat() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Si venimos con ?conv=... en la URL (ej: desde "Contactar al dueño"), abre
+  // esa conversación y la agrega a la lista si no estaba.
   useEffect(() => {
     const convId = searchParams.get("conv");
     if (!convId) return;
@@ -160,6 +183,8 @@ export default function Chat() {
       .catch(() => {});
   }, [searchParams]);
 
+  // Al abrir una conversación: carga sus mensajes y los vuelve a pedir cada 3s
+  // (polling) para simular tiempo real; además la marca como leída.
   useEffect(() => {
     clearInterval(pollRef.current);
     if (!activeConvId) { setMessages([]); return; }
@@ -173,7 +198,7 @@ export default function Chat() {
       poll();
       markConversationRead(activeConvId).catch(() => {});
     }, 3000);
-    return () => clearInterval(pollRef.current);
+    return () => clearInterval(pollRef.current); // corta el polling al salir
   }, [activeConvId]);
 
   useLayoutEffect(() => {
@@ -199,6 +224,7 @@ export default function Chat() {
     };
   }, []);
 
+  // Envía un mensaje de texto. Si falla, devuelve el texto al input para reintentar.
   const handleSend = async () => {
     if (!text.trim() || !activeConvId || sending) return;
     const content = text.trim();
@@ -211,6 +237,8 @@ export default function Chat() {
     setSending(false);
   };
 
+  // Empieza a grabar audio con el micrófono (MediaRecorder) y cuenta los segundos.
+  // Al detener, arma un Blob de audio y lo deja "pendiente" para enviar o cancelar.
   const startRecording = async () => {
     if (!activeConvId) return;
     try {
@@ -235,11 +263,13 @@ export default function Chat() {
     } catch { alert("No se pudo acceder al micrófono"); }
   };
 
+  // Detiene la grabación en curso.
   const stopRecording = () => {
     if (mediaRecorderRef.current && recording)
       mediaRecorderRef.current.stop();
   };
 
+  // Sube el audio grabado a Cloudinary y lo manda como mensaje tipo AUDIO.
   const handleSendAudio = async () => {
     if (!pendingAudio || !activeConvId) return;
     const { blob, url } = pendingAudio;
@@ -254,6 +284,7 @@ export default function Chat() {
     setUploading(false);
   };
 
+  // Descarta el audio grabado sin enviarlo.
   const handleCancelAudio = () => {
     if (pendingAudio) {
       URL.revokeObjectURL(pendingAudio.url);
@@ -261,6 +292,7 @@ export default function Chat() {
     }
   };
 
+  // Sube un archivo/imagen elegido a Cloudinary y manda su URL como mensaje.
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file || !activeConvId) return;
@@ -274,6 +306,7 @@ export default function Chat() {
     setUploading(false);
   };
 
+  // Dibuja el contenido de un mensaje según su tipo (audio, imagen, archivo o texto).
   const renderMsgContent = (msg) => {
     const kind = getMsgKind(msg);
     const isMe = msg.senderId === user?.id;
@@ -296,6 +329,8 @@ export default function Chat() {
     return <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{msg.content}</span>;
   };
 
+  // Dibuja todos los mensajes, insertando un separador de fecha cuando cambia
+  // el día. Los míos van a la derecha (azul); los del otro, a la izquierda.
   const renderMessages = () => {
     let lastDateLabel = "";
     return messages.map(msg => {
@@ -338,6 +373,8 @@ export default function Chat() {
     });
   };
 
+  // Dibuja la barra inferior, que cambia según el estado: audio pendiente de
+  // enviar, grabando, o el input normal (adjuntar + escribir + grabar + enviar).
   const renderInput = () => {
     if (pendingAudio) {
       return (
@@ -412,6 +449,8 @@ export default function Chat() {
   const v = activeConv?.listing?.vehicle;
   const listingLabel = v ? `${v.brand} ${v.model} ${v.year}` : activeConv?.listing?.title || "";
 
+  // Panel izquierdo: buscador + lista de conversaciones (con avatar, último
+  // mensaje y puntito de no leído).
   const convListJSX = (
     <div style={{ background: "#fff", width: isMobile ? "100%" : 300, borderRight: "1px solid #f3f4f6", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto" }}>
       <div style={{ padding: "18px 20px", borderBottom: "1px solid #f3f4f6" }}>
@@ -485,6 +524,7 @@ export default function Chat() {
     </div>
   );
 
+  // Panel derecho: cabecera con el otro usuario + lista de mensajes + input.
   const chatAreaJSX = (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
       <div style={{ padding: isMobile ? "12px 16px" : "14px 20px", borderBottom: "1px solid #f3f4f6", background: "#fff", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
