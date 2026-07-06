@@ -1,3 +1,16 @@
+// ============================================================================
+//  App.jsx — COMPONENTE RAÍZ y MAPA DE RUTAS de toda la aplicación
+// ----------------------------------------------------------------------------
+//  Acá se define:
+//   1) El "envoltorio" global: AuthProvider (sesión) y BrowserRouter (navegación).
+//   2) TODAS las rutas (URLs) de la app y qué página muestra cada una.
+//   3) El ChatBot flotante, que aparece en todas las pantallas.
+//
+//  Distinguimos dos tipos de rutas:
+//   - Públicas / de login: se ven sin estar logueado (login, registro, etc.).
+//   - Privadas: envueltas en <PrivateRoute>, requieren sesión iniciada.
+//  Y casi todas van dentro de <Layout> (sidebar + barra superior).
+// ============================================================================
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
@@ -34,6 +47,7 @@ const app = (el) => <Layout>{el}</Layout>;
 const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
 
 export default function App() {
+  // Al arrancar, aplicamos el modo claro/oscuro guardado por el usuario.
   useEffect(() => { initTheme(); }, []);
   return (
     <AuthProvider>

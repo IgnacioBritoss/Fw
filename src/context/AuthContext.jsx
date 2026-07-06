@@ -1,3 +1,17 @@
+// ============================================================================
+//  AuthContext.jsx — Manejo GLOBAL de la SESIÓN del usuario
+// ----------------------------------------------------------------------------
+//  Un "Context" de React es una caja compartida a la que cualquier componente
+//  puede acceder sin pasar datos por props. Acá guardamos QUIÉN está logueado
+//  y todas las acciones relacionadas con la cuenta (login, registro, logout,
+//  verificación de email, recuperar contraseña, etc.).
+//
+//  Cualquier pantalla puede usar `const { user, logout } = useAuth();` para
+//  saber si hay usuario y actuar en consecuencia.
+//
+//  La sesión se guarda en localStorage (clave "fw_user") para que siga activa
+//  aunque se recargue la página.
+// ============================================================================
 import { createContext, useContext, useState, useEffect } from "react";
 import {
   loginUser, registerUser, getMe,
@@ -10,10 +24,12 @@ import { initMockCars } from "../data/mockData";
 
 const AuthContext = createContext(null);
 
+// Provider: envuelve a toda la app (ver App.jsx) y "provee" la sesión.
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);      // usuario logueado (o null)
+  const [loading, setLoading] = useState(true); // true mientras verifica sesión al arrancar
 
+  // Al montar: carga los autos de ejemplo y recupera la sesión guardada (si hay).
   useEffect(() => {
     initMockCars();
     const saved = localStorage.getItem("fw_user");
@@ -23,16 +39,20 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  // Guarda el usuario en memoria y en localStorage (persistencia de la sesión).
   const saveUser = (userData) => {
     localStorage.setItem("fw_user", JSON.stringify(userData));
     setUser(userData);
   };
 
+  // Cierra la sesión: borra el usuario de memoria y de localStorage.
   const logout = () => {
     localStorage.removeItem("fw_user");
     setUser(null);
   };
 
+  // Inicia sesión con email/contraseña. Arma el nombre completo y guarda al
+  // usuario junto con su token. Devuelve { success } (con error si falla).
   const loginWithCredentials = async (email, password) => {
   try {
     const data = await loginUser({ email, password });
@@ -45,6 +65,8 @@ export function AuthProvider({ children }) {
   }
 };
 
+ // Registra un usuario nuevo. Separa el nombre completo en firstName/lastName
+ // (lo que espera el backend) y, si el registro es exitoso, deja la sesión abierta.
  const register = async (formData) => {
   const payload = {
     email: formData.email,
@@ -64,6 +86,8 @@ export function AuthProvider({ children }) {
   }
 };
 
+// Inicia sesión con el token que devuelve Google tras el login con OAuth.
+// Guarda el token, pide los datos del usuario al backend (getMe) y arma la sesión.
 const loginWithGoogleToken = async (token) => {
   try {
     localStorage.setItem("fw_user", JSON.stringify({ accessToken: token }));
@@ -79,6 +103,7 @@ const loginWithGoogleToken = async (token) => {
   }
 };
 
+  // Confirma el email con el código recibido y refresca los datos del usuario.
   const verifyEmail = async (code) => {
     try {
       await apiVerifyEmail({ code });
@@ -90,6 +115,7 @@ const loginWithGoogleToken = async (token) => {
     }
   };
 
+  // Reenvía el email con el código de verificación.
   const resendVerification = async () => {
     try {
       await apiResendVerification();
@@ -99,6 +125,7 @@ const loginWithGoogleToken = async (token) => {
     }
   };
 
+  // Dispara el envío del email para recuperar la contraseña olvidada.
   const forgotPassword = async (email) => {
     try {
       await apiForgotPassword({ email });
@@ -108,6 +135,7 @@ const loginWithGoogleToken = async (token) => {
     }
   };
 
+  // Establece la contraseña nueva usando el token recibido por email.
   const resetPassword = async ({ token, userId, newPassword }) => {
     try {
       await apiResetPassword({ token, userId, newPassword });
@@ -117,6 +145,8 @@ const loginWithGoogleToken = async (token) => {
     }
   };
 
+  // Vuelve a pedir al backend los datos del usuario (por si cambió su perfil,
+  // verificación, etc.) y actualiza la sesión. Si falla, cierra sesión.
   const refreshUser = async () => {
   try {
     const fresh = await getMe();
@@ -140,4 +170,6 @@ const loginWithGoogleToken = async (token) => {
   );
 }
 
+// Hook de atajo: cualquier componente hace `const { user, logout } = useAuth();`
+// para acceder a la sesión y a todas las acciones definidas arriba.
 export const useAuth = () => useContext(AuthContext);

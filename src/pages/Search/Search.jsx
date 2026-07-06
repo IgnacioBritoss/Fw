@@ -1,12 +1,23 @@
+// ============================================================================
+//  Search — Pantalla de BÚSQUEDA de autos (lista + mapa lado a lado)
+// ----------------------------------------------------------------------------
+//  Muestra los autos como una lista de tarjetas a la izquierda y un mapa
+//  interactivo a la derecha (en escritorio). Los dos están sincronizados:
+//  pasar el mouse o hacer clic en una tarjeta resalta su pin, y clickear un
+//  pin muestra una tarjeta flotante. Incluye filtros (orden, transmisión,
+//  combustible) y un buscador por ciudad o modelo.
+// ============================================================================
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { getListings } from "../../services/api";
 import { mockCars } from "../../data/mockData";
 
+// Traducciones de los códigos del backend a texto legible.
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
 
+// Unifica el formato de una publicación (venga del backend o de los ejemplos).
 function normalizeListing(l) {
   const v = l.vehicle || {};
   return {
@@ -31,6 +42,9 @@ function normalizeListing(l) {
 }
 
 // ── Menú desplegable reutilizable ──
+// Componente genérico de filtro: muestra un botón que abre una lista de
+// opciones y avisa la elegida con onChange(). Se usa para orden, transmisión
+// y combustible. Se cierra solo al hacer clic afuera.
 function Dropdown({ label, value, options, onChange, active }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -88,6 +102,8 @@ export default function Search() {
   const markersRef = useRef({});
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Trae las publicaciones del backend y las combina con las locales (igual que
+  // en Home). Si falla, usa los ejemplos + las locales.
   useEffect(() => {
     const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
     getListings()
@@ -107,6 +123,8 @@ export default function Search() {
   const price = (c) => c.price_per_day || c.pricePerDay || 0;
   const s = search.toLowerCase().trim();
 
+  // Resultado final: aplica disponibilidad, texto buscado y los filtros de
+  // transmisión y combustible, y ordena según el criterio elegido.
   const filtered = listings
     .filter(c => c.available !== false)
     .filter(c => !s ||
@@ -121,15 +139,19 @@ export default function Search() {
       return 0;
     });
 
+  // Auto actualmente seleccionado en el mapa (para la tarjeta flotante).
   const selectedCar = filtered.find(c => c.id === selected) || null;
 
   // ── Leaflet ──
+  // Carga la librería del mapa una sola vez.
   useEffect(() => {
     if (window.L) { setMapLoaded(true); return; }
     const link = document.createElement("link"); link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(link);
     const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; sc.onload = () => setMapLoaded(true); document.head.appendChild(sc);
   }, []);
 
+  // Redibuja los pines del mapa (uno por auto) con su precio. El pin resaltado
+  // (hover o seleccionado) se agranda y se pone oscuro. Clickearlo lo selecciona.
   const addMarkers = useCallback((map, L) => {
     Object.values(markersRef.current).forEach(m => { try { map.removeLayer(m); } catch {} });
     markersRef.current = {};
@@ -153,6 +175,7 @@ export default function Search() {
     });
   }, [filtered, hovered, selected]);
 
+  // Crea el mapa cuando corresponde mostrarlo (escritorio + vista mapa activa).
   useEffect(() => {
     if (!showMap || isMobile) return;
     const init = () => {
@@ -168,10 +191,12 @@ export default function Search() {
     else { const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 120); } }, 100); }
   }, [showMap, mapLoaded, isMobile]);
 
+  // Redibuja los pines cada vez que cambian los resultados o el resaltado.
   useEffect(() => {
     if (mapInstanceRef.current && window.L) addMarkers(mapInstanceRef.current, window.L);
   }, [filtered, hovered, selected, addMarkers]);
 
+  // Destruye el mapa si se oculta o se pasa a celular (libera memoria).
   useEffect(() => {
     if ((!showMap || isMobile) && mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; markersRef.current = {}; }
   }, [showMap, isMobile]);
@@ -188,6 +213,8 @@ export default function Search() {
     detail: { background: "#111827", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
   };
 
+  // Tarjeta de un auto en la lista. Al pasar el mouse resalta su pin en el mapa;
+  // al hacer clic va al detalle. Se pinta distinto si está seleccionado.
   const Card = ({ car }) => {
     const on = selected === car.id;
     return (

@@ -1,3 +1,14 @@
+// ============================================================================
+//  PublishCar — Publicar un auto (asistente de 4 PASOS)
+// ----------------------------------------------------------------------------
+//  Es la pantalla más completa de la app. En 4 pasos (`step`):
+//    0 → datos del vehículo (con AUTOCOMPLETAR SPECS con IA)
+//    1 → subir fotos (la IA verifica que cada foto sea un auto)
+//    2 → título, descripción, ubicación y precio (con SUGERIR PRECIO con IA)
+//    3 → revisión final y publicación
+//  Al publicar: crea el vehículo y el listing en el backend, sube las fotos a
+//  Cloudinary y guarda una copia local. Usa 3 servicios de IA de groq.js.
+// ============================================================================
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -7,6 +18,7 @@ import { createVehicle, createListing, createMediaAsset } from "../../services/a
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 
+// Colores predefinidos que se ofrecen como "chips" al elegir el color del auto.
 const PRESET_COLORS = [
   { name: "Blanco", hex: "#F5F5F5" },
   { name: "Negro", hex: "#1a1a1a" },
@@ -64,6 +76,8 @@ const s = {
   aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
 };
 
+// Valida el formato de una patente argentina. Acepta el formato viejo (ABC123)
+// y el nuevo Mercosur (AB123CD). Si está vacía, la da por válida (es opcional).
 function validateArgentinePlate(plate) {
   if (!plate) return true;
   const clean = plate.replace(/[\s\-\.]/g, "").toUpperCase();
@@ -72,6 +86,9 @@ function validateArgentinePlate(plate) {
   return oldFormat || mercosur;
 }
 
+// Revisa las specs numéricas y devuelve avisos si algún valor está fuera de un
+// rango razonable (ej: 20 puertas). Evita datos absurdos, sobre todo los que
+// completa la IA. No bloquea: solo advierte.
 function getSpecWarnings(form) {
   const checks = [
     ["doors", 2, 7, "Puertas"],
@@ -89,8 +106,11 @@ function getSpecWarnings(form) {
     .map(([, , , label, ,], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
 }
 
+// Normaliza un texto de ubicación (minúsculas, sin espacios de más) para poder
+// comparar dos ubicaciones aunque estén escritas distinto.
 const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
+// Nombres de los pasos y traducciones de las opciones a los códigos del backend.
 const STEPS = ["Vehículo", "Fotos", "Listing", "Confirmar"];
 const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
 const FUEL_MAP = { Nafta: "GASOLINE", Diesel: "DIESEL", Eléctrico: "ELECTRIC", GNC: "OTHER" };
@@ -126,11 +146,14 @@ export default function PublishCar() {
     locationText: "", latitude: null, longitude: null,
   });
 
+  // Atajos para actualizar un campo del formulario de vehículo (setV) o de listing (setL).
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
   const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));
 
-  const prevLocationRef = useRef("");
+  const prevLocationRef = useRef(""); // guarda la ubicación anterior para detectar cambios
 
+  // Si el usuario cambia la ubicación después de pedir una sugerencia de precio,
+  // la sugerencia deja de ser válida: la borramos para que pida una nueva.
   useEffect(() => {
     const prev = prevLocationRef.current;
     const curr = listingForm.locationText;
@@ -143,6 +166,9 @@ export default function PublishCar() {
 
   const specWarnings = getSpecWarnings(vehicleForm);
 
+  // ✦ IA #1 — Autocompletar specs: le pide al modelo las especificaciones técnicas
+  // del auto (marca/modelo/año) y rellena el formulario. Cachea el resultado en
+  // localStorage para no volver a pedir lo mismo.
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
       setError("Completá marca, modelo y año antes de autocompletar.");
@@ -194,6 +220,8 @@ Si no sabés un dato, usá null.`;
     if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
   };
 
+  // ✦ IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
+  // acorde al auto y a la ubicación, y lo carga en el formulario. También cachea.
   const fetchPricing = async () => {
     setPricingLoading(true);
     setPricingSuggestion(null);
@@ -235,6 +263,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     setPricingLoading(false);
   };
 
+  // ✦ IA #3 — Al subir fotos: las lee, las agrega a la grilla y por cada una llama
+  // a groqVision para verificar que muestre un vehículo (marca "ok"/"invalid").
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     if (photos.length + files.length > 6) { setError("Podés subir hasta 6 fotos."); return; }
@@ -256,6 +286,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     });
   };
 
+  // Elimina una foto y reordena los resultados de validación para que sigan
+  // apuntando a la foto correcta.
   const removePhoto = (idx) => {
     setPhotos(p => p.filter((_, i) => i !== idx));
     setPhotoValidations(v => {
@@ -269,6 +301,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     });
   };
 
+  // Valida el paso actual antes de dejar avanzar. Cada paso tiene sus reglas
+  // (datos obligatorios, mínimo 4 fotos válidas, precio y ubicación, etc.).
   const validateStep = () => {
     if (step === 0) {
       if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError("Completá marca, modelo y año."); return false; }
@@ -293,12 +327,18 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     setError(""); return true;
   };
 
+  // Avanza al siguiente paso solo si la validación pasa.
   const next = () => { if (validateStep()) setStep((s) => s + 1); };
 
+  // Publicación final: (1) crea el vehículo, (2) crea el listing, (3) sube las
+  // fotos a Cloudinary y las registra, (4) guarda una copia local del auto.
+  // Si algún paso opcional falla (ej: subida de fotos) no rompe la publicación.
   const handlePublish = async () => {
     setLoading(true);
     setError("");
     try {
+      // 1) Armamos los datos del vehículo (traduciendo a los códigos del backend
+      //    e incluyendo solo los campos que el usuario cargó).
       const vehiclePayload = {
         brand: vehicleForm.brand, model: vehicleForm.model, year: Number(vehicleForm.year),
         ...(vehicleForm.plate && { plate: vehicleForm.plate }),
@@ -319,6 +359,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(vehicleForm.observations && { observations: vehicleForm.observations }),
       };
       const vehicle = await createVehicle(vehiclePayload);
+      // 2) Con el id del vehículo creado, armamos y creamos el listing (el aviso).
       const listingPayload = {
         vehicleId: vehicle.id,
         title: listingForm.title || `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`,
@@ -330,12 +371,14 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         status: "ACTIVE",
       };
       const listing = await createListing(listingPayload);
+      // 3) Subimos las fotos a Cloudinary y las registramos como media del vehículo.
       let photoUrls = photos.map(p => p.url);
       try {
         const uploaded = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
         photoUrls = uploaded;
         await Promise.all(photoUrls.map(url => createMediaAsset({ entityType: "vehicle", entityId: vehicle.id, kind: "VEHICLE_PHOTO", url })));
       } catch {}
+      // 4) Guardamos una copia local del auto para que aparezca al toque en la app.
       const savedCar = {
         id: listing?.id || `local_${Date.now()}`,
         brand: vehicleForm.brand, model: vehicleForm.model, year: Number(vehicleForm.year),
@@ -383,6 +426,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     </div>
   );
 
+  // Botón tipo "chip" reutilizable: se pinta de azul si es la opción seleccionada.
   const chipBtn = (val, current, onClick) => (
     <button key={val} type="button" onClick={() => onClick(val)}
       style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: current === val ? "#2563eb" : "#fff", color: current === val ? "#fff" : "#374151" }}>

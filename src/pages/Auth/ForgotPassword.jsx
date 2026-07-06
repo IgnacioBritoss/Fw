@@ -1,3 +1,10 @@
+// ============================================================================
+//  ForgotPassword — "Olvidé mi contraseña"
+// ----------------------------------------------------------------------------
+//  El usuario ingresa su email y el backend le envía un link para crear una
+//  contraseña nueva. Por seguridad, siempre mostramos el mismo mensaje de
+//  éxito (esté o no registrado ese email), para no revelar quién tiene cuenta.
+// ============================================================================
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -23,6 +30,7 @@ export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Dispara el envío del email de recuperación y muestra el mensaje de enviado.
   const handleSubmit = async () => {
     if (!email) { setError("Ingresá tu email."); return; }
     setLoading(true);

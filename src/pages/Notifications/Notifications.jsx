@@ -1,3 +1,11 @@
+// ============================================================================
+//  Notifications — Centro de NOTIFICACIONES
+// ----------------------------------------------------------------------------
+//  Arma la lista de notificaciones a partir de datos reales (reservas y
+//  mensajes) usando el servicio notifications.js. Permite filtrarlas por
+//  categoría, marcarlas como leídas (una o todas) y las agrupa por día.
+//  El estado de "leído" se guarda en localStorage.
+// ============================================================================
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -33,6 +41,8 @@ const TABS = [
   { key: "sistema", label: "Sistema" },
 ];
 
+// Devuelve la hora/fecha corta que se muestra al costado de cada notificación
+// (la hora si es de hoy, "Ayer", o la fecha si es más vieja).
 function timeLabel(ts) {
   const d = new Date(ts);
   const now = new Date();
@@ -42,6 +52,7 @@ function timeLabel(ts) {
   if (sameDay(d, yest)) return "Ayer";
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
 }
+// Devuelve el título del grupo al que pertenece una notificación: Hoy / Ayer / Anteriores.
 function groupLabel(ts) {
   const d = new Date(ts);
   const now = new Date();
@@ -61,6 +72,7 @@ export default function Notifications() {
   const [tab, setTab] = useState("todas");
   const [loading, setLoading] = useState(true);
 
+  // Construye la lista de notificaciones y refresca el estado de leídas.
   const load = useCallback(() => {
     setLoading(true);
     buildNotifications(user?.id)
@@ -74,24 +86,28 @@ export default function Notifications() {
   const unreadCount = notifs.filter(n => !isRead(n)).length;
   const countFor = (key) => key === "todas" ? notifs.length : notifs.filter(n => n.cat === key).length;
 
+  // Notificaciones que se muestran según la pestaña (categoría) activa.
   const filtered = tab === "todas" ? notifs : notifs.filter(n => n.cat === tab);
 
+  // Abrir una notificación: la marca como leída y navega a su link (si tiene).
   const openNotif = (n) => {
     markRead([n.id]);
     setReadIds(getReadIds());
     if (n.link) navigate(n.link);
   };
+  // Marcar una sola como leída (sin abrirla).
   const markOne = (e, n) => {
     e.stopPropagation();
     markRead([n.id]);
     setReadIds(getReadIds());
   };
+  // Marcar todas como leídas.
   const markAll = () => {
     markAllRead(notifs);
     setReadIds(getReadIds());
   };
 
-  // Agrupar por día
+  // Agrupa las notificaciones filtradas por día (Hoy / Ayer / Anteriores).
   const groups = [];
   const seen = {};
   filtered.forEach(n => {

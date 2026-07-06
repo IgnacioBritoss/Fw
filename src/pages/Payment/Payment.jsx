@@ -1,3 +1,12 @@
+// ============================================================================
+//  Payment — Pantalla de PAGO (simulado)
+// ----------------------------------------------------------------------------
+//  Muestra el resumen y un botón para "pagar". El pago es una simulación:
+//  crea una intención de pago, espera ~1.8s y la confirma (o la falla a pedido).
+//  Según el resultado muestra la pantalla de éxito o de error. No hay dinero real.
+//  Los datos llegan por el state de la navegación (desde Booking) o, si no,
+//  se piden al backend por el id de la reserva.
+// ============================================================================
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -23,8 +32,10 @@ const s = {
   secureNote: { display: "flex", alignItems: "center", gap: 6, justifyContent: "center", fontSize: 12, color: "#9ca3af", marginTop: 16 },
 };
 
+// Estados posibles del pago (controlan qué pantalla se muestra).
 const STATUS = { idle: "idle", pending: "pending", processing: "processing", paid: "paid", failed: "failed" };
 
+// Fila "etiqueta ─ valor" reutilizable del resumen.
 function Row({ label, value }) {
   return (
     <div style={s.row}>
@@ -46,18 +57,20 @@ export default function Payment() {
   const [loading, setLoading] = useState(!stateData.booking);
   const [error, setError] = useState(null);
 
+  // Si no vino la reserva por el state, la pedimos al backend por su id.
   useEffect(() => {
     if (stateData.booking) return;
     getBookingById(bookingId).then(setBooking).catch(() => setError("No se pudo cargar la reserva.")).finally(() => setLoading(false));
   }, [bookingId]);
 
+  // Flujo de pago simulado: intención → procesando (espera) → confirmado.
   const handlePay = async () => {
     setPayStatus(STATUS.pending);
     setError(null);
     try {
       await createMockPaymentIntent(bookingId);
       setPayStatus(STATUS.processing);
-      await new Promise((r) => setTimeout(r, 1800));
+      await new Promise((r) => setTimeout(r, 1800)); // simula la demora del pago
       await confirmMockPayment(bookingId);
       setPayStatus(STATUS.paid);
     } catch (err) {
@@ -66,6 +79,7 @@ export default function Payment() {
     }
   };
 
+  // Botón de demo para forzar un pago fallido (muestra la pantalla de error).
   const handleFail = async () => {
     setPayStatus(STATUS.processing);
     try { await failMockPayment(bookingId); setPayStatus(STATUS.failed); }
@@ -74,6 +88,8 @@ export default function Payment() {
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#9ca3af" }}>Cargando...</div>;
 
+  // Datos para el resumen: se usa lo que vino por el state y, si falta, lo que
+  // trae la reserva. Recalcula días, subtotal, comisión, depósito y total.
   const displayCar = car || (booking?.listing?.vehicle ? { brand: booking.listing.vehicle.brand, model: booking.listing.vehicle.model, year: booking.listing.vehicle.year, price_per_day: booking.listing.pricePerDay || booking.pricePerDaySnapshot } : null);
   const startDate = stateData.startDate || booking?.startDate;
   const endDate = stateData.endDate || booking?.endDate;

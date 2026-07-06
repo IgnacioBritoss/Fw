@@ -1,3 +1,14 @@
+// ============================================================================
+//  BookingCalendar — Calendario para elegir fechas y ver el precio de la reserva
+// ----------------------------------------------------------------------------
+//  Muestra un calendario doble donde el usuario selecciona un rango de fechas.
+//  - Pide al backend qué días están ocupados y los bloquea.
+//  - Calcula automáticamente el detalle de precios (días × precio + comisión +
+//    depósito) y el total.
+//  - Al confirmar, avisa al componente padre (CarDetail) mediante onConfirm().
+//
+//  Props: listingId (id de la publicación), car (datos del auto), onConfirm.
+// ============================================================================
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -5,6 +16,7 @@ import { addDays, differenceInDays, format, addMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { getListingAvailability } from "../services/api";
 
+// Estilos en línea del componente (agrupados acá para no ensuciar el JSX).
 const s = {
   wrap: { background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e5e7eb" },
   title: { fontSize: 15, fontWeight: 600, color: "#111827", marginBottom: 16 },
@@ -17,11 +29,13 @@ const s = {
 };
 
 export default function BookingCalendar({ listingId, car, onConfirm }) {
-  const [range, setRange] = useState([null, null]);
+  const [range, setRange] = useState([null, null]); // [fechaInicio, fechaFin] elegidas
   const [start, end] = range;
-  const [blockedDates, setBlockedDates] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]); // días ocupados (no seleccionables)
   const [loadingAvail, setLoadingAvail] = useState(false);
 
+  // Al cargar (o cambiar de publicación), consulta la disponibilidad de los
+  // próximos 3 meses y guarda las fechas ocupadas para bloquearlas en el calendario.
   useEffect(() => {
     if (!listingId) return;
     setLoadingAvail(true);
@@ -37,14 +51,16 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
       .finally(() => setLoadingAvail(false));
   }, [listingId]);
 
+  // ¿Esta fecha está ocupada? (compara solo día/mes/año, ignora la hora).
   const isDateBlocked = (date) =>
     blockedDates.some((d) => d.toDateString() === date.toDateString());
 
-  const days = start && end ? Math.max(differenceInDays(end, start), 1) : 0;
+  // Cálculo del precio a partir de las fechas elegidas:
+  const days = start && end ? Math.max(differenceInDays(end, start), 1) : 0; // cantidad de días
   const pricePerDay = Number(car?.price_per_day || car?.pricePerDay || 0);
-  const total = days * pricePerDay;
-  const commission = Math.round(total * 0.1);
-  const deposit = pricePerDay * 2;
+  const total = days * pricePerDay;                 // subtotal por los días
+  const commission = Math.round(total * 0.1);       // comisión de la plataforma (10%)
+  const deposit = pricePerDay * 2;                  // depósito de garantía (2 días)
 
   return (
     <div style={s.wrap}>

@@ -1,3 +1,10 @@
+// ============================================================================
+//  ResetPassword — Crear una contraseña nueva desde el link de recuperación
+// ----------------------------------------------------------------------------
+//  Se llega acá desde el link del email, que trae en la URL un "token" y el
+//  id del usuario ("uid"). Si faltan, el link es inválido. El usuario escribe
+//  y confirma la nueva contraseña, y al guardarla vuelve al login.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -34,6 +41,7 @@ const s = {
 export default function ResetPassword() {
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
+  // Leemos el token y el id de usuario que vienen en la URL del email.
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const userId = params.get("uid") ?? "";
@@ -58,6 +66,7 @@ export default function ResetPassword() {
     );
   }
 
+  // Valida (largo mínimo y que ambas coincidan) y guarda la nueva contraseña.
   const handleSubmit = async () => {
     if (!form.password) { setError("Ingresá una nueva contraseña."); return; }
     if (form.password.length < 6) { setError("Mínimo 6 caracteres."); return; }

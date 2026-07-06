@@ -1,3 +1,10 @@
+// ============================================================================
+//  GoogleCallback — Pantalla intermedia del login con Google
+// ----------------------------------------------------------------------------
+//  Google, tras autenticar al usuario, lo redirige a esta ruta con un "token"
+//  en la URL. Acá tomamos ese token, iniciamos sesión con él y, si todo va
+//  bien, mandamos al inicio. Es una pantalla de paso ("Iniciando sesión...").
+// ============================================================================
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -8,6 +15,7 @@ export default function GoogleCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+  // Al cargar: leemos el token de la URL e iniciamos sesión con él.
   useEffect(() => {
     const token = params.get("token");
     if (!token) { setError("Error al iniciar sesión con Google."); return; }

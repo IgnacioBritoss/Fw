@@ -1,3 +1,12 @@
+// ============================================================================
+//  Dashboard — Panel del DUEÑO (gestión de sus autos)
+// ----------------------------------------------------------------------------
+//  Es el centro de control de quien publica autos. Muestra estadísticas (autos
+//  publicados, solicitudes, ganancias) y tres pestañas:
+//   - "Mis autos": las publicaciones propias.
+//   - "Solicitudes": reservas pendientes de sus autos, para aceptar o rechazar.
+//   - "Historial": (próximamente).
+// ============================================================================
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -9,6 +18,7 @@ import { es } from "date-fns/locale";
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
 
+// Unifica el formato de una publicación del backend (igual que en Home/Search).
 function normalizeListing(l) {
   const v = l.vehicle || {};
   return {
@@ -83,6 +93,7 @@ export default function Dashboard() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Al cargar: trae las publicaciones propias del backend.
   useEffect(() => {
     getMyListings()
       .then(data => setMyCars((Array.isArray(data) ? data : (data?.data ?? [])).map(normalizeListing)))
@@ -90,6 +101,7 @@ export default function Dashboard() {
       .finally(() => setLoadingCars(false));
   }, [user?.id]);
 
+  // Trae las reservas y deja solo las solicitudes pendientes de MIS autos.
   const loadRequests = useCallback(() => {
     setLoadingRequests(true);
     getMyBookings()
@@ -103,6 +115,7 @@ export default function Dashboard() {
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
 
+  // Acepta o rechaza una solicitud y refresca la lista.
   const respond = async (id, action) => {
     setActionLoading(id);
     try {
@@ -113,6 +126,7 @@ export default function Dashboard() {
     finally { setActionLoading(null); }
   };
 
+  // Helpers para mostrar el auto, el nombre del conductor y el rango de fechas.
   function getVehicleLabel(b) {
     const v = b?.listing?.vehicle || {};
     return `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim();

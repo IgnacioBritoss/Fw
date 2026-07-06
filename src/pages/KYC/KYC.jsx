@@ -1,3 +1,11 @@
+// ============================================================================
+//  KYC — Verificación de identidad (DNI + licencia)
+// ----------------------------------------------------------------------------
+//  "KYC" = Know Your Customer (conocé a tu cliente). Es el mismo flujo de
+//  verificación que aparece al registrarse, pero accesible por separado desde
+//  Ajustes/Perfil para completarlo después. Tres pasos: DNI, licencia y
+//  confirmación. Al subir los documentos marca la cuenta como verificada.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -14,7 +22,8 @@ const Logo = () => (
 
 const KYC_STEPS = ["Identidad", "Licencia", "Confirmación"];
 
-// Tarjeta de foto (mismo diseño que Register.jsx)
+// Tarjeta para subir una foto de documento (mismo diseño que Register.jsx):
+// abre el selector de archivos, lee la imagen y la devuelve con onChange().
 function PhotoCard({ label, hint, value, onChange }) {
   const id = `kyc-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -59,7 +68,8 @@ export default function KYC() {
   const [licFront, setLicFront] = useState(null);
   const [licBack, setLicBack] = useState(null);
 
-  // Guarda el estado de verificación (localStorage + contexto)
+  // Guarda el estado de verificación (ej: { dniVerified: true }) en localStorage
+  // y en la sesión, tolerando que `user` pueda ser null.
   const persistVerification = (patch) => {
     let base = user;
     if (!base) { try { base = JSON.parse(localStorage.getItem("fw_user") || "{}"); } catch { base = {}; } }

@@ -1,6 +1,17 @@
+// ============================================================================
+//  ReportModal — Ventana emergente para reportar una publicación o un usuario
+// ----------------------------------------------------------------------------
+//  Muestra un formulario (motivo + descripción) para denunciar contenido o
+//  comportamiento indebido. Exige elegir un motivo y escribir al menos 30
+//  caracteres. Al enviar, guarda el reporte en localStorage ("fw_reports")
+//  y muestra una pantalla de confirmación.
+//
+//  Props: target (a quién/qué se reporta), targetType ("car" o usuario), onClose.
+// ============================================================================
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
+// Estilos en línea de la ventana modal.
 const s = {
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.5)",
     display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
@@ -35,6 +46,7 @@ const s = {
   successSub: { fontSize: 13, color: "#6b7280" },
 };
 
+// Lista de motivos posibles para el reporte (el primero es el placeholder).
 const REASONS = [
   "Seleccioná un motivo...",
   "Información falsa en la publicación",
@@ -48,12 +60,14 @@ const REASONS = [
 
 export default function ReportModal({ target, targetType, onClose }) {
   const { user } = useAuth();
-  const [reason, setReason] = useState(REASONS[0]);
-  const [detail, setDetail] = useState("");
-  const [done, setDone] = useState(false);
+  const [reason, setReason] = useState(REASONS[0]); // motivo elegido
+  const [detail, setDetail] = useState("");          // descripción escrita
+  const [done, setDone] = useState(false);           // ¿ya se envió?
 
+  // El botón "Enviar" se habilita solo si hay motivo y 30+ caracteres de detalle.
   const canSubmit = reason !== REASONS[0] && detail.trim().length >= 30;
 
+  // Guarda el reporte en localStorage y muestra la pantalla de éxito.
   const handleSubmit = () => {
     if (!canSubmit) return;
     const reports = JSON.parse(localStorage.getItem("fw_reports") || "[]");

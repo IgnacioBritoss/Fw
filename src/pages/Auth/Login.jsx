@@ -1,8 +1,16 @@
+// ============================================================================
+//  Login — Pantalla de inicio de sesión
+// ----------------------------------------------------------------------------
+//  Permite entrar con email/contraseña o con Google. La lógica real de login
+//  vive en AuthContext (loginWithCredentials); acá solo tomamos los datos del
+//  formulario, validamos que estén completos y mostramos el error si falla.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GOOGLE_AUTH_URL } from "../../services/api";
 
+// Ícono de Google (SVG) para el botón "Continuar con Google".
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -12,6 +20,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// Íconos de "ojo" para mostrar/ocultar la contraseña.
 const EyeOpen = () => (
   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -33,6 +42,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Valida los campos, intenta iniciar sesión y, si sale bien, va al inicio.
   const handleSubmit = async () => {
     if (!form.email || !form.password) { setError("Completá todos los campos."); return; }
     setLoading(true); setError("");

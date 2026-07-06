@@ -1,6 +1,19 @@
+// ============================================================================
+//  cloudinary.js — Subida de archivos a la nube (Cloudinary)
+// ----------------------------------------------------------------------------
+//  Cloudinary es un servicio externo que almacena imágenes/archivos y nos
+//  devuelve una URL pública. Lo usamos para las fotos de los autos, los
+//  audios del chat y los archivos adjuntos. En vez de guardar los archivos en
+//  nuestro backend, los subimos acá y guardamos solo el link.
+//
+//  "upload_preset" es una configuración pública en Cloudinary que permite
+//  subir sin exponer credenciales secretas desde el navegador.
+// ============================================================================
+
 const CLOUD_NAME = "djvokvxt1";
 const UPLOAD_PRESET = "freewheel";
 
+// Sube una imagen (en formato base64/dataURL) y devuelve su URL pública segura.
 export async function uploadImageToCloudinary(base64DataUrl) {
   const formData = new FormData();
   formData.append("file", base64DataUrl);
@@ -14,6 +27,7 @@ export async function uploadImageToCloudinary(base64DataUrl) {
   return data.secure_url;
 }
 
+// Sube un audio (Blob grabado con el micrófono) y devuelve su URL pública.
 export async function uploadAudioToCloudinary(audioBlob) {
   const formData = new FormData();
   formData.append("file", audioBlob, "audio.webm");
@@ -27,6 +41,8 @@ export async function uploadAudioToCloudinary(audioBlob) {
   return data.secure_url;
 }
 
+// Sube cualquier archivo genérico (imagen o documento) elegido por el usuario.
+// Detecta si es imagen para usar el endpoint correcto y devuelve { url, isImage, name }.
 export async function uploadFileToCloudinary(file) {
   const isImage = file.type.startsWith("image/");
   const formData = new FormData();

@@ -1,3 +1,10 @@
+// ============================================================================
+//  VerifyEmail — Verificación de la cuenta con código de 6 dígitos
+// ----------------------------------------------------------------------------
+//  Tras registrarse, el usuario recibe un código por email y lo ingresa acá.
+//  Si es correcto, la cuenta queda activa y sigue a "completar perfil".
+//  También permite reenviar el código si no llegó.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -25,6 +32,7 @@ export default function VerifyEmail() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
+  // Verifica el código de 6 dígitos. Si es válido, avanza a completar el perfil.
   const handleVerify = async () => {
     if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
     setLoading(true);
@@ -35,6 +43,7 @@ export default function VerifyEmail() {
     navigate("/complete-profile");
   };
 
+  // Reenvía un código nuevo al email del usuario.
   const handleResend = async () => {
     setResending(true);
     setError("");

@@ -1,3 +1,15 @@
+// ============================================================================
+//  Layout — Estructura visual común a casi todas las pantallas
+// ----------------------------------------------------------------------------
+//  Envuelve a cada página con:
+//   - Sidebar (menú lateral): navegación, "Publicar auto", acceso admin, perfil.
+//   - Topbar (barra superior): íconos de mensajes, notificaciones y ajustes,
+//     cada uno con su "puntito" azul cuando hay algo sin leer.
+//  Es responsive: en celular el menú se abre como un cajón (drawer) y en
+//  escritorio queda fijo a la izquierda.
+//
+//  Prop: children = el contenido de la página que se está mostrando.
+// ============================================================================
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -5,6 +17,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
 
+// Estructura del menú lateral, agrupada por secciones.
 const NAV = [
   { group: "Navegación", items: [
     { label: "Inicio", path: "/" },
@@ -58,14 +71,16 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useIsMobile();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);       // menú lateral abierto (celular)
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
-  const [hasUnreadNotif, setHasUnreadNotif] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);         // ¿hay mensajes sin leer?
+  const [hasUnreadNotif, setHasUnreadNotif] = useState(false); // ¿hay notificaciones sin leer?
 
+  // Revisa cada 20 segundos si hay mensajes/notificaciones sin leer, para
+  // mostrar los "puntitos" azules en los íconos de la barra superior.
   useEffect(() => {
     if (!user) { setHasUnread(false); setHasUnreadNotif(false); return; }
-    let active = true;
+    let active = true; // evita actualizar estado si el componente ya se desmontó
     const check = () => {
       getMyConversations()
         .then(data => {
@@ -87,10 +102,12 @@ export default function Layout({ children }) {
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
   const initials = `${(user?.firstName || user?.name || "U")[0] || "U"}`.toUpperCase();
 
+  // Indica si un ítem del menú corresponde a la página actual (para resaltarlo).
   const isActive = (item) => item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
 
+  // Navega a una ruta y cierra el menú lateral (útil en celular).
   const go = (path) => { navigate(path); setDrawerOpen(false); };
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN"; // ¿el usuario es administrador?
 
   const t = {
     navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
@@ -99,6 +116,8 @@ export default function Layout({ children }) {
     iconBtn: { width: 40, height: 40, borderRadius: 10, background: "#f3f4f6", border: "1px solid #ececec", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", transition: "background .15s, border-color .15s" },
   };
 
+  // Contenido del menú lateral: logo, links de navegación, tarjeta "Publicar",
+  // botón de admin (si corresponde) y bloque de perfil con botón de salir.
   const SidebarInner = () => (
     <>
       <Logo />
@@ -146,6 +165,8 @@ export default function Layout({ children }) {
     </>
   );
 
+  // Parte derecha de la barra superior: íconos de mensajes/notificaciones/
+  // ajustes si hay sesión, o botones de login/registro si no la hay.
   const TopbarRight = () => (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       {user ? (

@@ -1,3 +1,15 @@
+// ============================================================================
+//  LocationPicker — Selector de ubicación con buscador + mapa
+// ----------------------------------------------------------------------------
+//  Se usa al publicar un auto para indicar dónde está. El usuario puede:
+//   - Escribir una dirección y elegir una sugerencia, o
+//   - Tocar directamente un punto en el mapa.
+//  En ambos casos obtenemos { lat, lng, address } y se lo pasamos al formulario
+//  padre mediante onChange(). Usa Nominatim (OpenStreetMap) para convertir
+//  texto ↔ coordenadas (geocodificación) sin necesidad de una API paga.
+//
+//  Props: value (ubicación inicial), onChange (avisa la ubicación elegida).
+// ============================================================================
 import { useEffect, useRef, useState } from "react";
 
 const s = {
@@ -32,8 +44,9 @@ export default function LocationPicker({ value, onChange }) {
   const [query, setQuery] = useState(value?.address || "");
   const [suggestions, setSuggestions] = useState([]);
   const [selected, setSelected] = useState(value || null);
-  const debounceRef = useRef(null);
+  const debounceRef = useRef(null); // temporizador para no buscar en cada tecla
 
+  // Carga la librería Leaflet (CSS + JS) una sola vez si todavía no está cargada.
   useEffect(() => {
     if (window.L) { setMapLoaded(true); return; }
     const link = document.createElement("link");
@@ -46,6 +59,8 @@ export default function LocationPicker({ value, onChange }) {
     document.head.appendChild(script);
   }, []);
 
+  // Crea el mapa cuando Leaflet ya está listo. Al hacer clic en el mapa,
+  // coloca el marcador y busca la dirección de ese punto (reverse geocoding).
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || mapInstanceRef.current) return;
     const L = window.L;
@@ -66,6 +81,7 @@ export default function LocationPicker({ value, onChange }) {
     mapInstanceRef.current = map;
   }, [mapLoaded]);
 
+  // Coloca (o reubica) el marcador rojo en unas coordenadas y centra el mapa ahí.
   const placeMarker = (lat, lng, map) => {
     const L = window.L;
     const m = map || mapInstanceRef.current;
@@ -82,6 +98,7 @@ export default function LocationPicker({ value, onChange }) {
     m.setView([lat, lng], 15);
   };
 
+  // Reverse geocoding: dadas unas coordenadas, obtiene la dirección en texto.
   const reverseGeocode = async (lat, lng) => {
     try {
       const res = await fetch(
@@ -102,6 +119,8 @@ export default function LocationPicker({ value, onChange }) {
     }
   };
 
+  // Geocoding directo: busca direcciones a partir del texto escrito y las
+  // ofrece como sugerencias.
   const searchAddress = async () => {
     if (!query.trim()) return;
     try {
@@ -115,6 +134,8 @@ export default function LocationPicker({ value, onChange }) {
     }
   };
 
+  // Se ejecuta al escribir. Usa "debounce": espera 600ms sin teclear antes de
+  // buscar, para no disparar un pedido por cada letra.
   const handleInput = (val) => {
     setQuery(val);
     clearTimeout(debounceRef.current);
@@ -122,6 +143,7 @@ export default function LocationPicker({ value, onChange }) {
     debounceRef.current = setTimeout(() => searchAddress(), 600);
   };
 
+  // Cuando el usuario elige una sugerencia, marca esa ubicación y la confirma.
   const selectSuggestion = (s) => {
     const lat = parseFloat(s.lat);
     const lng = parseFloat(s.lon);

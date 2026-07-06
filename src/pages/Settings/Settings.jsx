@@ -1,3 +1,13 @@
+// ============================================================================
+//  Settings — AJUSTES de la cuenta
+// ----------------------------------------------------------------------------
+//  Panel con menú lateral. Las secciones principales son:
+//   - "Cuenta": editar datos personales y activar preferencias (notificaciones,
+//     modo oscuro, 2FA...). Las preferencias se guardan en localStorage.
+//   - "Seguridad": estado de la verificación de identidad (DNI/licencia).
+//  El resto de secciones son "próximamente". Editar un dato lo guarda en el
+//  backend y en la sesión, así se ve al instante en el perfil.
+// ============================================================================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -32,6 +42,7 @@ const MENU = [
   { key: "ayuda", label: "Ayuda y soporte", icon: I.help },
 ];
 
+// Clave de localStorage y función para leer las preferencias guardadas.
 const PREFS_KEY = "fw_prefs";
 const loadPrefs = () => {
   try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch { return {}; }
@@ -44,6 +55,8 @@ export default function Settings() {
   const [section, setSection] = useState("cuenta");
   const [prefs, setPrefs] = useState({ emailNotif: true, pushNotif: true, offers: true, twofa: false, dark: false, ...loadPrefs() });
 
+  // Cambia una preferencia, la guarda y aplica su efecto real (modo oscuro,
+  // permiso de notificaciones, etc.).
   const setPref = (k, v) => {
     const next = { ...prefs, [k]: v };
     setPrefs(next);
@@ -88,6 +101,8 @@ export default function Settings() {
     rowSwitch: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 0", borderBottom: "1px solid #f3f4f6" },
   };
 
+  // Campo editable "in-line": muestra un dato y, al tocar Editar, permite
+  // cambiarlo y guardarlo. Reutilizado para nombre, email, teléfono, etc.
   const Field = ({ label, value, fieldKey, editable = true, type = "text" }) => {
     const [editing, setEditing] = useState(false);
     const [val, setVal] = useState(value || "");
@@ -111,6 +126,7 @@ export default function Settings() {
     );
   };
 
+  // Interruptor visual (switch) on/off reutilizable.
   const Toggle = ({ on, onChange }) => (
     <button onClick={() => onChange(!on)}
       style={{ width: 46, height: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#2563eb" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0 }}>
