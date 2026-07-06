@@ -11,8 +11,10 @@
 // ============================================================================
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions"; // audio → texto
 const MODEL = "llama-3.3-70b-versatile";           // modelo de texto
 const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // modelo que "ve" imágenes
+const TRANSCRIBE_MODEL = "whisper-large-v3-turbo"; // modelo que "escucha" audios (Whisper)
 
 // Envía una conversación al modelo de texto y devuelve la respuesta como string.
 // - messages: lista de mensajes con roles (system/user/assistant).
@@ -98,4 +100,43 @@ export async function groqVision(imageDataUrl) {
     console.error("Groq vision exception:", err);
     return null;
   }
+}
+
+// Transcribe un audio a texto usando el modelo Whisper de Groq. Se usa en el
+// chat para el botón "Transcribir mensaje" debajo de las notas de voz.
+// - audioUrlOrBlob: la URL del audio (en Cloudinary) o directamente un Blob.
+// Devuelve el texto transcripto. Si algo falla, lanza una excepción para que
+// el componente muestre el estado de error.
+export async function groqTranscribe(audioUrlOrBlob) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) throw new Error("VITE_GROQ_API_KEY no configurada");
+
+  // Si nos pasan una URL, primero descargamos el audio como Blob.
+  let blob = audioUrlOrBlob;
+  if (typeof audioUrlOrBlob === "string") {
+    const r = await fetch(audioUrlOrBlob);
+    if (!r.ok) throw new Error("No se pudo descargar el audio");
+    blob = await r.blob();
+  }
+
+  // Armamos el pedido multipart con el archivo y el modelo. Le indicamos que el
+  // idioma es español para mejorar la precisión. (No fijamos Content-Type: el
+  // navegador lo pone solo con el "boundary" correcto para FormData.)
+  const form = new FormData();
+  form.append("file", blob, "audio.webm");
+  form.append("model", TRANSCRIBE_MODEL);
+  form.append("language", "es");
+  form.append("response_format", "json");
+
+  const res = await fetch(TRANSCRIBE_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Error ${res.status}`);
+  }
+  const data = await res.json();
+  return (data.text || "").trim();
 }

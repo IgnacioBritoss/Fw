@@ -18,10 +18,15 @@ import {
 import { uploadAudioToCloudinary, uploadFileToCloudinary } from "../../services/cloudinary";
 
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
+// Además, debajo tiene un botón "Transcribir mensaje" que convierte el audio a
+// texto usando Whisper (IA de Groq) y muestra el resultado.
 function AudioMsg({ src }) {
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [transcript, setTranscript] = useState("");     // texto transcripto
+  const [transcribing, setTranscribing] = useState(false); // esperando a la IA
+  const [transcribeError, setTranscribeError] = useState(false);
   const audioRef = useRef(null);
   const bars = [3, 5, 9, 14, 20, 18, 12, 8, 14, 18, 20, 16, 10, 7, 12, 18, 20, 14, 6, 4];
   const progress = duration > 0 ? current / duration : 0;
@@ -32,26 +37,61 @@ function AudioMsg({ src }) {
     if (playing) { a.pause(); setPlaying(false); }
     else { a.play(); setPlaying(true); }
   };
+  // Pide la transcripción del audio a la IA y guarda el texto (o marca el error).
+  const handleTranscribe = async () => {
+    if (transcribing) return;
+    setTranscribing(true);
+    setTranscribeError(false);
+    try {
+      const { groqTranscribe } = await import("../../services/groq");
+      const text = await groqTranscribe(src);
+      setTranscript(text || "(No se reconoció texto en el audio)");
+    } catch {
+      setTranscribeError(true);
+    } finally {
+      setTranscribing(false);
+    }
+  };
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 180 }}>
-      <audio ref={audioRef} src={src}
-        onTimeUpdate={() => setCurrent(audioRef.current?.currentTime || 0)}
-        onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-        onEnded={() => { setPlaying(false); setCurrent(0); }} />
-      <button onClick={toggle} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {playing
-          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          : <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        }
-      </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
-        {bars.map((h, i) => (
-          <div key={i} style={{ width: 3, height: h, borderRadius: 2, background: progress > 0 && i / bars.length < progress ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }} />
-        ))}
+    <div style={{ minWidth: 180 }}>
+      {/* Fila del reproductor */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <audio ref={audioRef} src={src}
+          onTimeUpdate={() => setCurrent(audioRef.current?.currentTime || 0)}
+          onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
+          onEnded={() => { setPlaying(false); setCurrent(0); }} />
+        <button onClick={toggle} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {playing
+            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          }
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+          {bars.map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, borderRadius: 2, background: progress > 0 && i / bars.length < progress ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }} />
+          ))}
+        </div>
+        <span style={{ fontSize: 11, opacity: 0.8, minWidth: 30, textAlign: "right" }}>
+          {playing ? fmt(current) : fmt(duration)}
+        </span>
       </div>
-      <span style={{ fontSize: 11, opacity: 0.8, minWidth: 30, textAlign: "right" }}>
-        {playing ? fmt(current) : fmt(duration)}
-      </span>
+
+      {/* Transcripción: muestra el texto si ya lo tenemos, o el botón para pedirlo.
+          Usa color/opacidad heredados para que se lea tanto en la burbuja azul
+          (mensajes propios) como en la blanca (mensajes del otro). */}
+      {transcript ? (
+        <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px solid rgba(127,127,127,0.25)", fontSize: 12.5, lineHeight: 1.45, fontStyle: "italic", opacity: 0.92, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {transcript}
+        </div>
+      ) : (
+        <button onClick={handleTranscribe} disabled={transcribing}
+          style={{ marginTop: 6, background: "none", border: "none", padding: 0, cursor: transcribing ? "default" : "pointer", color: "inherit", opacity: 0.75, fontSize: 11.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, textDecoration: "underline" }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M4 12h10M4 17h7" />
+          </svg>
+          {transcribing ? "Transcribiendo..." : transcribeError ? "Error — reintentar" : "Transcribir mensaje"}
+        </button>
+      )}
     </div>
   );
 }
