@@ -6,7 +6,7 @@
 //  formulario, validamos que estén completos y mostramos el error si falla.
 // ============================================================================
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GOOGLE_AUTH_URL } from "../../services/api";
 
@@ -37,18 +37,33 @@ const EyeClosed = () => (
 export default function Login() {
   const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Valida los campos, intenta iniciar sesión y, si sale bien, va al inicio.
+  // Si se llegó acá por una sesión vencida, se avisa en vez de dejar la pantalla
+  // en blanco sin explicación.
+  const expired = searchParams.get("expired") === "1";
+
+  /**
+   * Inicia sesión. El backend puede responder tres cosas distintas:
+   *  - sesión completa            → entra a la app
+   *  - falta verificar el email   → pantalla de código
+   *  - falta la fecha de nacimiento (cuentas viejas o de Google) → completar perfil
+   * Antes cualquier respuesta que no fuera la primera terminaba en un error de
+   * JavaScript ("no se puede leer el nombre"), porque se leía el usuario de una
+   * respuesta que no había llegado.
+   */
   const handleSubmit = async () => {
     if (!form.email || !form.password) { setError("Completá todos los campos."); return; }
     setLoading(true); setError("");
-    const result = await loginWithCredentials(form.email, form.password);
+    const result = await loginWithCredentials(form.email.trim(), form.password);
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
+    if (result.pending === "verify_email") { navigate("/verify-email"); return; }
+    if (result.pending === "complete_profile") { navigate("/complete-profile"); return; }
     navigate("/");
   };
 
@@ -96,6 +111,7 @@ export default function Login() {
             </p>
           </div>
 
+          {expired && !error && <div style={{ background:"#fffbeb", border:"1.5px solid #fde68a", borderRadius:8, padding:"10px 14px", color:"#92400e", fontSize:13, marginBottom:20 }}>Tu sesión venció. Volvé a iniciar sesión para continuar.</div>}
           {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 }}>{error}</div>}
 
           <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{

@@ -4,17 +4,31 @@
 //  Muestra toda la info de un auto: galería de fotos, descripción, specs,
 //  equipamiento, reseñas y una tarjeta lateral con el precio.
 //  - Si el que mira es el DUEÑO: puede editar el precio/descripción o eliminar.
-//  - Si es otro usuario: puede reservar o contactar al dueño por chat.
-//  Primero busca el auto en localStorage (autos locales) y, si no está, lo pide
-//  al backend con getListingById.
+//  - Si es otro usuario: puede guardarlo en favoritos, reservar o escribirle.
+//
+//  Qué se arregló acá:
+//   · Se buscaba el auto primero en una copia guardada en el navegador, así que
+//     podía mostrar datos viejos (o un auto ya borrado). Ahora los datos salen
+//     siempre del backend.
+//   · El corazón de favoritos no existía en esta pantalla.
+//   · Se muestran los días ocupados, para no elegir fechas que van a fallar.
+//   · El desglose de precios usaba "3 días" fijos aunque el usuario no hubiera
+//     elegido ninguna fecha.
 // ============================================================================
 import { useState, useEffect } from "react";
 import ReportModal from "../../components/ReportModal";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockReviews } from "../../data/mockData";
+import { mockCars, mockReviews } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { getListingById, startConversation, updateListing, deleteListing } from "../../services/api";
+import {
+  getListingById, getListingAvailability, startConversation,
+  updateListing, deleteListing,
+} from "../../services/api";
+import FavoriteButton from "../../components/FavoriteButton";
+import { normalizeListing } from "../../services/listings";
+import { addMonths, format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
@@ -34,6 +48,8 @@ function apiListingToCar(listing) {
   const owner = listing.owner || {};
   return {
     id: listing.id,
+    status: listing.status,
+    isOwnerFlag: listing.isOwner === true,
     brand: v.brand || "",
     model: v.model || "",
     year: v.year || "",
@@ -163,26 +179,40 @@ export default function CarDetail() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [unavailableDates, setUnavailableDates] = useState([]);
+  const [editError, setEditError] = useState("");
 
-  // Al cargar: busca el auto primero entre los locales (localStorage). Si no lo
-  // encuentra completo, lo pide al backend por su id.
+  // Al cargar: pide la publicación al backend (única fuente de verdad). Solo si
+  // el id es de un auto de ejemplo se usa mockData, para que la demo sin autos
+  // publicados siga navegable.
   useEffect(() => {
-    const allCars = [
-      ...JSON.parse(localStorage.getItem("fw_all_cars") || "[]"),
-      ...JSON.parse(localStorage.getItem("fw_my_cars") || "[]"),
-    ];
-    const localCar = allCars.find(c => c.id === id);
-    if (localCar && localCar.ownerId) {
-      setCar(localCar);
-      setLoading(false);
-      return;
-    }
+    let active = true;
+    setLoading(true);
+
     getListingById(id)
       .then(listing => {
+        if (!active) return;
         if (listing) setCar(apiListingToCar(listing));
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!active) return;
+        const mock = mockCars.find(c => c.id === id);
+        if (mock) setCar({ ...normalizeListing(mock), isMock: true });
+      })
+      .finally(() => { if (active) setLoading(false); });
+
+    return () => { active = false; };
+  }, [id]);
+
+  // Días ya ocupados, para avisar antes de que elija fechas que van a fallar.
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    const from = new Date();
+    getListingAvailability(id, from.toISOString(), addMonths(from, 3).toISOString())
+      .then(data => { if (active) setUnavailableDates(data?.unavailableDates || []); })
+      .catch(() => { /* auto de ejemplo o sin disponibilidad cargada */ });
+    return () => { active = false; };
   }, [id]);
 
   // "Contactar al dueño": abre (o reutiliza) una conversación y va al chat.
@@ -198,15 +228,6 @@ export default function CarDetail() {
     }
   };
 
-  // Aplica un cambio al auto también en las copias guardadas en localStorage.
-  const patchLocalCar = (patch) => {
-    ["fw_my_cars", "fw_all_cars"].forEach(key => {
-      const arr = JSON.parse(localStorage.getItem(key) || "[]");
-      const next = arr.map(c => c.id === id ? { ...c, ...patch } : c);
-      localStorage.setItem(key, JSON.stringify(next));
-    });
-  };
-
   // Abre el modo edición precargando el precio y la descripción actuales.
   const startEdit = () => {
     setEditPrice(String(car.price_per_day || ""));
@@ -214,26 +235,40 @@ export default function CarDetail() {
     setEditing(true);
   };
 
-  // Guarda los cambios de precio/descripción en el backend y en localStorage.
+  // Guarda los cambios de precio/descripción en el backend. Si falla, se avisa:
+  // antes el error se descartaba y parecía guardado cuando no lo estaba.
   const handleSaveEdit = async () => {
     setSavingEdit(true);
+    setEditError("");
     const pricePerDay = Number(editPrice);
-    try { await updateListing(id, { pricePerDay, description: editDesc }); } catch { /* puede ser auto local */ }
-    patchLocalCar({ price_per_day: pricePerDay, pricePerDay, description: editDesc });
-    setCar(c => ({ ...c, price_per_day: pricePerDay, description: editDesc }));
-    setSavingEdit(false);
-    setEditing(false);
+    if (!pricePerDay || pricePerDay <= 0) {
+      setEditError("Ingresá un precio por día válido.");
+      setSavingEdit(false);
+      return;
+    }
+    try {
+      await updateListing(id, { pricePerDay, description: editDesc });
+      setCar(c => ({ ...c, price_per_day: pricePerDay, description: editDesc }));
+      setEditing(false);
+    } catch (err) {
+      setEditError(err.message || "No pudimos guardar los cambios.");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
-  // Elimina la publicación del backend y de localStorage, y vuelve al dashboard.
+  // Elimina la publicación y vuelve a "Mis autos".
   const handleDelete = async () => {
     setDeleting(true);
-    try { await deleteListing(id); } catch { /* puede ser auto local */ }
-    ["fw_my_cars", "fw_all_cars"].forEach(key => {
-      const arr = JSON.parse(localStorage.getItem(key) || "[]");
-      localStorage.setItem(key, JSON.stringify(arr.filter(c => c.id !== id)));
-    });
-    navigate("/dashboard");
+    setEditError("");
+    try {
+      await deleteListing(id);
+      navigate("/dashboard");
+    } catch (err) {
+      setEditError(err.message || "No pudimos eliminar la publicación.");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
   };
 
   if (loading) return (
@@ -250,7 +285,9 @@ export default function CarDetail() {
 
   const reviews = mockReviews[id] || [];
   const photos = car.photos || [];
-  const isOwner = user?.id === car.ownerId; // ¿el que mira es el dueño del auto?
+  // ¿El que mira es el dueño? El backend ya lo informa (isOwner) para no depender
+  // de comparar ids que pueden venir vacíos.
+  const isOwner = car.isOwnerFlag === true || (!!user?.id && user.id === car.ownerId);
 
   // Navegación circular de la galería (anterior / siguiente foto).
   const prevPhoto = () =>
@@ -275,8 +312,13 @@ export default function CarDetail() {
     <div style={isMobile ? s.priceCardMobile : s.priceCard}>
       <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>
       <div style={s.priceSub}>por día</div>
+      {/* Ejemplo de 3 días, aclarado como tal: el total real depende de las
+          fechas que se elijan y lo calcula el servidor al reservar. */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>
+        Ejemplo para 3 días
+      </div>
       <div style={s.row}>
-        <span>Precio base (3 días)</span>
+        <span>Alquiler (3 días)</span>
         <span>${(car.price_per_day * 3).toLocaleString()}</span>
       </div>
       <div style={s.row}>
@@ -284,7 +326,7 @@ export default function CarDetail() {
         <span>${Math.round(car.price_per_day * 3 * 0.1).toLocaleString()}</span>
       </div>
       <div style={s.row}>
-        <span>Depósito garantía</span>
+        <span>Depósito garantía (se devuelve)</span>
         <span>${(car.price_per_day * 2).toLocaleString()}</span>
       </div>
       <div style={s.total}>
@@ -293,6 +335,19 @@ export default function CarDetail() {
           ${Math.round(car.price_per_day * 3 * 1.1 + car.price_per_day * 2).toLocaleString()}
         </span>
       </div>
+
+      {/* Disponibilidad: los días que ya están tomados. */}
+      {unavailableDates.length > 0 && (
+        <div style={{ marginTop: 14, background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "10px 12px" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#9a3412", marginBottom: 4 }}>
+            Fechas ya ocupadas
+          </div>
+          <div style={{ fontSize: 12, color: "#9a3412", lineHeight: 1.5 }}>
+            {unavailableDates.slice(0, 6).map(day => format(new Date(`${day}T12:00:00`), "d MMM", { locale: es })).join(" · ")}
+            {unavailableDates.length > 6 ? ` y ${unavailableDates.length - 6} más` : ""}
+          </div>
+        </div>
+      )}
       <br />
 
       {isOwner ? (
@@ -304,6 +359,7 @@ export default function CarDetail() {
             <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Descripción</div>
             <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
               style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "none", marginBottom: 10 }} />
+            {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
             <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
               {savingEdit ? "Guardando..." : "Guardar cambios"}
             </button>
@@ -323,16 +379,22 @@ export default function CarDetail() {
         )
       ) : (
         <>
-          <button
-            style={s.btn}
-            onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
-          >
-            {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
-          </button>
+          {car.isMock ? (
+            <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#92400e", marginBottom: 10 }}>
+              Este es un auto de ejemplo para mostrar la app: no se puede reservar.
+            </div>
+          ) : (
+            <button
+              style={s.btn}
+              onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
+            >
+              {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
+            </button>
+          )}
           <button
             style={contactLoading ? s.chatBtnLoading : s.chatBtn}
             onClick={handleContact}
-            disabled={contactLoading}
+            disabled={contactLoading || car.isMock}
           >
             {contactLoading ? "Abriendo chat..." : "Contactar al dueño"}
           </button>
@@ -376,6 +438,9 @@ export default function CarDetail() {
             ? <img src={photos[currentPhoto]} alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <span style={{ color: "#9ca3af", fontSize: 14 }}>Sin fotos</span>}
+
+          {/* Corazón de favoritos, también en el detalle. */}
+          {!isOwner && <FavoriteButton listingId={car.id} size={38} disabled={car.isMock} />}
 
           {photos.length > 1 && (
             <>

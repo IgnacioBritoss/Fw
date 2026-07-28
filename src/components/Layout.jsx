@@ -13,6 +13,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
@@ -68,6 +69,7 @@ const GearIcon = ({ size = 18, color = "#374151" }) => (
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { count: favoritesCount } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useIsMobile();
@@ -127,7 +129,14 @@ export default function Layout({ children }) {
             <div style={t.navGroup}>{g.group}</div>
             {g.items.map((it, ii) => (
               <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}>
-                <span style={t.navDot(isActive(it))} />{it.label}
+                <span style={t.navDot(isActive(it))} />
+                <span style={{ flex: 1 }}>{it.label}</span>
+                {/* Cantidad de favoritos guardados, al lado del ítem. */}
+                {it.path === "/favoritos" && favoritesCount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "#eff6ff", color: isActive(it) ? "#fff" : "#2563eb" }}>
+                    {favoritesCount}
+                  </span>
+                )}
               </div>
             ))}
           </div>

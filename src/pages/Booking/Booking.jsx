@@ -57,6 +57,7 @@ export default function Booking() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   // Al cargar: trae la publicación por su id y arma el objeto del auto.
   useEffect(() => {
@@ -78,23 +79,33 @@ export default function Booking() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Se llama desde el calendario al confirmar. Crea la reserva y navega al pago,
-  // llevando el detalle de fechas y montos por el state de la ruta.
-  const handleConfirm = async ({ start, end, days, total, commission, deposit, totalFinal }) => {
+  /**
+   * Se llama desde el calendario al confirmar. Crea la SOLICITUD de reserva; el
+   * pago viene después, cuando el dueño la acepta.
+   */
+  const handleConfirm = async ({ start, end }) => {
     if (!user) { navigate("/login"); return; }
     setSubmitting(true);
     setError(null);
+    setNeedsVerification(false);
     try {
       const booking = await createBooking({
         listingId: id,
         startDate: start.toISOString(),
         endDate: end.toISOString(),
       });
-      navigate(`/payment/${booking.id}`, {
-        state: { booking, car: listing, days, total, commission, deposit, totalFinal, startDate: start.toISOString(), endDate: end.toISOString() },
-      });
+      // La reserva queda pendiente de que el dueño la acepte: se manda a "Mis
+      // reservas", que es donde se ve el estado y el paso siguiente. Antes se
+      // iba directo a pagar, algo que el backend todavía no permite.
+      navigate("/my-bookings", { state: { justRequested: booking.id } });
     } catch (err) {
-      setError(err.message || "Error al crear la reserva.");
+      // La cuenta sin verificar es el motivo más común: se explica qué hacer.
+      if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
+        setNeedsVerification(true);
+        setError("Para reservar necesitás verificar tu cuenta (teléfono, DNI y licencia).");
+      } else {
+        setError(err.message || "Error al crear la reserva.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -112,19 +123,27 @@ export default function Booking() {
         <div>
           <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
           {error && <div style={s.errorBox}>{error}</div>}
+          {needsVerification && (
+            <button style={{ width: "100%", marginTop: 10, padding: 12, background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
+          )}
           {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
-          <div style={{ ...s.infoBox, marginTop: 16 }}><strong>Recordá:</strong> El pago se procesa solo cuando el dueño confirma la reserva.</div>
+          <div style={{ ...s.infoBox, marginTop: 16 }}><strong>Recordá:</strong> primero el dueño acepta la solicitud y después pagás.</div>
         </div>
       ) : (
         <div style={s.grid}>
           <div>
             <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
             {error && <div style={s.errorBox}>{error}</div>}
+            {needsVerification && (
+              <button style={{ marginTop: 10, padding: "12px 22px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
+            )}
             {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
           </div>
           <div>
             <CarSummaryCard car={listing} />
-            <div style={s.infoBox}><strong>Recordá:</strong> El pago se procesa solo cuando el dueño confirma la reserva.</div>
+            <div style={s.infoBox}><strong>Recordá:</strong> primero el dueño acepta la solicitud y después pagás.</div>
           </div>
         </div>
       )}

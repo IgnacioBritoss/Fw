@@ -1,18 +1,24 @@
 // ============================================================================
 //  Register — Registro en VARIOS PASOS (asistente / wizard)
 // ----------------------------------------------------------------------------
-//  Es una única pantalla que cambia de "paso" con la variable `step`:
-//    0 → datos de la cuenta (nombre, email, contraseña, términos)
-//    1 → verificar el email con el código de 6 dígitos
-//    2 → subir DNI (frente y dorso)   ┐
-//    3 → subir licencia (frente/dorso)├─ verificación de identidad (KYC)
-//    4 → confirmación final           ┘
-//  Los pasos de KYC se pueden omitir y completar después desde Ajustes.
+//  El registro del backend tiene DOS pasos y en ese orden:
+//    1) se manda un código al email  → todavía NO existe ninguna cuenta
+//    2) con el código + los datos    → se crea la cuenta, ya con el email
+//                                       verificado, y queda la sesión abierta
+//  Antes esta pantalla llamaba a POST /auth/register, una ruta que no existe:
+//  de ahí el error "Cannot POST /auth/register". Y creaba la cuenta primero para
+//  verificar el email después, al revés de como funciona el servidor.
+//
+//  Pasos de la pantalla (`step`):
+//    0 → datos de la cuenta (incluye fecha de nacimiento: es obligatoria, +18)
+//    1 → código de 6 dígitos que llegó al mail → se crea la cuenta
+//    2 → verificación de identidad (DNI, licencia y teléfono), se puede omitir
 // ============================================================================
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GOOGLE_AUTH_URL } from "../../services/api";
+import IdentityVerification from "../../components/IdentityVerification";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -46,118 +52,107 @@ const Logo = () => (
   </div>
 );
 
-// Nombres de los pasos del verificador de identidad (para el "stepper" visual).
-const KYC_STEPS = ["Identidad", "Licencia", "Confirmación"];
+// Edad exacta en años a partir de la fecha de nacimiento (YYYY-MM-DD).
+function ageFrom(dateString) {
+  const birth = new Date(`${dateString}T00:00:00`);
+  if (Number.isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
-// Tarjeta para subir una foto (DNI/licencia). Al hacer clic abre el selector de
-// archivos, lee la imagen como dataURL y la devuelve al padre con onChange().
-// Muestra una tilde verde cuando ya hay una foto cargada.
-function PhotoCard({ label, hint, value, onChange }) {
-  const id = `reg-${label.replace(/\s+/g, "-").toLowerCase()}`;
-  return (
-    <div
-      onClick={() => document.getElementById(id).click()}
-      style={{
-        flex:1, border: value ? "1.5px solid #16a34a" : "1px solid #e5e7eb",
-        borderRadius:14, padding:14, cursor:"pointer", background:"#fff",
-      }}>
-      <input id={id} type="file" accept="image/*" style={{ display:"none" }}
-        onChange={(e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (ev) => onChange(ev.target.result);
-          reader.readAsDataURL(file);
-        }} />
-      <div style={{
-        position:"relative", width:"100%", height:120, borderRadius:10, overflow:"hidden",
-        background: value ? "#1f2937" : "#f3f4f6", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12,
-      }}>
-        {value
-          ? <>
-              <img src={value} alt={label} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-              <div style={{ position:"absolute", top:8, right:8, width:24, height:24, borderRadius:"50%", background:"#16a34a", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>✓</div>
-            </>
-          : <div style={{ width:42, height:42, borderRadius:"50%", background:"#fff", border:"1px solid #e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:"#9ca3af" }}>+</div>}
-      </div>
-      <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>{label}</div>
-      <div style={{ fontSize:12, color:"#9ca3af", marginTop:2 }}>{hint}</div>
-    </div>
-  );
+// Fecha máxima elegible: hoy menos 18 años (para el selector del navegador).
+function maxBirthDate() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().slice(0, 10);
 }
 
 export default function Register() {
-  const { register, verifyEmail, resendVerification, user, login } = useAuth();
+  const { startRegistration, completeRegistration, user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0); // 0 = datos, 1 = verificar email, 2 = identidad, 3 = licencia, 4 = confirmación
+  const [step, setStep] = useState(0); // 0 = datos, 1 = código del email, 2 = verificación de identidad
 
-  // Guarda cambios del estado de verificación (ej: { dniVerified: true }) tanto
-  // en localStorage como en el contexto. Funciona aunque `user` sea null.
-  const persistVerification = (patch) => {
-    let base = user;
-    if (!base) { try { base = JSON.parse(localStorage.getItem("fw_user") || "{}"); } catch { base = {}; } }
-    const updated = { ...base, ...patch };
-    localStorage.setItem("fw_user", JSON.stringify(updated));
-    if (login) login(updated);
-  };
-  const [form, setForm] = useState({ firstName:"", lastName:"", email:"", phone:"", password:"", confirmPassword:"", acceptedTerms:false });
+  const [form, setForm] = useState({
+    firstName:"", lastName:"", email:"", phone:"", dateOfBirth:"",
+    password:"", confirmPassword:"", acceptedTerms:false,
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Verificación de email
-  const [code, setCode] = useState("");
   const [info, setInfo] = useState("");
-  const [verifying, setVerifying] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState("");
   const [resending, setResending] = useState(false);
-
-  const [dniFront, setDniFront] = useState(null);
-  const [dniBack, setDniBack] = useState(null);
-  const [licFront, setLicFront] = useState(null);
-  const [licBack, setLicBack] = useState(null);
 
   // Atajo para actualizar un campo del formulario por su nombre.
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
 
-  // Paso 0 → 1: valida los datos, crea la cuenta y pasa a verificar el email.
-  const handleSubmit = async () => {
-    if (!form.firstName || !form.email || !form.password) { setError("Completá todos los campos obligatorios."); return; }
-    if (form.password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres."); return; }
-    if (form.password !== form.confirmPassword) { setError("Las contraseñas no coinciden."); return; }
-    if (!form.acceptedTerms) { setError("Debés aceptar los términos y condiciones."); return; }
-    setLoading(true); setError("");
-    const result = await register({ name:`${form.firstName} ${form.lastName}`.trim(), email:form.email, password:form.password, acceptedTerms:form.acceptedTerms });
+  // Valida los datos del paso 0. Devuelve el mensaje de error, o null si está ok.
+  const validateForm = () => {
+    if (!form.firstName.trim()) return "Ingresá tu nombre.";
+    if (!form.lastName.trim()) return "Ingresá tu apellido.";
+    if (!form.email.trim()) return "Ingresá tu email.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "El email no parece válido.";
+    if (!form.dateOfBirth) return "Ingresá tu fecha de nacimiento.";
+    const age = ageFrom(form.dateOfBirth);
+    if (age === null) return "La fecha de nacimiento no es válida.";
+    if (age < 18) return "Tenés que ser mayor de 18 años para usar Freewheel.";
+    if (age > 100) return "Revisá la fecha de nacimiento.";
+    if (form.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+    if (form.password !== form.confirmPassword) return "Las contraseñas no coinciden.";
+    if (!form.acceptedTerms) return "Debés aceptar los términos y condiciones.";
+    return null;
+  };
+
+  // Paso 0 → 1: pide el código al email. Todavía no se crea ninguna cuenta.
+  const handleRequestCode = async () => {
+    const invalid = validateForm();
+    if (invalid) { setError(invalid); return; }
+    setLoading(true); setError(""); setInfo("");
+    const result = await startRegistration(form.email.trim());
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-    setStep(1); // ← primero verificar el email (código que llega al mail)
+    setInfo("");
+    setStep(1);
   };
 
-  // Paso 1: verificar el código que llegó al email
-  const handleVerifyEmail = async () => {
+  // Paso 1 → 2: con el código, crea la cuenta y deja la sesión abierta.
+  const handleCreateAccount = async () => {
     if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
-    setVerifying(true); setError(""); setInfo("");
-    const result = await verifyEmail(code);
-    setVerifying(false);
-    if (!result.success) { setError(result.error || "Código incorrecto."); return; }
-    setStep(2); // ← email verificado, sigue el KYC (DNI / licencia)
+    setLoading(true); setError(""); setInfo("");
+    const result = await completeRegistration({
+      email: form.email.trim(),
+      code,
+      password: form.password,
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      phone: form.phone.replace(/\D/g, "") || undefined,
+      dateOfBirth: form.dateOfBirth,
+      acceptedTerms: form.acceptedTerms,
+    });
+    setLoading(false);
+    if (!result.success) { setError(result.error); return; }
+    setStep(2);
   };
 
-  // Reenvía el código de verificación al email si el usuario no lo recibió.
+  // Reenvía el código: volver a llamar al paso 1 rota el código anterior.
   const handleResend = async () => {
     setResending(true); setError(""); setInfo("");
-    const result = await resendVerification();
+    const result = await startRegistration(form.email.trim());
     setResending(false);
-    if (result.success) setInfo("Te enviamos un nuevo código. Revisá tu bandeja (y el spam).");
-    else setError(result.error || "No se pudo reenviar el código.");
+    if (result.success) setInfo("Te enviamos un código nuevo. Revisá tu bandeja (y el spam).");
+    else setError(result.error);
   };
 
   const inputStyle = { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", boxSizing:"border-box" };
   const labelStyle = { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 };
-  const btnPrimary = { padding:"12px 22px", background:"#2563eb", color:"#fff", border:"none", borderRadius:24, fontSize:14, fontWeight:700, cursor:"pointer" };
-  const btnGhost = { padding:"12px 22px", background:"#fff", color:"#374151", border:"1.5px solid #e5e7eb", borderRadius:24, fontSize:14, fontWeight:600, cursor:"pointer" };
+  const errorBox = { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 };
+  const infoBox = { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 };
 
-  // ─────────────── PASO 0: REGISTRO (diseño original) ───────────────
+  // ─────────────── PASO 0: DATOS DE LA CUENTA ───────────────
   if (step === 0) {
     return (
       <div style={{ display:"flex", minHeight:"100vh" }}>
@@ -175,7 +170,7 @@ export default function Register() {
               </p>
             </div>
 
-            {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 }}>{error}</div>}
+            {error && <div style={errorBox}>{error}</div>}
 
             <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
               width:"100%", padding:"11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
@@ -195,7 +190,7 @@ export default function Register() {
                 <input style={inputStyle} placeholder="Martin" value={form.firstName} onChange={e => set("firstName", e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Apellido</label>
+                <label style={labelStyle}>Apellido *</label>
                 <input style={inputStyle} placeholder="García" value={form.lastName} onChange={e => set("lastName", e.target.value)} />
               </div>
             </div>
@@ -205,9 +200,19 @@ export default function Register() {
               <input style={inputStyle} type="email" placeholder="martin@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
 
-            <div style={{ marginBottom:16 }}>
-              <label style={labelStyle}>Teléfono</label>
-              <input style={inputStyle} placeholder="+54 9 11 2345 6789" value={form.phone} onChange={e => set("phone", e.target.value)} />
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+              <div>
+                <label style={labelStyle}>Teléfono</label>
+                <input style={inputStyle} placeholder="1123456789" value={form.phone} maxLength={15}
+                  onChange={e => set("phone", e.target.value.replace(/\D/g, ""))} />
+              </div>
+              <div>
+                {/* La fecha de nacimiento es obligatoria: la plataforma es solo
+                    para mayores de 18 y el backend rechaza el registro sin ella. */}
+                <label style={labelStyle}>Fecha de nacimiento *</label>
+                <input style={inputStyle} type="date" max={maxBirthDate()} value={form.dateOfBirth}
+                  onChange={e => set("dateOfBirth", e.target.value)} />
+              </div>
             </div>
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
@@ -245,12 +250,15 @@ export default function Register() {
               </label>
             </div>
 
-            <button onClick={handleSubmit} disabled={loading} style={{
+            <button onClick={handleRequestCode} disabled={loading} style={{
               width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
               fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
-              {loading ? "Creando cuenta..." : "Continuar →"}
+              {loading ? "Enviando código..." : "Continuar →"}
             </button>
+            <div style={{ fontSize:12, color:"#9ca3af", textAlign:"center", marginTop:10 }}>
+              Te vamos a enviar un código de 6 dígitos para confirmar tu email.
+            </div>
           </div>
         </div>
 
@@ -272,37 +280,37 @@ export default function Register() {
     );
   }
 
-  // ─────────────── PASO 1: VERIFICAR EMAIL ───────────────
+  // ─────────────── PASO 1: CÓDIGO DEL EMAIL → CREA LA CUENTA ───────────────
   if (step === 1) {
     return (
       <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
           <Logo />
           <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICÁ TU EMAIL</div>
-          <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }}>¿Necesitás ayuda?</div>
+          <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>Cambiar email</div>
         </div>
         <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ width:"100%", maxWidth:420, background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid #f0f0f0" }}>
             <div style={{ fontSize:46, marginBottom:8 }}>📧</div>
-            <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>Verificá tu email</h2>
+            <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>Confirmá tu email</h2>
             <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
-              Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para activar tu cuenta.
+              Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para crear tu cuenta.
             </p>
 
-            {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 }}>{error}</div>}
-            {info && <div style={{ background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 }}>{info}</div>}
+            {error && <div style={{ ...errorBox, marginBottom:16 }}>{error}</div>}
+            {info && <div style={infoBox}>{info}</div>}
 
             <input
               style={{ width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:28, fontWeight:700, letterSpacing:12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20, boxSizing:"border-box" }}
               type="text" inputMode="numeric" maxLength={6} placeholder="000000"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              onKeyDown={(e) => e.key === "Enter" && handleVerifyEmail()}
+              onKeyDown={(e) => e.key === "Enter" && handleCreateAccount()}
             />
 
-            <button onClick={handleVerifyEmail} disabled={verifying}
-              style={{ width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:verifying?"not-allowed":"pointer", opacity:verifying?0.6:1, marginBottom:12 }}>
-              {verifying ? "Verificando..." : "Verificar código"}
+            <button onClick={handleCreateAccount} disabled={loading}
+              style={{ width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
+              {loading ? "Creando cuenta..." : "Crear mi cuenta"}
             </button>
 
             <div style={{ fontSize:13, color:"#6b7280" }}>
@@ -318,113 +326,23 @@ export default function Register() {
     );
   }
 
-  // ─────────────── PASOS 2-4: VERIFICACIÓN KYC (diseño del Figma) ───────────────
-  const kycStepIndex = step - 2; // 0=Identidad, 1=Licencia, 2=Confirmación
-  const headerLabel = step === 2 ? "VERIFICACIÓN DE IDENTIDAD" : step === 3 ? "VERIFICACIÓN DE LICENCIA" : "VERIFICACIÓN COMPLETA";
-
+  // ─────────────── PASO 2: VERIFICACIÓN DE IDENTIDAD (real) ───────────────
   return (
     <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
-      {/* Barra superior */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
         <Logo />
-        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{headerLabel}</div>
-        <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }}>¿Necesitás ayuda?</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICACIÓN DE LA CUENTA</div>
+        <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
       </div>
 
       <div style={{ flex:1, padding:"40px 24px" }}>
-        {/* Stepper */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", marginBottom:40 }}>
-          {KYC_STEPS.map((label, i) => (
-            <div key={label} style={{ display:"flex", alignItems:"center" }}>
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
-                <div style={{
-                  width:34, height:34, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:14, fontWeight:700,
-                  background: i < kycStepIndex ? "#16a34a" : i === kycStepIndex ? "#2563eb" : "#fff",
-                  color: i <= kycStepIndex ? "#fff" : "#9ca3af",
-                  border: i > kycStepIndex ? "1.5px solid #e5e7eb" : "none",
-                }}>{i < kycStepIndex ? "✓" : i + 1}</div>
-                <span style={{ fontSize:12, fontWeight:600, color: i === kycStepIndex ? "#111827" : "#9ca3af" }}>{label}</span>
-              </div>
-              {i < KYC_STEPS.length - 1 && <div style={{ width:140, height:2, margin:"0 10px", marginBottom:24, background: i < kycStepIndex ? "#16a34a" : i === kycStepIndex ? "#2563eb" : "#e5e7eb" }} />}
-            </div>
-          ))}
+        <div style={{ maxWidth:720, margin:"0 auto 24px", background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:12, padding:"14px 18px", fontSize:13.5, color:"#166534" }}>
+          <strong>¡Cuenta creada{form.firstName ? `, ${form.firstName}` : ""}!</strong> Verificá tu identidad para poder publicar autos y reservar.
         </div>
-
-        {/* Tarjeta central */}
-        <div style={{ maxWidth:720, margin:"0 auto", background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", border:"1px solid #f0f0f0" }}>
-          {/* PASO 2: IDENTIDAD */}
-          {step === 2 && (
-            <>
-              <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:4 }}>Verificá tu identidad</h2>
-              <p style={{ fontSize:14, color:"#6b7280", marginBottom:24 }}>Necesitamos confirmar quién sos. Tus datos están encriptados y protegidos.</p>
-              <div style={{ display:"flex", gap:16, marginBottom:24 }}>
-                <PhotoCard label="Frente del DNI" hint="Cara visible, sin reflejo" value={dniFront} onChange={setDniFront} />
-                <PhotoCard label="Dorso del DNI" hint="Número y fecha legibles" value={dniBack} onChange={setDniBack} />
-              </div>
-              <div style={{ borderTop:"1px solid #f0f0f0", paddingTop:20, marginBottom:20 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:"#111827", marginBottom:12 }}>Consejos para tus fotos</div>
-                <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  {["Buena iluminación", "Sin cortes ni reflejos", "JPG o PNG hasta 5MB"].map(tip => (
-                    <div key={tip} style={{ display:"flex", alignItems:"center", gap:7, background:"#f3f4f6", borderRadius:20, padding:"7px 14px", fontSize:12, color:"#374151" }}>
-                      <span style={{ width:7, height:7, borderRadius:"50%", background:"#16a34a" }} />{tip}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ fontSize:12, color:"#9ca3af", marginBottom:20 }}>🔒 Tus datos están cifrados con AES-256 y solo los usamos para validar tu identidad.</div>
-              <div style={{ display:"flex", justifyContent:"flex-end", gap:12 }}>
-                <button style={btnGhost} onClick={() => navigate("/")}>Cancelar</button>
-                <button style={{ ...btnPrimary, opacity:(dniFront && dniBack) ? 1 : 0.5, cursor:(dniFront && dniBack) ? "pointer" : "not-allowed" }}
-                  disabled={!(dniFront && dniBack)} onClick={() => { persistVerification({ dniVerified: true }); setStep(3); }}>Continuar →</button>
-              </div>
-              <button style={{ display:"block", width:"100%", marginTop:16, padding:6, background:"none", border:"none", color:"#9ca3af", fontSize:13, fontWeight:500, cursor:"pointer", textAlign:"center", textDecoration:"underline" }}
-                onClick={() => setStep(3)}>Omitir este paso · verificar después desde Ajustes</button>
-            </>
-          )}
-
-          {/* PASO 3: LICENCIA */}
-          {step === 3 && (
-            <>
-              <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:4 }}>Tu licencia de conducir</h2>
-              <p style={{ fontSize:14, color:"#6b7280", marginBottom:24 }}>Subí ambos lados de tu licencia vigente.</p>
-              <div style={{ display:"flex", gap:16, marginBottom:24 }}>
-                <PhotoCard label="Frente de la licencia" hint="Foto y datos visibles" value={licFront} onChange={setLicFront} />
-                <PhotoCard label="Dorso de la licencia" hint="Categorías y vencimiento" value={licBack} onChange={setLicBack} />
-              </div>
-              <div style={{ fontSize:12, color:"#9ca3af", marginBottom:20 }}>🔒 Tus datos están cifrados con AES-256 y solo los usamos para validar tu licencia.</div>
-              <div style={{ display:"flex", justifyContent:"flex-end", gap:12 }}>
-                <button style={btnGhost} onClick={() => setStep(2)}>Atrás</button>
-                <button style={{ ...btnPrimary, opacity:(licFront && licBack) ? 1 : 0.5, cursor:(licFront && licBack) ? "pointer" : "not-allowed" }}
-                  disabled={!(licFront && licBack)} onClick={() => { persistVerification({ licenseVerified: true }); setStep(4); }}>Finalizar →</button>
-              </div>
-              <button style={{ display:"block", width:"100%", marginTop:16, padding:6, background:"none", border:"none", color:"#9ca3af", fontSize:13, fontWeight:500, cursor:"pointer", textAlign:"center", textDecoration:"underline" }}
-                onClick={() => setStep(4)}>Omitir este paso · verificar después desde Ajustes</button>
-            </>
-          )}
-
-          {/* PASO 4: CONFIRMACIÓN */}
-          {step === 4 && (
-            <div style={{ textAlign:"center", padding:"20px 0" }}>
-              <div style={{ width:72, height:72, borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 18px" }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </div>
-              <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:6 }}>¡Todo listo{form.firstName ? `, ${form.firstName}` : ""}!</h2>
-              <p style={{ fontSize:14, color:"#6b7280", marginBottom:24 }}>{(user?.dniVerified && user?.licenseVerified) ? "Tu cuenta quedó verificada. Ya podés usar Freewheel." : "Ya podés usar Freewheel. Verificá lo que falte cuando quieras desde Ajustes."}</p>
-              <div style={{ display:"flex", flexDirection:"column", gap:10, maxWidth:320, margin:"0 auto" }}>
-                {[["DNI", user?.dniVerified], ["Licencia de conducir", user?.licenseVerified]].map(([lbl, ok]) => (
-                  <div key={lbl} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", fontSize:13, fontWeight:600, color: ok ? "#166534" : "#9a3412", background: ok ? "#f0fdf4" : "#fff7ed", border:`1px solid ${ok ? "#bbf7d0" : "#fed7aa"}`, borderRadius:8, padding:"8px 12px" }}>
-                    <span>{lbl}</span><span>{ok ? "Validado" : "Pendiente"}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display:"flex", gap:12, justifyContent:"center", marginTop:24 }}>
-                <button style={btnGhost} onClick={() => navigate("/")}>Buscar autos</button>
-                <button style={btnPrimary} onClick={() => navigate("/publish")}>Publicar mi auto</button>
-              </div>
-            </div>
-          )}
-        </div>
+        <IdentityVerification
+          onDone={() => navigate(user?.verification?.fullyVerified ? "/publish" : "/")}
+          onCancel={() => navigate("/")}
+        />
       </div>
     </div>
   );
