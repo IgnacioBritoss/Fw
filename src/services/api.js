@@ -12,26 +12,40 @@
 //  correctos.
 // ============================================================================
 
-// Dirección base del backend (está desplegado en Vercel).
-const BASE_URL = "https://free-wheel-back.vercel.app";
+// Dirección base del backend. Por defecto apunta al que está desplegado en
+// Vercel; con VITE_API_URL se puede apuntar a un backend local para desarrollo
+// (por ejemplo VITE_API_URL=http://localhost:3000 en un archivo .env.local).
+const BASE_URL = import.meta.env.VITE_API_URL || "https://free-wheel-back.vercel.app";
 
 // URL a la que se redirige al usuario para iniciar sesión con Google (OAuth).
 export const GOOGLE_AUTH_URL = `${BASE_URL}/auth/google`;
 
 // Devuelve el token de sesión (JWT) guardado en el navegador, o null si no hay.
 // El token viaja en cada pedido para que el backend sepa quién está pidiendo.
+// `onboardingToken` es el token corto que da el backend cuando la cuenta todavía
+// debe verificar el email o cargar la fecha de nacimiento: solo sirve en las
+// rutas de onboarding, pero se manda igual porque son las únicas que se llaman
+// mientras la sesión está a medio abrir.
 function getToken() {
   const user = localStorage.getItem("fw_user");
   if (!user) return null;
-  try { return JSON.parse(user).accessToken || null; } catch { return null; }
+  try {
+    const parsed = JSON.parse(user);
+    return parsed.accessToken || parsed.onboardingToken || null;
+  } catch { return null; }
 }
+
+// Rutas donde un 401 es una respuesta esperada ("contraseña incorrecta"), no una
+// sesión vencida: acá NO hay que borrar la sesión ni redirigir al login.
+const AUTH_ROUTES = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
+const isAuthRoute = (path) => AUTH_ROUTES.some(route => path.startsWith(route));
 
 // Función central: hace un pedido HTTP al backend y devuelve la respuesta en JSON.
 // - Agrega automáticamente el token de sesión en la cabecera Authorization.
-// - Si el backend responde 401 (sesión vencida/inválida), cierra la sesión y
-//   manda al login.
-// - Si hay otro error, lanza una excepción con el mensaje del backend para que
-//   la pantalla que llamó pueda mostrarlo.
+// - Si el backend responde 401 con una sesión vencida, la cierra y manda al login.
+// - En cualquier error lanza una excepción con el mensaje del backend, para que
+//   la pantalla que llamó pueda mostrarlo. Nunca devuelve `undefined` en un
+//   error: si lo hiciera, quien la llamó reventaría al leer `data.user`.
 async function apiFetch(path, options = {}) {
   const token = getToken();
   const headers = {
@@ -39,33 +53,68 @@ async function apiFetch(path, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  if (!res.ok) {
-    if (res.status === 401) {
-      localStorage.removeItem("fw_user");
-      window.location.href = "/login";
-      return;
-    }
-    let errorMessage = `Error ${res.status}`;
-    try { const data = await res.json(); errorMessage = data.message || errorMessage; } catch {}
-    const err = new Error(errorMessage);
-    err.status = res.status;
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  } catch {
+    // Falló la red (sin internet, backend caído): mensaje claro en vez de
+    // "Failed to fetch", que no le dice nada al usuario.
+    const err = new Error("No pudimos conectarnos con el servidor. Revisá tu conexión e intentá de nuevo.");
+    err.status = 0;
     throw err;
   }
+
+  if (!res.ok) {
+    let payload = null;
+    try { payload = await res.json(); } catch { /* la respuesta puede no ser JSON */ }
+    const message = Array.isArray(payload?.message)
+      ? payload.message.join(" · ")            // errores de validación del backend
+      : payload?.message || `Error ${res.status}`;
+
+    // Sesión vencida o token inválido en una ruta que requiere estar logueado.
+    if (res.status === 401 && !isAuthRoute(path)) {
+      localStorage.removeItem("fw_user");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login?expired=1";
+      }
+    }
+
+    const err = new Error(message);
+    err.status = res.status;
+    err.code = payload?.code;                  // ej: ACCOUNT_NOT_VERIFIED
+    err.payload = payload;
+    throw err;
+  }
+
   if (res.status === 204) return null;
   return res.json();
 }
 
 // ── AUTENTICACIÓN ──────────────────────────────────────────────
-// Registro, login, verificación de email y recuperación de contraseña.
+// El registro tiene DOS pasos en el backend:
+//   1) registerStart(email) → manda un código de 6 dígitos al mail. Todavía no
+//      existe ninguna cuenta.
+//   2) registerComplete(...) → con el código + los datos crea la cuenta, ya con
+//      el email verificado, y devuelve el token de sesión.
+// Hacerlo así evita cuentas a medio crear con emails que no existen.
 
-// Crea una cuenta nueva. Devuelve el usuario y el token de sesión.
-export async function registerUser({ email, password, firstName, lastName, acceptedTerms }) {
-  return apiFetch("/auth/register", {
+// Paso 1: pide el código de verificación para un email sin cuenta.
+export async function registerStart({ email }) {
+  return apiFetch("/auth/register/start", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+// Paso 2: crea la cuenta. Devuelve { user, accessToken }.
+export async function registerComplete({ email, code, password, firstName, lastName, phone, dateOfBirth, acceptedTerms }) {
+  return apiFetch("/auth/register/complete", {
     method: "POST",
-    body: JSON.stringify({ email, password, firstName, lastName, acceptedTerms }),
+    body: JSON.stringify({
+      email, code, password, firstName, lastName, dateOfBirth, acceptedTerms,
+      ...(phone ? { phone } : {}),
+    }),
   });
 }
+
 // Inicia sesión con email y contraseña. Devuelve el usuario y el token.
 export async function loginUser({ email, password }) {
   return apiFetch("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
@@ -73,6 +122,11 @@ export async function loginUser({ email, password }) {
 // Confirma la cuenta con el código que llegó por email.
 export async function verifyEmail({ code }) {
   return apiFetch("/auth/verify-email", { method: "POST", body: JSON.stringify({ code }) });
+}
+// Carga la fecha de nacimiento que falta (cuentas de Google y cuentas viejas).
+// Es obligatoria y debe ser de alguien mayor de 18. Devuelve la sesión completa.
+export async function completeProfile({ dateOfBirth }) {
+  return apiFetch("/auth/complete-profile", { method: "POST", body: JSON.stringify({ dateOfBirth }) });
 }
 // Reenvía el código de verificación al email del usuario.
 export async function resendVerification() {
@@ -133,18 +187,77 @@ export async function deleteVehicle(id) {
 export async function createListing(data) {
   return apiFetch("/listings", { method: "POST", body: JSON.stringify(data) });
 }
+// Búsqueda pública de publicaciones. Acepta los filtros que entiende el backend:
+// locationText, minPrice, maxPrice, brand, model, category, transmission,
+// fuelType, minSeats, startDate, endDate, sort, page y limit.
+// Los filtros vacíos se descartan: si se mandaran como "undefined", el backend
+// los tomaría como un valor real y no devolvería nada.
 export async function getListings(params = {}) {
-  const qs = new URLSearchParams(params).toString();
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    search.set(key, value instanceof Date ? value.toISOString() : String(value));
+  });
+  const qs = search.toString();
   return apiFetch(`/listings${qs ? `?${qs}` : ""}`);
 }
 export async function getMyListings() { return apiFetch("/listings/me"); }
 export async function getListingById(id) { return apiFetch(`/listings/${id}`); }
-export async function getListingAvailability(listingId, from, to) {
-  const params = new URLSearchParams();
-  if (from) params.set("from", from);
-  if (to) params.set("to", to);
-  const qs = params.toString();
-  return apiFetch(`/listings/${listingId}/availability${qs ? `?${qs}` : ""}`);
+
+// Disponibilidad de una publicación entre dos fechas. El backend espera
+// startDate/endDate (no from/to) y responde, además de las reservas y bloqueos,
+// `unavailableDates`: los días ocupados ya listados uno por uno.
+export async function getListingAvailability(listingId, startDate, endDate) {
+  const params = new URLSearchParams({ startDate, endDate });
+  return apiFetch(`/listings/${listingId}/availability?${params.toString()}`);
+}
+
+// ── DISPONIBILIDAD POR FECHAS (del dueño) ──────────────────────
+// El dueño puede bloquear rangos en los que su auto no está disponible (viaje,
+// service, uso personal). Esos bloqueos ocultan el auto de las búsquedas con
+// fechas y se pintan como no disponibles en el calendario de reserva.
+export async function getAvailabilityBlocks(listingId) {
+  return apiFetch(`/listings/${listingId}/availability-blocks`);
+}
+export async function createAvailabilityBlock(listingId, { startDate, endDate, reason }) {
+  return apiFetch(`/listings/${listingId}/availability-blocks`, {
+    method: "POST",
+    body: JSON.stringify({ startDate, endDate, ...(reason ? { reason } : {}) }),
+  });
+}
+export async function deleteAvailabilityBlock(listingId, blockId) {
+  return apiFetch(`/listings/${listingId}/availability-blocks/${blockId}`, { method: "DELETE" });
+}
+
+// ── FAVORITOS ──────────────────────────────────────────────────
+// Se guardan en la base, así que los favoritos siguen estando al entrar desde
+// otro dispositivo.
+export async function getMyFavorites() { return apiFetch("/favorites/me"); }
+export async function getMyFavoriteIds() { return apiFetch("/favorites/me/ids"); }
+export async function addFavorite(listingId) {
+  return apiFetch("/favorites", { method: "POST", body: JSON.stringify({ listingId }) });
+}
+export async function removeFavorite(listingId) {
+  return apiFetch(`/favorites/${listingId}`, { method: "DELETE" });
+}
+
+// ── VERIFICACIÓN DE LA CUENTA (KYC) ────────────────────────────
+// Para publicar o reservar, el backend exige la cuenta VERIFICADA: email +
+// teléfono + DNI y licencia. getVerificationStatus() devuelve el checklist con
+// lo que falta.
+export async function getVerificationStatus() { return apiFetch("/verification/me/status"); }
+export async function requestPhoneCode() {
+  return apiFetch("/verification/phone/request", { method: "POST" });
+}
+export async function confirmPhoneCode(code) {
+  return apiFetch("/verification/phone/confirm", { method: "POST", body: JSON.stringify({ code }) });
+}
+// Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
+export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }) {
+  return apiFetch("/verification/identity/submit", {
+    method: "POST",
+    body: JSON.stringify({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }),
+  });
 }
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
@@ -159,6 +272,32 @@ export async function createMediaAsset(data) {
   return apiFetch("/media/assets", { method: "POST", body: JSON.stringify(data) });
 }
 
+// Pide al backend la firma para subir a Cloudinary. El secreto de Cloudinary vive
+// solo en el servidor: el navegador recibe una firma temporal y sube con ella.
+export async function getCloudinarySignature(folder = "freewheel") {
+  return apiFetch("/media/cloudinary-signature", {
+    method: "POST",
+    body: JSON.stringify({ folder }),
+  });
+}
+
+// ── INTELIGENCIA ARTIFICIAL (proxy del backend) ────────────────
+// La clave de la IA vive únicamente en el servidor: el navegador le pide al
+// backend y el backend habla con el proveedor. Antes el front llamaba a la API
+// de IA directo con la clave incluida en el bundle, a la vista de cualquiera.
+export async function aiChat(messages, temperature) {
+  return apiFetch("/ai/chat", {
+    method: "POST",
+    body: JSON.stringify({ messages, ...(temperature !== undefined ? { temperature } : {}) }),
+  });
+}
+export async function aiVision(imageDataUrl) {
+  return apiFetch("/ai/vision", { method: "POST", body: JSON.stringify({ imageDataUrl }) });
+}
+export async function aiTranscribe(audioUrl) {
+  return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });
+}
+
 // ── RESERVAS (BOOKINGS) ────────────────────────────────────────
 // Ciclo de vida de una reserva: el inquilino la crea (createBooking) y el
 // dueño la acepta/rechaza; cualquiera puede cancelarla.
@@ -170,8 +309,11 @@ export async function createBooking({ listingId, startDate, endDate }) {
 }
 export async function getMyBookings() { return apiFetch("/bookings/me"); }
 export async function getBookingById(id) { return apiFetch(`/bookings/${id}`); }
-export async function cancelBooking(id) {
-  return apiFetch(`/bookings/${id}/cancel`, { method: "PATCH" });
+export async function cancelBooking(id, reason) {
+  return apiFetch(`/bookings/${id}/cancel`, {
+    method: "PATCH",
+    body: JSON.stringify(reason ? { reason } : {}),
+  });
 }
 export async function acceptBooking(id) {
   return apiFetch(`/bookings/${id}/accept`, { method: "PATCH" });
@@ -180,20 +322,65 @@ export async function rejectBooking(id) {
   return apiFetch(`/bookings/${id}/reject`, { method: "PATCH" });
 }
 
-// ── PAGOS (SIMULADOS) ──────────────────────────────────────────
-// El pago es "mock" (de mentira, para la demo): se crea una intención de pago,
-// y luego se confirma o se falla a mano. No hay tarjeta real involucrada.
-export async function createMockPaymentIntent(bookingId) {
-  return apiFetch(`/payments/bookings/${bookingId}/mock-intent`, { method: "POST" });
+// ── ENTREGA Y DEVOLUCIÓN DEL AUTO ──────────────────────────────
+// El circuito completo entre los dos usuarios, después del pago:
+//   1) el dueño marca la reserva "lista para retiro" (readyForPickup)
+//   2) el inquilino muestra su token/QR de retiro y el DUEÑO lo confirma
+//   3) al devolver, el dueño muestra el token de devolución y el INQUILINO lo
+//      confirma, con lo que la reserva queda completada.
+// getBookingTokens() devuelve, para cada uno, solo el token que le toca ver.
+export async function markReadyForPickup(id) {
+  return apiFetch(`/bookings/${id}/ready-for-pickup`, { method: "PATCH" });
 }
-export async function confirmMockPayment(bookingId) {
-  return apiFetch(`/payments/bookings/${bookingId}/mock-confirm`, { method: "POST" });
+export async function getBookingTokens(id) { return apiFetch(`/bookings/${id}/tokens`); }
+export async function confirmPickup(id, token) {
+  return apiFetch(`/bookings/${id}/confirm-pickup`, { method: "POST", body: JSON.stringify({ token }) });
 }
-export async function failMockPayment(bookingId) {
-  return apiFetch(`/payments/bookings/${bookingId}/mock-fail`, { method: "POST" });
+export async function confirmReturn(id, token) {
+  return apiFetch(`/bookings/${id}/confirm-return`, { method: "POST", body: JSON.stringify({ token }) });
+}
+
+// ── PAGOS ──────────────────────────────────────────────────────
+// El pago está partido en tres tramos, como en cualquier alquiler real:
+// la seña, el saldo y el depósito de garantía (que se retiene y se libera).
+// mockConfirmPayment() completa los tres de una sola vez: existe para la demo y
+// solo funciona con PAYMENTS_PROVIDER=mock en el backend.
+export async function createSenaIntent(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/sena-intent`, { method: "POST" });
+}
+export async function createBalanceIntent(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/balance-intent`, { method: "POST" });
+}
+export async function createDepositHold(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/deposit-hold`, { method: "POST" });
+}
+export async function mockConfirmPayment(bookingId, kind) {
+  return apiFetch(`/payments/bookings/${bookingId}/mock-confirm`, {
+    method: "POST",
+    body: JSON.stringify(kind ? { kind } : {}),
+  });
+}
+export async function mockFailPayment(bookingId, kind) {
+  return apiFetch(`/payments/bookings/${bookingId}/mock-fail`, {
+    method: "POST",
+    body: JSON.stringify(kind ? { kind } : {}),
+  });
 }
 export async function getBookingPaymentStatus(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/status`);
+}
+
+// ── CONTRATO DIGITAL ───────────────────────────────────────────
+// Al aceptarse la reserva queda un contrato con los montos congelados, que
+// ambas partes aceptan y se puede descargar en PDF.
+export async function getBookingContract(bookingId) {
+  return apiFetch(`/contracts/bookings/${bookingId}`);
+}
+export async function acceptBookingContract(bookingId) {
+  return apiFetch(`/contracts/bookings/${bookingId}/accept`, { method: "POST" });
+}
+export function getBookingContractPdfUrl(bookingId) {
+  return `${BASE_URL}/contracts/bookings/${bookingId}/pdf`;
 }
 
 // ── CONVERSACIONES / CHAT ──────────────────────────────────────

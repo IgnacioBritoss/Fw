@@ -6,8 +6,12 @@
 //    1 → subir fotos (la IA verifica que cada foto sea un auto)
 //    2 → título, descripción, ubicación y precio (con SUGERIR PRECIO con IA)
 //    3 → revisión final y publicación
-//  Al publicar: crea el vehículo y el listing en el backend, sube las fotos a
-//  Cloudinary y guarda una copia local. Usa 3 servicios de IA de groq.js.
+//  Al publicar: crea el vehículo, sube las fotos y recién entonces crea el aviso.
+//  Usa los 3 servicios de IA, que ahora pasan por el backend (ver groq.js).
+//
+//  Ya no se guarda una copia del auto en el navegador: esa copia era la que hacía
+//  que un mismo auto apareciera duplicado o siguiera visible después de borrarlo.
+//  La única fuente de verdad es el backend.
 // ============================================================================
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing, createMediaAsset } from "../../services/api";
+import { CATEGORIES } from "../../services/listings";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 
@@ -117,7 +122,7 @@ const FUEL_MAP = { Nafta: "GASOLINE", Diesel: "DIESEL", Eléctrico: "ELECTRIC", 
 const DRIVETRAIN_MAP = { Delantera: "FRONT", Trasera: "REAR", "4x4": "FOUR_BY_FOUR", AWD: "AWD" };
 
 export default function PublishCar() {
-  const { user } = useAuth();
+  const { isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [step, setStep] = useState(0);
@@ -130,9 +135,14 @@ export default function PublishCar() {
   const [photos, setPhotos] = useState([]);
   const [photoValidations, setPhotoValidations] = useState({});
   const [uploadHover, setUploadHover] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   const [vehicleForm, setVehicleForm] = useState({
     brand: "", model: "", year: "2022",
+    // La categoría es la que usa el filtro "Explorá por categoría" del inicio y
+    // el buscador. Antes no se cargaba en ninguna parte, así que los autos
+    // publicados quedaban afuera de ese filtro.
+    category: "",
     transmission: "Manual", fuel: "Nafta", drivetrain: "Delantera",
     seats: "5", doors: "4", color: "", plate: "",
     bluetooth: false, rearCamera: false, parkingSensors: false,
@@ -151,6 +161,11 @@ export default function PublishCar() {
   const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));
 
   const prevLocationRef = useRef(""); // guarda la ubicación anterior para detectar cambios
+
+  // Estado real de verificación de la cuenta: es lo que el backend va a exigir al
+  // publicar, así que se relee al abrir la pantalla.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshUser(); }, []);
 
   // Si el usuario cambia la ubicación después de pedir una sugerencia de precio,
   // la sugerencia deja de ser válida: la borramos para que pida una nueva.
@@ -306,6 +321,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   const validateStep = () => {
     if (step === 0) {
       if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError("Completá marca, modelo y año."); return false; }
+      if (!vehicleForm.category) { setError("Elegí la categoría del vehículo (es lo que usa el buscador para filtrarlo)."); return false; }
       if (!vehicleForm.color) { setError("Seleccioná el color del vehículo."); return false; }
       if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { setError("Ingresá la cantidad de asientos."); return false; }
       if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { setError("Patente inválida. Formato: ABC123 (viejo) o AB123CD (Mercosur)."); return false; }
@@ -330,9 +346,18 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   // Avanza al siguiente paso solo si la validación pasa.
   const next = () => { if (validateStep()) setStep((s) => s + 1); };
 
-  // Publicación final: (1) crea el vehículo, (2) crea el listing, (3) sube las
-  // fotos a Cloudinary y las registra, (4) guarda una copia local del auto.
-  // Si algún paso opcional falla (ej: subida de fotos) no rompe la publicación.
+  /**
+   * Publicación final, en este orden:
+   *   1) crea el vehículo,
+   *   2) sube las fotos y las registra en el vehículo,
+   *   3) recién entonces crea el aviso (listing) y queda visible.
+   *
+   * El orden importa: antes el aviso se creaba primero y las fotos se subían
+   * después, con el error escondido. Si la subida fallaba, el auto quedaba
+   * publicado y visible SIN NINGUNA FOTO (esas eran las tarjetas que aparecían
+   * como "Sin foto"). Ahora, si las fotos no se pueden subir, se avisa y el aviso
+   * no se publica a medias.
+   */
   const handlePublish = async () => {
     setLoading(true);
     setError("");
@@ -341,6 +366,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       //    e incluyendo solo los campos que el usuario cargó).
       const vehiclePayload = {
         brand: vehicleForm.brand, model: vehicleForm.model, year: Number(vehicleForm.year),
+        ...(vehicleForm.category && { category: vehicleForm.category }),
         ...(vehicleForm.plate && { plate: vehicleForm.plate }),
         ...(vehicleForm.color && { color: vehicleForm.color }),
         seats: Number(vehicleForm.seats) || undefined,
@@ -359,7 +385,21 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(vehicleForm.observations && { observations: vehicleForm.observations }),
       };
       const vehicle = await createVehicle(vehiclePayload);
-      // 2) Con el id del vehículo creado, armamos y creamos el listing (el aviso).
+
+      // 2) Subimos las fotos y las registramos como media del vehículo. Si esto
+      //    falla, se corta acá: mejor avisar que publicar un aviso sin fotos.
+      try {
+        const photoUrls = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
+        await Promise.all(photoUrls.map(url => createMediaAsset({
+          entityType: "vehicle", entityId: vehicle.id, kind: "VEHICLE_PHOTO", url,
+        })));
+      } catch (photoError) {
+        throw new Error(
+          `${photoError.message || "No pudimos subir las fotos"}. Tu vehículo quedó guardado: reintentá la publicación desde "Mis autos".`,
+        );
+      }
+
+      // 3) Con las fotos ya cargadas, se crea el aviso y queda visible.
       const listingPayload = {
         vehicleId: vehicle.id,
         title: listingForm.title || `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`,
@@ -370,37 +410,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(listingForm.longitude && { longitude: listingForm.longitude }),
         status: "ACTIVE",
       };
-      const listing = await createListing(listingPayload);
-      // 3) Subimos las fotos a Cloudinary y las registramos como media del vehículo.
-      let photoUrls = photos.map(p => p.url);
-      try {
-        const uploaded = await Promise.all(photos.map(p => uploadImageToCloudinary(p.url)));
-        photoUrls = uploaded;
-        await Promise.all(photoUrls.map(url => createMediaAsset({ entityType: "vehicle", entityId: vehicle.id, kind: "VEHICLE_PHOTO", url })));
-      } catch {}
-      // 4) Guardamos una copia local del auto para que aparezca al toque en la app.
-      const savedCar = {
-        id: listing?.id || `local_${Date.now()}`,
-        brand: vehicleForm.brand, model: vehicleForm.model, year: Number(vehicleForm.year),
-        price_per_day: Number(listingForm.pricePerDay),
-        locationText: listingForm.locationText, location: listingForm.locationText,
-        lat: listingForm.latitude, lng: listingForm.longitude,
-        transmission: vehicleForm.transmission, fuel: vehicleForm.fuel,
-        seats: Number(vehicleForm.seats), doors: Number(vehicleForm.doors),
-        color: vehicleForm.color, photos: photoUrls, available: true, owner_id: user?.id,
-        description: listingForm.description,
-        bluetooth: vehicleForm.bluetooth, rearCamera: vehicleForm.rearCamera, parkingSensors: vehicleForm.parkingSensors,
-        horsePower: vehicleForm.horsePower ? Number(vehicleForm.horsePower) : null,
-        engineDisplacementCC: vehicleForm.engineDisplacementCC ? Number(vehicleForm.engineDisplacementCC) : null,
-        trunkCapacityLiters: vehicleForm.trunkCapacityLiters ? Number(vehicleForm.trunkCapacityLiters) : null,
-        fuelConsumptionLitersPer100Km: vehicleForm.fuelConsumptionLitersPer100Km ? Number(vehicleForm.fuelConsumptionLitersPer100Km) : null,
-        weightKg: vehicleForm.weightKg ? Number(vehicleForm.weightKg) : null,
-      };
-      const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
-      localStorage.setItem("fw_my_cars", JSON.stringify([...myCars, savedCar]));
+      await createListing(listingPayload);
       setDone(true);
     } catch (err) {
-      setError(err.message || "Error al publicar.");
+      // El backend responde con un error identificable cuando la cuenta no está
+      // verificada: se explica qué hacer en vez de mostrar el error crudo.
+      if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
+        setNeedsVerification(true);
+        setError("Para publicar un auto necesitás verificar tu cuenta (teléfono, DNI y licencia).");
+      } else {
+        setError(err.message || "Error al publicar.");
+      }
     } finally {
       setLoading(false);
     }
@@ -420,8 +440,14 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </svg>
         </div>
         <div style={s.successTitle}>Auto publicado</div>
-        <div style={s.successSub}>Tu vehículo fue creado y está activo en la plataforma.<br />Ya es visible para otros usuarios.</div>
-        <button style={{ ...s.btn, maxWidth: 200, margin: "0 auto", flex: "none" }} onClick={() => navigate("/")}>Ver publicaciones</button>
+        <div style={s.successSub}>
+          Tu auto ya está publicado y visible para otros usuarios.<br />
+          Desde "Mis autos" podés bloquear las fechas en las que no esté disponible.
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>Ir a mis autos</button>
+          <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>Ver el inicio</button>
+        </div>
       </div>
     </div>
   );
@@ -477,6 +503,18 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
       {error && <div style={s.error}>{error}</div>}
 
+      {/* La cuenta sin verificar es el motivo más común de que publicar falle:
+          se ofrece el camino para resolverlo en vez de dejar solo el error. */}
+      {(needsVerification || !isVerified) && (
+        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 13, color: "#9a3412" }}>
+            Para publicar un auto tu cuenta tiene que estar verificada (teléfono, DNI y licencia).
+          </div>
+          <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            onClick={() => navigate("/kyc")}>Verificar ahora</button>
+        </div>
+      )}
+
       {/* PASO 0 */}
       {step === 0 && (
         <div style={cardStyle}>
@@ -493,6 +531,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={s.field}>
               <label style={s.label}>Año *</label>
               <input style={s.input} type="number" min="2000" max="2025" value={vehicleForm.year} onChange={(e) => setV("year", e.target.value)} />
+            </div>
+          </div>
+
+          {/* Categoría: alimenta el filtro por categoría del inicio y del buscador. */}
+          <div style={s.field}>
+            <label style={s.label}>Categoría *</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {CATEGORIES.map(c => chipBtn(c.label, CATEGORIES.find(x => x.id === vehicleForm.category)?.label, () => setV("category", c.id)))}
+            </div>
+            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+              Es lo que permite encontrar tu auto cuando alguien filtra por tipo de vehículo.
             </div>
           </div>
 
@@ -749,6 +798,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           )}
           {[
             ["Vehículo", `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
+            ["Categoría", CATEGORIES.find(c => c.id === vehicleForm.category)?.label || "—"],
             ["Color", vehicleForm.color],
             ["Transmisión", vehicleForm.transmission],
             ["Combustible", vehicleForm.fuel],

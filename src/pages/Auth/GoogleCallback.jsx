@@ -1,34 +1,62 @@
 // ============================================================================
 //  GoogleCallback — Pantalla intermedia del login con Google
 // ----------------------------------------------------------------------------
-//  Google, tras autenticar al usuario, lo redirige a esta ruta con un "token"
-//  en la URL. Acá tomamos ese token, iniciamos sesión con él y, si todo va
-//  bien, mandamos al inicio. Es una pantalla de paso ("Iniciando sesión...").
+//  Google, tras autenticar al usuario, lo redirige acá con un token en la URL.
+//
+//  Ojo: ese token puede ser de DOS tipos, y el backend lo aclara con el
+//  parámetro `pending`:
+//   - sin `pending`             → sesión completa, se entra a la app.
+//   - pending=complete_profile  → token de onboarding: Google no informa la
+//                                 fecha de nacimiento, y hasta cargarla (es
+//                                 obligatoria, +18) la sesión no está abierta.
+//
+//  Antes se trataba a los dos igual: con el token de onboarding se pedía
+//  /users/me, esa ruta lo rechazaba con 401, y la app cerraba la sesión y volvía
+//  al login. Eso es lo que hacía imposible entrar con Google.
 // ============================================================================
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function GoogleCallback() {
   const [params] = useSearchParams();
   const { loginWithGoogleToken } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
+  const handled = useRef(false); // evita procesar el token dos veces
 
-  // Al cargar: leemos el token de la URL e iniciamos sesión con él.
+  const token = params.get("token");
+  const pending = params.get("pending");
+  const oauthError = params.get("error"); // Google puede volver con un error en la URL
+
+  // Errores que se saben antes de llamar a nadie: se calculan en el render.
+  const initialError = oauthError
+    ? "Google canceló el inicio de sesión. Probá de nuevo."
+    : !token
+      ? "No recibimos el token de Google. Probá iniciar sesión de nuevo."
+      : "";
+  const [loginError, setLoginError] = useState("");
+  const error = initialError || loginError;
+
   useEffect(() => {
-    const token = params.get("token");
-    if (!token) { setError("Error al iniciar sesión con Google."); return; }
-    loginWithGoogleToken(token).then((result) => {
-      if (result.success) navigate("/", { replace: true });
-      else setError(result.error);
+    if (handled.current || initialError) return;
+    handled.current = true;
+
+    loginWithGoogleToken(token, pending).then((result) => {
+      if (!result.success) { setLoginError(result.error); return; }
+      // Falta la fecha de nacimiento: primero completar el perfil.
+      navigate(result.pending === "complete_profile" ? "/complete-profile" : "/", { replace: true });
     });
-  }, []);
+  }, [token, pending, initialError, loginWithGoogleToken, navigate]);
 
   if (error) return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:12, padding:"24px 32px", color:"#b91c1c" }}>
-        {error}
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <div style={{ maxWidth:420, textAlign:"center" }}>
+        <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:12, padding:"20px 24px", color:"#b91c1c", fontSize:14, marginBottom:20 }}>
+          {error}
+        </div>
+        <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"#2563eb", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
+          Volver al login
+        </Link>
       </div>
     </div>
   );

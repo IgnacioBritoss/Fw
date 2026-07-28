@@ -8,7 +8,7 @@
 //  El resto de secciones son "próximamente". Editar un dato lo guarda en el
 //  backend y en la sesión, así se ve al instante en el perfil.
 // ============================================================================
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -49,10 +49,15 @@ const loadPrefs = () => {
 };
 
 export default function Settings() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, refreshUser, isVerified } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [section, setSection] = useState("cuenta");
+
+  // Estado real de la verificación desde el backend (no marcas del navegador).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshUser(); }, []);
+  const checklist = user?.verification?.checklist || {};
   const [prefs, setPrefs] = useState({ emailNotif: true, pushNotif: true, offers: true, twofa: false, dark: false, ...loadPrefs() });
 
   // Cambia una preferencia, la guarda y aplica su efecto real (modo oscuro,
@@ -202,7 +207,12 @@ export default function Settings() {
                   <Field label="Apellido" value={lastName} fieldKey="lastName" />
                   <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}><Field label="Email" value={user?.email} fieldKey="email" type="email" /></div>
                   <Field label="Teléfono" value={user?.phone} fieldKey="phone" />
-                  <Field label="Fecha de nacimiento" value={user?.birthdate} fieldKey="birthdate" />
+                  {/* La fecha de nacimiento la valida el backend al registrarse y
+                      no se puede cambiar después (de ahí editable={false}). Antes
+                      leía `birthdate`, un campo que la API nunca devuelve, y por
+                      eso siempre aparecía vacía. */}
+                  <Field label="Fecha de nacimiento" editable={false} fieldKey="dateOfBirth"
+                    value={user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("es-AR") : ""} />
                 </div>
               </div>
 
@@ -226,24 +236,44 @@ export default function Settings() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Verificación de identidad</div>
                 <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 18 }}>Subí tu documentación para verificar tu cuenta</div>
 
+                {/* Estado REAL de la verificación (GET /verification/me/status).
+                    Antes se leían marcas guardadas en el navegador: acá decía
+                    "Verificado" y el servidor igual rechazaba publicar y reservar. */}
                 <VerifRow
-                  title="Documento (DNI)"
-                  desc="Frente, dorso y selfie"
-                  verified={user?.dniVerified === true}
+                  title="Email"
+                  desc="Confirmación de tu dirección de correo"
+                  verified={checklist.emailVerified === true}
+                  onVerify={() => navigate("/verify-email")}
+                />
+                <VerifRow
+                  title="Teléfono"
+                  desc="Código de verificación por SMS"
+                  verified={checklist.phoneVerified === true}
                   onVerify={() => navigate("/kyc")}
                 />
                 <VerifRow
-                  title="Licencia de conducir"
-                  desc="Licencia vigente, ambos lados"
-                  verified={user?.licenseVerified === true}
+                  title="DNI y licencia de conducir"
+                  desc="Frente y dorso de ambos documentos"
+                  verified={checklist.documentsSubmitted === true}
                   onVerify={() => navigate("/kyc")}
+                />
+                <VerifRow
+                  title="Fecha de nacimiento"
+                  desc="Necesaria para validar que sos mayor de 18"
+                  verified={checklist.dateOfBirthProvided === true}
+                  onVerify={() => navigate("/complete-profile")}
                   last
                 />
 
-                {(user?.dniVerified === true && user?.licenseVerified === true) && (
+                {isVerified ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
                     <Svg d={<path d="M20 6L9 17l-5-5" />} color="#16a34a" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>Tu cuenta está completamente verificada.</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>Tu cuenta está completamente verificada: ya podés publicar y reservar.</span>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
+                    <Svg d={<><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>} color="#ea580c" />
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#9a3412" }}>Completá los pasos pendientes para poder publicar autos y reservar.</span>
                   </div>
                 )}
               </div>

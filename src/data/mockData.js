@@ -2,15 +2,20 @@
 //  mockData.js — Datos de PRUEBA (autos, reseñas, dueños y mensajes de ejemplo)
 // ----------------------------------------------------------------------------
 //  Estos datos "de mentira" sirven para que la app tenga contenido de ejemplo
-//  aunque el backend no tenga autos cargados (útil para la demo y el desarrollo).
-//  Al arrancar, initMockCars() los deja guardados en localStorage bajo la clave
-//  "fw_all_cars", para que otras pantallas los puedan leer.
+//  cuando el backend todavía no tiene ningún auto publicado (para la demo y el
+//  desarrollo). En cuanto hay publicaciones reales, dejan de mostrarse.
+//
+//  Las pantallas los importan directamente desde acá (ver hooks/useListings.js).
+//  Antes también se guardaba una copia en el navegador que se mezclaba con los
+//  autos reales: por eso aparecían autos duplicados o que ya no existían.
 // ============================================================================
 
 // Lista de autos de ejemplo con todos sus datos y especificaciones técnicas.
+// `isMock: true` los marca como datos de ejemplo: las pantallas solo los muestran
+// cuando el backend todavía no tiene ninguna publicación, y no se pueden reservar.
 export const mockCars = [
   {
-    id: "1",
+    id: "1", isMock: true,
     brand: "Toyota", model: "Corolla", year: 2021,
     category: "Sedan", price_per_day: 8500,
     location: "Palermo, CABA", lat: -34.5885, lng: -58.4315,
@@ -26,7 +31,7 @@ export const mockCars = [
     specs: { baul_litros: 371, puertas: 4, potencia_cv: 122, consumo_mixto: "6.8 l/100km", traccion: "Delantera", largo_mm: 4630, ancho_mm: 1780, peso_kg: 1365, bluetooth: "Sí", camara_reversa: "Sí", sensor_estacionamiento: "Traseros" },
   },
   {
-    id: "2",
+    id: "2", isMock: true,
     brand: "Volkswagen", model: "T-Cross", year: 2022,
     category: "SUV", price_per_day: 12000,
     location: "Belgrano, CABA", lat: -34.5621, lng: -58.4567,
@@ -42,7 +47,7 @@ export const mockCars = [
     specs: { baul_litros: 373, puertas: 5, potencia_cv: 116, consumo_mixto: "6.5 l/100km", traccion: "Delantera", largo_mm: 4198, ancho_mm: 1760, peso_kg: 1280, bluetooth: "Sí", camara_reversa: "Sí", sensor_estacionamiento: "Delanteros y traseros" },
   },
   {
-    id: "3",
+    id: "3", isMock: true,
     brand: "Fiat", model: "500", year: 2020,
     category: "Sedan", price_per_day: 6000,
     location: "San Isidro, GBA Norte", lat: -34.4731, lng: -58.5270,
@@ -88,8 +93,7 @@ export const mockMessages = [
   { id: "msg3", from: "2", to: "current_user", text: "No, solo el DNI y la licencia. Nos vemos!", time: "10:36" },
 ];
 
-// Guarda los autos de ejemplo en localStorage para que estén disponibles al
-// arrancar la app. Se llama una vez desde AuthProvider.
-export const initMockCars = () => {
-  localStorage.setItem("fw_all_cars", JSON.stringify(mockCars));
-};
+// Se conserva por compatibilidad con las pantallas que la llamaban al arrancar.
+// Ya no guarda nada: los autos de ejemplo se leen directamente de este archivo,
+// sin copias en el navegador que se desincronicen con el backend.
+export const initMockCars = () => {};

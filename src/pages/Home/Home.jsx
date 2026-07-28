@@ -2,125 +2,86 @@
 //  Home — Pantalla de INICIO
 // ----------------------------------------------------------------------------
 //  Es la portada de la app. Muestra:
-//   - Un "hero" con buscador por ubicación.
-//   - Categorías de autos (Sedan, SUV, etc.) que actúan como filtros.
-//   - La grilla de autos destacados, con opción de verlos en Lista o en Mapa.
-//   - Una sección de "¿cómo funciona?".
-//  Trae las publicaciones del backend (getListings) y, si no hay, usa los
-//  autos de ejemplo (mockCars). También suma los autos publicados localmente.
+//   - Un "hero" con buscador por ubicación Y FECHAS (retiro / devolución).
+//   - Categorías de autos (Sedan, SUV, etc.), que ahora filtran de verdad.
+//   - La grilla de autos, en Lista o en Mapa, con el corazón de favoritos.
+//
+//  Qué se arregló acá:
+//   · Las fechas del buscador eran texto fijo ("18 dic · 10:00"): no filtraban
+//     nada. Ahora son dos selectores reales y el backend descarta los autos ya
+//     reservados u ocupados en ese rango.
+//   · Las categorías comparaban contra un campo que el backend no devolvía, así
+//     que las tarjetas quedaban sin precio ("Ver autos →") y al tocarlas no
+//     aparecía ningún auto. Ahora la categoría se guarda en el vehículo.
+//   · Los autos de ejemplo se mezclaban siempre con los publicados. Ahora solo
+//     aparecen si todavía no hay ninguna publicación.
+//   · El corazón de favoritos no se podía tocar: el clic abría la publicación.
 // ============================================================================
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useAuth } from "../../context/AuthContext";
-import { getListings } from "../../services/api";
-import { mockCars } from "../../data/mockData";
+import { useListings } from "../../hooks/useListings";
+import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
+import FavoriteButton from "../../components/FavoriteButton";
 
-// Categorías para el filtro rápido de arriba.
-const CATEGORIES = [
-  { id: "Todos", label: "Todos" },
-  { id: "Sedan", label: "Sedan" },
-  { id: "SUV", label: "SUV" },
-  { id: "Pickup", label: "Pickup" },
-  { id: "Eléctrico", label: "Eléctrico" },
-];
-
-const CATEGORY_CARDS = [
-  { id: "Sedan", label: "Sedan" },
-  { id: "SUV", label: "SUV" },
-  { id: "Berlina", label: "Berlinas" },
-  { id: "Pickup", label: "Pickup" },
-  { id: "Eléctrico", label: "Eléctricos" },
-  { id: "Premium", label: "Premium" },
-];
-
-// Traducciones de los códigos del backend (en inglés) a texto para mostrar.
-const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
-const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
-
-// El backend y los datos de ejemplo tienen formatos distintos. Esta función
-// "normaliza" una publicación a un formato único que usa toda la pantalla,
-// tolerando nombres alternativos de cada campo (ej: pricePerDay o price_per_day).
-function normalizeListing(l) {
-  const v = l.vehicle || {};
-  return {
-    id: l.id,
-    brand: v.brand || l.brand || "",
-    model: v.model || l.model || "",
-    year: v.year || l.year || "",
-    price_per_day: l.pricePerDay || l.price_per_day || 0,
-    locationText: l.locationText || l.location || "",
-    location: l.locationText || l.location || "",
-    lat: l.latitude ?? l.lat,
-    lng: l.longitude ?? l.lng,
-    transmission: TRANSMISSION_LABELS[v.transmission] || v.transmission || l.transmission || "",
-    fuel: FUEL_LABELS[v.fuelType] || v.fuelType || l.fuel || "",
-    seats: v.seats || l.seats,
-    doors: v.doors || l.doors,
-    photos: l.photos || v.photos || [],
-    available: (l.status === "ACTIVE" || l.available !== false) && l.status !== "DELETED",
-    is_verified: l.is_verified || false,
-    rating: l.rating || 0,
-    category: l.category || v.category || "",
-    description: l.description || "",
-    owner_id: l.ownerId || l.owner_id,
-  };
-}
+// Fecha de hoy / mañana en formato YYYY-MM-DD, para los selectores de fecha.
+const toInputDate = (date) => date.toISOString().slice(0, 10);
+const todayInput = () => toInputDate(new Date());
+const tomorrowInput = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return toInputDate(d);
+};
 
 export default function Home() {
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const { user } = useAuth();
+
   const [search, setSearch] = useState("");
-  const [cat, setCat] = useState("Todos");
+  const [cat, setCat] = useState("");            // "" = todas las categorías
+  const [pickup, setPickup] = useState("");      // fecha de retiro (YYYY-MM-DD)
+  const [dropoff, setDropoff] = useState("");    // fecha de devolución
   const [view, setView] = useState("lista");
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [dateError, setDateError] = useState("");
+
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
-  const [listings, setListings] = useState(mockCars);
-  const [loadingListings, setLoadingListings] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Al cargar la pantalla: pide las publicaciones al backend. Si vienen datos,
-  // los normaliza y les suma los autos publicados localmente (sin duplicar).
-  // Si falla o no hay datos, se queda con los de ejemplo + los locales.
-  useEffect(() => {
-    const myCars = JSON.parse(localStorage.getItem("fw_my_cars") || "[]");
-
-    getListings()
-  .then((data) => {
-    const items = Array.isArray(data) ? data : (data?.data ?? []);
-    if (items.length > 0) {
-      const normalized = items.map(normalizeListing);
-      const apiIds = new Set(normalized.map(c => c.id));
-      const extra = myCars.filter(c => !apiIds.has(c.id));
-      setListings([...normalized, ...extra]);
-    } else {
-      setListings(prev => {
-        const existingIds = new Set(prev.map(c => c.id));
-        return [...prev, ...myCars.filter(c => !existingIds.has(c.id))];
-      });
+  /**
+   * Filtros que se envían al backend. Las fechas se mandan solo si están las
+   * dos y son coherentes: es lo que hace que el filtro por fechas realmente
+   * descarte los autos ocupados (el servidor mira reservas y bloqueos).
+   */
+  const serverFilters = useMemo(() => {
+    const filters = { limit: 50 };
+    if (cat) filters.category = cat;
+    if (pickup && dropoff && new Date(dropoff) > new Date(pickup)) {
+      filters.startDate = new Date(`${pickup}T10:00:00`).toISOString();
+      filters.endDate = new Date(`${dropoff}T10:00:00`).toISOString();
     }
-  })
-      .catch(() => {
-        setListings(prev => {
-          const existingIds = new Set(prev.map(c => c.id));
-          return [...prev, ...myCars.filter(c => !existingIds.has(c.id))];
-        });
-      });
-  }, []);
+    return filters;
+  }, [cat, pickup, dropoff]);
 
-  // Lista final que se muestra: aplica el texto buscado, la categoría elegida
-  // y descarta los autos no disponibles.
-  const filtered = listings.filter(c => {
-    const matchSearch = !search ||
-      c.location?.toLowerCase().includes(search.toLowerCase()) ||
-      c.locationText?.toLowerCase().includes(search.toLowerCase()) ||
-      c.brand?.toLowerCase().includes(search.toLowerCase()) ||
-      c.model?.toLowerCase().includes(search.toLowerCase());
-    const matchCat = cat === "Todos" || c.category === cat;
-    return matchSearch && matchCat && c.available !== false;
-  });
+  const { cars, loading, error, showingMocks } = useListings(serverFilters);
+
+  // Sobre lo que trajo el backend se aplica la búsqueda por texto, que responde
+  // sin esperar otra vuelta al servidor.
+  const filtered = useMemo(() => filterCars(cars, { text: search }), [cars, search]);
+
+  // Avisa si el rango de fechas está al revés o incompleto.
+  useEffect(() => {
+    if (pickup && dropoff && new Date(dropoff) <= new Date(pickup)) {
+      setDateError("La devolución tiene que ser después del retiro.");
+    } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
+      setDateError("Completá las dos fechas para filtrar por disponibilidad.");
+    } else {
+      setDateError("");
+    }
+  }, [pickup, dropoff]);
 
   // Carga la librería del mapa (Leaflet) una sola vez.
   useEffect(() => {
@@ -144,6 +105,52 @@ export default function Home() {
     }
   }, [view]);
 
+  // Dibuja en el mapa un pin + un círculo de "zona aproximada" por cada auto
+  // filtrado, con un popup que lleva al detalle. Borra los pines anteriores.
+  const addMarkers = useCallback((map, L) => {
+    if (!map || !L) return;
+    Object.values(markersRef.current).forEach(m => {
+      try {
+        map.removeLayer(m.marker || m);
+        if (m.circle) map.removeLayer(m.circle);
+      } catch { /* la capa ya no estaba en el mapa */ }
+    });
+    markersRef.current = {};
+
+    filtered.forEach(car => {
+      if (!car.lat || !car.lng) return;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:14px;height:14px;background:#2563eb;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
+        iconAnchor: [7, 7],
+      });
+      const circle = L.circle([car.lat, car.lng], {
+        radius: 600, color: "#2563eb", fillColor: "#bfdbfe",
+        fillOpacity: 0.18, weight: 1.5, interactive: false,
+      }).addTo(map);
+      const marker = L.marker([car.lat, car.lng], { icon });
+      marker.bindPopup(L.popup({ closeButton: false, maxWidth: 220 }).setContent(`
+        <div style="cursor:pointer;font-family:sans-serif" onclick="window.__fwOpen('${car.id}')">
+          <div style="width:100%;height:120px;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#e5e7eb;">
+            ${car.photos?.length > 0
+              ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
+              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
+          </div>
+          <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">${car.brand} ${car.model} ${car.year}</div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
+          <div style="font-weight:700;font-size:15px;color:#2563eb">
+            $${priceOf(car).toLocaleString()}
+            <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
+          </div>
+          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">Ver auto</div>
+        </div>
+      `));
+      marker.addTo(map);
+      markersRef.current[car.id] = { marker, circle };
+    });
+    window.__fwOpen = (id) => navigate(`/cars/${id}`);
+  }, [filtered, navigate]);
+
   // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
   useEffect(() => {
     if (view !== "mapa") return;
@@ -156,85 +163,61 @@ export default function Home() {
       mapInstanceRef.current = map;
       addMarkers(map, L);
     };
-    if (window.L) setTimeout(init, 150);
-    else {
-      const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 150); } }, 100);
-    }
-  }, [view, mapLoaded]);
-
-  // Dibuja en el mapa un pin + un círculo de "zona aproximada" por cada auto
-  // filtrado, con un popup que lleva al detalle. Borra los pines anteriores.
-  const addMarkers = useCallback((map, L) => {
-    if (!map || !L) return;
-    Object.values(markersRef.current).forEach(m => {
-      try {
-        map.removeLayer(m.marker || m);
-        if (m.circle) map.removeLayer(m.circle);
-      } catch {}
-    });
-    markersRef.current = {};
-
-    filtered.forEach(car => {
-      if (!car.lat || !car.lng) return;
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="width:14px;height:14px;background:#2563eb;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
-        iconAnchor: [7, 7],
-      });
-      const circle = L.circle([car.lat, car.lng], {
-        radius: 600,
-        color: "#2563eb",
-        fillColor: "#bfdbfe",
-        fillOpacity: 0.18,
-        weight: 1.5,
-        interactive: false,
-      }).addTo(map);
-      const marker = L.marker([car.lat, car.lng], { icon });
-      marker.bindPopup(L.popup({ closeButton: false, maxWidth: 220 }).setContent(`
-        <div style="cursor:pointer;font-family:sans-serif" onclick="window.__fwOpen('${car.id}')">
-          <div style="width:100%;height:120px;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#e5e7eb;">
-            ${car.photos?.length > 0
-              ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
-              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
-          </div>
-          <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">${car.brand} ${car.model} ${car.year}</div>
-          <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location || car.locationText} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
-          <div style="font-weight:700;font-size:15px;color:#2563eb">
-            $${Number(car.price_per_day || car.pricePerDay).toLocaleString()}
-            <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
-          </div>
-          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">Ver auto</div>
-        </div>
-      `));
-      marker.addTo(map);
-      markersRef.current[car.id] = { marker, circle };
-    });
-    window.__fwOpen = (id) => navigate(`/cars/${id}`);
-  }, [filtered, navigate]);
+    if (window.L) { const t = setTimeout(init, 150); return () => clearTimeout(t); }
+    const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 150); } }, 100);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, mapLoaded, isMobile]);
 
   useEffect(() => {
     if (view !== "mapa" || !mapInstanceRef.current || !window.L) return;
     addMarkers(mapInstanceRef.current, window.L);
   }, [filtered, addMarkers, view]);
 
-  // Precio por día de un auto (tolerando los dos nombres de campo posibles).
-  const price = (car) => car.price_per_day || car.pricePerDay || 0;
+  /**
+   * Precio más barato de cada categoría, calculado con los autos que hay. Es lo
+   * que llena el "Desde $X" de las tarjetas de categoría, que antes quedaban
+   * siempre vacías porque el dato de categoría no llegaba.
+   */
+  const priceByCategory = useMemo(() => {
+    const result = {};
+    cars.forEach(car => {
+      if (!car.category || car.available === false) return;
+      const price = priceOf(car);
+      if (!price) return;
+      result[car.category] = result[car.category] ? Math.min(result[car.category], price) : price;
+    });
+    return result;
+  }, [cars]);
 
-  // Precio más barato dentro de una categoría (para mostrar "Desde $X").
-  const minPriceFor = (catId) => {
-    const inCat = listings.filter(c => c.category === catId && c.available !== false);
-    if (!inCat.length) return null;
-    return Math.min(...inCat.map(c => Number(price(c)) || Infinity));
-  };
+  const countByCategory = useMemo(() => {
+    const result = {};
+    cars.forEach(car => {
+      if (!car.category || car.available === false) return;
+      result[car.category] = (result[car.category] || 0) + 1;
+    });
+    return result;
+  }, [cars]);
 
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
+
+  // Manda al buscador con los filtros ya puestos, para no perderlos al cambiar
+  // de pantalla.
+  const goToSearch = () => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (cat) params.set("category", cat);
+    if (pickup) params.set("from", pickup);
+    if (dropoff) params.set("to", dropoff);
+    navigate(`/buscar${params.toString() ? `?${params.toString()}` : ""}`);
+  };
 
   // ─────────────────────────────────────────── Estilos
   const t = {
     content: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1320, margin: "0 auto" },
     hero: { borderRadius: 20, padding: isMobile ? 24 : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: 32 },
     searchRow: { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
-    searchCell: { flex: 1, minWidth: 130, padding: "8px 20px", borderRight: "1px solid #eee" },
+    searchCell: { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
     searchLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
@@ -242,6 +225,7 @@ export default function Home() {
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
     reservar: { background: "#111827", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
     stepCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: 20 },
+    banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 20 },
   };
 
   // ─────────────────────────────────────────── Subcomponentes
@@ -252,23 +236,24 @@ export default function Home() {
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
-        {car.is_verified && (
-          <div style={{ position: "absolute", top: 12, left: 12, background: "#111827", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>✓ Verificado</div>
+        {car.categoryLabel && (
+          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{car.categoryLabel}</div>
         )}
-        <div style={{ position: "absolute", top: 12, right: 12, width: 30, height: 30, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,.12)", fontSize: 14 }}>♡</div>
+        {/* Corazón: es un botón que corta el clic, así no abre la publicación. */}
+        <FavoriteButton listingId={car.id} disabled={car.isMock} />
       </div>
       <div style={{ padding: 16 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
-          {(car.location || car.locationText) && `${car.location || car.locationText} · `}
+          {car.location && `${car.location} · `}
           {car.rating > 0 && `${car.rating} ★ · `}{car.transmission}
         </div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
           {car.fuel && <span style={t.tag}>{car.fuel}</span>}
-          {car.doors && <span style={t.tag}>{car.doors} puertas</span>}
+          {car.seats && <span style={t.tag}>{car.seats} asientos</span>}
         </div>
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${Number(price(car)).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
+          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
           <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Reservar</button>
         </div>
       </div>
@@ -280,27 +265,28 @@ export default function Home() {
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 16 }}>Explorá por categoría</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(6,1fr)", gap: 14, marginBottom: 32 }}>
-        {CATEGORY_CARDS.map((c, i) => {
-          const min = minPriceFor(c.id);
+        {CATEGORIES.map((c) => {
+          const min = priceByCategory[c.id];
+          const count = countByCategory[c.id] || 0;
           const active = cat === c.id;
           return (
-            <div key={i}
-              onClick={() => setCat(active ? "Todos" : c.id)}
+            <div key={c.id}
+              onClick={() => setCat(active ? "" : c.id)}
               style={{
                 background: "#fff",
                 border: active ? "1.5px solid #2563eb" : "1px solid #ececec",
                 borderRadius: 14, padding: "20px 18px", cursor: "pointer",
                 transition: "transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .35s ease",
                 boxShadow: active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)",
-                willChange: "transform",
               }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.10)"; if (!active) e.currentTarget.style.borderColor = "#c7d2fe"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "#ececec"; }}
             >
               <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#2563eb" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
               <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{c.label}</div>
+              {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
               <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
-                {min ? `Desde $${Number(min).toLocaleString()}` : "Ver autos →"}
+                {min ? `Desde $${min.toLocaleString()}` : count > 0 ? `${count} auto${count !== 1 ? "s" : ""}` : "Sin autos por ahora"}
               </div>
             </div>
           );
@@ -316,9 +302,9 @@ export default function Home() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {[
           ["01", "Buscá", "Elegí ubicación y fechas, aplicá filtros."],
-          ["02", "Reservá", "Pagá online con Mercado Pago."],
-          ["03", "Retirá", "Coordiná con el dueño y firmá digital."],
-          ["04", "Disfrutá", "Manejá tranquilo: seguro incluido."],
+          ["02", "Reservá", "El dueño acepta y pagás online."],
+          ["03", "Retirá", "Coordinás la entrega y confirman con el QR."],
+          ["04", "Devolvé", "Al devolver se cierra la reserva y se libera el depósito."],
         ].map(([n, ti, d]) => (
           <div key={n} style={t.stepCard}>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>{n}</div>
@@ -330,43 +316,6 @@ export default function Home() {
     </>
   );
 
-  // Encabezado de la grilla: cantidad de autos y botones Lista/Mapa.
-  const CarsHeader = () => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-      <div>
-        <div style={t.sectionTitle}>Autos destacados en tu zona</div>
-        <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>{filtered.length} auto{filtered.length !== 1 ? "s" : ""} disponibles</div>
-      </div>
-      <div style={{ display: "flex", gap: 6 }}>
-        {[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, l]) => (
-          <button key={k} onClick={() => setView(k)} style={{
-            padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
-            border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
-            background: view === k ? "#2563eb" : "#fff", color: view === k ? "#fff" : "#374151",
-          }}>{l}</button>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Cuerpo de resultados: la grilla de tarjetas (vista Lista) o el contenedor
-  // del mapa (vista Mapa), según lo que haya elegido el usuario.
-  const CarsGrid = () => (
-    loadingListings ? (
-      <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando...</div>
-    ) : view === "lista" ? (
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
-        {filtered.map(car => <CarCard key={car.id} car={car} />)}
-        {filtered.length === 0 && (
-          <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>No se encontraron autos.</div>
-        )}
-      </div>
-    ) : (
-      <div ref={mapRef} style={{ height: isMobile ? "60vh" : "calc(100vh - 240px)", borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid #e5e7eb" }} />
-    )
-  );
-
-  // ─────────────────────────────────────────── Contenido (el Layout provee el sidebar y la topbar)
   return (
     <div style={t.content}>
       {/* Hero */}
@@ -375,33 +324,98 @@ export default function Home() {
         <div style={{ position: "relative" }}>
           <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● BUEN DÍA, {firstName.toUpperCase()}</div>
           <div style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>¿A dónde vas hoy?</div>
-          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>+12.000 autos verificados en toda Argentina</div>
+          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>Elegí las fechas y te mostramos solo los autos libres</div>
 
           <div style={t.searchRow}>
             <div style={t.searchCell}>
               <div style={t.searchLabel}>Dónde</div>
-              <input style={t.searchInput} placeholder="Buenos Aires" value={search} onChange={e => setSearch(e.target.value)} />
+              <input style={t.searchInput} placeholder="Ciudad, barrio o modelo" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
+            {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
             <div style={t.searchCell}>
               <div style={t.searchLabel}>Retiro</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>18 dic · 10:00</div>
+              <input type="date" style={t.searchInput} min={todayInput()} value={pickup}
+                onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) <= new Date(e.target.value)) setDropoff(""); }} />
             </div>
             <div style={t.searchCell}>
               <div style={t.searchLabel}>Devolución</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>22 dic · 10:00</div>
+              <input type="date" style={t.searchInput} min={pickup || tomorrowInput()} value={dropoff}
+                onChange={e => setDropoff(e.target.value)} />
             </div>
             <div style={{ ...t.searchCell, borderRight: "none" }}>
               <div style={t.searchLabel}>Tipo</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>Todos los autos</div>
+              <select style={{ ...t.searchInput, cursor: "pointer" }} value={cat} onChange={e => setCat(e.target.value)}>
+                <option value="">Todos los autos</option>
+                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
             </div>
-            <button style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 12, padding: "14px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", margin: 4 }} onClick={() => setView("lista")}>Buscar autos →</button>
+            <button style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 12, padding: "14px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", margin: 4 }}
+              onClick={goToSearch}>Buscar autos →</button>
           </div>
+          {dateError && (
+            <div style={{ marginTop: 12, fontSize: 13, background: "rgba(255,255,255,.16)", borderRadius: 8, padding: "8px 12px", display: "inline-block" }}>{dateError}</div>
+          )}
         </div>
       </div>
 
+      {/* Avisos de estado: datos de ejemplo o backend caído */}
+      {showingMocks && (
+        <div style={t.banner}>
+          Todavía no hay autos publicados, así que estás viendo <strong>autos de ejemplo</strong>.
+          {" "}En cuanto alguien publique un auto, aparecen los reales.
+        </div>
+      )}
+      {error && !showingMocks && (
+        <div style={{ ...t.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
+      )}
+
       <CategoriesSection />
-      <CarsHeader />
-      <CarsGrid />
+
+      {/* Encabezado de la grilla */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <div style={t.sectionTitle}>
+            {cat ? `Autos ${CATEGORIES.find(c => c.id === cat)?.label}` : "Autos disponibles"}
+          </div>
+          <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
+            {loading ? "Buscando autos..." : `${filtered.length} auto${filtered.length !== 1 ? "s" : ""} disponible${filtered.length !== 1 ? "s" : ""}`}
+            {pickup && dropoff && !dateError && " en las fechas elegidas"}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {(cat || search || pickup || dropoff) && (
+            <button onClick={() => { setCat(""); setSearch(""); setPickup(""); setDropoff(""); }}
+              style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+              Limpiar filtros
+            </button>
+          )}
+          {[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, l]) => (
+            <button key={k} onClick={() => setView(k)} style={{
+              padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
+              border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
+              background: view === k ? "#2563eb" : "#fff", color: view === k ? "#fff" : "#374151",
+            }}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Resultados */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando autos...</div>
+      ) : view === "lista" ? (
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
+          {filtered.map(car => <CarCard key={car.id} car={car} />)}
+          {filtered.length === 0 && (
+            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
+              No se encontraron autos con estos filtros.
+              {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>Probá con otras fechas o con otra categoría.</div>}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div ref={mapRef} style={{ height: isMobile ? "60vh" : "calc(100vh - 240px)", borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid #e5e7eb" }} />
+      )}
+
       <div style={{ height: 28 }} />
       <StepsSection />
     </div>

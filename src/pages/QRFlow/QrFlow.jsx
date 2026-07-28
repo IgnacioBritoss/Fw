@@ -1,13 +1,23 @@
 // ============================================================================
 //  QRFlow — Retiro y devolución del auto con QR / token
 // ----------------------------------------------------------------------------
-//  Cuando se concreta un alquiler, el dueño y el conductor confirman la entrega
-//  (pickup) y la devolución (return) mediante un código QR / token. Esta
-//  pantalla muestra el QR a mostrar y un campo para ingresar el token del otro
-//  y confirmar la operación. Tiene dos modos: "pickup" (retiro) y "return".
+//  Es el momento en que el auto cambia de manos, y funciona como el código de
+//  un envío: uno MUESTRA su código y el otro lo CONFIRMA.
+//
+//   · RETIRO:     el conductor muestra su QR  →  el DUEÑO lo confirma.
+//   · DEVOLUCIÓN: el dueño muestra su QR      →  el CONDUCTOR lo confirma.
+//
+//  Cada uno ve solo lo que le toca, porque el backend entrega a cada parte
+//  únicamente su token y solo en el estado correcto de la reserva.
+//
+//  Qué se arregló acá: la pantalla existía pero no estaba enlazada en la app (la
+//  ruta /qr/:id no existía, así que el botón de "Mis reservas" no llevaba a
+//  ninguna parte), leía los tokens con nombres de campo que el backend no
+//  devuelve, y le mostraba a los dos usuarios el mismo formulario.
 // ============================================================================
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { getBookingTokens, confirmPickup, confirmReturn, getBookingById } from "../../services/api";
 
@@ -17,26 +27,27 @@ const s = {
   title: { fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 6 },
   sub: { fontSize: 14, color: "#6b7280", marginBottom: 28 },
   qrBox: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: 28, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.06)" },
-  tokenDisplay: { background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 18, fontWeight: 700, letterSpacing: 4, color: "#111827", marginBottom: 12 },
+  tokenDisplay: { background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#111827", marginBottom: 12, wordBreak: "break-all" },
   tokenLabel: { fontSize: 12, color: "#9ca3af", marginBottom: 6 },
   input: { width: "100%", padding: "12px 16px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 },
   btn: { width: "100%", padding: "14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   btnDisabled: { width: "100%", padding: "14px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
   successIcon: { width: 72, height: 72, borderRadius: "50%", background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 12, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+  infoBox: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, fontSize: 13, color: "#1e40af", marginBottom: 16 },
   tabRow: { display: "flex", gap: 4, marginBottom: 20, background: "#f3f4f6", borderRadius: 10, padding: 4 },
   tab: { flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };
 
-// Dibuja el QR a partir del token, usando un servicio externo que genera la
-// imagen del código. Si falla la carga, oculta la imagen.
+// Dibuja el QR a partir del token con un servicio que genera la imagen. Si no
+// carga, queda el token en texto, que sirve igual.
 function QRDisplay({ token }) {
   if (!token) return null;
   const size = 180;
   return (
     <img
       src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(token)}&bgcolor=ffffff&color=000000&qzone=1`}
-      alt="QR Code"
+      alt="Código QR"
       style={{ width: size, height: size, borderRadius: 10, display: "block", margin: "0 auto 12px" }}
       onError={(e) => { e.target.style.display = "none"; }}
     />
@@ -47,6 +58,7 @@ export default function QRFlow() {
   const { bookingId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isMobile } = useIsMobile();
   const [mode, setMode] = useState(searchParams.get("mode") === "return" ? "return" : "pickup");
   const [booking, setBooking] = useState(null);
@@ -57,17 +69,30 @@ export default function QRFlow() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState(null);
 
-  // Al cargar: trae la reserva y sus tokens de retiro/devolución en paralelo.
-  useEffect(() => {
+  // Trae la reserva y los tokens que le corresponden a este usuario.
+  const load = () => {
+    setLoading(true);
     Promise.all([getBookingById(bookingId), getBookingTokens(bookingId).catch(() => null)])
       .then(([b, t]) => { setBooking(b); setTokens(t); })
-      .catch(() => setError("No se pudo cargar la reserva."))
+      .catch((err) => setError(err.message || "No se pudo cargar la reserva."))
       .finally(() => setLoading(false));
-  }, [bookingId]);
+  };
 
-  // Confirma el retiro o la devolución (según el modo) con el token ingresado.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [bookingId]);
+
+  const isOwner = booking?.ownerId === user?.id;
+
+  // Quién confirma cada paso: el retiro lo confirma el dueño (con el token del
+  // conductor) y la devolución la confirma el conductor (con el token del dueño).
+  const iConfirm = mode === "pickup" ? isOwner : !isOwner;
+
+  // El token propio a mostrar: el conductor tiene el de retiro y el dueño el de
+  // devolución. El backend solo lo entrega en el estado correcto de la reserva.
+  const myToken = mode === "pickup" ? tokens?.pickupQrToken : tokens?.returnQrToken;
+
   const handleConfirm = async () => {
-    if (!tokenInput.trim()) { setError("Ingresá el token."); return; }
+    if (!tokenInput.trim()) { setError("Ingresá el código que te muestra la otra persona."); return; }
     setConfirming(true);
     setError(null);
     try {
@@ -75,55 +100,106 @@ export default function QRFlow() {
       else await confirmReturn(bookingId, tokenInput.trim());
       setConfirmed(true);
     } catch (err) {
-      setError(err.message || "Token inválido o expirado.");
+      setError(err.message || "El código no es válido o la reserva no está en el estado correcto.");
     } finally {
       setConfirming(false);
     }
   };
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#9ca3af" }}>Cargando...</div>;
-  if (!booking && error) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>{error}<br /><button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>Mis reservas</button></div>;
+
+  if (!booking) return (
+    <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
+      {error || "No encontramos la reserva."}
+      <br />
+      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>Mis reservas</button>
+    </div>
+  );
 
   if (confirmed) {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
         <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         <div style={s.title}>{mode === "pickup" ? "Retiro confirmado" : "Devolución confirmada"}</div>
-        <div style={s.sub}>{mode === "pickup" ? "El vehículo fue entregado al conductor." : "La devolución fue registrada. Reserva completada."}</div>
+        <div style={s.sub}>
+          {mode === "pickup"
+            ? "El auto quedó entregado y el alquiler está en curso."
+            : "La devolución quedó registrada y la reserva está completada."}
+        </div>
         <button style={{ padding: "12px 28px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>Ver mis reservas</button>
       </div>
     );
   }
 
-  const activeToken = mode === "pickup" ? (tokens?.pickupToken || tokens?.pickupTokenPreview) : (tokens?.returnToken || tokens?.returnTokenPreview);
+  const vehicle = booking?.listing?.vehicle || booking?.vehicle || {};
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.title}>{mode === "pickup" ? "Retiro del vehículo" : "Devolución del vehículo"}</div>
-      <div style={s.sub}>{mode === "pickup" ? "Mostrá el QR al conductor o ingresá el token." : "Mostrá el QR o ingresá el token para confirmar."}</div>
+      <div style={s.sub}>
+        {`${vehicle.brand || ""} ${vehicle.model || ""}`.trim()}
+        {" — "}
+        {iConfirm
+          ? "Pedile el código a la otra persona e ingresalo acá."
+          : "Mostrale este código a la otra persona."}
+      </div>
+
       <div style={s.tabRow}>
         {[["pickup", "Retiro"], ["return", "Devolución"]].map(([k, l]) => (
           <button key={k} style={{ ...s.tab, background: mode === k ? "#fff" : "transparent", color: mode === k ? "#2563eb" : "#6b7280", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
             onClick={() => { setMode(k); setError(null); setTokenInput(""); }}>{l}</button>
         ))}
       </div>
-      {activeToken && (
-        <div style={s.qrBox}>
-          <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 12, fontWeight: 600 }}>{mode === "pickup" ? "QR de retiro" : "QR de devolución"}</div>
-          <QRDisplay token={activeToken} />
-          <div style={s.tokenLabel}>Token</div>
-          <div style={s.tokenDisplay}>{activeToken}</div>
-          <div style={{ fontSize: 12, color: "#9ca3af" }}>Mostrá este código al {mode === "pickup" ? "conductor" : "dueño"}.</div>
+
+      {/* MI CÓDIGO — solo para quien tiene que mostrarlo */}
+      {!iConfirm && (
+        myToken ? (
+          <div style={s.qrBox}>
+            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 12, fontWeight: 600 }}>
+              {mode === "pickup" ? "Tu QR de retiro" : "Tu QR de devolución"}
+            </div>
+            <QRDisplay token={myToken} />
+            <div style={s.tokenLabel}>Código</div>
+            <div style={s.tokenDisplay}>{myToken}</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>
+              Mostrale este código al {mode === "pickup" ? "dueño" : "conductor"} para confirmar.
+            </div>
+          </div>
+        ) : (
+          <div style={s.infoBox}>
+            Todavía no hay código para este paso.
+            {mode === "pickup"
+              ? " El dueño tiene que marcar el auto como listo para retiro."
+              : " El código de devolución aparece cuando el alquiler está en curso."}
+          </div>
+        )
+      )}
+
+      {/* CONFIRMAR — solo para quien tiene que confirmar */}
+      {iConfirm && (
+        <div style={{ ...s.qrBox, textAlign: "left" }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827", marginBottom: 6 }}>
+            Confirmar {mode === "pickup" ? "el retiro" : "la devolución"}
+          </div>
+          <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 12 }}>
+            Ingresá el código que aparece en la pantalla del {mode === "pickup" ? "conductor" : "dueño"}.
+          </div>
+          <input style={s.input} placeholder="Pegá o escribí el código..." value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleConfirm()} />
+          {error && <div style={s.errorBox}>{error}</div>}
+          <button style={confirming ? s.btnDisabled : s.btn} disabled={confirming} onClick={handleConfirm}>
+            {confirming ? "Confirmando..." : mode === "pickup" ? "Confirmar retiro" : "Confirmar devolución"}
+          </button>
         </div>
       )}
-      <div style={{ ...s.qrBox, textAlign: "left" }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: "#111827", marginBottom: 12 }}>Confirmar con token</div>
-        <input style={s.input} placeholder="Ingresá el token..." value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleConfirm()} />
-        {error && <div style={s.errorBox}>{error}</div>}
-        <button style={confirming ? s.btnDisabled : s.btn} disabled={confirming} onClick={handleConfirm}>
-          {confirming ? "Confirmando..." : mode === "pickup" ? "Confirmar retiro" : "Confirmar devolución"}
-        </button>
-      </div>
+
+      {!iConfirm && error && <div style={s.errorBox}>{error}</div>}
+
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#2563eb", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
+        Actualizar estado
+      </button>
+      <br />
       <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>← Volver a mis reservas</button>
     </div>
   );

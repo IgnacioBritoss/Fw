@@ -5,6 +5,7 @@
 //  y el estado de sus verificaciones (DNI, licencia, email, teléfono). Todo se
 //  deriva del objeto `user`, así que lo que se edita en Ajustes se refleja acá.
 // ============================================================================
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -19,9 +20,15 @@ const StatusBadge = ({ ok }) => (
 );
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, refreshUser, isVerified } = useAuth();
   const { isMobile } = useIsMobile();
   const navigate = useNavigate();
+
+  // Al abrir el perfil se relee el estado real de la cuenta desde el backend,
+  // así lo que se muestra acá es lo mismo que el servidor va a exigir al
+  // publicar o reservar (y no una marca guardada en el navegador).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshUser(); }, []);
 
   // Todo se deriva directamente del usuario: lo que se edita en Ajustes se ve acá al instante
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -32,9 +39,13 @@ export default function Profile() {
   const fullName = `${firstName} ${lastName}`.trim() || "Usuario";
   const initials = `${firstName[0] || "U"}${lastName[0] || ""}`.toUpperCase();
   const email = user?.email || "—";
-  const dniVerified = user?.dniVerified === true;
-  const licenseVerified = user?.licenseVerified === true;
-  const fullyVerified = dniVerified && licenseVerified;
+
+  // Checklist REAL de verificación que devuelve el backend.
+  const checklist = user?.verification?.checklist || {};
+  const emailVerified = checklist.emailVerified ?? !!user?.emailVerifiedAt;
+  const phoneVerified = checklist.phoneVerified ?? !!user?.phoneVerifiedAt;
+  const documentsSubmitted = checklist.documentsSubmitted === true;
+  const fullyVerified = isVerified;
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" })
     : "2025";
@@ -55,10 +66,10 @@ export default function Profile() {
       <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>Documentos validados por Freewheel</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
         {[
-          ["Documento (DNI)", dniVerified ? "DNI argentino validado" : "Pendiente de verificación", dniVerified],
-          ["Licencia de conducir", licenseVerified ? "Licencia vigente validada" : "Pendiente de verificación", licenseVerified],
-          ["Email verificado", email, true],
-          ["Teléfono verificado", phone ? `+54 ${phone.slice(0, 2)} ···· ····` : "No cargado", !!phone],
+          ["DNI y licencia", documentsSubmitted ? (fullyVerified ? "Documentación validada" : "Documentación en revisión") : "Pendiente de envío", documentsSubmitted],
+          ["Email verificado", emailVerified ? email : "Pendiente de confirmación", emailVerified],
+          ["Teléfono verificado", phoneVerified ? `+54 ${phone.slice(0, 2)} ···· ····` : (phone ? "Falta confirmar el código" : "No cargado"), phoneVerified],
+          ["Fecha de nacimiento", checklist.dateOfBirthProvided ? "Edad validada (+18)" : "Pendiente", checklist.dateOfBirthProvided === true],
         ].map(([ti, sub, ok]) => (
           <div key={ti} style={t.verifyItem}>
             <div style={{ width: 40, height: 40, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb", flexShrink: 0 }} />
@@ -72,7 +83,15 @@ export default function Profile() {
       </div>
       {!fullyVerified && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18, padding: "14px 16px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
-          <div style={{ fontSize: 13, color: "#9a3412" }}>Te falta verificar {(!dniVerified && !licenseVerified) ? "tu DNI y tu licencia" : !dniVerified ? "tu DNI" : "tu licencia"}.</div>
+          <div style={{ fontSize: 13, color: "#9a3412" }}>
+            Sin la cuenta verificada no podés publicar autos ni reservar.
+            {" "}Te falta: {[
+              !emailVerified && "confirmar el email",
+              !phoneVerified && "confirmar el teléfono",
+              !documentsSubmitted && "enviar DNI y licencia",
+              !checklist.dateOfBirthProvided && "tu fecha de nacimiento",
+            ].filter(Boolean).join(", ") || "que terminemos de revisar tu documentación"}.
+          </div>
           <button onClick={() => navigate("/kyc")} style={{ background: "#ea580c", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Verificar ahora</button>
         </div>
       )}

@@ -12,8 +12,9 @@
 //  Y casi todas van dentro de <Layout> (sidebar + barra superior).
 // ============================================================================
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { FavoritesProvider } from "./context/FavoritesContext";
 import { initTheme } from "./services/theme";
 import { PrivateRoute } from "./components/PrivateRoute";
 import Layout from "./components/Layout";
@@ -40,17 +41,38 @@ import Profile from "./pages/Profile/Profile";
 import Search from "./pages/Search/Search";
 import Settings from "./pages/Settings/Settings";
 import Notifications from "./pages/Notifications/Notifications";
+import Favorites from "./pages/Favorites/Favorites";
+import QrFlow from "./pages/QRFlow/QrFlow";
 
 // Páginas de la app: se muestran dentro del Layout (con sidebar + topbar)
 const app = (el) => <Layout>{el}</Layout>;
 // Páginas privadas dentro del Layout
 const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
 
+// Pantalla para cualquier dirección que no exista. Sin esto, escribir mal una URL
+// (o tocar un link a una ruta que falta) dejaba la pantalla completamente en
+// blanco, sin ningún aviso.
+const NotFound = () => (
+  <div style={{ textAlign: "center", padding: "80px 24px" }}>
+    <div style={{ fontSize: 46, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>404</div>
+    <div style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 8 }}>No encontramos esta página</div>
+    <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>
+      Puede que el link esté viejo o que la publicación ya no exista.
+    </div>
+    <Link to="/" style={{ display: "inline-block", padding: "12px 26px", background: "#2563eb", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+      Volver al inicio
+    </Link>
+  </div>
+);
+
 export default function App() {
   // Al arrancar, aplicamos el modo claro/oscuro guardado por el usuario.
   useEffect(() => { initTheme(); }, []);
   return (
     <AuthProvider>
+      {/* Los favoritos se comparten con toda la app (corazones en las grillas,
+          contador y la pantalla /favoritos), por eso viven en un provider. */}
+      <FavoritesProvider>
       <BrowserRouter>
         <Routes>
           {/* Pantallas de autenticación / onboarding — sin Layout */}
@@ -68,6 +90,9 @@ export default function App() {
           <Route path="/" element={app(<Home />)} />
           <Route path="/buscar" element={app(<Search />)} />
           <Route path="/cars/:id" element={app(<CarDetail />)} />
+          {/* El menú lateral ya linkeaba a /favoritos, pero la ruta no existía:
+              la pantalla quedaba en blanco. */}
+          <Route path="/favoritos" element={priv(<Favorites />)} />
           <Route path="/profile" element={priv(<Profile />)} />
           <Route path="/ajustes" element={priv(<Settings />)} />
           <Route path="/notificaciones" element={priv(<Notifications />)} />
@@ -78,9 +103,15 @@ export default function App() {
           <Route path="/booking/:id" element={priv(<Booking />)} />
           <Route path="/my-bookings" element={priv(<MyBookings />)} />
           <Route path="/payment/:bookingId" element={priv(<Payment />)} />
+          {/* Retiro y devolución con QR/token: "Mis reservas" ya tenía el botón,
+              pero esta ruta faltaba, así que no llevaba a ninguna parte. */}
+          <Route path="/qr/:bookingId" element={priv(<QrFlow />)} />
+
+          <Route path="*" element={app(<NotFound />)} />
         </Routes>
         <ChatBot />
       </BrowserRouter>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }
