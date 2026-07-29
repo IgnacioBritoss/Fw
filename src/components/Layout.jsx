@@ -284,7 +284,7 @@ export default function Layout({ children }) {
           <div style={{ flex: 1 }} />
           {topbarRight()}
         </div>
-        <div>{children}</div>
+        <div className="fw-content">{children}</div>
       </div>
     </div>
   );

@@ -202,11 +202,13 @@ export default function Search() {
   }, [showMap, isMobile]);
 
   const st = {
-    barCell: { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
+    barCell: isMobile
+      ? { width: "100%", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
+      : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
     barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 3 },
-    barInput: { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: 140 },
-    card: { display: "flex", gap: 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
-    ph: { width: 150, height: 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
+    barInput: { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: isMobile ? "100%" : 140, boxSizing: "border-box" },
+    card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
+    ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
     verif: { fontSize: 11, fontWeight: 600, color: "#166534", background: "#dcfce7", borderRadius: 20, padding: "3px 10px" },
     detail: { background: "#111827", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
@@ -236,9 +238,15 @@ export default function Search() {
             {car.fuel && <span style={st.tag}>{car.fuel}</span>}
             {car.seats && <span style={st.tag}>{car.seats} asientos</span>}
           </div>
-          <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: 12 }}>
+          <div style={{
+            marginTop: "auto", paddingTop: 12, display: "flex", gap: 10,
+            ...(isMobile
+              ? { flexDirection: "column", alignItems: "stretch" }
+              : { justifyContent: "space-between", alignItems: "flex-end" }),
+          }}>
             <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>/día</span></div>
-            <button style={st.detail} onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Ver detalle →</button>
+            <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
+              onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Ver detalle →</button>
           </div>
         </div>
       </div>
@@ -269,7 +277,7 @@ export default function Search() {
           <input type="date" style={st.barInput} min={pickup || todayInput()} value={dropoff}
             onChange={e => setDropoff(e.target.value)} />
         </div>
-        <div className="fw-plain-field" style={{ ...st.barCell, borderRight: "none" }}>
+        <div className="fw-plain-field" style={{ ...st.barCell, ...(isMobile ? { borderBottom: "none", marginBottom: 0 } : { borderRight: "none" }) }}>
           <div style={st.barLbl}>Categoría</div>
           <select style={{ ...st.barInput, cursor: "pointer" }} value={category} onChange={e => setCategory(e.target.value)}>
             <option value="">Todas</option>

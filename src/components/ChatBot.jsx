@@ -215,13 +215,16 @@ export default function ChatBot() {
     border: "1px solid #e5e7eb",
   };
 
+  // El botón flotante en celular quedaba justo encima de los botones de la
+  // pantalla ("Eliminar publicación", "Reservar ahora") y les robaba el toque.
+  // Se lo baja al borde y se lo hace un poco más chico.
   const fabStyle = {
     position: "fixed",
-    bottom: 80,
-    right: isChat ? "auto" : 20,
-    left: isChat ? 20 : "auto",
-    width: 50,
-    height: 50,
+    bottom: isMobile ? 18 : 80,
+    right: isChat ? "auto" : isMobile ? 14 : 20,
+    left: isChat ? (isMobile ? 14 : 20) : "auto",
+    width: isMobile ? 46 : 50,
+    height: isMobile ? 46 : 50,
     borderRadius: "50%",
     background: "#2563eb",
     color: "#fff",

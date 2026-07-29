@@ -194,3 +194,84 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fw-plain-field input[type="date"]:focus {
   box-shadow: none;
 }
+
+/* ============================================================================
+   Celular
+   ----------------------------------------------------------------------------
+   Reglas que valen para toda la app en pantallas chicas. Van en CSS y no en
+   estilos en línea a propósito: son cosas transversales que de otra forma habría
+   que repetir en cada pantalla (y olvidarse en la mitad).
+   ============================================================================ */
+
+/* Nada puede empujar la página a lo ancho: si algo no entra, se corta o se
+   ajusta, pero la pantalla nunca se mueve para los costados. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* Las palabras largas (un mail, una URL, un modelo de auto larguísimo) partían
+   la caja que las contiene.
+   Es `break-word` y no `anywhere` a propósito: `anywhere` también cambia el ancho
+   mínimo que el navegador le reconoce al texto, y eso hacía que en una fila
+   apretada el logo se partiera en "Freewhee / l" aunque hubiera lugar de sobra.
+   `break-word` corta solo cuando la palabra realmente no entra. */
+h1, h2, h3, h4, p, label, strong, td, th, li, a {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 767px) {
+  /* En iOS, un campo con letra menor a 16px hace que el navegador haga zoom solo
+     al tocarlo, y después la página queda corrida. Con 16px no pasa. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Los campos de las barras de búsqueda ocupan todo el ancho disponible. */
+  .fw-plain-field {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .fw-plain-field input,
+  .fw-plain-field select {
+    width: 100%;
+  }
+
+  /* Blancos de aire más chicos: en 390px de ancho, 32px de padding a cada lado
+     se comen un sexto de la pantalla. */
+  select,
+  input[type="date"] {
+    padding: 11px 36px 11px 11px;
+  }
+
+  /* Cualquier tabla o fila muy ancha se desplaza sola en vez de estirar la
+     página. */
+  table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  /* Los botones tienen que poder tocarse con el dedo: 44px es la medida que
+     recomiendan Apple y Google. */
+  button {
+    min-height: 40px;
+  }
+
+  /* Aire abajo de todo: el botón flotante del chat vive en la esquina inferior y
+     tapaba el último botón de la pantalla (el de eliminar la publicación, el de
+     reservar). Con este espacio el contenido siempre puede pasar por encima. */
+  .fw-content {
+    padding-bottom: 76px;
+  }
+}
