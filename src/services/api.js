@@ -259,6 +259,15 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
     body: JSON.stringify({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }),
   });
 }
+
+/**
+ * Revisa una foto de documento ANTES de subirla, para avisar en el momento si no
+ * corresponde. `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
+ * Devuelve { matches, reason }: matches en null significa que no se pudo revisar.
+ */
+export async function checkDocumentPhoto(image, kind) {
+  return apiFetch("/ai/document", { method: "POST", body: JSON.stringify({ image, kind }) });
+}
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }

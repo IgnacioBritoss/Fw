@@ -362,7 +362,7 @@ export default function Chat() {
       return (
         <a href={msg.content} target="_blank" rel="noreferrer"
           style={{ color: isMe ? "#bfdbfe" : "#2563eb", fontSize: 13 }}>
-          📎 Abrir archivo
+          Abrir archivo
         </a>
       );
     }
@@ -516,7 +516,7 @@ export default function Chat() {
       {loading && <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Cargando...</div>}
       {!loading && conversations.length === 0 && (
         <div style={{ padding: 32, textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 10px", display: "block" }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="#9ca3af" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>No tenés conversaciones aún.</div>
         </div>
       )}

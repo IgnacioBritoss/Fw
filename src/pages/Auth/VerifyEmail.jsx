@@ -60,7 +60,7 @@ export default function VerifyEmail() {
   return (
     <div style={s.page}>
       <div style={s.card}>
-        <div style={s.icon}>📧</div>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
         <div style={s.title}>Verificá tu email</div>
         <div style={s.sub}>
           Te enviamos un código de 6 dígitos a <strong>{user?.email}</strong>.<br />

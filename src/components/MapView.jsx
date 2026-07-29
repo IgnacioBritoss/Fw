@@ -86,13 +86,13 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
           ">
             ${car.photos?.length > 0
               ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
-              : "🚙"}
+              : "—"}
           </div>
           <div style="font-weight:700;font-size:14px;margin-bottom:2px">
             ${car.brand} ${car.model} ${car.year}
           </div>
           <div style="font-size:12px;color:#6b7280;margin-bottom:6px">
-            📍 ${car.location}
+            ${car.location}
           </div>
           <div style="font-weight:700;font-size:16px;color:#1d4ed8">
             $${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>

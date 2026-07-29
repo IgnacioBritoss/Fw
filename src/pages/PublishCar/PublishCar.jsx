@@ -181,7 +181,7 @@ export default function PublishCar() {
 
   const specWarnings = getSpecWarnings(vehicleForm);
 
-  // ✦ IA #1 — Autocompletar specs: le pide al modelo las especificaciones técnicas
+  // IA #1 — Autocompletar specs: le pide al modelo las especificaciones técnicas
   // del auto (marca/modelo/año) y rellena el formulario. Cachea el resultado en
   // localStorage para no volver a pedir lo mismo.
   const fetchSpecs = async () => {
@@ -235,7 +235,7 @@ Si no sabés un dato, usá null.`;
     if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
   };
 
-  // ✦ IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
+  // IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
   // acorde al auto y a la ubicación, y lo carga en el formulario. También cachea.
   const fetchPricing = async () => {
     setPricingLoading(true);
@@ -278,7 +278,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     setPricingLoading(false);
   };
 
-  // ✦ IA #3 — Al subir fotos: las lee, las agrega a la grilla y por cada una llama
+  // IA #3 — Al subir fotos: las lee, las agrega a la grilla y por cada una llama
   // a groqVision para verificar que muestre un vehículo (marca "ok"/"invalid").
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
@@ -628,7 +628,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Especificaciones técnicas</div>
             <button style={{ padding: "8px 16px", background: aiLoading ? "#e5e7eb" : "#111827", color: aiLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
               onClick={fetchSpecs} disabled={aiLoading}>
-              {aiLoading ? <><span style={s.spinner} /> Completando...</> : "✦ Autocompletar con IA"}
+              {aiLoading ? <><span style={s.spinner} /> Completando...</> : "Autocompletar con IA"}
             </button>
           </div>
 
@@ -648,7 +648,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
           {specWarnings.length > 0 && (
             <div style={{ ...s.warning, marginTop: 12 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠ Revisá estas especificaciones:</div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Revisá estas especificaciones:</div>
               {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
             </div>
           )}
@@ -679,7 +679,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             onMouseLeave={() => setUploadHover(false)}
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
-            <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
             <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Hacé clic para subir fotos</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
@@ -759,12 +759,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               <label style={{ ...s.label, marginBottom: 0 }}>Precio por día ($ARS) *</label>
               <button style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
                 onClick={fetchPricing} disabled={pricingLoading}>
-                {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "✦ Sugerir con IA"}
+                {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "Sugerir con IA"}
               </button>
             </div>
             {pricingSuggestion && (
               <div style={s.aiBox}>
-                <div style={s.aiBoxTitle}>✦ Sugerencia de precio</div>
+                <div style={s.aiBoxTitle}>Sugerencia de precio</div>
                 <div style={s.aiBoxRow}>
                   <span style={s.aiBoxLabel}>Rango sugerido</span>
                   <span style={s.aiBoxValue}>${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS/día</span>

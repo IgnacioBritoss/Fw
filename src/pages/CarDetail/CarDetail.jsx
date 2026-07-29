@@ -182,37 +182,45 @@ export default function CarDetail() {
   const [unavailableDates, setUnavailableDates] = useState([]);
   const [editError, setEditError] = useState("");
 
-  // Al cargar: pide la publicación al backend (única fuente de verdad). Solo si
-  // el id es de un auto de ejemplo se usa mockData, para que la demo sin autos
-  // publicados siga navegable.
+  // ¿El id corresponde a un auto de ejemplo? En ese caso no se le pregunta nada
+  // al backend: no existe ahí, y preguntarle solo generaba errores 404 en la
+  // consola.
+  const mockCar = mockCars.find(c => c.id === id);
+
+  // Al cargar: pide la publicación al backend, que es la única fuente de verdad.
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
+    if (mockCar) {
+      setCar({ ...normalizeListing(mockCar), isMock: true });
+      setLoading(false);
+      return () => { active = false; };
+    }
+
+    setLoading(true);
     getListingById(id)
       .then(listing => {
         if (!active) return;
         if (listing) setCar(apiListingToCar(listing));
       })
-      .catch(() => {
-        if (!active) return;
-        const mock = mockCars.find(c => c.id === id);
-        if (mock) setCar({ ...normalizeListing(mock), isMock: true });
-      })
+      .catch(() => { /* no existe o no está disponible: se muestra "no encontrado" */ })
       .finally(() => { if (active) setLoading(false); });
 
     return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // Días ya ocupados, para avisar antes de que elija fechas que van a fallar.
+  // Los autos de ejemplo no tienen disponibilidad que consultar.
   useEffect(() => {
-    if (!id) return;
+    if (!id || mockCar) return undefined;
     let active = true;
     const from = new Date();
     getListingAvailability(id, from.toISOString(), addMonths(from, 3).toISOString())
       .then(data => { if (active) setUnavailableDates(data?.unavailableDates || []); })
-      .catch(() => { /* auto de ejemplo o sin disponibilidad cargada */ });
+      .catch(() => { /* sin disponibilidad cargada */ });
     return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // "Contactar al dueño": abre (o reutiliza) una conversación y va al chat.
@@ -593,7 +601,7 @@ export default function CarDetail() {
         >
           <div onClick={e => e.stopPropagation()}
             style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 16 }}>🗑️</div>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>Eliminar publicación</div>
             <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
               ¿Seguro que querés eliminar <strong>{car.brand} {car.model} {car.year}</strong>? Esta acción no se puede deshacer.

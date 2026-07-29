@@ -46,6 +46,8 @@ export default function Profile() {
   const phoneVerified = checklist.phoneVerified ?? !!user?.phoneVerifiedAt;
   const documentsSubmitted = checklist.documentsSubmitted === true;
   const fullyVerified = isVerified;
+  // El teléfono es opcional salvo que el backend diga lo contrario.
+  const phoneRequired = user?.verification?.phoneRequired === true;
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("es-AR", { month: "long", year: "numeric" })
     : "2025";
@@ -68,7 +70,7 @@ export default function Profile() {
         {[
           ["DNI y licencia", documentsSubmitted ? (fullyVerified ? "Documentación validada" : "Documentación en revisión") : "Pendiente de envío", documentsSubmitted],
           ["Email verificado", emailVerified ? email : "Pendiente de confirmación", emailVerified],
-          ["Teléfono verificado", phoneVerified ? `+54 ${phone.slice(0, 2)} ···· ····` : (phone ? "Falta confirmar el código" : "No cargado"), phoneVerified],
+          [`Teléfono verificado${phoneRequired ? "" : " (opcional)"}`, phoneVerified ? `+54 ${phone.slice(0, 2)} ···· ····` : (phone ? "Falta confirmar el código" : "No cargado"), phoneVerified],
           ["Fecha de nacimiento", checklist.dateOfBirthProvided ? "Edad validada (+18)" : "Pendiente", checklist.dateOfBirthProvided === true],
         ].map(([ti, sub, ok]) => (
           <div key={ti} style={t.verifyItem}>
@@ -87,9 +89,10 @@ export default function Profile() {
             Sin la cuenta verificada no podés publicar autos ni reservar.
             {" "}Te falta: {[
               !emailVerified && "confirmar el email",
-              !phoneVerified && "confirmar el teléfono",
               !documentsSubmitted && "enviar DNI y licencia",
               !checklist.dateOfBirthProvided && "tu fecha de nacimiento",
+              // El teléfono no bloquea: solo se sugiere si además falta.
+              phoneRequired && !phoneVerified && "confirmar el teléfono",
             ].filter(Boolean).join(", ") || "que terminemos de revisar tu documentación"}.
           </div>
           <button onClick={() => navigate("/kyc")} style={{ background: "#ea580c", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Verificar ahora</button>
