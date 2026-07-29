@@ -77,7 +77,7 @@ export default function Favorites() {
         <div style={t.empty}>Cargando...</div>
       ) : visible.length === 0 ? (
         <div style={t.empty}>
-          <div style={{ fontSize: 42, marginBottom: 12 }}>♡</div>
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 12px", display: "block" }}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z" stroke="#d1d5db" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Todavía no guardaste ningún auto</div>
           <div style={{ fontSize: 13, marginBottom: 20 }}>Tocá el corazón de cualquier auto para tenerlo a mano acá.</div>
           <button style={t.btn} onClick={() => navigate("/buscar")}>Buscar autos</button>

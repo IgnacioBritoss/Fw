@@ -1,27 +1,34 @@
 // ============================================================================
 //  IdentityVerification — Verificación de la cuenta DE VERDAD (KYC)
 // ----------------------------------------------------------------------------
-//  Para publicar un auto o reservar, el backend exige la cuenta VERIFICADA, y
-//  para eso hacen falta cuatro cosas: email confirmado, teléfono confirmado,
-//  fecha de nacimiento y las fotos del DNI + licencia.
-//
-//  Antes esta pantalla solo escribía `dniVerified: true` en el navegador: se
-//  veía "Verificado" pero el servidor seguía viendo la cuenta sin verificar, y
-//  al publicar o reservar respondía 403. Ahora:
-//    1) sube cada foto a Cloudinary,
-//    2) las manda a POST /verification/identity/submit,
-//    3) confirma el teléfono con un código (SMS),
+//  Para publicar un auto o reservar, el backend exige la cuenta VERIFICADA.
+//  Esta pantalla es la que la consigue:
+//    1) sube las fotos del DNI y la licencia a Cloudinary,
+//    2) las manda a POST /verification/identity/submit, donde un modelo de visión
+//       revisa cada una y RECHAZA la que no sea el documento pedido,
+//    3) permite confirmar el teléfono (opcional),
 //    4) relee el estado real desde GET /verification/me/status.
 //
+//  Antes solo escribía una marca en el navegador: se veía "Verificado" pero el
+//  servidor seguía rechazando publicar y reservar con un 403.
+//
+//  SOBRE LAS FOTOS: al elegir cada una se la revisa en el momento (POST
+//  /ai/document) y se avisa si no corresponde, así el problema se ve antes de
+//  enviar y no se puede usar una imagen cualquiera como documento.
+//
+//  SOBRE EL TELÉFONO: mandar un SMS a un número real es un servicio pago, así
+//  que el código llega al EMAIL de la persona. Por eso el teléfono no bloquea la
+//  verificación: es un paso extra que se puede completar cuando quiera.
+//
 //  Se usa en el registro (últimos pasos) y en la pantalla /kyc.
-//  Props: onDone() al terminar, compact para ocultar el encabezado.
+//  Props: onDone() al terminar, onCancel() para salir.
 // ============================================================================
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { uploadImageToCloudinary } from "../services/cloudinary";
 import {
-  confirmPhoneCode, getVerificationStatus, requestPhoneCode,
-  submitIdentity, updateMe,
+  checkDocumentPhoto, confirmPhoneCode, getVerificationStatus,
+  requestPhoneCode, submitIdentity, updateMe,
 } from "../services/api";
 
 const STEPS = ["Identidad", "Licencia", "Teléfono", "Confirmación"];
@@ -38,44 +45,72 @@ const st = {
   input: { width: "100%", padding: "11px 14px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", color: "#111827", boxSizing: "border-box" },
   label: { display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 },
   codeInput: { width: "100%", padding: 14, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 26, fontWeight: 700, letterSpacing: 10, textAlign: "center", outline: "none", color: "#111827", boxSizing: "border-box", marginBottom: 12 },
+  codeBox: { background: "#f9fafb", border: "1.5px dashed #d1d5db", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#374151", marginBottom: 16, lineHeight: 1.6 },
 };
 
-// Tarjeta para subir una foto de documento: abre el selector de archivos, lee la
-// imagen y avisa al padre. Muestra una tilde verde cuando ya hay una cargada.
-function PhotoCard({ id, label, hint, value, onChange }) {
+/**
+ * Tarjeta para subir una foto de documento. Al elegir el archivo pide la revisión
+ * automática y muestra el resultado: "corresponde", "no corresponde" (con el
+ * motivo) o "no se pudo revisar".
+ */
+function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
+  const border =
+    review?.state === "invalid" ? "1.5px solid #dc2626"
+      : review?.state === "ok" ? "1.5px solid #16a34a"
+        : value ? "1.5px solid #2563eb" : "1px solid #e5e7eb";
+
   return (
-    <div onClick={() => document.getElementById(id)?.click()}
-      style={{ flex: 1, border: value ? "1.5px solid #16a34a" : "1px solid #e5e7eb", borderRadius: 14, padding: 14, cursor: "pointer", background: "#fff" }}>
-      <input id={id} type="file" accept="image/*" style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          if (file.size > 5 * 1024 * 1024) { onChange(null, "La foto no puede pesar más de 5MB."); return; }
-          const reader = new FileReader();
-          reader.onload = (ev) => onChange(ev.target.result, null);
-          reader.readAsDataURL(file);
-        }} />
-      <div style={{ position: "relative", width: "100%", height: 120, borderRadius: 10, overflow: "hidden", background: value ? "#1f2937" : "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-        {value ? (
-          <>
+    <div style={{ flex: 1, minWidth: 240 }}>
+      <div onClick={() => document.getElementById(id)?.click()}
+        style={{ border, borderRadius: 14, padding: 14, cursor: "pointer", background: "#fff" }}>
+        <input id={id} type="file" accept="image/*" style={{ display: "none" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { onChange(null, "La foto no puede pesar más de 5MB.", kind); return; }
+            const reader = new FileReader();
+            reader.onload = (ev) => onChange(ev.target.result, null, kind);
+            reader.readAsDataURL(file);
+          }} />
+        <div style={{ position: "relative", width: "100%", height: 120, borderRadius: 10, overflow: "hidden", background: value ? "#1f2937" : "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+          {value ? (
             <img src={value} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{ position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%", background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>✓</div>
-          </>
-        ) : (
-          <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "#9ca3af" }}>+</div>
-        )}
+          ) : (
+            <span style={{ fontSize: 13, color: "#9ca3af" }}>Elegir foto</span>
+          )}
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{label}</div>
+        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{hint}</div>
       </div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{label}</div>
-      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{hint}</div>
+
+      {/* Resultado de la revisión automática de esta foto */}
+      {review?.state === "checking" && (
+        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>Revisando la foto...</div>
+      )}
+      {review?.state === "ok" && (
+        <div style={{ fontSize: 12, color: "#166534", marginTop: 6, fontWeight: 600 }}>
+          Verificada: es el documento correcto
+        </div>
+      )}
+      {review?.state === "invalid" && (
+        <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 6, fontWeight: 600 }}>
+          No corresponde. {review.reason}
+        </div>
+      )}
+      {review?.state === "unknown" && (
+        <div style={{ fontSize: 12, color: "#92400e", marginTop: 6 }}>
+          No se pudo revisar automáticamente. Se envía igual.
+        </div>
+      )}
     </div>
   );
 }
 
 // Barra de pasos de arriba.
-function Stepper({ current }) {
+function Stepper({ current, steps }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 40, flexWrap: "wrap" }}>
-      {STEPS.map((label, i) => (
+      {steps.map((label, i) => (
         <div key={label} style={{ display: "flex", alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
             <div style={{
@@ -87,7 +122,7 @@ function Stepper({ current }) {
             }}>{i < current ? "✓" : i + 1}</div>
             <span style={{ fontSize: 12, fontWeight: 600, color: i === current ? "#111827" : "#9ca3af" }}>{label}</span>
           </div>
-          {i < STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <div style={{ width: 90, height: 2, margin: "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#2563eb" : "#e5e7eb" }} />
           )}
         </div>
@@ -100,6 +135,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(0);       // 0=DNI, 1=licencia, 2=teléfono, 3=confirmación
   const [docs, setDocs] = useState({ dniFront: null, dniBack: null, licFront: null, licBack: null });
+  const [reviews, setReviews] = useState({}); // resultado de la revisión por foto
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
@@ -107,12 +143,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const [phone, setPhone] = useState(user?.phone || "");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
-
-  const setDoc = (key) => (value, err) => {
-    if (err) { setError(err); return; }
-    setError("");
-    setDocs(d => ({ ...d, [key]: value }));
-  };
+  const [codeHint, setCodeHint] = useState(null); // por dónde llegó y, en demo, cuál es
 
   // Estado real de la verificación al abrir la pantalla.
   const loadStatus = async () => {
@@ -123,10 +154,30 @@ export default function IdentityVerification({ onDone, onCancel }) {
   useEffect(() => { loadStatus(); }, []);
 
   const checklist = status?.checklist || {};
+  // El backend informa si el teléfono es obligatorio. Hoy no lo es, porque el
+  // envío por SMS es un servicio pago.
+  const phoneRequired = status?.phoneRequired === true;
+
+  /** Guarda la foto elegida y dispara su revisión automática. */
+  const handlePhoto = (key) => async (value, err, kind) => {
+    if (err) { setError(err); return; }
+    setError("");
+    setDocs(d => ({ ...d, [key]: value }));
+    setReviews(r => ({ ...r, [key]: { state: "checking" } }));
+
+    const result = await checkDocumentPhoto(value, kind).catch(() => null);
+    setReviews(r => ({
+      ...r,
+      [key]: result?.matches === true ? { state: "ok" }
+        : result?.matches === false ? { state: "invalid", reason: result.reason || "" }
+          : { state: "unknown" },
+    }));
+  };
 
   /**
-   * Sube las cuatro fotos y las manda al backend. Recién con las cuatro cargadas
-   * el servidor puede resolver la verificación, así que se envían juntas.
+   * Sube las cuatro fotos y las manda al backend, que vuelve a revisarlas del
+   * lado del servidor antes de aprobar (el chequeo del navegador es solo para
+   * avisar antes).
    */
   const submitDocuments = async () => {
     setBusy(true); setError(""); setInfo("");
@@ -137,9 +188,22 @@ export default function IdentityVerification({ onDone, onCancel }) {
         uploadImageToCloudinary(docs.licFront),
         uploadImageToCloudinary(docs.licBack),
       ]);
-      await submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl });
-      await loadStatus();
-      setInfo("Documentación enviada correctamente.");
+      const submission = await submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl });
+      const fresh = await loadStatus();
+      await refreshUser();
+
+      // El backend puede rechazar la documentación al revisarla.
+      if (submission?.status === "REJECTED") {
+        setError(submission.notes || "La documentación no pasó la revisión. Revisá las fotos y volvé a enviarlas.");
+        setBusy(false);
+        return;
+      }
+
+      setInfo(
+        fresh?.fullyVerified
+          ? "Documentación aprobada: tu cuenta quedó verificada."
+          : "Documentación enviada correctamente.",
+      );
       setStep(2);
     } catch (err) {
       setError(err.message || "No pudimos enviar la documentación. Probá de nuevo.");
@@ -155,9 +219,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
     setBusy(true); setError(""); setInfo("");
     try {
       if (clean !== user?.phone) await updateMe({ phone: clean });
-      await requestPhoneCode();
+      const result = await requestPhoneCode();
       setCodeSent(true);
-      setInfo("Te enviamos un código a tu teléfono.");
+      setCodeHint(result || null);
+      setInfo(
+        result?.channel === "email"
+          ? `Te enviamos el código a ${result.sentTo}. El envío por SMS todavía no está habilitado, así que llega por email.`
+          : "Te enviamos el código por SMS.",
+      );
     } catch (err) {
       setError(err.message || "No pudimos enviar el código.");
     } finally {
@@ -165,8 +234,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
     }
   };
 
-  // Confirma el código del teléfono. Si con esto se completa el checklist, el
-  // backend deja la cuenta verificada.
+  // Confirma el código del teléfono.
   const verifyPhone = async () => {
     if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
     setBusy(true); setError(""); setInfo("");
@@ -176,7 +244,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       await refreshUser();
       setStep(3);
     } catch (err) {
-      setError(err.message || "Código incorrecto.");
+      setError(err.message || "El código no es correcto.");
     } finally {
       setBusy(false);
     }
@@ -189,10 +257,13 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
   const docsReady = docs.dniFront && docs.dniBack;
   const licenseReady = docs.licFront && docs.licBack;
+  // Una foto que la revisión marcó como "no corresponde" bloquea el envío.
+  const hasInvalid = Object.values(reviews).some(r => r?.state === "invalid");
+  const isChecking = Object.values(reviews).some(r => r?.state === "checking");
 
   return (
     <div>
-      <Stepper current={step} />
+      <Stepper current={step} steps={STEPS} />
       <div style={st.card}>
         {error && <div style={st.error}>{error}</div>}
         {info && <div style={st.info}>{info}</div>}
@@ -201,10 +272,15 @@ export default function IdentityVerification({ onDone, onCancel }) {
         {step === 0 && (
           <>
             <h2 style={st.title}>Verificá tu identidad</h2>
-            <p style={st.sub}>Necesitamos confirmar quién sos. Tus datos están encriptados y protegidos.</p>
+            <p style={st.sub}>
+              Subí las fotos de tu DNI. Cada foto se revisa automáticamente: si no
+              es un documento, te lo avisamos antes de enviarla.
+            </p>
             <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
-              <PhotoCard id="iv-dni-front" label="Frente del DNI" hint="Cara visible, sin reflejo" value={docs.dniFront} onChange={setDoc("dniFront")} />
-              <PhotoCard id="iv-dni-back" label="Dorso del DNI" hint="Número y fecha legibles" value={docs.dniBack} onChange={setDoc("dniBack")} />
+              <PhotoCard id="iv-dni-front" label="Frente del DNI" hint="Cara visible, sin reflejo"
+                kind="DNI_FRONT" value={docs.dniFront} review={reviews.dniFront} onChange={handlePhoto("dniFront")} />
+              <PhotoCard id="iv-dni-back" label="Dorso del DNI" hint="Número y fecha legibles"
+                kind="DNI_BACK" value={docs.dniBack} review={reviews.dniBack} onChange={handlePhoto("dniBack")} />
             </div>
             <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 20, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 12 }}>Consejos para tus fotos</div>
@@ -218,8 +294,9 @@ export default function IdentityVerification({ onDone, onCancel }) {
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>Cancelar</button>}
-              <button style={{ ...st.btnPrimary, opacity: docsReady ? 1 : 0.5, cursor: docsReady ? "pointer" : "not-allowed" }}
-                disabled={!docsReady} onClick={() => { setError(""); setStep(1); }}>Continuar →</button>
+              <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking ? "pointer" : "not-allowed" }}
+                disabled={!docsReady || hasInvalid || isChecking}
+                onClick={() => { setError(""); setStep(1); }}>Continuar →</button>
             </div>
           </>
         )}
@@ -230,35 +307,48 @@ export default function IdentityVerification({ onDone, onCancel }) {
             <h2 style={st.title}>Tu licencia de conducir</h2>
             <p style={st.sub}>Subí ambos lados de tu licencia vigente. Al continuar enviamos los cuatro documentos a validar.</p>
             <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
-              <PhotoCard id="iv-lic-front" label="Frente de la licencia" hint="Foto y datos visibles" value={docs.licFront} onChange={setDoc("licFront")} />
-              <PhotoCard id="iv-lic-back" label="Dorso de la licencia" hint="Categorías y vencimiento" value={docs.licBack} onChange={setDoc("licBack")} />
+              <PhotoCard id="iv-lic-front" label="Frente de la licencia" hint="Foto y datos visibles"
+                kind="LICENSE_FRONT" value={docs.licFront} review={reviews.licFront} onChange={handlePhoto("licFront")} />
+              <PhotoCard id="iv-lic-back" label="Dorso de la licencia" hint="Categorías y vencimiento"
+                kind="LICENSE_BACK" value={docs.licBack} review={reviews.licBack} onChange={handlePhoto("licBack")} />
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 20 }}>🔒 Tus datos se usan únicamente para validar tu identidad.</div>
+            <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 20 }}>
+              Tus datos se usan únicamente para validar tu identidad. Del documento
+              se registran el número, el nombre y el vencimiento.
+            </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
               <button style={st.btnGhost} onClick={() => setStep(0)}>Atrás</button>
-              <button style={{ ...st.btnPrimary, opacity: licenseReady && !busy ? 1 : 0.5, cursor: licenseReady && !busy ? "pointer" : "not-allowed" }}
-                disabled={!licenseReady || busy} onClick={submitDocuments}>
+              <button style={{ ...st.btnPrimary, opacity: licenseReady && !hasInvalid && !isChecking && !busy ? 1 : 0.5, cursor: licenseReady && !hasInvalid && !isChecking && !busy ? "pointer" : "not-allowed" }}
+                disabled={!licenseReady || hasInvalid || isChecking || busy} onClick={submitDocuments}>
                 {busy ? "Enviando documentación..." : "Enviar y continuar →"}
               </button>
             </div>
           </>
         )}
 
-        {/* PASO 2: TELÉFONO */}
+        {/* PASO 2: TELÉFONO (opcional) */}
         {step === 2 && (
           <>
             <h2 style={st.title}>Verificá tu teléfono</h2>
             <p style={st.sub}>
-              Es el último dato que falta para que tu cuenta quede habilitada a publicar y reservar autos.
+              {phoneRequired
+                ? "Es el último dato que falta para habilitar tu cuenta."
+                : "Es un paso opcional: tu cuenta ya queda habilitada sin esto. Sirve para que el dueño o el conductor puedan contactarte."}
             </p>
+
             {checklist.phoneVerified ? (
               <div style={{ ...st.info, marginBottom: 20 }}>Tu teléfono ya está verificado.</div>
             ) : !codeSent ? (
               <>
-                <div style={{ marginBottom: 20 }}>
+                <div style={{ marginBottom: 16 }}>
                   <label style={st.label}>Teléfono</label>
                   <input style={st.input} placeholder="1134567890" value={phone} maxLength={15}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} />
+                </div>
+                <div style={st.codeBox}>
+                  El código de confirmación llega a <strong>tu email</strong>, no por
+                  SMS: enviar mensajes a un número es un servicio pago que todavía
+                  no está contratado. El número igual queda registrado y confirmado.
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
                   <button style={st.btnGhost} onClick={() => setStep(1)}>Atrás</button>
@@ -269,6 +359,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
               </>
             ) : (
               <>
+                {/* Modo demostración: el backend devuelve el código y se muestra
+                    acá, para poder completar el circuito sin esperar el mail. */}
+                {codeHint?.code && (
+                  <div style={st.codeBox}>
+                    Modo demostración: tu código es{" "}
+                    <strong style={{ fontFamily: "monospace", fontSize: 16, letterSpacing: 2 }}>{codeHint.code}</strong>
+                  </div>
+                )}
                 <input style={st.codeInput} type="text" inputMode="numeric" maxLength={6} placeholder="000000"
                   value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && verifyPhone()} />
@@ -281,8 +379,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 </div>
               </>
             )}
+
             <button style={st.skip} onClick={() => setStep(3)}>
-              Omitir por ahora · lo completo después desde Ajustes
+              {phoneRequired
+                ? "Omitir por ahora · lo completo después desde Ajustes"
+                : "Continuar sin verificar el teléfono"}
             </button>
           </>
         )}
@@ -294,27 +395,28 @@ export default function IdentityVerification({ onDone, onCancel }) {
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             <h2 style={st.title}>
-              {status?.fullyVerified ? "¡Cuenta verificada!" : "Verificación en curso"}
+              {status?.fullyVerified ? "Cuenta verificada" : "Verificación en curso"}
             </h2>
             <p style={st.sub}>
               {status?.fullyVerified
                 ? "Ya podés publicar tu auto y reservar en Freewheel."
                 : "Te falta completar algún paso. Podés terminarlo cuando quieras desde Ajustes."}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360, margin: "0 auto" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380, margin: "0 auto" }}>
               {[
-                ["Email confirmado", checklist.emailVerified],
-                ["Teléfono confirmado", checklist.phoneVerified],
-                ["DNI y licencia enviados", checklist.documentsSubmitted],
-                ["Fecha de nacimiento", checklist.dateOfBirthProvided],
-              ].map(([label, ok]) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, fontWeight: 600, color: ok ? "#166534" : "#9a3412", background: ok ? "#f0fdf4" : "#fff7ed", border: `1px solid ${ok ? "#bbf7d0" : "#fed7aa"}`, borderRadius: 8, padding: "8px 12px" }}>
-                  <span>{label}</span><span>{ok ? "Listo" : "Pendiente"}</span>
+                ["Email confirmado", checklist.emailVerified, true],
+                ["DNI y licencia enviados", checklist.documentsSubmitted, true],
+                ["Fecha de nacimiento", checklist.dateOfBirthProvided, true],
+                ["Teléfono confirmado", checklist.phoneVerified, phoneRequired],
+              ].map(([label, ok, required]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, fontWeight: 600, color: ok ? "#166534" : required ? "#9a3412" : "#6b7280", background: ok ? "#f0fdf4" : required ? "#fff7ed" : "#f9fafb", border: `1px solid ${ok ? "#bbf7d0" : required ? "#fed7aa" : "#e5e7eb"}`, borderRadius: 8, padding: "8px 12px" }}>
+                  <span>{label}{!required && !ok ? " (opcional)" : ""}</span>
+                  <span>{ok ? "Listo" : required ? "Pendiente" : "Sin completar"}</span>
                 </div>
               ))}
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-              <button style={st.btnGhost} onClick={() => { setCode(""); setCodeSent(false); setStep(2); }}>Completar lo que falta</button>
+              <button style={st.btnGhost} onClick={() => { setCode(""); setCodeSent(false); setStep(2); }}>Verificar teléfono</button>
               <button style={st.btnPrimary} onClick={finish}>Continuar</button>
             </div>
           </div>

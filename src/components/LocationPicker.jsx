@@ -179,7 +179,7 @@ export default function LocationPicker({ value, onChange }) {
               onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
               onMouseLeave={e => e.currentTarget.style.background = "#fff"}
               onClick={() => selectSuggestion(s)}>
-              📍 {s.display_name.split(",").slice(0, 4).join(", ")}
+              {s.display_name.split(",").slice(0, 4).join(", ")}
             </div>
           ))}
         </div>
@@ -189,7 +189,7 @@ export default function LocationPicker({ value, onChange }) {
 
       {selected ? (
         <div style={s.selectedBox}>
-          📍 <strong>Ubicación seleccionada:</strong> {selected.address}
+          <strong>Ubicación seleccionada:</strong> {selected.address}
         </div>
       ) : (
         <div style={s.hint}>

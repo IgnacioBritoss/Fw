@@ -246,8 +246,8 @@ export default function Settings() {
                   onVerify={() => navigate("/verify-email")}
                 />
                 <VerifRow
-                  title="Teléfono"
-                  desc="Código de verificación por SMS"
+                  title={user?.verification?.phoneRequired ? "Teléfono" : "Teléfono (opcional)"}
+                  desc="El código llega a tu email: el envío por SMS es un servicio pago que todavía no está contratado"
                   verified={checklist.phoneVerified === true}
                   onVerify={() => navigate("/kyc")}
                 />

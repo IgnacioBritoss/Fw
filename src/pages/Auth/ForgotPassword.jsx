@@ -52,7 +52,7 @@ export default function ForgotPassword() {
 
         {sent ? (
           <div style={s.success}>
-            ✅ Si ese email está registrado, te enviamos un link de recuperación.<br />
+            Si ese email está registrado, te enviamos un link de recuperación.<br />
             Revisá tu bandeja de entrada (y el spam).
           </div>
         ) : (

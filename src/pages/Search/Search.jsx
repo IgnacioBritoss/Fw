@@ -362,7 +362,7 @@ export default function Search() {
 
             <button onClick={() => setShowMap(false)}
               style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 500, background: "#111827", color: "#fff", border: "none", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}>
-              ☰ Ver como lista
+              Ver como lista
             </button>
           </div>
         )}
@@ -372,7 +372,7 @@ export default function Search() {
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <button onClick={() => setShowMap(true)}
             style={{ background: "#fff", color: "#111827", border: "1px solid #e5e7eb", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            🗺 Ver en el mapa
+            Ver en el mapa
           </button>
         </div>
       )}

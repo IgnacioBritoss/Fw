@@ -52,25 +52,31 @@ export default function Home() {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   /**
-   * Filtros que se envían al backend. Las fechas se mandan solo si están las
-   * dos y son coherentes: es lo que hace que el filtro por fechas realmente
-   * descarte los autos ocupados (el servidor mira reservas y bloqueos).
+   * Filtros que se envían al backend: SOLO las fechas, porque son las únicas que
+   * necesitan mirar la base (reservas y bloqueos) para saber qué auto está libre.
+   *
+   * La categoría y el texto se filtran en el navegador. Así las tarjetas de
+   * categoría pueden seguir mostrando el precio de TODAS las categorías (si se
+   * filtrara en el servidor, al elegir "Sedan" el resto quedaría en "Sin autos")
+   * y el filtro también funciona sobre los autos de ejemplo.
    */
   const serverFilters = useMemo(() => {
     const filters = { limit: 50 };
-    if (cat) filters.category = cat;
     if (pickup && dropoff && new Date(dropoff) > new Date(pickup)) {
       filters.startDate = new Date(`${pickup}T10:00:00`).toISOString();
       filters.endDate = new Date(`${dropoff}T10:00:00`).toISOString();
     }
     return filters;
-  }, [cat, pickup, dropoff]);
+  }, [pickup, dropoff]);
 
   const { cars, loading, error, showingMocks } = useListings(serverFilters);
 
-  // Sobre lo que trajo el backend se aplica la búsqueda por texto, que responde
-  // sin esperar otra vuelta al servidor.
-  const filtered = useMemo(() => filterCars(cars, { text: search }), [cars, search]);
+  // Sobre lo que trajo el backend se aplican la categoría y la búsqueda por
+  // texto, que responden sin esperar otra vuelta al servidor.
+  const filtered = useMemo(
+    () => filterCars(cars, { text: search, category: cat }),
+    [cars, search, cat],
+  );
 
   // Avisa si el rango de fechas está al revés o incompleto.
   useEffect(() => {

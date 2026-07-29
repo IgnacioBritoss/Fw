@@ -291,7 +291,7 @@ export default function Register() {
         </div>
         <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ width:"100%", maxWidth:420, background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid #f0f0f0" }}>
-            <div style={{ fontSize:46, marginBottom:8 }}>📧</div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
             <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>Confirmá tu email</h2>
             <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
               Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para crear tu cuenta.

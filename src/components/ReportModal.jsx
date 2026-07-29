@@ -90,7 +90,7 @@ export default function ReportModal({ target, targetType, onClose }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.success}>
-          <div style={s.successIcon}>✅</div>
+          <div style={s.successIcon}><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
           <div style={s.successTitle}>Reporte enviado correctamente</div>
           <div style={s.successSub}>
             Nuestro equipo va a revisar tu reporte en las próximas 24 horas.
@@ -127,7 +127,7 @@ export default function ReportModal({ target, targetType, onClose }) {
         <div style={s.counter}>{detail.length}/500 caracteres · mínimo 30</div>
 
         <div style={s.warning}>
-          ⚠️ Los reportes falsos o malintencionados pueden resultar en la suspensión
+          Importante: los reportes falsos o malintencionados pueden resultar en la suspensión
           de tu cuenta. Solo reportá situaciones reales.
         </div>
 
