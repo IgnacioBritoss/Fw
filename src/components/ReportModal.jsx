@@ -3,13 +3,22 @@
 // ----------------------------------------------------------------------------
 //  Muestra un formulario (motivo + descripción) para denunciar contenido o
 //  comportamiento indebido. Exige elegir un motivo y escribir al menos 30
-//  caracteres. Al enviar, guarda el reporte en localStorage ("fw_reports")
-//  y muestra una pantalla de confirmación.
+//  caracteres. Al enviar, lo guarda EN EL BACKEND y muestra la confirmación.
 //
-//  Props: target (a quién/qué se reporta), targetType ("car" o usuario), onClose.
+//  Antes el reporte se guardaba en localStorage del propio navegador de quien
+//  reportaba: quedaba en su computadora y nadie lo veía nunca. Ahora va a la base,
+//  la IA lo compara con la publicación denunciada para decir si tiene relación, y
+//  aparece en el panel de las cuentas administradoras, que pueden pausar o
+//  eliminar el aviso.
+//
+//  Props:
+//    · targetId    → el ID de la publicación o de la persona (es lo que se manda)
+//    · targetLabel → cómo se llama, solo para mostrarlo en el título
+//    · targetType  → "car" (publicación) o "user" (persona)
+//    · onClose
 // ============================================================================
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { createReport } from "../services/api";
 
 // Estilos en línea de la ventana modal.
 const s = {
@@ -58,32 +67,34 @@ const REASONS = [
   "Otro motivo",
 ];
 
-export default function ReportModal({ target, targetType, onClose }) {
-  const { user } = useAuth();
+export default function ReportModal({ targetId, targetLabel, targetType, onClose }) {
   const [reason, setReason] = useState(REASONS[0]); // motivo elegido
   const [detail, setDetail] = useState("");          // descripción escrita
   const [done, setDone] = useState(false);           // ¿ya se envió?
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   // El botón "Enviar" se habilita solo si hay motivo y 30+ caracteres de detalle.
   const canSubmit = reason !== REASONS[0] && detail.trim().length >= 30;
 
-  // Guarda el reporte en localStorage y muestra la pantalla de éxito.
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    const reports = JSON.parse(localStorage.getItem("fw_reports") || "[]");
-    reports.push({
-      id: Date.now().toString(),
-      reporter_id: user.id,
-      reporter_name: user.name,
-      target,
-      targetType,
-      reason,
-      detail: detail.trim(),
-      status: "pending",
-      created_at: new Date().toISOString(),
-    });
-    localStorage.setItem("fw_reports", JSON.stringify(reports));
-    setDone(true);
+  // Manda el reporte al backend y muestra la pantalla de éxito.
+  const handleSubmit = async () => {
+    if (!canSubmit || sending) return;
+    setSending(true);
+    setError("");
+    try {
+      await createReport({
+        targetType: targetType === "car" ? "LISTING" : "USER",
+        ...(targetType === "car" ? { listingId: targetId } : { targetUserId: targetId }),
+        reason,
+        details: detail.trim(),
+      });
+      setDone(true);
+    } catch (err) {
+      setError(err.message || "No pudimos enviar el reporte. Intentá de nuevo.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (done) return (
@@ -93,7 +104,7 @@ export default function ReportModal({ target, targetType, onClose }) {
           <div style={s.successIcon}><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
           <div style={s.successTitle}>Reporte enviado correctamente</div>
           <div style={s.successSub}>
-            Nuestro equipo va a revisar tu reporte en las próximas 24 horas.
+            Ya quedó registrado y le llega al equipo de administración.
             Gracias por ayudarnos a mantener la comunidad segura.
           </div>
           <button style={{ ...s.btnReport, marginTop: 20, width: "100%" }}
@@ -107,7 +118,10 @@ export default function ReportModal({ target, targetType, onClose }) {
     <div style={s.overlay} onClick={onClose}>
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
-          <div style={s.title}>Reportar {targetType === "car" ? "publicación" : "usuario"}</div>
+          <div style={s.title}>
+            Reportar {targetType === "car" ? "publicación" : "usuario"}
+            {targetLabel ? <span style={{ fontWeight: 500, color: "#6b7280" }}>: {targetLabel}</span> : null}
+          </div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
 
@@ -134,12 +148,15 @@ export default function ReportModal({ target, targetType, onClose }) {
         <div style={s.btnRow}>
           <button style={s.btnCancel} onClick={onClose}>Cancelar</button>
           <button
-            style={{ ...s.btnReport, ...(canSubmit ? {} : s.btnReportDisabled) }}
+            style={{ ...s.btnReport, ...(canSubmit && !sending ? {} : s.btnReportDisabled) }}
             onClick={handleSubmit}
-            disabled={!canSubmit}>
-            Enviar reporte
+            disabled={!canSubmit || sending}>
+            {sending ? "Enviando..." : "Enviar reporte"}
           </button>
         </div>
+        {error && (
+          <div style={{ ...s.warning, marginTop: 12, marginBottom: 0 }}>{error}</div>
+        )}
       </div>
     </div>
   );

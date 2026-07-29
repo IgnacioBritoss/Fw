@@ -25,14 +25,9 @@ import { useListings } from "../../hooks/useListings";
 import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 
-// Fecha de hoy / mañana en formato YYYY-MM-DD, para los selectores de fecha.
+// Fecha de hoy en formato YYYY-MM-DD, para los selectores de fecha.
 const toInputDate = (date) => date.toISOString().slice(0, 10);
 const todayInput = () => toInputDate(new Date());
-const tomorrowInput = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return toInputDate(d);
-};
 
 export default function Home() {
   const navigate = useNavigate();
@@ -62,7 +57,11 @@ export default function Home() {
    */
   const serverFilters = useMemo(() => {
     const filters = { limit: 50 };
-    if (pickup && dropoff && new Date(dropoff) > new Date(pickup)) {
+    // Un solo día (retiro = devolución) es una búsqueda válida: se pregunta si el
+    // auto está libre ESE día. Antes se exigía devolución posterior al retiro y
+    // con fechas iguales no se mandaba ninguna, así que no se filtraba nada y
+    // aparecían autos que estaban ocupados justo ese día.
+    if (pickup && dropoff && new Date(dropoff) >= new Date(pickup)) {
       filters.startDate = new Date(`${pickup}T10:00:00`).toISOString();
       filters.endDate = new Date(`${dropoff}T10:00:00`).toISOString();
     }
@@ -80,8 +79,8 @@ export default function Home() {
 
   // Avisa si el rango de fechas está al revés o incompleto.
   useEffect(() => {
-    if (pickup && dropoff && new Date(dropoff) <= new Date(pickup)) {
-      setDateError("La devolución tiene que ser después del retiro.");
+    if (pickup && dropoff && new Date(dropoff) < new Date(pickup)) {
+      setDateError("La devolución no puede ser antes del retiro.");
     } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
       setDateError("Completá las dos fechas para filtrar por disponibilidad.");
     } else {
@@ -333,28 +332,24 @@ export default function Home() {
           <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>Elegí las fechas y te mostramos solo los autos libres</div>
 
           <div style={t.searchRow}>
-            <div style={t.searchCell}>
+            <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>Dónde</div>
               <input style={t.searchInput} placeholder="Ciudad, barrio o modelo" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
-            <div style={t.searchCell}>
+            <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>Retiro</div>
               <input type="date" style={t.searchInput} min={todayInput()} value={pickup}
-                onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) <= new Date(e.target.value)) setDropoff(""); }} />
+                onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
-            <div style={t.searchCell}>
+            <div className="fw-plain-field" style={{ ...t.searchCell, borderRight: "none" }}>
               <div style={t.searchLabel}>Devolución</div>
-              <input type="date" style={t.searchInput} min={pickup || tomorrowInput()} value={dropoff}
+              <input type="date" style={t.searchInput} min={pickup || todayInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
             </div>
-            <div style={{ ...t.searchCell, borderRight: "none" }}>
-              <div style={t.searchLabel}>Tipo</div>
-              <select style={{ ...t.searchInput, cursor: "pointer" }} value={cat} onChange={e => setCat(e.target.value)}>
-                <option value="">Todos los autos</option>
-                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            </div>
+            {/* Acá había un select "Tipo" con el diseño por defecto del
+                navegador. Se quitó: justo abajo está "Explorá por categoría",
+                que hace exactamente lo mismo y se ve mucho mejor. */}
             <button style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 12, padding: "14px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", margin: 4 }}
               onClick={goToSearch}>Buscar autos →</button>
           </div>

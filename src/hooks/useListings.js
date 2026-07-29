@@ -7,25 +7,23 @@
 //   1) Pide las publicaciones al backend CON los filtros que solo el servidor
 //      puede resolver (ubicación, precio y, sobre todo, las fechas: hay que
 //      mirar las reservas y los bloqueos para saber qué auto está libre).
-//   2) Los autos de ejemplo (mockData) SOLO aparecen si el backend no tiene
-//      ninguna publicación o si no responde. En ese caso se devuelven TODOS y la
+//   2) Los autos de ejemplo (mockData) SOLO aparecen si se confirmó que el
+//      backend no tiene NINGUNA publicación. En ese caso se devuelven todos y la
 //      pantalla les aplica los filtros por su cuenta: antes, con un filtro
 //      puesto, se ocultaban y la pantalla quedaba en "0 autos disponibles".
 //   3) Deja un estado claro de carga / error para que la pantalla lo muestre.
+//
+//  MOCKS Y ERRORES — por qué ya no se mezclan
+//  Antes, si el pedido al backend fallaba, se mostraban los autos de ejemplo.
+//  Eso era muy confuso: alguien que ya había publicado autos veía en el inicio
+//  tres autos que no eran suyos (y con las fotos cortadas, porque son imágenes
+//  externas). Ahora un error es un error: se avisa y no se inventan autos. Los de
+//  ejemplo quedan solo para la app recién estrenada, con la base realmente vacía.
 // ============================================================================
 import { useCallback, useEffect, useState } from "react";
 import { getListings } from "../services/api";
 import { itemsOf, normalizeListing } from "../services/listings";
 import { mockCars } from "../data/mockData";
-
-// ¿El usuario pidió algo en particular? Sirve para distinguir "no hay autos que
-// cumplan el filtro" de "no hay autos publicados".
-function hasActiveFilters(filters) {
-  return Object.entries(filters).some(([key, value]) => {
-    if (["page", "limit", "sort"].includes(key)) return false;
-    return value !== undefined && value !== null && value !== "";
-  });
-}
 
 const MOCK_CARS = mockCars.map(normalizeListing);
 
@@ -58,11 +56,11 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
       // Cero resultados. Hay que distinguir dos situaciones bien distintas:
       //   · la base TIENE autos pero ninguno cumple el filtro → "sin resultados"
       //   · la base está VACÍA → recién ahí tienen sentido los de ejemplo
-      let databaseIsEmpty = true;
-      if (hasActiveFilters(activeFilters)) {
-        const probe = await getListings({ limit: 1 }).catch(() => null);
-        databaseIsEmpty = itemsOf(probe).length === 0;
-      }
+      //
+      // Se consulta siempre, sin importar si había filtros puestos: es la única
+      // forma de estar seguros, y es un pedido chico (un solo registro).
+      const probe = await getListings({ limit: 1 });
+      const databaseIsEmpty = itemsOf(probe).length === 0;
 
       if (databaseIsEmpty && includeMocks) {
         setCars(MOCK_CARS);
@@ -74,12 +72,13 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
         setShowingMocks(false);
       }
     } catch (err) {
-      setError(err.message || "No se pudieron cargar los autos.");
-      // El backend no respondió: se muestran los ejemplos para que la pantalla
-      // no quede vacía, avisando que son datos de demostración.
-      setCars(includeMocks ? MOCK_CARS : []);
-      setTotal(includeMocks ? MOCK_CARS.length : 0);
-      setShowingMocks(includeMocks);
+      // El backend no respondió. Se avisa y NO se muestran autos de ejemplo:
+      // inventar autos cuando el servidor falla hace pensar que la app perdió
+      // las publicaciones propias.
+      setError(err.message || "No pudimos cargar los autos.");
+      setCars([]);
+      setTotal(0);
+      setShowingMocks(false);
     } finally {
       setLoading(false);
     }

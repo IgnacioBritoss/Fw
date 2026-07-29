@@ -18,12 +18,13 @@
 import { useState, useEffect } from "react";
 import ReportModal from "../../components/ReportModal";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockCars, mockReviews } from "../../data/mockData";
+import { mockCars } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getListingById, getListingAvailability, startConversation,
-  updateListing, deleteListing,
+  updateListing, deleteListing, getListingReviews,
+  getPriceChangeStatus, requestPriceChange, confirmPriceChange, cancelPriceChange,
 } from "../../services/api";
 import FavoriteButton from "../../components/FavoriteButton";
 import { normalizeListing } from "../../services/listings";
@@ -32,6 +33,7 @@ import { es } from "date-fns/locale";
 
 const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
+const DRIVETRAIN_LABELS = { FRONT: "Delantera", REAR: "Trasera", FOUR_BY_FOUR: "4x4", AWD: "Integral" };
 
 // Arma el nombre visible del dueño a partir de sus datos.
 function getName(owner) {
@@ -54,8 +56,12 @@ function apiListingToCar(listing) {
     model: v.model || "",
     year: v.year || "",
     price_per_day: listing.pricePerDay || 0,
+    // Promedio real de las reseñas, calculado y guardado por el backend.
+    ratingAverage: listing.ratingAverage ?? null,
+    ratingCount: listing.ratingCount ?? 0,
     location: listing.locationText || "",
     transmission: TRANSMISSION_LABELS[v.transmission] || v.transmission || "",
+    drivetrain: DRIVETRAIN_LABELS[v.drivetrain] || "",
     fuel: FUEL_LABELS[v.fuelType] || v.fuelType || "",
     seats: v.seats,
     doors: v.doors,
@@ -177,6 +183,12 @@ export default function CarDetail() {
   const [editPrice, setEditPrice] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [listingReviews, setListingReviews] = useState([]);
+  // Cambio de precio: estado del circuito con confirmación por email.
+  const [priceStatus, setPriceStatus] = useState(null);
+  const [priceStep, setPriceStep] = useState("idle"); // idle | code
+  const [priceCode, setPriceCode] = useState("");
+  const [priceInfo, setPriceInfo] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
@@ -223,6 +235,17 @@ export default function CarDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Reseñas de la publicación. Los autos de ejemplo no tienen ninguna.
+  useEffect(() => {
+    if (!id || mockCar) return undefined;
+    let active = true;
+    getListingReviews(id)
+      .then(data => { if (active) setListingReviews(Array.isArray(data) ? data : []); })
+      .catch(() => { /* sin reseñas */ });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   // "Contactar al dueño": abre (o reutiliza) una conversación y va al chat.
   const handleContact = async () => {
     if (!user) { navigate("/login"); return; }
@@ -236,11 +259,23 @@ export default function CarDetail() {
     }
   };
 
-  // Abre el modo edición precargando el precio y la descripción actuales.
-  const startEdit = () => {
+  // Abre el modo edición precargando el precio y la descripción actuales, y
+  // consulta si el precio se puede cambiar ahora (ver el bloque de más abajo).
+  const startEdit = async () => {
     setEditPrice(String(car.price_per_day || ""));
     setEditDesc(car.description || "");
     setEditing(true);
+    setPriceStep("idle");
+    setPriceCode("");
+    setPriceInfo("");
+    const status = await getPriceChangeStatus(id).catch(() => null);
+    setPriceStatus(status);
+    // Si había un cambio pendiente de confirmar, se retoma en el paso del código.
+    if (status?.pendingPricePerDay) {
+      setEditPrice(String(status.pendingPricePerDay));
+      setPriceStep("code");
+      setPriceInfo("Tenías un cambio de precio sin confirmar. Ingresá el código que te llegó por email.");
+    }
   };
 
   // Guarda los cambios de precio/descripción en el backend. Si falla, se avisa:
@@ -248,21 +283,66 @@ export default function CarDetail() {
   const handleSaveEdit = async () => {
     setSavingEdit(true);
     setEditError("");
+    setPriceInfo("");
     const pricePerDay = Number(editPrice);
-    if (!pricePerDay || pricePerDay <= 0) {
+    const priceChanged = pricePerDay && Math.round(pricePerDay) !== Math.round(car.price_per_day);
+
+    if (editPrice !== "" && (!pricePerDay || pricePerDay <= 0)) {
       setEditError("Ingresá un precio por día válido.");
       setSavingEdit(false);
       return;
     }
+
     try {
-      await updateListing(id, { pricePerDay, description: editDesc });
-      setCar(c => ({ ...c, price_per_day: pricePerDay, description: editDesc }));
-      setEditing(false);
+      // La descripción se guarda directo.
+      if (editDesc !== car.description) {
+        await updateListing(id, { description: editDesc });
+        setCar(c => ({ ...c, description: editDesc }));
+      }
+
+      // El precio no: se pide el código por email y se aplica al confirmarlo.
+      if (priceChanged) {
+        const result = await requestPriceChange(id, pricePerDay);
+        setPriceStep("code");
+        setPriceInfo(`Te enviamos un código a ${result.sentTo}. El precio recién cambia cuando lo ingresás.`);
+        const status = await getPriceChangeStatus(id).catch(() => null);
+        if (status) setPriceStatus(status);
+      } else {
+        setEditing(false);
+      }
     } catch (err) {
       setEditError(err.message || "No pudimos guardar los cambios.");
     } finally {
       setSavingEdit(false);
     }
+  };
+
+  /** Paso 2 del cambio de precio: con el código, el precio nuevo queda aplicado. */
+  const handleConfirmPrice = async () => {
+    setSavingEdit(true);
+    setEditError("");
+    try {
+      const result = await confirmPriceChange(id, priceCode.trim());
+      setCar(c => ({ ...c, price_per_day: result.pricePerDay }));
+      setPriceStep("idle");
+      setPriceCode("");
+      setPriceInfo("");
+      setEditing(false);
+    } catch (err) {
+      setEditError(err.message || "No pudimos confirmar el cambio.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  /** Se descarta el cambio pendiente y el precio queda como estaba. */
+  const handleCancelPrice = async () => {
+    await cancelPriceChange(id).catch(() => {});
+    setPriceStep("idle");
+    setPriceCode("");
+    setPriceInfo("");
+    setEditPrice(String(car.price_per_day || ""));
+    setEditError("");
   };
 
   // Elimina la publicación y vuelve a "Mis autos".
@@ -291,7 +371,9 @@ export default function CarDetail() {
     </div>
   );
 
-  const reviews = mockReviews[id] || [];
+  // Reseñas reales de la publicación. Antes esta sección mostraba comentarios de
+  // ejemplo escritos a mano, iguales para todos los autos.
+  const reviews = listingReviews;
   const photos = car.photos || [];
   // ¿El que mira es el dueño? El backend ya lo informa (isOwner) para no depender
   // de comparar ids que pueden venir vacíos.
@@ -306,6 +388,8 @@ export default function CarDetail() {
   // Lista de specs técnicas, descartando las que el auto no tenga cargadas.
   const techSpecs = [
     ["Color", car.color],
+    // La tracción se cargaba al publicar y no se mostraba en ninguna parte.
+    ["Tracción", car.drivetrain],
     ["Puertas", car.doors],
     ["Potencia", car.horsePower ? `${car.horsePower} HP` : null],
     ["Cilindrada", car.engineDisplacementCC ? `${car.engineDisplacementCC} cc` : null],
@@ -316,7 +400,24 @@ export default function CarDetail() {
 
   // Tarjeta lateral de precio. Muestra el desglose (base + comisión + depósito)
   // y, según sea dueño o no, los botones de editar/eliminar o reservar/contactar.
-  const PriceCard = () => (
+  /**
+   * Tarjeta de precio (y, para el dueño, el formulario de edición).
+   *
+   * OJO: es una función que DEVUELVE JSX, y se usa como `{priceCard()}`, no como
+   * `<PriceCard />`. La diferencia no es de estilo, es un bug:
+   *
+   * Declarar un componente adentro de otro crea una función NUEVA en cada
+   * render. React compara los tipos de componente por identidad, así que al ver
+   * una función distinta da por muerto el árbol anterior y monta uno nuevo desde
+   * cero. Resultado: cada letra escrita en la descripción cambiaba el estado,
+   * disparaba un render, y el <textarea> se destruía y volvía a crearse: el
+   * cursor se perdía y había que hacer clic otra vez por cada carácter.
+   *
+   * Llamándola como función, el JSX queda inlineado en el árbol del padre y los
+   * campos conservan el foco. Lo mismo pasaba al cambiar de tamaño la ventana,
+   * porque la tarjeta se dibuja en dos lugares distintos según isMobile.
+   */
+  const priceCard = () => (
     <div style={isMobile ? s.priceCardMobile : s.priceCard}>
       <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>
       <div style={s.priceSub}>por día</div>
@@ -361,17 +462,52 @@ export default function CarDetail() {
       {isOwner ? (
         editing ? (
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Precio por día ($)</div>
-            <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Descripción</div>
-            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
-              style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "none", marginBottom: 10 }} />
-            {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
-            <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
-              {savingEdit ? "Guardando..." : "Guardar cambios"}
-            </button>
-            <button style={s.chatBtn} onClick={() => setEditing(false)}>Cancelar</button>
+            {/* PASO DEL CÓDIGO: el precio nuevo ya quedó guardado como pendiente y
+                se aplica recién cuando se ingresa el código que llegó por email. */}
+            {priceStep === "code" ? (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 6 }}>
+                  Confirmá el cambio de precio
+                </div>
+                <div style={{ fontSize: 12.5, color: "#4b5563", lineHeight: 1.5, marginBottom: 10 }}>
+                  {priceInfo}
+                </div>
+                <input value={priceCode} onChange={e => setPriceCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric" placeholder="000000"
+                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 22, fontWeight: 700, letterSpacing: 8, textAlign: "center", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+                {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
+                <button style={{ ...s.btn, opacity: savingEdit || priceCode.length !== 6 ? 0.6 : 1 }}
+                  onClick={handleConfirmPrice} disabled={savingEdit || priceCode.length !== 6}>
+                  {savingEdit ? "Confirmando..." : "Confirmar precio nuevo"}
+                </button>
+                <button style={s.chatBtn} onClick={handleCancelPrice}>Descartar el cambio</button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Precio por día ($)</div>
+                <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
+                  disabled={priceStatus ? !priceStatus.canChange : false}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 6, background: priceStatus && !priceStatus.canChange ? "#f9fafb" : "#fff" }} />
+
+                {/* Por qué el precio está protegido, y si ahora se puede cambiar */}
+                <div style={{ fontSize: 11.5, color: "#6b7280", lineHeight: 1.5, marginBottom: 10 }}>
+                  {priceStatus && priceStatus.blockedByBookings
+                    ? `No se puede cambiar el precio con ${priceStatus.activeBookings} reserva${priceStatus.activeBookings === 1 ? "" : "s"} en curso.`
+                    : priceStatus && priceStatus.nextAllowedChangeAt
+                      ? `El precio se cambia una vez cada ${priceStatus.cooldownHours} horas. Vas a poder cambiarlo el ${format(new Date(priceStatus.nextAllowedChangeAt), "d MMM 'a las' HH:mm", { locale: es })}.`
+                      : "Al cambiar el precio te mandamos un código por email para confirmarlo."}
+                </div>
+
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Descripción</div>
+                <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
+                  style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "vertical", marginBottom: 10 }} />
+                {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
+                <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
+                  {savingEdit ? "Guardando..." : "Guardar cambios"}
+                </button>
+                <button style={s.chatBtn} onClick={() => setEditing(false)}>Cancelar</button>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -447,8 +583,9 @@ export default function CarDetail() {
                 style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <span style={{ color: "#9ca3af", fontSize: 14 }}>Sin fotos</span>}
 
-          {/* Corazón de favoritos, también en el detalle. */}
-          {!isOwner && <FavoriteButton listingId={car.id} size={38} disabled={car.isMock} />}
+          {/* Corazón de favoritos. Va a la IZQUIERDA: arriba a la derecha está
+              el contador de fotos ("2 / 4") y se pisaban entre sí. */}
+          {!isOwner && <FavoriteButton listingId={car.id} size={38} disabled={car.isMock} side="left" />}
 
           {photos.length > 1 && (
             <>
@@ -487,7 +624,7 @@ export default function CarDetail() {
         )}
       </div>
 
-      {isMobile && <PriceCard />}
+      {isMobile && priceCard()}
 
       <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: "1fr 340px", gap: 32 }}>
         <div>
@@ -552,22 +689,43 @@ export default function CarDetail() {
           )}
 
           <div style={s.section}>
-            <div style={s.sectionTitle}>Reseñas ({reviews.length})</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+              <div style={s.sectionTitle}>Reseñas ({car.ratingCount})</div>
+              {/* Promedio real: sale de las puntuaciones guardadas, no de un número fijo. */}
+              {car.ratingAverage !== null && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ ...s.stars, fontSize: 15 }}>{"★".repeat(Math.round(car.ratingAverage))}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{car.ratingAverage.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
             {reviews.length === 0
-              ? <p style={{ color: "#9ca3af", fontSize: 13 }}>Aún sin reseñas.</p>
+              ? (
+                <p style={{ color: "#9ca3af", fontSize: 13 }}>
+                  Todavía no hay reseñas. Las escriben las personas que alquilaron
+                  este auto, cuando la reserva termina y el pago está completo.
+                </p>
+              )
               : reviews.map(r => (
                 <div key={r.id} style={s.review}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={s.reviewAuthor}>{r.author}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <span style={s.reviewAuthor}>
+                      {r.author?.displayName
+                        || `${r.author?.firstName || ""} ${r.author?.lastName || ""}`.trim()
+                        || "Usuario"}
+                    </span>
                     <span style={s.stars}>{"★".repeat(r.rating)}</span>
                   </div>
-                  <div style={s.reviewText}>{r.comment}</div>
+                  {r.comment && <div style={s.reviewText}>{r.comment}</div>}
+                  <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+                    {format(new Date(r.createdAt), "d MMM yyyy", { locale: es })}
+                  </div>
                 </div>
               ))}
           </div>
         </div>
 
-        {!isMobile && <div><PriceCard /></div>}
+        {!isMobile && <div>{priceCard()}</div>}
       </div>
 
       <div style={{ textAlign: "center", marginTop: 32 }}>
@@ -581,14 +739,16 @@ export default function CarDetail() {
 
       {showReport && (
         <ReportModal
-          target={`${car.brand} ${car.model} ${car.year}`}
+          targetId={car.id}
+          targetLabel={`${car.brand} ${car.model} ${car.year}`}
           targetType="car"
           onClose={() => setShowReport(false)}
         />
       )}
       {showReportUser && (
         <ReportModal
-          target={car.ownerName}
+          targetId={car.ownerId}
+          targetLabel={car.ownerName}
           targetType="user"
           onClose={() => setShowReportUser(false)}
         />

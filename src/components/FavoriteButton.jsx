@@ -14,7 +14,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 
-export default function FavoriteButton({ listingId, size = 30, disabled = false }) {
+/**
+ * `side` dice de qué lado se ubica el corazón. En el detalle del auto va a la
+ * IZQUIERDA porque arriba a la derecha está el contador de fotos del carrusel
+ * ("2 / 4") y los dos se pisaban. En las tarjetas del listado no hay contador,
+ * así que sigue arriba a la derecha.
+ */
+export default function FavoriteButton({ listingId, size = 30, disabled = false, side = "right" }) {
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -44,7 +50,8 @@ export default function FavoriteButton({ listingId, size = 30, disabled = false 
       aria-pressed={active}
       title={disabled ? "Disponible al publicar autos reales" : active ? "Quitar de favoritos" : "Guardar en favoritos"}
       style={{
-        position: "absolute", top: 12, right: 12, width: size, height: size,
+        position: "absolute", top: 12, ...(side === "left" ? { left: 12 } : { right: 12 }),
+        width: size, height: size,
         borderRadius: "50%", background: "#fff", border: "none", padding: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: hover ? "0 3px 10px rgba(0,0,0,.20)" : "0 1px 4px rgba(0,0,0,.12)",

@@ -97,7 +97,10 @@ export default function Search() {
   const markersRef = useRef({});
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const datesValid = !!(pickup && dropoff && new Date(dropoff) > new Date(pickup));
+  // Retiro = devolución es una búsqueda válida: "¿está libre ese día?". Antes se
+  // exigía devolución posterior, así que con fechas iguales no se mandaba ninguna
+  // y el listado no filtraba por disponibilidad.
+  const datesValid = !!(pickup && dropoff && new Date(dropoff) >= new Date(pickup));
 
   // Filtros que resuelve el BACKEND (los que necesitan mirar la base: ubicación,
   // precio, categoría, caja, combustible y disponibilidad por fechas).
@@ -252,21 +255,21 @@ export default function Search() {
     <div style={{ padding: isMobile ? "16px" : "24px 28px", maxWidth: 1360, margin: "0 auto" }}>
       {/* Barra de búsqueda: ubicación + fechas reales */}
       <div style={{ display: "flex", alignItems: "center", gap: 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 16, flexWrap: "wrap" }}>
-        <div style={st.barCell}>
+        <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Dónde</div>
           <input style={st.barInput} placeholder="Toda Argentina" value={where} onChange={e => setWhere(e.target.value)} />
         </div>
-        <div style={st.barCell}>
+        <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Retiro</div>
           <input type="date" style={st.barInput} min={todayInput()} value={pickup}
-            onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) <= new Date(e.target.value)) setDropoff(""); }} />
+            onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
         </div>
-        <div style={st.barCell}>
+        <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Devolución</div>
           <input type="date" style={st.barInput} min={pickup || todayInput()} value={dropoff}
             onChange={e => setDropoff(e.target.value)} />
         </div>
-        <div style={{ ...st.barCell, borderRight: "none" }}>
+        <div className="fw-plain-field" style={{ ...st.barCell, borderRight: "none" }}>
           <div style={st.barLbl}>Categoría</div>
           <select style={{ ...st.barInput, cursor: "pointer" }} value={category} onChange={e => setCategory(e.target.value)}>
             <option value="">Todas</option>
@@ -285,7 +288,7 @@ export default function Search() {
 
       {pickup && dropoff && !datesValid && (
         <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>
-          La fecha de devolución tiene que ser posterior a la de retiro.
+          La fecha de devolución no puede ser anterior a la de retiro.
         </div>
       )}
       {datesValid && (

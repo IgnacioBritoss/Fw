@@ -103,12 +103,10 @@ function getSpecWarnings(form) {
     ["trunkCapacityLiters", 50, 3000, "Baúl (litros)"],
     ["fuelConsumptionLitersPer100Km", 2, 35, "Consumo (l/100km)"],
     ["weightKg", 500, 6000, "Peso (kg)"],
-    ["widthMm", 1200, 3000, "Ancho (mm)"],
-    ["lengthMm", 2500, 7000, "Largo (mm)"],
   ];
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
-    .map(([, , , label, ,], i, arr) => `${arr[i][3]}: ${form[arr[i][0]]} parece fuera del rango normal (${arr[i][1]}–${arr[i][2]})`);
+    .map(([key, min, max, label]) => `${label}: ${form[key]} parece fuera del rango normal (${min}–${max})`);
 }
 
 // Normaliza un texto de ubicación (minúsculas, sin espacios de más) para poder
@@ -121,11 +119,62 @@ const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
 const FUEL_MAP = { Nafta: "GASOLINE", Diesel: "DIESEL", Eléctrico: "ELECTRIC", GNC: "OTHER" };
 const DRIVETRAIN_MAP = { Delantera: "FRONT", Trasera: "REAR", "4x4": "FOUR_BY_FOUR", AWD: "AWD" };
 
+/**
+ * Borrador de la publicación, guardado en el navegador.
+ *
+ * Cargar un auto lleva varios pasos y bastante escritura. Si la pantalla se
+ * reinicia por cualquier motivo (una recarga, salir a mirar otra cosa y volver,
+ * un toque sin querer en "atrás") se perdía todo lo escrito y había que empezar
+ * de nuevo desde el paso 1.
+ *
+ * Las fotos NO se guardan: son imágenes en base64 y llenarían el espacio que el
+ * navegador permite guardar. Se vuelven a elegir, que es lo más rápido de rehacer.
+ */
+const DRAFT_KEY = "fw_publish_draft";
+
+/** Valores iniciales del formulario, también usados al descartar el borrador. */
+const EMPTY_VEHICLE = {
+  brand: "", model: "", year: "2022",
+  // La categoría es la que usa el filtro "Explorá por categoría" del inicio y
+  // el buscador. Antes no se cargaba en ninguna parte, así que los autos
+  // publicados quedaban afuera de ese filtro.
+  category: "",
+  transmission: "Manual", fuel: "Nafta", drivetrain: "Delantera",
+  seats: "5", doors: "4", color: "", plate: "",
+  bluetooth: false, rearCamera: false, parkingSensors: false,
+  trunkCapacityLiters: "", fuelConsumptionLitersPer100Km: "",
+  horsePower: "", engineDisplacementCC: "",
+  weightKg: "", observations: "",
+};
+
+const EMPTY_LISTING = {
+  title: "", description: "", pricePerDay: "",
+  locationText: "", latitude: null, longitude: null,
+};
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveDraft(draft) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* sin espacio */ }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* nada que borrar */ }
+}
+
 export default function PublishCar() {
   const { isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const [step, setStep] = useState(0);
+  // Lo que hubiera quedado a medio cargar la última vez.
+  const draft = useRef(loadDraft()).current;
+  const [step, setStep] = useState(() => draft?.step ?? 0);
+  const [draftRestored, setDraftRestored] = useState(Boolean(draft));
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -137,24 +186,14 @@ export default function PublishCar() {
   const [uploadHover, setUploadHover] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
 
-  const [vehicleForm, setVehicleForm] = useState({
-    brand: "", model: "", year: "2022",
-    // La categoría es la que usa el filtro "Explorá por categoría" del inicio y
-    // el buscador. Antes no se cargaba en ninguna parte, así que los autos
-    // publicados quedaban afuera de ese filtro.
-    category: "",
-    transmission: "Manual", fuel: "Nafta", drivetrain: "Delantera",
-    seats: "5", doors: "4", color: "", plate: "",
-    bluetooth: false, rearCamera: false, parkingSensors: false,
-    trunkCapacityLiters: "", fuelConsumptionLitersPer100Km: "",
-    horsePower: "", engineDisplacementCC: "",
-    widthMm: "", lengthMm: "", weightKg: "", observations: "",
-  });
+  const [vehicleForm, setVehicleForm] = useState(() => draft?.vehicleForm ?? EMPTY_VEHICLE);
 
-  const [listingForm, setListingForm] = useState({
-    title: "", description: "", pricePerDay: "",
-    locationText: "", latitude: null, longitude: null,
-  });
+  const [listingForm, setListingForm] = useState(() => draft?.listingForm ?? EMPTY_LISTING);
+
+  // Cada cambio se guarda. No hace falta debounce: es una sola clave chica.
+  useEffect(() => {
+    saveDraft({ step, vehicleForm, listingForm });
+  }, [step, vehicleForm, listingForm]);
 
   // Atajos para actualizar un campo del formulario de vehículo (setV) o de listing (setL).
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
@@ -225,8 +264,6 @@ Si no sabés un dato, usá null.`;
     if (data.puertas) setV("doors", String(data.puertas));
     if (data.baul_litros) setV("trunkCapacityLiters", String(data.baul_litros));
     if (data.peso_kg) setV("weightKg", String(data.peso_kg));
-    if (data.ancho_mm) setV("widthMm", String(data.ancho_mm));
-    if (data.largo_mm) setV("lengthMm", String(data.largo_mm));
     if (data.consumo_l100km) setV("fuelConsumptionLitersPer100Km", String(data.consumo_l100km));
     if (data.hp) setV("horsePower", String(data.hp));
     if (data.cilindrada_cc) setV("engineDisplacementCC", String(data.cilindrada_cc));
@@ -379,8 +416,6 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(vehicleForm.engineDisplacementCC && { engineDisplacementCC: Number(vehicleForm.engineDisplacementCC) }),
         ...(vehicleForm.trunkCapacityLiters && { trunkCapacityLiters: Number(vehicleForm.trunkCapacityLiters) }),
         ...(vehicleForm.fuelConsumptionLitersPer100Km && { fuelConsumptionLitersPer100Km: Number(vehicleForm.fuelConsumptionLitersPer100Km) }),
-        ...(vehicleForm.widthMm && { widthMm: Number(vehicleForm.widthMm) }),
-        ...(vehicleForm.lengthMm && { lengthMm: Number(vehicleForm.lengthMm) }),
         ...(vehicleForm.weightKg && { weightKg: Number(vehicleForm.weightKg) }),
         ...(vehicleForm.observations && { observations: vehicleForm.observations }),
       };
@@ -411,6 +446,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         status: "ACTIVE",
       };
       await createListing(listingPayload);
+      // Publicado: el borrador ya no hace falta.
+      clearDraft();
       setDone(true);
     } catch (err) {
       // El backend responde con un error identificable cuando la cuenta no está
@@ -500,6 +537,27 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
         ))}
       </div>
+
+      {/* Se avisa cuando se recuperó lo que había quedado a medio cargar, con la
+          opción de descartarlo y arrancar de cero. */}
+      {draftRestored && !done && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 }}>
+          <span style={{ flex: 1, minWidth: 200 }}>
+            Retomamos la carga donde la habías dejado. Las fotos hay que elegirlas de nuevo.
+          </span>
+          <button type="button"
+            onClick={() => {
+              clearDraft();
+              setDraftRestored(false);
+              setStep(0);
+              setVehicleForm(EMPTY_VEHICLE);
+              setListingForm(EMPTY_LISTING);
+            }}
+            style={{ background: "#fff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+            Empezar de cero
+          </button>
+        </div>
+      )}
 
       {error && <div style={s.error}>{error}</div>}
 
@@ -607,6 +665,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <input style={s.input} placeholder="AB123CD" value={vehicleForm.plate}
               onChange={(e) => setV("plate", e.target.value.toUpperCase())}
               onBlur={(e) => { const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase(); setV("plate", clean); }} />
+            {/* La patente es el único dato que se pide y NO se publica: hace falta
+                para el contrato de alquiler. Se aclara para que no parezca que se
+                está pidiendo de más. */}
+            <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+              No se muestra en la publicación. Se usa solo para el contrato de alquiler.
+            </div>
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -636,7 +700,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             {[
               ["doors", "Puertas"], ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
               ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
-              ["widthMm", "Ancho (mm)"], ["lengthMm", "Largo (mm)"], ["weightKg", "Peso (kg)"],
+              ["weightKg", "Peso (kg)"],
             ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
                 <div style={s.specLabel}>{label}</div>

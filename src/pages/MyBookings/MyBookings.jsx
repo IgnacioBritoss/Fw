@@ -28,7 +28,9 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   getMyBookings, cancelBooking, acceptBooking, rejectBooking, markReadyForPickup,
+  getMyPendingReviews, createReview,
 } from "../../services/api";
+import ReviewForm from "../../components/ReviewForm";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
@@ -118,6 +120,11 @@ function nextStepFor(booking, isOwner) {
 
 export default function MyBookings() {
   const { user } = useAuth();
+  // Qué reservas se pueden reseñar y cuáles ya se reseñaron. Lo decide el
+  // backend (reserva completada y pago cerrado), así la pantalla no adivina.
+  const [reviewable, setReviewable] = useState([]);
+  const [reviewingId, setReviewingId] = useState(null);
+
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [tab, setTab] = useState("mis-reservas");
@@ -134,6 +141,11 @@ export default function MyBookings() {
       .then((data) => setBookings(Array.isArray(data) ? data : (data?.data ?? [])))
       .catch((err) => setError(err.message || "Error al cargar reservas."))
       .finally(() => setLoading(false));
+    // En paralelo: qué reservas se pueden reseñar. Si falla, simplemente no se
+    // muestra el botón; no es motivo para romper la pantalla.
+    getMyPendingReviews()
+      .then((data) => setReviewable(Array.isArray(data) ? data : []))
+      .catch(() => setReviewable([]));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -168,6 +180,9 @@ export default function MyBookings() {
     const paid = b.paymentStatus === "FULLY_PAID";
 
     const canCancel = ["REQUESTED", "ACCEPTED", "READY_FOR_PICKUP"].includes(b.status);
+    // El backend ya dijo qué reservas se pueden reseñar y cuáles no.
+    const reviewInfo = reviewable.find(r => r.bookingId === b.id);
+    const canReview = Boolean(reviewInfo) && !reviewInfo.alreadyReviewed;
     const canAcceptOwner = isOwner && b.status === "REQUESTED";
     // El pago lo hace el conductor una vez aceptada la reserva.
     const canPayRenter = !isOwner && b.status === "ACCEPTED" && !paid;
@@ -210,6 +225,13 @@ export default function MyBookings() {
             {actionLoading === `${b.id}-cancel` ? "..." : "Cancelar"}
           </button>
         )}
+        {/* La reseña se habilita solo cuando la reserva terminó y el pago se
+            completó: es lo que hace que las puntuaciones signifiquen algo. */}
+        {canReview && (
+          <button style={s.btnQR} onClick={() => setReviewingId(b.id)}>
+            {isOwner ? "Calificar al conductor" : "Dejar reseña"}
+          </button>
+        )}
       </div>
     );
 
@@ -241,7 +263,17 @@ export default function MyBookings() {
         </div>
         {/* Guía del paso siguiente para cada rol. */}
         {nextStepFor(b, isOwner) && <div style={s.nextStep}>{nextStepFor(b, isOwner)}</div>}
-        {buttons}
+        {reviewingId === b.id ? (
+          <ReviewForm
+            isOwner={isOwner}
+            onCancel={() => setReviewingId(null)}
+            onSubmit={async ({ rating, comment }) => {
+              await createReview(b.id, { rating, comment });
+              setReviewingId(null);
+              load();
+            }}
+          />
+        ) : buttons}
       </>
     );
 

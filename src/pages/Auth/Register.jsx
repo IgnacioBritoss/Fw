@@ -17,6 +17,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import PhoneInput from "../../components/PhoneInput";
+import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
 import { GOOGLE_AUTH_URL } from "../../services/api";
 import IdentityVerification from "../../components/IdentityVerification";
 
@@ -86,6 +88,9 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
   const [resending, setResending] = useState(false);
+  // Se marca al intentar continuar: recién ahí se muestra el error del teléfono,
+  // para no retar a la persona mientras todavía está escribiendo.
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   // Atajo para actualizar un campo del formulario por su nombre.
   const set = (k, v) => setForm(f => ({ ...f, [k]:v }));
@@ -96,6 +101,9 @@ export default function Register() {
     if (!form.lastName.trim()) return "Ingresá tu apellido.";
     if (!form.email.trim()) return "Ingresá tu email.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "El email no parece válido.";
+    if (!isArgentinePhone(`54${form.phone}`)) {
+      return "El teléfono tiene que ser un celular argentino completo: 9 + código de área + número (ejemplo 9 11 3289 5416). El servicio funciona solo en Argentina.";
+    }
     if (!form.dateOfBirth) return "Ingresá tu fecha de nacimiento.";
     const age = ageFrom(form.dateOfBirth);
     if (age === null) return "La fecha de nacimiento no es válida.";
@@ -109,6 +117,7 @@ export default function Register() {
 
   // Paso 0 → 1: pide el código al email. Todavía no se crea ninguna cuenta.
   const handleRequestCode = async () => {
+    setPhoneTouched(true);
     const invalid = validateForm();
     if (invalid) { setError(invalid); return; }
     setLoading(true); setError(""); setInfo("");
@@ -129,7 +138,7 @@ export default function Register() {
       password: form.password,
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
-      phone: form.phone.replace(/\D/g, "") || undefined,
+      phone: normalizeArgentinePhone(`54${form.phone}`) || undefined,
       dateOfBirth: form.dateOfBirth,
       acceptedTerms: form.acceptedTerms,
     });
@@ -202,9 +211,10 @@ export default function Register() {
 
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
               <div>
-                <label style={labelStyle}>Teléfono</label>
-                <input style={inputStyle} placeholder="1123456789" value={form.phone} maxLength={15}
-                  onChange={e => set("phone", e.target.value.replace(/\D/g, ""))} />
+                {/* Teléfono argentino completo: el +54 es fijo y no se puede
+                    continuar con un número a medias (antes "123" pasaba). */}
+                <PhoneInput label="Teléfono *" value={form.phone} showError={phoneTouched}
+                  onChange={v => set("phone", v)} />
               </div>
               <div>
                 {/* La fecha de nacimiento es obligatoria: la plataforma es solo

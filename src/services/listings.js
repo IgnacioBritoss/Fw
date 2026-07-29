@@ -94,8 +94,13 @@ export function normalizeListing(listing) {
     status: listing.status || (listing.available === false ? "PAUSED" : "ACTIVE"),
     available: listing.status ? listing.status === "ACTIVE" : listing.available !== false,
     is_verified: listing.is_verified ?? true,
-    rating: Number(listing.rating || 0),
-    reviews: Number(listing.reviews_count || listing.reviewsCount || 0),
+    // Promedio real de reseñas. El backend lo calcula y lo guarda en la
+    // publicación (ratingAverage/ratingCount); los autos de ejemplo traen un
+    // `rating` fijo escrito a mano.
+    ratingAverage: listing.ratingAverage ?? (listing.rating ? Number(listing.rating) : null),
+    ratingCount: Number(listing.ratingCount ?? listing.reviews_count ?? listing.reviewsCount ?? 0),
+    rating: Number(listing.ratingAverage ?? listing.rating ?? 0),
+    reviews: Number(listing.ratingCount ?? listing.reviews_count ?? listing.reviewsCount ?? 0),
     ownerId: listing.owner?.id || listing.ownerId || listing.owner_id || "",
     ownerName: ownerName(listing),
     isMock: listing.isMock === true,

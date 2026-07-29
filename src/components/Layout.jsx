@@ -18,17 +18,38 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
 
-// Estructura del menú lateral, agrupada por secciones.
+// Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
+// sistema y desentona con el resto de la interfaz.
+const icon = (paths) => ({ size = 18, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {paths}
+  </svg>
+);
+
+const HomeIcon = icon(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></>);
+const SearchIcon = icon(<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>);
+const CalendarIcon = icon(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></>);
+const HeartIcon = icon(<path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7 3.7c0 4.9-7 9.3-7 9.3z" />);
+const CarIcon = icon(<><path d="M5 17h14M4 17v-4l2-5h12l2 5v4" /><circle cx="7.5" cy="17.5" r="1.5" /><circle cx="16.5" cy="17.5" r="1.5" /></>);
+const PlusIcon = icon(<><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>);
+const ShieldIcon = icon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />);
+
+// Estructura del menú lateral, agrupada por secciones. `adminOnly` hace que la
+// opción se muestre únicamente a las cuentas administradoras.
 const NAV = [
   { group: "Navegación", items: [
-    { label: "Inicio", path: "/" },
-    { label: "Buscar autos", path: "/buscar" },
-    { label: "Mis reservas", path: "/my-bookings" },
-    { label: "Favoritos", path: "/favoritos" },
+    { label: "Inicio", path: "/", Icon: HomeIcon },
+    { label: "Buscar autos", path: "/buscar", Icon: SearchIcon },
+    { label: "Mis reservas", path: "/my-bookings", Icon: CalendarIcon },
+    { label: "Favoritos", path: "/favoritos", Icon: HeartIcon },
   ]},
   { group: "Para dueños", items: [
-    { label: "Mis autos", path: "/dashboard" },
-    { label: "Publicar auto", path: "/publish" },
+    { label: "Mis autos", path: "/dashboard", Icon: CarIcon },
+    { label: "Publicar auto", path: "/publish", Icon: PlusIcon },
+    // El panel de administración es una opción más del menú, debajo de
+    // "Publicar auto", y solo aparece si la cuenta es admin.
+    { label: "Panel Admin", path: "/admin", Icon: ShieldIcon, adminOnly: true },
   ]},
 ];
 
@@ -114,22 +135,22 @@ export default function Layout({ children }) {
   const t = {
     navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
     navItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 2, background: active ? "#111827" : "transparent", color: active ? "#fff" : "#374151", transition: "background .15s" }),
-    navDot: (active) => ({ width: 18, height: 18, borderRadius: 5, background: active ? "#fff" : "#d1d5db", flexShrink: 0 }),
+    navIcon: (active) => ({ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0, color: active ? "#fff" : "#6b7280" }),
     iconBtn: { width: 40, height: 40, borderRadius: 10, background: "#f3f4f6", border: "1px solid #ececec", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", transition: "background .15s, border-color .15s" },
   };
 
   // Contenido del menú lateral: logo, links de navegación, tarjeta "Publicar",
   // botón de admin (si corresponde) y bloque de perfil con botón de salir.
-  const SidebarInner = () => (
+  const sidebarInner = () => (
     <>
       <Logo />
       <div style={{ flex: 1, overflowY: "auto" }}>
         {NAV.map((g, gi) => (
           <div key={gi}>
             <div style={t.navGroup}>{g.group}</div>
-            {g.items.map((it, ii) => (
+            {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
               <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}>
-                <span style={t.navDot(isActive(it))} />
+                <span style={t.navIcon(isActive(it))}><it.Icon /></span>
                 <span style={{ flex: 1 }}>{it.label}</span>
                 {/* Cantidad de favoritos guardados, al lado del ítem. */}
                 {it.path === "/favoritos" && favoritesCount > 0 && (
@@ -142,21 +163,11 @@ export default function Layout({ children }) {
           </div>
         ))}
       </div>
-      <div style={{ background: "#111827", borderRadius: 14, padding: 16, color: "#fff", marginTop: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Ganá con tu auto</div>
-        <div style={{ fontSize: 12, opacity: .7, lineHeight: 1.5, marginBottom: 12 }}>Publicá tu vehículo y empezá a generar ingresos este mes.</div>
-        <button style={{ background: "#fff", color: "#111827", border: "none", borderRadius: 10, padding: "9px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }} onClick={() => go("/publish")}>Publicar →</button>
-      </div>
-
-      {isAdmin && (
-        <button onClick={() => go("/admin")}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 12, padding: "11px", background: "#ede9fe", color: "#6d28d9", border: "1px solid #ddd6fe", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-          onMouseEnter={e => e.currentTarget.style.background = "#ddd6fe"}
-          onMouseLeave={e => e.currentTarget.style.background = "#ede9fe"}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#6d28d9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Panel Admin
-        </button>
-      )}
+      {/* Acá había una tarjeta negra "Ganá con tu auto" con un botón "Publicar".
+          Se quitó: repetía la opción "Publicar auto" que está justo arriba en el
+          menú, y el bloque oscuro se comía la mitad del panel. El acceso al
+          panel de administración también estaba suelto acá abajo; ahora es una
+          opción más del menú, que es donde se lo busca. */}
 
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
@@ -176,7 +187,7 @@ export default function Layout({ children }) {
 
   // Parte derecha de la barra superior: íconos de mensajes/notificaciones/
   // ajustes si hay sesión, o botones de login/registro si no la hay.
-  const TopbarRight = () => (
+  const topbarRight = () => (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       {user ? (
         /* Mensajes (con puntito azul si hay no leídos) */
@@ -218,42 +229,60 @@ export default function Layout({ children }) {
     </div>
   );
 
-    // ───────────── MOBILE ─────────────
-  if (isMobile) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#fff", borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 50 }}>
-          <button onClick={() => setDrawerOpen(o => !o)} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
-            <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
-            <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
-          </button>
-          <Logo />
-          <TopbarRight />
-        </header>
-        {drawerOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 100 }} onClick={() => setDrawerOpen(false)}>
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.4)" }} />
-            <aside onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 248, background: "#fff", padding: "24px 16px", display: "flex", flexDirection: "column", boxShadow: "0 0 40px rgba(0,0,0,.2)" }}>
-              <SidebarInner />
-            </aside>
-          </div>
-        )}
-        <main>{children}</main>
-      </div>
-    );
-  }
-
-  // ───────────── DESKTOP ─────────────
+  // ───────────── UN SOLO ÁRBOL PARA CELULAR Y ESCRITORIO ─────────────
+  //
+  // Antes había dos `return` distintos según isMobile. Eso parece inofensivo pero
+  // rompía las pantallas con formularios: al cruzar los 768px de ancho —por
+  // ejemplo al ABRIR LA CONSOLA del navegador, que angosta la ventana— React se
+  // encontraba con un árbol de otra forma, daba por muerto el anterior y volvía a
+  // montar la página desde cero. El formulario de publicar un auto volvía al
+  // paso 1 y se perdía todo lo cargado.
+  //
+  // Ahora la estructura es siempre la misma y lo único que cambia son los
+  // estilos, así que `children` nunca se desmonta y el estado de la página se
+  // conserva al cambiar el tamaño de la ventana.
   return (
     <div style={{ minHeight: "100vh", background: "#f3f4f6", display: "flex" }}>
-      <aside style={{ width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec", padding: "24px 16px", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh" }}>
-        <SidebarInner />
+      {/* Menú lateral: fijo en escritorio, cajón deslizable en celular */}
+      <aside
+        style={isMobile ? {
+          position: "fixed", top: 0, left: 0, bottom: 0, width: 248, zIndex: 101,
+          background: "#fff", padding: "24px 16px", display: "flex", flexDirection: "column",
+          boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
+          transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform .22s ease",
+        } : {
+          width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec",
+          padding: "24px 16px", display: "flex", flexDirection: "column",
+          position: "sticky", top: 0, height: "100vh",
+        }}
+      >
+        {sidebarInner()}
       </aside>
+
+      {/* Fondo oscuro detrás del cajón, solo en celular y con el menú abierto */}
+      {isMobile && drawerOpen && (
+        <div onClick={() => setDrawerOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 100 }} />
+      )}
+
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 32px", background: "#fff", borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 16, background: "#fff",
+          borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
+          padding: isMobile ? "12px 16px" : "14px 32px",
+        }}>
+          {isMobile && (
+            <button onClick={() => setDrawerOpen(o => !o)} aria-label="Abrir menú"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
+              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
+              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
+            </button>
+          )}
+          {isMobile && <Logo />}
           <div style={{ flex: 1 }} />
-          <TopbarRight />
+          {topbarRight()}
         </div>
         <div>{children}</div>
       </div>

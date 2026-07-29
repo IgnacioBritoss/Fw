@@ -26,8 +26,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { uploadImageToCloudinary } from "../services/cloudinary";
+import { checkDocument } from "../services/groq";
+import PhoneInput from "./PhoneInput";
+import { normalizeArgentinePhone } from "../services/phone";
 import {
-  checkDocumentPhoto, confirmPhoneCode, getVerificationStatus,
+  confirmPhoneCode, getVerificationStatus,
   requestPhoneCode, submitIdentity, updateMe,
 } from "../services/api";
 
@@ -99,7 +102,9 @@ function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
       )}
       {review?.state === "unknown" && (
         <div style={{ fontSize: 12, color: "#92400e", marginTop: 6 }}>
-          No se pudo revisar automáticamente. Se envía igual.
+          {review.code === "not_configured"
+            ? "La revisión automática no está configurada en el servidor. La foto se envía igual."
+            : `No se pudo revisar automáticamente. Se envía igual.${review.reason ? ` (${review.reason})` : ""}`}
         </div>
       )}
     </div>
@@ -140,7 +145,9 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(null); // checklist real del backend
-  const [phone, setPhone] = useState(user?.phone || "");
+  // Solo los dígitos que van DESPUÉS del 54 (el "+54" lo pone PhoneInput).
+  const [phone, setPhone] = useState(() => String(user?.phone || "").replace(/\D/g, "").replace(/^54/, ""));
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [codeHint, setCodeHint] = useState(null); // por dónde llegó y, en demo, cuál es
@@ -165,12 +172,15 @@ export default function IdentityVerification({ onDone, onCancel }) {
     setDocs(d => ({ ...d, [key]: value }));
     setReviews(r => ({ ...r, [key]: { state: "checking" } }));
 
-    const result = await checkDocumentPhoto(value, kind).catch(() => null);
+    const result = await checkDocument(value, kind).catch(() => null);
     setReviews(r => ({
       ...r,
       [key]: result?.matches === true ? { state: "ok" }
         : result?.matches === false ? { state: "invalid", reason: result.reason || "" }
-          : { state: "unknown" },
+          // No se pudo revisar: se muestra el motivo real. Si el servidor no
+          // tiene la clave de la IA no es lo mismo que si la foto era ilegible,
+          // y antes las dos cosas llegaban como el mismo aviso genérico.
+          : { state: "unknown", code: result?.code, reason: result?.reason || "" },
     }));
   };
 
@@ -214,11 +224,15 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
   // Guarda el teléfono (si cambió) y pide el código de verificación.
   const sendPhoneCode = async () => {
-    const clean = phone.replace(/\D/g, "");
-    if (clean.length < 8) { setError("Ingresá un teléfono válido (solo números)."); return; }
+    setPhoneTouched(true);
+    const full = normalizeArgentinePhone(`54${phone}`);
+    if (!full) {
+      setError("El teléfono tiene que ser un celular argentino completo: 9 + código de área + número (ejemplo 9 11 3289 5416). El servicio funciona solo en Argentina.");
+      return;
+    }
     setBusy(true); setError(""); setInfo("");
     try {
-      if (clean !== user?.phone) await updateMe({ phone: clean });
+      if (full !== user?.phone) await updateMe({ phone: full });
       const result = await requestPhoneCode();
       setCodeSent(true);
       setCodeHint(result || null);
@@ -340,11 +354,8 @@ export default function IdentityVerification({ onDone, onCancel }) {
               <div style={{ ...st.info, marginBottom: 20 }}>Tu teléfono ya está verificado.</div>
             ) : !codeSent ? (
               <>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={st.label}>Teléfono</label>
-                  <input style={st.input} placeholder="1134567890" value={phone} maxLength={15}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} />
-                </div>
+                <PhoneInput label="Teléfono" value={phone} showError={phoneTouched}
+                  onChange={setPhone} style={{ marginBottom: 16 }} />
                 <div style={st.codeBox}>
                   El código de confirmación llega a <strong>tu email</strong>, no por
                   SMS: enviar mensajes a un número es un servicio pago que todavía
