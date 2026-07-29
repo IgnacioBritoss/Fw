@@ -264,8 +264,12 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
  * Revisa una foto de documento ANTES de subirla, para avisar en el momento si no
  * corresponde. `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
  * Devuelve { matches, reason }: matches en null significa que no se pudo revisar.
+ *
+ * Las pantallas NO deberían llamar a esto directo, sino a checkDocument() de
+ * services/groq.js, que además achica la foto (si no, el backend la rechaza por
+ * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
  */
-export async function checkDocumentPhoto(image, kind) {
+export async function aiDocument(image, kind) {
   return apiFetch("/ai/document", { method: "POST", body: JSON.stringify({ image, kind }) });
 }
 export async function updateListing(id, data) {
@@ -305,6 +309,78 @@ export async function aiVision(imageDataUrl) {
 }
 export async function aiTranscribe(audioUrl) {
   return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });
+}
+
+// ── RESEÑAS ────────────────────────────────────────────────────
+// Solo se puede reseñar una reserva COMPLETADA y PAGADA: es lo que hace que las
+// puntuaciones signifiquen algo. El promedio lo calcula y lo guarda el backend.
+export async function getListingReviews(listingId) {
+  return apiFetch(`/listings/${listingId}/reviews`);
+}
+export async function getUserReviews(userId) {
+  return apiFetch(`/users/${userId}/reviews`);
+}
+/** Qué reservas propias se pueden reseñar y cuáles ya se reseñaron. */
+export async function getMyPendingReviews() {
+  return apiFetch("/reviews/me/pending");
+}
+export async function createReview(bookingId, { rating, comment }) {
+  return apiFetch(`/bookings/${bookingId}/reviews`, {
+    method: "POST",
+    body: JSON.stringify({ rating, ...(comment ? { comment } : {}) }),
+  });
+}
+
+// ── REPORTES ───────────────────────────────────────────────────
+// Antes el botón "Reportar" guardaba el texto en el navegador de quien reportaba
+// y nadie lo veía nunca. Ahora va al backend, lo lee la IA para decir si tiene
+// relación con la publicación, y le llega a las cuentas administradoras.
+export async function createReport({ targetType, listingId, targetUserId, reason, details }) {
+  return apiFetch("/reports", {
+    method: "POST",
+    body: JSON.stringify({
+      targetType,
+      ...(listingId ? { listingId } : {}),
+      ...(targetUserId ? { targetUserId } : {}),
+      reason,
+      details,
+    }),
+  });
+}
+export async function getMyReports() {
+  return apiFetch("/reports/me");
+}
+export async function getAdminReports(status) {
+  return apiFetch(`/admin/reports${status ? `?status=${status}` : ""}`);
+}
+export async function resolveReport(reportId, action, note) {
+  return apiFetch(`/admin/reports/${reportId}/resolve`, {
+    method: "PATCH",
+    body: JSON.stringify({ action, ...(note ? { note } : {}) }),
+  });
+}
+
+// ── CAMBIO DE PRECIO ───────────────────────────────────────────
+// El precio es el único dato que mueve plata sin que intervenga nadie más, así
+// que no se cambia con un PATCH: hace falta confirmar con el código que llega por
+// email, no puede haber reservas en curso y hay una espera entre cambios.
+export async function getPriceChangeStatus(listingId) {
+  return apiFetch(`/listings/${listingId}/price-change`);
+}
+export async function requestPriceChange(listingId, pricePerDay) {
+  return apiFetch(`/listings/${listingId}/price-change`, {
+    method: "POST",
+    body: JSON.stringify({ pricePerDay }),
+  });
+}
+export async function confirmPriceChange(listingId, code) {
+  return apiFetch(`/listings/${listingId}/price-change/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+export async function cancelPriceChange(listingId) {
+  return apiFetch(`/listings/${listingId}/price-change`, { method: "DELETE" });
 }
 
 // ── RESERVAS (BOOKINGS) ────────────────────────────────────────

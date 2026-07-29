@@ -1,23 +1,37 @@
 // ============================================================================
-//  groq.js — Funciones de INTELIGENCIA ARTIFICIAL (a través del backend)
+//  groq.js — Funciones de INTELIGENCIA ARTIFICIAL
 // ----------------------------------------------------------------------------
-//  Se usa la IA para tres cosas:
-//    1) aiChat       → el chatbot de ayuda y autocompletar las specs del auto.
-//    2) aiVision     → verificar que una foto sea realmente de un vehículo.
-//    3) aiTranscribe → pasar a texto las notas de voz del chat.
+//  Se usa la IA para cuatro cosas:
+//    1) aiChat          → el chatbot de ayuda y autocompletar las specs del auto.
+//    2) groqVision      → verificar que una foto sea realmente de un vehículo.
+//    3) checkDocument   → verificar que una foto sea el DNI/licencia pedido.
+//    4) groqTranscribe  → pasar a texto las notas de voz del chat.
 //
-//  IMPORTANTE — dónde corre esto:
-//  Antes este archivo llamaba a la API de Groq DIRECTO desde el navegador, con
-//  la clave en VITE_GROQ_API_KEY. Todo lo que empieza con VITE_ queda escrito
-//  dentro del JavaScript que se descarga cualquier visitante: la clave quedaba a
-//  la vista y cualquiera podía usarla (y gastarla).
+//  DÓNDE CORRE ESTO
+//  Los pedidos van al BACKEND (/ai/*), que es el único que conoce la clave de la
+//  IA. Antes se llamaba a Groq directo desde el navegador con la clave en
+//  VITE_GROQ_API_KEY, y todo lo que empieza con VITE_ queda escrito dentro del
+//  JavaScript que se descarga cualquier visitante: la clave estaba a la vista.
 //
-//  Ahora los pedidos van al BACKEND (/ai/chat, /ai/vision, /ai/transcribe), que
-//  es el único que conoce la GROQ_API_KEY. El navegador nunca ve la clave.
-//  Las funciones siguen llamándose y devolviendo lo mismo, así que las pantallas
-//  no tuvieron que cambiar.
+//  RESPALDO
+//  Si el backend contesta que la IA no está configurada (le falta GROQ_API_KEY en
+//  sus variables de entorno), y el front todavía tiene VITE_GROQ_API_KEY cargada,
+//  se llama a Groq directo desde el navegador. Es el mismo criterio que ya usa
+//  cloudinary.js: preferir que la función ande a que quede muerta esperando que
+//  alguien toque un panel. En cuanto la clave esté en el backend, este respaldo
+//  deja de usarse solo.
+//
+//  ANTES DE MANDAR, SE ACHICA
+//  Las fotos de un celular pesan varios MB, y en base64 crecen un 33% más. El
+//  backend rechaza cualquier imagen de más de 3MB, así que una foto sin achicar
+//  volvía como "no se pudo revisar" sin que la IA la llegara a mirar nunca. Por
+//  eso toda imagen pasa por shrinkImage() antes de salir.
 // ============================================================================
-import { aiChat as apiAiChat, aiTranscribe as apiAiTranscribe, aiVision as apiAiVision } from "./api";
+import { aiChat as apiAiChat, aiDocument as apiAiDocument, aiTranscribe as apiAiTranscribe, aiVision as apiAiVision } from "./api";
+
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const DIRECT_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 // Envía una conversación al modelo de texto y devuelve la respuesta como string.
 // - messages: lista de mensajes con roles (system/user/assistant).
@@ -35,10 +49,14 @@ export function extractJSON(text) {
   return JSON.parse(match[0]);
 }
 
-// Achica una imagen antes de mandarla a la IA (máx. 512px de lado y calidad 65%).
-// Se sigue haciendo en el navegador a propósito: así viaja menos peso al servidor
-// y la verificación es más rápida y barata.
-async function resizeImage(dataUrl, maxPx = 512) {
+/**
+ * Achica una imagen antes de mandarla a la IA. `maxPx` es el lado más largo.
+ *
+ * Para "¿es un auto?" alcanza con 512px. Para un documento hace falta bastante
+ * más resolución, porque el modelo tiene que poder LEER el número y el nombre:
+ * con 512px el texto queda ilegible y la revisión falla aunque la foto esté bien.
+ */
+export async function shrinkImage(dataUrl, maxPx = 512, quality = 0.65) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -47,26 +65,140 @@ async function resizeImage(dataUrl, maxPx = 512) {
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.65));
+      resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.onerror = () => resolve(dataUrl); // si no se pudo achicar, va como está
     img.src = dataUrl;
   });
 }
 
-// Verifica con IA si una foto muestra un vehículo. Se usa al publicar un auto
-// para evitar que suban fotos que no correspondan.
-// Devuelve: true (es vehículo), false (no lo es) o null (no se pudo verificar).
-export async function groqVision(imageDataUrl) {
+/** ¿El backend avisó que la IA no está configurada de su lado? */
+function notConfigured(errorOrResult) {
+  return errorOrResult?.status === 503 || errorOrResult?.code === "not_configured";
+}
+
+/**
+ * Llamada directa a Groq desde el navegador. Solo se usa como respaldo (ver la
+ * nota de arriba) y solo si VITE_GROQ_API_KEY sigue cargada en el front.
+ * Devuelve el texto de la respuesta, o null si no se pudo.
+ */
+async function askVisionDirect(imageDataUrl, prompt, maxTokens) {
+  if (!DIRECT_KEY) return null;
   try {
-    const resized = await resizeImage(imageDataUrl);
-    const data = await apiAiVision(resized);
-    return data?.isVehicle ?? null;
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${DIRECT_KEY}` },
+      body: JSON.stringify({
+        model: VISION_MODEL,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: imageDataUrl } },
+            { type: "text", text: prompt },
+          ],
+        }],
+        temperature: 0,
+        max_tokens: maxTokens,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content ?? null;
   } catch {
-    // Si la IA no está disponible no se bloquea la publicación: se devuelve
-    // null y la pantalla trata la foto como "no verificada".
     return null;
   }
+}
+
+// Texto de las preguntas. Están repetidos del backend a propósito: son los que
+// usa el respaldo del navegador, que tiene que preguntar exactamente lo mismo
+// para que el resultado sea comparable.
+const VEHICLE_PROMPT =
+  "¿Esta imagen muestra un automóvil, camioneta, SUV, moto u otro vehículo de motor? Respondé únicamente SI o NO.";
+
+const DOCUMENT_EXPECTED = {
+  DNI_FRONT: "el FRENTE de un documento nacional de identidad (DNI), con la foto de la persona, su nombre y el número de documento",
+  DNI_BACK: "el DORSO de un documento nacional de identidad (DNI), con datos como domicilio, fecha de emisión o código de barras",
+  LICENSE_FRONT: "el FRENTE de una licencia de conducir, con la foto de la persona, su nombre y el número de licencia",
+  LICENSE_BACK: "el DORSO de una licencia de conducir, con las categorías habilitadas y/o la fecha de vencimiento",
+};
+
+const documentPrompt = (kind) =>
+  `Analizá la imagen. Se espera ${DOCUMENT_EXPECTED[kind]}.\n` +
+  "Respondé SOLO un JSON válido, sin texto alrededor, con esta forma exacta:\n" +
+  '{"corresponde": true|false, "legible": true|false, "tipo_detectado": "texto corto", ' +
+  '"numero": "solo dígitos o null", "nombre": "nombre completo o null", ' +
+  '"vencimiento": "YYYY-MM-DD o null", "motivo": "una frase explicando la decisión"}\n' +
+  "Si la imagen no es un documento de identidad (por ejemplo un paisaje, una mascota, " +
+  'una captura de pantalla o una persona sin documento), "corresponde" debe ser false.';
+
+/**
+ * Verifica con IA si una foto muestra un vehículo. Se usa al publicar un auto.
+ * Devuelve: true (es vehículo), false (no lo es) o null (no se pudo verificar).
+ */
+export async function groqVision(imageDataUrl) {
+  const small = await shrinkImage(imageDataUrl, 512, 0.65);
+
+  let backendFailed = false;
+  try {
+    const data = await apiAiVision(small);
+    if (data?.isVehicle === true || data?.isVehicle === false) return data.isVehicle;
+    backendFailed = notConfigured(data);
+  } catch (err) {
+    backendFailed = notConfigured(err);
+  }
+
+  if (!backendFailed) return null;
+
+  const answer = (await askVisionDirect(small, VEHICLE_PROMPT, 5))?.trim().toUpperCase();
+  if (!answer) return null;
+  return answer.startsWith("SI") ? true : answer.startsWith("NO") ? false : null;
+}
+
+/**
+ * Revisa si una foto es realmente el documento pedido, ANTES de subirla.
+ * `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
+ *
+ * Devuelve { matches, reason, code }:
+ *   · matches true  → es el documento correcto
+ *   · matches false → no corresponde (reason explica por qué)
+ *   · matches null  → no se pudo revisar (code dice el motivo)
+ */
+export async function checkDocument(imageDataUrl, kind) {
+  // 1024px y calidad 0.8: suficiente para que se lea el número del documento y
+  // muy por debajo del límite de peso del backend.
+  const small = await shrinkImage(imageDataUrl, 1024, 0.8);
+
+  let failure = null;
+  try {
+    const data = await apiAiDocument(small, kind);
+    if (data?.matches === true || data?.matches === false) return data;
+    failure = data;
+  } catch (err) {
+    failure = err;
+  }
+
+  // El backend no pudo. Si es porque no tiene la clave, se intenta desde acá.
+  if (notConfigured(failure)) {
+    const content = await askVisionDirect(small, documentPrompt(kind), 400);
+    if (content) {
+      try {
+        const parsed = extractJSON(content);
+        const matches = parsed.corresponde === true && parsed.legible !== false;
+        return {
+          matches,
+          reason: parsed.motivo || (matches
+            ? "El documento coincide con lo esperado."
+            : "La imagen no corresponde al documento pedido."),
+        };
+      } catch { /* respuesta ilegible: cae al retorno de abajo */ }
+    }
+  }
+
+  return {
+    matches: null,
+    code: failure?.code || (failure?.status === 503 ? "not_configured" : "upstream_error"),
+    reason: failure?.reason || failure?.message || "No se pudo revisar la foto.",
+  };
 }
 
 // Transcribe una nota de voz. Recibe la URL del audio ya subido a Cloudinary y

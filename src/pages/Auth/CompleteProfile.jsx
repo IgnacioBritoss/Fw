@@ -15,6 +15,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import PhoneInput from "../../components/PhoneInput";
+import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
 import { updateMe } from "../../services/api";
 
 // Edad exacta a partir de la fecha (YYYY-MM-DD).
@@ -38,7 +40,9 @@ export default function CompleteProfile() {
   const { user, completeProfile, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [phone, setPhone] = useState(user?.phone || "");
+  // Solo los dígitos posteriores al 54 (el "+54" lo pone PhoneInput).
+  const [phone, setPhone] = useState(() => String(user?.phone || "").replace(/\D/g, "").replace(/^54/, ""));
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +64,13 @@ export default function CompleteProfile() {
     const age = ageFrom(dateOfBirth);
     if (age === null) { setError("La fecha no es válida."); return; }
     if (age < 18) { setError("Tenés que ser mayor de 18 años para usar Freewheel."); return; }
+    // El teléfono es opcional acá, pero si lo cargan tiene que estar completo:
+    // guardar un número a medias no le sirve a nadie.
+    if (phone && !isArgentinePhone(`54${phone}`)) {
+      setPhoneTouched(true);
+      setError("El teléfono tiene que ser un celular argentino completo (ejemplo 9 11 3289 5416), o dejalo vacío.");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -68,9 +79,9 @@ export default function CompleteProfile() {
 
     // Con la sesión ya completa se puede guardar el teléfono (es opcional: si
     // falla, no bloquea el ingreso).
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone) {
-      try { await updateMe({ phone: cleanPhone }); } catch { /* opcional */ }
+    const fullPhone = normalizeArgentinePhone(`54${phone}`);
+    if (fullPhone) {
+      try { await updateMe({ phone: fullPhone }); } catch { /* opcional */ }
     }
     await refreshUser();
     setLoading(false);
@@ -96,10 +107,8 @@ export default function CompleteProfile() {
         </div>
 
         <div style={{ marginBottom:24 }}>
-          <label style={s.label}>Teléfono (opcional)</label>
-          <input style={s.input} placeholder="1134567890" value={phone} maxLength={15}
-            onChange={e => setPhone(e.target.value.replace(/\D/g,""))} />
-          <div style={s.hint}>Lo vas a necesitar para verificar tu cuenta y poder reservar.</div>
+          <PhoneInput label="Teléfono (opcional)" value={phone} showError={phoneTouched}
+            onChange={setPhone} />
         </div>
 
         <button style={{ ...s.btn, opacity: loading ? 0.6 : 1 }} onClick={finish} disabled={loading}>

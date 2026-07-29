@@ -13,6 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
+  getAdminReports, resolveReport,
 } from "../../services/api";
 
 const s = {
@@ -60,6 +61,11 @@ export default function Admin() {
   const [alert, setAlert] = useState({ msg: "", type: "ok" });
   const [expandedUser, setExpandedUser] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
+  // Reportes de las personas. Antes se guardaban en el navegador de quien
+  // reportaba y no llegaban a ninguna parte.
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [openReports, setOpenReports] = useState(0);
 
   // Portón de seguridad: si no es admin, no muestra el panel.
   if (!user || user.role !== "ADMIN") {
@@ -95,7 +101,31 @@ export default function Admin() {
         .catch(() => showAlert("Error al cargar usuarios", "err"))
         .finally(() => setLoadingUsers(false));
     }
+    if (tab === "reports") {
+      setLoadingReports(true);
+      getAdminReports()
+        .then(data => setReports(Array.isArray(data) ? data : []))
+        .catch(() => showAlert("Error al cargar reportes", "err"))
+        .finally(() => setLoadingReports(false));
+    }
+    // Cantidad sin resolver, para el número al lado de la pestaña. Se pide en
+    // cada cambio de pestaña, que es cuando puede haber cambiado.
+    getAdminReports("OPEN")
+      .then(data => setOpenReports(Array.isArray(data) ? data.length : 0))
+      .catch(() => setOpenReports(0));
   }, [tab]);
+
+  /** Resuelve un reporte y refresca la lista. */
+  const doResolveReport = async (id, action, label) => {
+    try {
+      await resolveReport(id, action);
+      setReports(prev => prev.filter(r => r.id !== id));
+      setOpenReports(prev => Math.max(0, prev - 1));
+      showAlert(label);
+    } catch (err) {
+      showAlert(err.message || "No pudimos resolver el reporte", "err");
+    }
+  };
 
   // Acciones reales: cambian el estado en el backend y actualizan la lista local.
   const doDeleteListing = async (id, label) => {
@@ -146,7 +176,11 @@ export default function Admin() {
       {alert.msg && <div style={alert.type === "err" ? s.alertErr : s.alertOk}>{alert.msg}</div>}
 
       <div style={s.tabs}>
-        {[["listings", "Publicaciones"], ["users", "Usuarios"]].map(([k, l]) => (
+        {[
+          ["listings", "Publicaciones"],
+          ["users", "Usuarios"],
+          ["reports", openReports > 0 ? `Reportes (${openReports})` : "Reportes"],
+        ].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
             onClick={() => setTab(k)}>{l}</button>
@@ -245,6 +279,83 @@ export default function Admin() {
             )}
           </div>
         ))
+      )}
+
+      {/* REPORTES
+          Cada reporte trae la lectura de la IA: dice si lo denunciado tiene
+          relación con la publicación, así el admin no tiene que leer de cero los
+          que no tienen nada que ver. La decisión siempre la toma el admin. */}
+      {tab === "reports" && (
+        loadingReports ? <div style={s.empty}>Cargando...</div>
+        : reports.length === 0 ? <div style={s.empty}>No hay reportes.</div>
+        : reports.map(r => {
+          const ai = {
+            COHERENT: { label: "La IA lo ve coherente con la publicación", bg: "#fef3c7", color: "#92400e" },
+            INCOHERENT: { label: "La IA no le ve relación con la publicación", bg: "#f3f4f6", color: "#4b5563" },
+            UNCLEAR: { label: "La IA no pudo decidir", bg: "#eff6ff", color: "#1e40af" },
+          }[r.aiVerdict];
+          const reporterName = r.reporter?.displayName
+            || `${r.reporter?.firstName || ""} ${r.reporter?.lastName || ""}`.trim()
+            || "Usuario";
+
+          return (
+            <div key={r.id} style={{ ...s.card, display: "block" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                <span style={{ ...s.badge, background: r.status === "OPEN" ? "#fee2e2" : "#f3f4f6", color: r.status === "OPEN" ? "#991b1b" : "#4b5563" }}>
+                  {r.status === "OPEN" ? "SIN RESOLVER" : r.status}
+                </span>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{r.reason}</span>
+                <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: "auto" }}>
+                  {new Date(r.createdAt).toLocaleDateString("es-AR")}
+                </span>
+              </div>
+
+              <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 8 }}>
+                {r.targetType === "LISTING"
+                  ? <>Publicación: <strong style={{ color: "#374151" }}>{r.listing?.title || "(eliminada)"}</strong></>
+                  : <>Cuenta reportada: <strong style={{ color: "#374151" }}>{r.targetUser?.firstName} {r.targetUser?.lastName}</strong></>}
+                {" · "}reportó {reporterName}
+              </div>
+
+              <div style={{ fontSize: 13.5, color: "#374151", lineHeight: 1.6, background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+                {r.details}
+              </div>
+
+              {ai && (
+                <div style={{ background: ai.bg, color: ai.color, borderRadius: 8, padding: "9px 12px", fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
+                  <strong>{ai.label}.</strong>{r.aiSummary ? ` ${r.aiSummary}` : ""}
+                </div>
+              )}
+
+              {r.status === "OPEN" && (
+                <div style={s.btnRow}>
+                  {r.listing && (
+                    <>
+                      <button style={s.btnSuspend}
+                        onClick={() => doResolveReport(r.id, "PAUSE_LISTING", "Publicación pausada.")}>
+                        Pausar publicación
+                      </button>
+                      <button style={s.btnDelete}
+                        onClick={() => doResolveReport(r.id, "DELETE_LISTING", "Publicación eliminada.")}>
+                        Eliminar publicación
+                      </button>
+                    </>
+                  )}
+                  {r.targetUser && (
+                    <button style={s.btnSuspend}
+                      onClick={() => doResolveReport(r.id, "SUSPEND_USER", "Cuenta suspendida.")}>
+                      Suspender cuenta
+                    </button>
+                  )}
+                  <button style={{ ...s.btnSuspend, background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151" }}
+                    onClick={() => doResolveReport(r.id, "DISMISS", "Reporte descartado.")}>
+                    Descartar
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
 
       {confirmModal && (
