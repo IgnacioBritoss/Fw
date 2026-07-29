@@ -220,9 +220,15 @@ export default function Home() {
   // ─────────────────────────────────────────── Estilos
   const t = {
     content: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1320, margin: "0 auto" },
-    hero: { borderRadius: 20, padding: isMobile ? 24 : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: 32 },
-    searchRow: { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
-    searchCell: { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
+    hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "20px 16px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
+    searchRow: isMobile
+      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 14, padding: 8, marginTop: 20 }
+      : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
+    // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
+    // en vez de a la derecha, que es lo que se lee bien apilado.
+    searchCell: isMobile
+      ? { width: "100%", padding: "9px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
+      : { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
     searchLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
@@ -342,7 +348,7 @@ export default function Home() {
               <input type="date" style={t.searchInput} min={todayInput()} value={pickup}
                 onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
-            <div className="fw-plain-field" style={{ ...t.searchCell, borderRight: "none" }}>
+            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }) }}>
               <div style={t.searchLabel}>Devolución</div>
               <input type="date" style={t.searchInput} min={pickup || todayInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
@@ -350,7 +356,14 @@ export default function Home() {
             {/* Acá había un select "Tipo" con el diseño por defecto del
                 navegador. Se quitó: justo abajo está "Explorá por categoría",
                 que hace exactamente lo mismo y se ve mucho mejor. */}
-            <button style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 12, padding: "14px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", margin: 4 }}
+            <button
+              style={{
+                background: "#2563eb", color: "#fff", border: "none", borderRadius: 12,
+                fontWeight: 700, fontSize: 14, cursor: "pointer",
+                ...(isMobile
+                  ? { width: "100%", padding: "14px", marginTop: 8 }
+                  : { padding: "14px 24px", margin: 4 }),
+              }}
               onClick={goToSearch}>Buscar autos →</button>
           </div>
           {dateError && (

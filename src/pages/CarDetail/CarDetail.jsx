@@ -27,6 +27,7 @@ import {
   getPriceChangeStatus, requestPriceChange, confirmPriceChange, cancelPriceChange,
 } from "../../services/api";
 import FavoriteButton from "../../components/FavoriteButton";
+import OccupiedDates from "../../components/OccupiedDates";
 import { normalizeListing } from "../../services/listings";
 import { addMonths, format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -445,18 +446,9 @@ export default function CarDetail() {
         </span>
       </div>
 
-      {/* Disponibilidad: los días que ya están tomados. */}
-      {unavailableDates.length > 0 && (
-        <div style={{ marginTop: 14, background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "10px 12px" }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#9a3412", marginBottom: 4 }}>
-            Fechas ya ocupadas
-          </div>
-          <div style={{ fontSize: 12, color: "#9a3412", lineHeight: 1.5 }}>
-            {unavailableDates.slice(0, 6).map(day => format(new Date(`${day}T12:00:00`), "d MMM", { locale: es })).join(" · ")}
-            {unavailableDates.length > 6 ? ` y ${unavailableDates.length - 6} más` : ""}
-          </div>
-        </div>
-      )}
+      {/* Disponibilidad: los días tomados, agrupados en tramos, con los colores
+          de la app. Ver components/OccupiedDates.jsx. */}
+      <OccupiedDates days={unavailableDates} isMobile={isMobile} />
       <br />
 
       {isOwner ? (
@@ -624,16 +616,19 @@ export default function CarDetail() {
         )}
       </div>
 
-      {isMobile && priceCard()}
-
       <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: "1fr 340px", gap: 32 }}>
         <div>
-          <div style={{ fontSize: isMobile ? 22 : 26, fontWeight: 800, marginBottom: 6, color: "#111827", letterSpacing: "-.5px", marginTop: isMobile ? 20 : 0 }}>
+          <div style={{ fontSize: isMobile ? 21 : 26, fontWeight: 800, marginBottom: 6, color: "#111827", letterSpacing: "-.5px", marginTop: isMobile ? 16 : 0 }}>
             {car.brand} {car.model} {car.year}
           </div>
           <div style={{ color: "#6b7280", fontSize: 14, marginBottom: 16 }}>
             {car.location}
           </div>
+
+          {/* En celular la tarjeta de precio va acá, después del nombre y la
+              ubicación. Estaba antes del título, así que se veía la foto y
+              enseguida una pared de importes sin saber todavía qué auto era. */}
+          {isMobile && priceCard()}
 
           <div style={s.section}>
             <div style={s.sectionTitle}>Descripción</div>
