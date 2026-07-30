@@ -31,6 +31,7 @@ import {
   getMyPendingReviews, createReview,
 } from "../../services/api";
 import ReviewForm from "../../components/ReviewForm";
+import UserReputation from "../../components/UserReputation";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
@@ -246,6 +247,15 @@ export default function MyBookings() {
         <div style={{ fontSize: isMobile ? 12 : 13, color: "#374151", marginBottom: 4 }}>
           {isOwner ? "Conductor: " : "Dueño: "}<strong>{getPersonName(isOwner ? b.renter : b.owner)}</strong>
         </div>
+        {/* La calificación de la otra persona, en el momento en que hace falta:
+            el dueño la ve al decidir si acepta la solicitud, y quien alquila la
+            ve del dueño del auto. Se muestra solo el rol que corresponde. */}
+        <UserReputation
+          userId={isOwner ? b.renterId : b.ownerId}
+          role={isOwner ? "driver" : "owner"}
+          compact
+          style={{ marginBottom: 6 }}
+        />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, gap: 8, flexWrap: "wrap" }}>
           <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "#2563eb" }}>
             ${Number(total).toLocaleString()} total

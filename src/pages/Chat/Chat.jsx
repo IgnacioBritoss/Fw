@@ -16,6 +16,7 @@ import {
   getConversationMessages, sendMessage, markConversationRead,
 } from "../../services/api";
 import { uploadAudioToCloudinary, uploadFileToCloudinary } from "../../services/cloudinary";
+import UserProfileModal from "../../components/UserProfileModal";
 
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
 // Además, debajo tiene un botón "Transcribir mensaje" que convierte el audio a
@@ -179,6 +180,9 @@ export default function Chat() {
 
   // Conversación abierta y el "otro" participante (si soy el inquilino, el otro
   // es el dueño, y viceversa).
+  // Perfil que se está mirando (se abre desde el avatar del encabezado).
+  const [profileUserId, setProfileUserId] = useState(null);
+
   const activeConv = conversations.find(c => c.id === activeConvId);
   const otherUser = activeConv
     ? (activeConv.renterId === user?.id ? activeConv.owner : activeConv.renter)
@@ -574,11 +578,21 @@ export default function Chat() {
             ‹
           </button>
         )}
-        <Avatar name={otherName} size={40} fontSize={15} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
-          {listingLabel && <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 500 }}>{listingLabel}</div>}
-        </div>
+        {/* El avatar y el nombre abren el perfil de la otra persona: ahí se ven
+            sus calificaciones como conductor y como dueño, y sus reseñas. Es la
+            forma de saber con quién estás tratando antes de acordar algo. */}
+        <button
+          type="button"
+          onClick={() => otherUser?.id && setProfileUserId(otherUser.id)}
+          title="Ver perfil y reseñas"
+          style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: otherUser?.id ? "pointer" : "default", textAlign: "left" }}
+        >
+          <Avatar name={otherName} size={40} fontSize={15} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
+            {listingLabel && <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 500 }}>{listingLabel}</div>}
+          </div>
+        </button>
       </div>
       <div ref={messagesRef}
         style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "16px 24px", display: "flex", flexDirection: "column", gap: 6, background: "#f9fafb", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
@@ -604,6 +618,9 @@ export default function Chat() {
       <div style={{ position: "fixed", top: navbarHeight + viewport.offsetTop, left: 0, right: 0, height: Math.max(0, viewport.height - navbarHeight), display: "flex", flexDirection: "column", background: "#fff", zIndex: 50, overflow: "hidden" }}>
         {!activeConvId ? convListJSX : chatAreaJSX}
       </div>
+      {profileUserId && (
+        <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
     </>
   );
 
@@ -629,6 +646,9 @@ export default function Chat() {
           ) : chatAreaJSX}
         </div>
       </div>
+      {profileUserId && (
+        <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
     </>
   );
 }

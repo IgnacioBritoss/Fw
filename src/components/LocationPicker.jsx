@@ -67,6 +67,9 @@ export default function LocationPicker({ value, onChange }) {
     const map = L.map(mapRef.current, {
       center: [-34.6037, -58.3816],
       zoom: 12,
+      // Ver la nota en MapView.jsx: sin esto, la rueda del mouse sobre el mapa
+      // hace zoom en vez de bajar la página.
+      scrollWheelZoom: false,
     });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap",

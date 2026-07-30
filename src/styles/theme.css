@@ -204,8 +204,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
    ============================================================================ */
 
 /* Nada puede empujar la página a lo ancho: si algo no entra, se corta o se
-   ajusta, pero la pantalla nunca se mueve para los costados. */
-html,
+   ajusta, pero la pantalla nunca se mueve para los costados.
+   Va SOLO en <body>, no en <html>: poner "overflow-x: hidden" en <html> es lo
+   que rompió el scroll con la rueda del mouse en Windows/Chrome con el zoom del
+   sistema activado (una combinación conocida) — quedaba una franja angosta a la
+   derecha como única zona donde la rueda seguía funcionando. Con <body> alcanza
+   igual para evitar el desborde horizontal. */
 body {
   max-width: 100%;
   overflow-x: hidden;

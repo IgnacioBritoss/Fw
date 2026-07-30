@@ -19,6 +19,7 @@
 // ============================================================================
 import { useState } from "react";
 import { createReport } from "../services/api";
+import Select from "./Select";
 
 // Estilos en línea de la ventana modal.
 const s = {
@@ -55,27 +56,32 @@ const s = {
   successSub: { fontSize: 13, color: "#6b7280" },
 };
 
-// Lista de motivos posibles para el reporte (el primero es el placeholder).
+// Motivos sugeridos. La última opción abre un campo libre: ninguna lista cerrada
+// cubre todo lo que puede pasar, y forzar a elegir "Otro motivo" sin poder
+// explicar el motivo real deja al admin sin la información que necesita.
+const OTHER = "__otro__";
 const REASONS = [
-  "Seleccioná un motivo...",
   "Información falsa en la publicación",
   "Comportamiento inapropiado",
   "Intento de estafa o fraude",
   "Vehículo en mal estado no declarado",
   "Incumplimiento de condiciones acordadas",
   "Perfil falso o suplantación de identidad",
-  "Otro motivo",
 ];
 
 export default function ReportModal({ targetId, targetLabel, targetType, onClose }) {
-  const [reason, setReason] = useState(REASONS[0]); // motivo elegido
+  const [reason, setReason] = useState("");          // motivo elegido de la lista
+  const [customReason, setCustomReason] = useState(""); // motivo escrito a mano
   const [detail, setDetail] = useState("");          // descripción escrita
   const [done, setDone] = useState(false);           // ¿ya se envió?
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
-  // El botón "Enviar" se habilita solo si hay motivo y 30+ caracteres de detalle.
-  const canSubmit = reason !== REASONS[0] && detail.trim().length >= 30;
+  // El motivo que se manda: el elegido de la lista, o el escrito a mano.
+  const finalReason = reason === OTHER ? customReason.trim() : reason;
+
+  // El botón "Enviar" se habilita con un motivo y 30+ caracteres de descripción.
+  const canSubmit = finalReason.length >= 3 && detail.trim().length >= 30;
 
   // Manda el reporte al backend y muestra la pantalla de éxito.
   const handleSubmit = async () => {
@@ -86,7 +92,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       await createReport({
         targetType: targetType === "car" ? "LISTING" : "USER",
         ...(targetType === "car" ? { listingId: targetId } : { targetUserId: targetId }),
-        reason,
+        reason: finalReason,
         details: detail.trim(),
       });
       setDone(true);
@@ -126,9 +132,33 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
         </div>
 
         <label style={s.label}>Motivo del reporte</label>
-        <select style={s.select} value={reason} onChange={e => setReason(e.target.value)}>
-          {REASONS.map(r => <option key={r}>{r}</option>)}
-        </select>
+        {/* Desplegable propio: el <select> nativo abre la lista del sistema
+            operativo, que no respeta nada del diseño de la página. */}
+        <Select
+          value={reason}
+          onChange={setReason}
+          placeholder="Seleccioná un motivo..."
+          options={[
+            ...REASONS.map(r => ({ value: r, label: r })),
+            { value: OTHER, label: "Otro motivo (lo escribo yo)" },
+          ]}
+          style={{ marginBottom: 16 }}
+        />
+
+        {/* Motivo propio: aparece solo al elegir "Otro motivo". */}
+        {reason === OTHER && (
+          <input
+            value={customReason}
+            onChange={e => setCustomReason(e.target.value)}
+            maxLength={160}
+            placeholder="Escribí el motivo en pocas palabras"
+            style={{
+              width: "100%", padding: "11px 14px", borderRadius: 8,
+              border: "1.5px solid #d1d5db", fontSize: 14, marginBottom: 16,
+              outline: "none", boxSizing: "border-box", color: "#111827",
+            }}
+          />
+        )}
 
         <label style={s.label}>Descripción detallada</label>
         <textarea

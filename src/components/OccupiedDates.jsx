@@ -16,6 +16,7 @@
 // ============================================================================
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { firstBookableDay, toInputDate } from "../services/dates";
 
 const MS_DAY = 24 * 60 * 60 * 1000;
 
@@ -39,15 +40,20 @@ function groupIntoRanges(days) {
   return ranges;
 }
 
-/** El primer día, de hoy en adelante, que no está en la lista de ocupados. */
+/**
+ * El primer día que se puede alquilar y que además no está ocupado.
+ *
+ * Arranca en MAÑANA, no en hoy: no hay alquileres para el mismo día (ver
+ * services/dates.js). Antes empezaba desde hoy, así que a las 16:40 del 29 el
+ * panel decía "Libre desde el 29" y después el servidor rechazaba esa fecha.
+ */
 function firstFreeDay(days) {
   const taken = new Set(days);
-  const cursor = new Date();
-  cursor.setHours(12, 0, 0, 0);
+  const cursor = firstBookableDay();
 
   // Se buscan como máximo 120 días para adelante; más lejos no tiene sentido.
   for (let i = 0; i < 120; i++) {
-    const key = cursor.toISOString().slice(0, 10);
+    const key = toInputDate(cursor);
     if (!taken.has(key)) return key;
     cursor.setDate(cursor.getDate() + 1);
   }
