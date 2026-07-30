@@ -17,6 +17,7 @@ import {
   createAvailabilityBlock, deleteAvailabilityBlock,
   getAvailabilityBlocks, getListingAvailability,
 } from "../services/api";
+import { today, toInputDate } from "../services/dates";
 
 const s = {
   panel: { background: "#f9fafb", border: "1px solid #ececec", borderRadius: 12, padding: 16, marginTop: 12 },
@@ -34,7 +35,13 @@ const s = {
   booked: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "9px 12px", marginBottom: 8, fontSize: 12.5, color: "#9a3412" },
 };
 
-const todayInput = () => new Date().toISOString().slice(0, 10);
+// El dueño SÍ puede bloquear el día de hoy: bloquear no es reservar, es avisar
+// que su auto no está disponible. La regla de "no se alquila el mismo día" aplica
+// a las reservas, no a esto.
+// Se usa el helper compartido porque `toISOString()` devuelve la fecha en UTC, y
+// para alguien en Argentina (UTC-3) eso significaba que después de las 21:00 el
+// mínimo saltaba al día siguiente.
+const todayInput = () => toInputDate(today());
 const fmt = (date) => format(new Date(date), "d MMM yyyy", { locale: es });
 
 export default function AvailabilityManager({ listingId }) {

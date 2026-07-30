@@ -320,6 +320,19 @@ export async function getListingReviews(listingId) {
 export async function getUserReviews(userId) {
   return apiFetch(`/users/${userId}/reviews`);
 }
+/**
+ * Reputación de una persona separada por rol: cómo la calificaron como conductor
+ * y cómo como dueño. Son dos cosas distintas y no conviene mezclarlas.
+ */
+export async function getUserReputation(userId) {
+  return apiFetch(`/users/${userId}/reputation`);
+}
+
+/** Perfil público de otra persona (nombre, foto, promedio, antigüedad). */
+export async function getPublicProfile(userId) {
+  return apiFetch(`/users/${userId}`);
+}
+
 /** Qué reservas propias se pueden reseñar y cuáles ya se reseñaron. */
 export async function getMyPendingReviews() {
   return apiFetch("/reviews/me/pending");

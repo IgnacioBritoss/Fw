@@ -26,6 +26,11 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       center: [-34.6037, -58.3816],
       zoom: 12,
       zoomControl: true,
+      // El mapa vive dentro de una página que se scrollea: si la rueda del
+      // mouse hace zoom al pasar por encima, para bajar la página hay que
+      // esquivarlo (mover el mouse afuera del mapa, típicamente a un costado).
+      // Se puede seguir haciendo zoom con los botones +/- o con dos dedos.
+      scrollWheelZoom: false,
     });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {

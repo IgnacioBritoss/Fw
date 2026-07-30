@@ -24,10 +24,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useListings } from "../../hooks/useListings";
 import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
+import { firstBookableInput } from "../../services/dates";
 
-// Fecha de hoy en formato YYYY-MM-DD, para los selectores de fecha.
-const toInputDate = (date) => date.toISOString().slice(0, 10);
-const todayInput = () => toInputDate(new Date());
+// El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
+// mismo día (ver services/dates.js).
 
 export default function Home() {
   const navigate = useNavigate();
@@ -163,7 +163,8 @@ export default function Home() {
       if (!mapRef.current || mapInstanceRef.current) return;
       const L = window.L;
       if (!L) return;
-      const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: isMobile ? 11 : 12 });
+      // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
+      const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: isMobile ? 11 : 12, scrollWheelZoom: false });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
       mapInstanceRef.current = map;
       addMarkers(map, L);
@@ -345,12 +346,12 @@ export default function Home() {
             {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
             <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>Retiro</div>
-              <input type="date" style={t.searchInput} min={todayInput()} value={pickup}
+              <input type="date" style={t.searchInput} min={firstBookableInput()} value={pickup}
                 onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
             <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }) }}>
               <div style={t.searchLabel}>Devolución</div>
-              <input type="date" style={t.searchInput} min={pickup || todayInput()} value={dropoff}
+              <input type="date" style={t.searchInput} min={pickup || firstBookableInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
             </div>
             {/* Acá había un select "Tipo" con el diseño por defecto del

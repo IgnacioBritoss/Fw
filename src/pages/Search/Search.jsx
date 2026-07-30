@@ -26,6 +26,8 @@ import {
   filterCars, priceOf, sortCars,
 } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
+import Select from "../../components/Select";
+import { firstBookableInput } from "../../services/dates";
 
 const SORT_OPTIONS = [
   { id: "newest", label: "Más nuevos" },
@@ -35,7 +37,8 @@ const SORT_OPTIONS = [
 const TRANSMISSION_OPTIONS = ["Todas", "Manual", "Automático"];
 const FUEL_OPTIONS = ["Todos", "Nafta", "Diesel", "Híbrido", "Eléctrico", "GNC"];
 
-const todayInput = () => new Date().toISOString().slice(0, 10);
+// El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
+// mismo día (ver services/dates.js).
 
 // ── Menú desplegable reutilizable ──
 // Componente genérico de filtro: un botón que abre una lista de opciones y avisa
@@ -179,7 +182,8 @@ export default function Search() {
     const init = () => {
       if (!mapRef.current || mapInstanceRef.current) return;
       const L = window.L; if (!L) return;
-      const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: 12, zoomControl: false });
+      // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
+      const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: 12, zoomControl: false, scrollWheelZoom: false });
       L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { attribution: "© OSM" }).addTo(map);
       map.on("click", () => setSelected(null));
       mapInstanceRef.current = map;
@@ -269,20 +273,25 @@ export default function Search() {
         </div>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Retiro</div>
-          <input type="date" style={st.barInput} min={todayInput()} value={pickup}
+          <input type="date" style={st.barInput} min={firstBookableInput()} value={pickup}
             onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
         </div>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Devolución</div>
-          <input type="date" style={st.barInput} min={pickup || todayInput()} value={dropoff}
+          <input type="date" style={st.barInput} min={pickup || firstBookableInput()} value={dropoff}
             onChange={e => setDropoff(e.target.value)} />
         </div>
         <div className="fw-plain-field" style={{ ...st.barCell, ...(isMobile ? { borderBottom: "none", marginBottom: 0 } : { borderRight: "none" }) }}>
           <div style={st.barLbl}>Categoría</div>
-          <select style={{ ...st.barInput, cursor: "pointer" }} value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="">Todas</option>
-            {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
+          {/* Desplegable propio: el <select> nativo abre la lista que dibuja el
+              sistema operativo, y en Windows eso se veía como un menú cuadrado
+              con el celeste del sistema, sin nada del diseño de la página. */}
+          <Select
+            plain
+            value={category}
+            onChange={setCategory}
+            options={[{ value: "", label: "Todas" }, ...CATEGORIES.map(c => ({ value: c.id, label: c.label }))]}
+          />
         </div>
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
