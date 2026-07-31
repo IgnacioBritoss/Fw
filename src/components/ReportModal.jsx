@@ -19,14 +19,19 @@
 // ============================================================================
 import { useState } from "react";
 import { createReport } from "../services/api";
+import { uploadImageToCloudinary } from "../services/cloudinary";
 import Select from "./Select";
 
 // Estilos en línea de la ventana modal.
 const s = {
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,.5)",
     display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
+  // maxHeight + scroll propio: con las pruebas adjuntas el formulario creció, y
+  // en un celular con 5 miniaturas el botón de enviar quedaba abajo del borde de
+  // la pantalla sin manera de llegar.
   modal: { background: "#fff", borderRadius: 16, padding: 28,
-    width: "90%", maxWidth: 480, boxShadow: "0 8px 40px rgba(0,0,0,.2)" },
+    width: "90%", maxWidth: 480, boxShadow: "0 8px 40px rgba(0,0,0,.2)",
+    maxHeight: "90vh", overflowY: "auto" },
   header: { display: "flex", justifyContent: "space-between",
     alignItems: "center", marginBottom: 20 },
   title: { fontSize: 18, fontWeight: 700, color: "#111827" },
@@ -60,6 +65,10 @@ const s = {
 // cubre todo lo que puede pasar, y forzar a elegir "Otro motivo" sin poder
 // explicar el motivo real deja al admin sin la información que necesita.
 const OTHER = "__otro__";
+
+/** Tope de archivos y de peso por archivo (el backend valida lo mismo). */
+const MAX_EVIDENCE = 5;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const REASONS = [
   "Información falsa en la publicación",
   "Comportamiento inapropiado",
@@ -76,12 +85,55 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
   const [done, setDone] = useState(false);           // ¿ya se envió?
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  // Pruebas: cada una es { id, dataUrl, file }. Se suben a Cloudinary al enviar,
+  // no al elegirlas, para no dejar archivos colgados si la persona se arrepiente.
+  const [evidence, setEvidence] = useState([]);
 
   // El motivo que se manda: el elegido de la lista, o el escrito a mano.
   const finalReason = reason === OTHER ? customReason.trim() : reason;
 
-  // El botón "Enviar" se habilita con un motivo y 30+ caracteres de descripción.
-  const canSubmit = finalReason.length >= 3 && detail.trim().length >= 30;
+  // Para enviar hacen falta las tres cosas: motivo, descripción y AL MENOS UNA
+  // PRUEBA. Sin prueba es la palabra de uno contra la del otro, y el admin no
+  // tiene con qué decidir si pausar una publicación o suspender una cuenta.
+  const canSubmit =
+    finalReason.length >= 3 && detail.trim().length >= 30 && evidence.length > 0;
+
+  /** Agrega los archivos elegidos, hasta 5, avisando si alguno no sirve. */
+  const addFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    if (files.length === 0) return;
+    setError("");
+
+    const libres = MAX_EVIDENCE - evidence.length;
+    if (libres <= 0) {
+      setError(`Podés adjuntar hasta ${MAX_EVIDENCE} archivos.`);
+      return;
+    }
+
+    for (const file of files.slice(0, libres)) {
+      if (!file.type.startsWith("image/")) {
+        setError("Solo se pueden adjuntar imágenes (foto o captura de pantalla).");
+        continue;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        setError(`"${file.name}" pesa más de 5MB. Probá con una foto más liviana.`);
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setEvidence(prev => prev.length >= MAX_EVIDENCE
+          ? prev
+          : [...prev, { id: `${file.name}-${Date.now()}-${Math.random()}`, dataUrl: ev.target.result }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    if (files.length > libres) {
+      setError(`Solo se agregaron ${libres}: el máximo es ${MAX_EVIDENCE} archivos.`);
+    }
+  };
+
+  const removeEvidence = (id) =>
+    setEvidence(prev => prev.filter(item => item.id !== id));
 
   // Manda el reporte al backend y muestra la pantalla de éxito.
   const handleSubmit = async () => {
@@ -89,11 +141,17 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
     setSending(true);
     setError("");
     try {
+      // Primero las pruebas: si alguna falla, el reporte no se crea a medias.
+      const evidenceUrls = await Promise.all(
+        evidence.map(item => uploadImageToCloudinary(item.dataUrl)),
+      );
+
       await createReport({
         targetType: targetType === "car" ? "LISTING" : "USER",
         ...(targetType === "car" ? { listingId: targetId } : { targetUserId: targetId }),
         reason: finalReason,
         details: detail.trim(),
+        evidenceUrls,
       });
       setDone(true);
     } catch (err) {
@@ -169,6 +227,70 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
           maxLength={500}
         />
         <div style={s.counter}>{detail.length}/500 caracteres · mínimo 30</div>
+
+        {/* PRUEBAS — obligatorias.
+            Un reporte sin evidencia es la palabra de uno contra la del otro: el
+            admin no tiene con qué decidir si pausar una publicación o suspender
+            una cuenta, y abre la puerta a reportes hechos por despecho. */}
+        <label style={s.label}>
+          Pruebas <span style={{ color: "#dc2626" }}>*</span>
+        </label>
+        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10, lineHeight: 1.5 }}>
+          Adjuntá al menos una foto o captura que respalde lo que contás (el auto,
+          el daño, la conversación). Hasta {MAX_EVIDENCE} imágenes de 5MB cada una.
+        </div>
+
+        <input
+          id="report-evidence"
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={e => { addFiles(e.target.files); e.target.value = ""; }}
+        />
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          {evidence.map(item => (
+            <div key={item.id} style={{ position: "relative", width: 74, height: 74 }}>
+              <img src={item.dataUrl} alt="Prueba adjuntada"
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
+              <button
+                type="button"
+                onClick={() => removeEvidence(item.id)}
+                aria-label="Quitar esta prueba"
+                style={{
+                  position: "absolute", top: -6, right: -6, width: 22, height: 22,
+                  minHeight: 22, borderRadius: "50%", background: "#111827", color: "#fff",
+                  border: "2px solid #fff", cursor: "pointer", fontSize: 13, lineHeight: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+
+          {evidence.length < MAX_EVIDENCE && (
+            <button
+              type="button"
+              onClick={() => document.getElementById("report-evidence")?.click()}
+              style={{
+                width: 74, height: 74, minHeight: 74, borderRadius: 8,
+                border: `1.5px dashed ${evidence.length === 0 ? "#fca5a5" : "#d1d5db"}`,
+                background: evidence.length === 0 ? "#fef2f2" : "#f9fafb",
+                cursor: "pointer", display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: 3,
+                color: "#6b7280", fontSize: 11, fontWeight: 600, padding: 0,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Agregar
+            </button>
+          )}
+        </div>
 
         <div style={s.warning}>
           Importante: los reportes falsos o malintencionados pueden resultar en la suspensión

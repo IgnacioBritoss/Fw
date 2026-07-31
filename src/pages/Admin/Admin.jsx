@@ -321,6 +321,27 @@ export default function Admin() {
                 {r.details}
               </div>
 
+              {/* PRUEBAS. Es lo que hay que mirar antes de pausar una publicación
+                  o suspender una cuenta. Se abren en una pestaña nueva a tamaño
+                  completo: en una miniatura no se ve un daño ni se lee una
+                  conversación. */}
+              {r.evidenceUrls?.length > 0 && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>
+                    PRUEBAS ADJUNTAS ({r.evidenceUrls.length}) · tocá para ver en grande
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {r.evidenceUrls.map((url, i) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "block", width: 84, height: 84, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                        <img src={url} alt={`Prueba ${i + 1}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {ai && (
                 <div style={{ background: ai.bg, color: ai.color, borderRadius: 8, padding: "9px 12px", fontSize: 12.5, lineHeight: 1.55, marginBottom: 10 }}>
                   <strong>{ai.label}.</strong>{r.aiSummary ? ` ${r.aiSummary}` : ""}
