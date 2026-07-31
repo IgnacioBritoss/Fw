@@ -348,7 +348,12 @@ export async function createReview(bookingId, { rating, comment }) {
 // Antes el botón "Reportar" guardaba el texto en el navegador de quien reportaba
 // y nadie lo veía nunca. Ahora va al backend, lo lee la IA para decir si tiene
 // relación con la publicación, y le llega a las cuentas administradoras.
-export async function createReport({ targetType, listingId, targetUserId, reason, details }) {
+// `evidenceUrls` son las fotos que ya se subieron a Cloudinary y que sirven de
+// PRUEBA: el backend rechaza el reporte si viene vacío, porque un reporte sin
+// evidencia deja al admin sin nada con que decidir.
+export async function createReport({
+  targetType, listingId, targetUserId, reason, details, evidenceUrls = [],
+}) {
   return apiFetch("/reports", {
     method: "POST",
     body: JSON.stringify({
@@ -357,6 +362,7 @@ export async function createReport({ targetType, listingId, targetUserId, reason
       ...(targetUserId ? { targetUserId } : {}),
       reason,
       details,
+      evidenceUrls,
     }),
   });
 }
