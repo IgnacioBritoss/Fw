@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { useDraggableFab } from "../hooks/useDraggableFab";
 
 // "System prompt": instrucciones ocultas que definen la personalidad y los
 // límites del asistente. Se envían antes de cada conversación con la IA.
@@ -218,11 +219,12 @@ export default function ChatBot() {
   // El botón flotante en celular quedaba justo encima de los botones de la
   // pantalla ("Eliminar publicación", "Reservar ahora") y les robaba el toque.
   // Se lo baja al borde y se lo hace un poco más chico.
+  const fabSize = isMobile ? 46 : 50;
+  // El botón se puede arrastrar: dónde molesta depende de la pantalla, así que la
+  // decisión es de quien lo usa. El hook pone position/left/top.
+  const fab = useDraggableFab({ size: fabSize, onTap: () => setOpen((o) => !o) });
+
   const fabStyle = {
-    position: "fixed",
-    bottom: isMobile ? 18 : 80,
-    right: isChat ? "auto" : isMobile ? 14 : 20,
-    left: isChat ? (isMobile ? 14 : 20) : "auto",
     width: isMobile ? 46 : 50,
     height: isMobile ? 46 : 50,
     borderRadius: "50%",
@@ -588,9 +590,12 @@ export default function ChatBot() {
       {/* Botón flotante (FAB) que abre/cierra el asistente. */}
       {!hideFab && (
         <button
-          style={fabStyle}
-          onClick={() => setOpen((o) => !o)}
+          style={{ ...fabStyle, ...fab.style }}
+          {...fab.handlers}
+          aria-label={open ? "Cerrar el asistente" : "Abrir el asistente (se puede arrastrar)"}
+          title="Tocá para abrir. Sostené y arrastrá para moverlo."
           onMouseEnter={(e) => {
+            if (fab.dragging) return;
             e.currentTarget.style.transform = "scale(1.08)";
             e.currentTarget.style.boxShadow = "0 6px 20px rgba(37,99,235,.5)";
           }}
