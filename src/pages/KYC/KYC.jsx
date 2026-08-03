@@ -12,6 +12,7 @@
 // ============================================================================
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import IdentityVerification from "../../components/IdentityVerification";
 
 const Logo = () => (
@@ -27,20 +28,25 @@ const Logo = () => (
 export default function KYC() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isMobile } = useIsMobile();
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "";
 
   return (
     <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
       {/* Barra superior */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding: isMobile ? "14px 16px" : "20px 32px", gap:10, flexWrap:"wrap", background:"#fff", borderBottom:"1px solid #ececec" }}>
         <Logo />
-        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICACIÓN DE LA CUENTA</div>
+        {/* El rótulo del medio se saca en celular: con 390px de ancho, logo +
+            rótulo + link no entran en una fila y se apilan raro. */}
+        {!isMobile && (
+          <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICACIÓN DE LA CUENTA</div>
+        )}
         <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
       </div>
 
-      <div style={{ flex:1, padding:"40px 24px" }}>
-        <div style={{ maxWidth:720, margin:"0 auto 24px" }}>
-          <div style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:4 }}>
+      <div style={{ flex:1, padding: isMobile ? "22px 14px 40px" : "40px 24px" }}>
+        <div style={{ maxWidth:720, margin:"0 auto 20px" }}>
+          <div style={{ fontSize: isMobile ? 19 : 22, fontWeight:800, color:"#111827", marginBottom:4 }}>
             {firstName ? `${firstName}, verifiquemos tu cuenta` : "Verifiquemos tu cuenta"}
           </div>
           <div style={{ fontSize:14, color:"#6b7280" }}>

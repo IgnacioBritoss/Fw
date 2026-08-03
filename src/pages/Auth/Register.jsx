@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import PhoneInput from "../../components/PhoneInput";
 import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
 import { GOOGLE_AUTH_URL } from "../../services/api";
@@ -73,6 +74,7 @@ function maxBirthDate() {
 }
 
 export default function Register() {
+  const { isMobile } = useIsMobile();
   const { startRegistration, completeRegistration, user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0); // 0 = datos, 1 = código del email, 2 = verificación de identidad
@@ -156,7 +158,13 @@ export default function Register() {
     else setError(result.error);
   };
 
-  const inputStyle = { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", boxSizing:"border-box" };
+  // En celular los campos van a 16px: con menos, Safari en iPhone hace zoom solo
+  // al tocarlos y la pantalla queda corrida a lo ancho.
+  const inputStyle = { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827", boxSizing:"border-box" };
+  // Los pares de campos (nombre/apellido, teléfono/fecha) se apilan en celular:
+  // en 390px de ancho, dos columnas dejan cada campo en 170px y el selector de
+  // fecha no entra, que es lo que hacía que el registro se viera amontonado.
+  const twoCols = { display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:12, marginBottom:16 };
   const labelStyle = { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 };
   const errorBox = { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 };
   const infoBox = { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 };
@@ -165,7 +173,7 @@ export default function Register() {
   if (step === 0) {
     return (
       <div style={{ display:"flex", minHeight:"100vh" }}>
-        <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 64px", background:"#fff", overflowY:"auto" }}>
+        <div style={{ flex:1, display:"flex", alignItems:isMobile?"flex-start":"center", justifyContent:"center", padding: isMobile ? "26px 20px 40px" : "48px 64px", background:"#fff", overflowY:"auto" }}>
           <div style={{ width:"100%", maxWidth:480 }}>
             <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none", marginBottom:32 }}>
               <Logo />
@@ -182,8 +190,8 @@ export default function Register() {
             {error && <div style={errorBox}>{error}</div>}
 
             <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
-              width:"100%", padding:"11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
-              borderRadius:10, fontSize:14, fontWeight:600, color:"#374151", cursor:"pointer",
+              width:"100%", padding: isMobile ? "14px 16px" : "11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
+              borderRadius:10, fontSize: isMobile ? 15 : 14, fontWeight:600, color:"#374151", cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:20,
             }}>
               <GoogleIcon /> Continuar con Google
@@ -193,7 +201,7 @@ export default function Register() {
               <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>o registrate con email</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
             </div>
 
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+            <div style={twoCols}>
               <div>
                 <label style={labelStyle}>Nombre *</label>
                 <input style={inputStyle} placeholder="Martin" value={form.firstName} onChange={e => set("firstName", e.target.value)} />
@@ -209,7 +217,7 @@ export default function Register() {
               <input style={inputStyle} type="email" placeholder="martin@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
 
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+            <div style={twoCols}>
               <div>
                 {/* Teléfono argentino completo: el +54 es fijo y no se puede
                     continuar con un número a medias (antes "123" pasaba). */}
@@ -225,7 +233,7 @@ export default function Register() {
               </div>
             </div>
 
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
+            <div style={twoCols}>
               <div>
                 <label style={labelStyle}>Contraseña *</label>
                 <div style={{ position:"relative" }}>
@@ -261,8 +269,8 @@ export default function Register() {
             </div>
 
             <button onClick={handleRequestCode} disabled={loading} style={{
-              width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
-              fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
+              width:"100%", padding: isMobile ? 15 : 13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
+              fontSize: isMobile ? 16 : 15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
               {loading ? "Enviando código..." : "Continuar →"}
             </button>
@@ -272,6 +280,7 @@ export default function Register() {
           </div>
         </div>
 
+        {!isMobile && (
         <div style={{
           flex:"0 0 42%", background:"linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)",
           display:"flex", flexDirection:"column", justifyContent:"center", padding:"48px 52px", position:"relative", overflow:"hidden",
@@ -286,6 +295,7 @@ export default function Register() {
             </p>
           </div>
         </div>
+        )}
       </div>
     );
   }

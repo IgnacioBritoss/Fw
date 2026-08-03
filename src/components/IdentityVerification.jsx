@@ -25,6 +25,7 @@
 // ============================================================================
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { uploadImageToCloudinary } from "../services/cloudinary";
 import { checkDocument } from "../services/groq";
 import PhoneInput from "./PhoneInput";
@@ -36,20 +37,26 @@ import {
 
 const STEPS = ["Identidad", "Licencia", "Teléfono", "Confirmación"];
 
-const st = {
-  card: { maxWidth: 720, margin: "0 auto", background: "#fff", borderRadius: 18, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,.06)", border: "1px solid #f0f0f0" },
+// En celular: menos aire, campos de 16px (con menos, Safari en iPhone hace zoom
+// solo al tocarlos) y botones de ancho completo, alcanzables con el pulgar.
+const styles = (isMobile) => ({
+  card: { maxWidth: 720, margin: "0 auto", background: "#fff", borderRadius: 18, padding: isMobile ? 18 : 32, boxShadow: "0 4px 24px rgba(0,0,0,.06)", border: "1px solid #f0f0f0" },
   title: { fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 4 },
   sub: { fontSize: 14, color: "#6b7280", marginBottom: 24 },
-  btnPrimary: { padding: "12px 22px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 24, fontSize: 14, fontWeight: 700, cursor: "pointer" },
-  btnGhost: { padding: "12px 22px", background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  btnPrimary: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#2563eb", color: "#fff", border: "none", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 700, cursor: "pointer" },
+  btnGhost: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 600, cursor: "pointer" },
   skip: { display: "block", width: "100%", marginTop: 16, padding: 6, background: "none", border: "none", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "center", textDecoration: "underline" },
   error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
   info: { background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", color: "#1e40af", fontSize: 13, marginBottom: 16 },
-  input: { width: "100%", padding: "11px 14px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", color: "#111827", boxSizing: "border-box" },
+  input: { width: "100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline: "none", color: "#111827", boxSizing: "border-box" },
   label: { display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 },
-  codeInput: { width: "100%", padding: 14, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 26, fontWeight: 700, letterSpacing: 10, textAlign: "center", outline: "none", color: "#111827", boxSizing: "border-box", marginBottom: 12 },
+  codeInput: { width: "100%", padding: 14, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 23 : 26, fontWeight: 700, letterSpacing: isMobile ? 8 : 10, textAlign: "center", outline: "none", color: "#111827", boxSizing: "border-box", marginBottom: 12 },
   codeBox: { background: "#f9fafb", border: "1.5px dashed #d1d5db", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#374151", marginBottom: 16, lineHeight: 1.6 },
-};
+  /** Fila de botones: en celular se apilan y ocupan todo el ancho. */
+  actions: isMobile
+    ? { display: "flex", flexDirection: "column-reverse", gap: 10 }
+    : { display: "flex", justifyContent: "flex-end", gap: 12 },
+});
 
 /**
  * Tarjeta para subir una foto de documento. Al elegir el archivo pide la revisión
@@ -63,7 +70,7 @@ function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
         : value ? "1.5px solid #2563eb" : "1px solid #e5e7eb";
 
   return (
-    <div style={{ flex: 1, minWidth: 240 }}>
+    <div style={{ flex: 1, minWidth: 220 }}>
       <div onClick={() => document.getElementById(id)?.click()}
         style={{ border, borderRadius: 14, padding: 14, cursor: "pointer", background: "#fff" }}>
         <input id={id} type="file" accept="image/*" style={{ display: "none" }}
@@ -100,11 +107,18 @@ function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
           No corresponde. {review.reason}
         </div>
       )}
+      {/*
+        No se pudo revisar. Antes acá decía "se envía igual", y eso terminó
+        significando que la foto quedaba APROBADA sin que nadie la mirara: así una
+        foto de un perro pasó como DNI el día que el modelo de la IA se dio de
+        baja. Ahora se dice lo que realmente va a pasar: la manda, pero la cuenta
+        no queda verificada hasta que un administrador revise la foto a mano.
+      */}
       {review?.state === "unknown" && (
-        <div style={{ fontSize: 12, color: "#92400e", marginTop: 6 }}>
-          {review.code === "not_configured"
-            ? "La revisión automática no está configurada en el servidor. La foto se envía igual."
-            : `No se pudo revisar automáticamente. Se envía igual.${review.reason ? ` (${review.reason})` : ""}`}
+        <div style={{ fontSize: 12, color: "#92400e", marginTop: 6, lineHeight: 1.5 }}>
+          No pudimos revisar esta foto automáticamente. La podés enviar igual, pero
+          la cuenta no queda verificada hasta que un administrador la revise a mano.
+          {review.reason ? ` (${review.reason})` : ""}
         </div>
       )}
     </div>
@@ -112,9 +126,9 @@ function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
 }
 
 // Barra de pasos de arriba.
-function Stepper({ current, steps }) {
+function Stepper({ current, steps, isMobile }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 40, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: isMobile ? 26 : 40, flexWrap: "wrap" }}>
       {steps.map((label, i) => (
         <div key={label} style={{ display: "flex", alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
@@ -128,7 +142,7 @@ function Stepper({ current, steps }) {
             <span style={{ fontSize: 12, fontWeight: 600, color: i === current ? "#111827" : "#9ca3af" }}>{label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: 90, height: 2, margin: "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#2563eb" : "#e5e7eb" }} />
+            <div style={{ width: isMobile ? 22 : 90, height: 2, margin: isMobile ? "0 4px" : "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#2563eb" : "#e5e7eb" }} />
           )}
         </div>
       ))}
@@ -137,6 +151,8 @@ function Stepper({ current, steps }) {
 }
 
 export default function IdentityVerification({ onDone, onCancel }) {
+  const { isMobile } = useIsMobile();
+  const st = styles(isMobile);
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(0);       // 0=DNI, 1=licencia, 2=teléfono, 3=confirmación
   const [docs, setDocs] = useState({ dniFront: null, dniBack: null, licFront: null, licBack: null });
@@ -209,10 +225,13 @@ export default function IdentityVerification({ onDone, onCancel }) {
         return;
       }
 
+      // Si no quedó verificada en el momento, es porque la revisión automática no
+      // pudo decidir y la solicitud está esperando a un administrador. Decirlo,
+      // en vez de un "enviada correctamente" que deja pensando si falta algo.
       setInfo(
         fresh?.fullyVerified
           ? "Documentación aprobada: tu cuenta quedó verificada."
-          : "Documentación enviada correctamente.",
+          : "Documentación enviada. Un administrador va a revisar las fotos y te avisamos cuando la cuenta quede verificada.",
       );
       setStep(2);
     } catch (err) {
@@ -277,7 +296,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
   return (
     <div>
-      <Stepper current={step} steps={STEPS} />
+      <Stepper current={step} steps={STEPS} isMobile={isMobile} />
       <div style={st.card}>
         {error && <div style={st.error}>{error}</div>}
         {info && <div style={st.info}>{info}</div>}
@@ -306,7 +325,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 ))}
               </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <div style={st.actions}>
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>Cancelar</button>}
               <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking ? "pointer" : "not-allowed" }}
                 disabled={!docsReady || hasInvalid || isChecking}
@@ -330,7 +349,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
               Tus datos se usan únicamente para validar tu identidad. Del documento
               se registran el número, el nombre y el vencimiento.
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <div style={st.actions}>
               <button style={st.btnGhost} onClick={() => setStep(0)}>Atrás</button>
               <button style={{ ...st.btnPrimary, opacity: licenseReady && !hasInvalid && !isChecking && !busy ? 1 : 0.5, cursor: licenseReady && !hasInvalid && !isChecking && !busy ? "pointer" : "not-allowed" }}
                 disabled={!licenseReady || hasInvalid || isChecking || busy} onClick={submitDocuments}>
@@ -361,7 +380,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                   SMS: enviar mensajes a un número es un servicio pago que todavía
                   no está contratado. El número igual queda registrado y confirmado.
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <div style={st.actions}>
                   <button style={st.btnGhost} onClick={() => setStep(1)}>Atrás</button>
                   <button style={{ ...st.btnPrimary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={sendPhoneCode}>
                     {busy ? "Enviando..." : "Enviarme el código"}

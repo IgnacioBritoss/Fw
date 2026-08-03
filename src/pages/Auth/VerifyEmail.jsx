@@ -8,22 +8,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
-const s = {
-  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
-  card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)", textAlign:"center" },
+// Los estilos dependen del ancho de la pantalla, así que se arman adentro del
+// componente. En celular: menos aire alrededor y campos de 16px, porque con
+// menos de 16 Safari en iPhone hace zoom solo al tocar un campo.
+const styles = (isMobile) => ({
+  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
+  card: { background:"#fff", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)", textAlign:"center" },
   icon: { fontSize:48, marginBottom:12 },
   title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:28, lineHeight:1.6 },
-  input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:28, fontWeight:700, letterSpacing:12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20 },
+  input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 24 : 28, fontWeight:700, letterSpacing: isMobile ? 8 : 12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20 },
   btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   btnLink: { background:"none", border:"none", color:"#2563eb", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 },
-};
+});
 
 export default function VerifyEmail() {
+  const { isMobile } = useIsMobile();
+  const s = styles(isMobile);
   const { verifyEmail, resendVerification, user } = useAuth();
   const navigate = useNavigate();
   const [code, setCode] = useState("");

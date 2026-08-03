@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -22,13 +23,16 @@ const EyeClosed = () => (
   </svg>
 );
 
-const s = {
-  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
-  card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
+// Los estilos dependen del ancho de la pantalla, así que se arman adentro del
+// componente. En celular: menos aire alrededor y campos de 16px, porque con
+// menos de 16 Safari en iPhone hace zoom solo al tocar un campo.
+const styles = (isMobile) => ({
+  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
+  card: { background:"#fff", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
   title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:24 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
-  input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827" },
+  input: { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827" },
   btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
@@ -36,9 +40,11 @@ const s = {
   back: { textAlign:"center", fontSize:13 },
   wrapper: { position:"relative", marginBottom:14 },
   eyeBtn: { position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0, display:"flex", alignItems:"center" },
-};
+});
 
 export default function ResetPassword() {
+  const { isMobile } = useIsMobile();
+  const s = styles(isMobile);
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
   // Leemos el token y el id de usuario que vienen en la URL del email.

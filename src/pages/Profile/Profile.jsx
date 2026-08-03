@@ -5,10 +5,12 @@
 //  y el estado de sus verificaciones (DNI, licencia, email, teléfono). Todo se
 //  deriva del objeto `user`, así que lo que se edita en Ajustes se refleja acá.
 // ============================================================================
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { getMyIdentity } from "../../services/api";
+import IdentityDocuments from "../../components/IdentityDocuments";
 
 // Círculo verde (tilde) o naranja (signo) según algo esté verificado o pendiente.
 const StatusBadge = ({ ok }) => (
@@ -29,6 +31,16 @@ export default function Profile() {
   // publicar o reservar (y no una marca guardada en el navegador).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refreshUser(); }, []);
+
+  // Mis propios documentos. Cada uno puede ver las fotos que mandó y los datos
+  // que se leyeron de ellas; las de los demás no las ve nadie más que el admin.
+  const [myDocs, setMyDocs] = useState([]);
+  useEffect(() => {
+    getMyIdentity()
+      .then(list => setMyDocs(Array.isArray(list) ? list : []))
+      .catch(() => setMyDocs([]));
+  }, []);
+  const lastSubmission = myDocs[0] || null;
 
   // Todo se deriva directamente del usuario: lo que se edita en Ajustes se ve acá al instante
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -62,7 +74,7 @@ export default function Profile() {
 
   // Bloque de verificaciones: una tarjeta por documento con su estado, y un
   // aviso con botón "Verificar ahora" si falta completar el DNI o la licencia.
-  const Verifications = () => (
+  const verifications = () => (
     <div style={{ ...t.card, padding: 28, flex: 1 }}>
       <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>Identidad y verificaciones</div>
       <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>Documentos validados por Freewheel</div>
@@ -83,6 +95,22 @@ export default function Profile() {
           </div>
         ))}
       </div>
+      {/* Las fotos que mandé y lo que se leyó de ellas. Solo las ve el dueño de
+          la cuenta (y el panel admin): en el perfil de otra persona nunca
+          aparecen, porque un DNI a la vista de cualquiera es material para
+          suplantar una identidad. */}
+      {lastSubmission && (
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #f0f0f0" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 3 }}>
+            Mis documentos
+          </div>
+          <div style={{ fontSize: 12.5, color: "#9ca3af", marginBottom: 12 }}>
+            Solo los ves vos y el equipo de administración
+          </div>
+          <IdentityDocuments submission={lastSubmission} />
+        </div>
+      )}
+
       {!fullyVerified && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18, padding: "14px 16px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
           <div style={{ fontSize: 13, color: "#9a3412" }}>
@@ -143,7 +171,7 @@ export default function Profile() {
       </div>
 
       {/* Verificaciones */}
-      <Verifications />
+      {verifications()}
     </div>
   );
 }

@@ -252,6 +252,17 @@ export async function requestPhoneCode() {
 export async function confirmPhoneCode(code) {
   return apiFetch("/verification/phone/confirm", { method: "POST", body: JSON.stringify({ code }) });
 }
+/**
+ * Mis propios envíos de documentación, del más nuevo al más viejo, con las fotos
+ * y los datos que la IA leyó de ellas.
+ *
+ * Solo devuelve lo de la cuenta que hace el pedido: nadie puede ver el DNI de otra
+ * persona por esta vía (para eso está el panel admin, y nada más).
+ */
+export async function getMyIdentity() {
+  return apiFetch("/verification/identity/me");
+}
+
 // Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
 export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }) {
   return apiFetch("/verification/identity/submit", {
@@ -534,3 +545,20 @@ export async function adminUpdateUserRole(id, role) {
     body: JSON.stringify({ role }),
   });
 }
+
+// Solicitudes de verificación de identidad, con las fotos del DNI y la licencia y
+// los datos que la IA leyó de ellas. Son las únicas dos puertas por las que se ven
+// esas fotos: acá (cuentas admin) y GET /verification/identity/me (el propio
+// dueño). No aparecen en el perfil público de nadie.
+export async function adminGetVerifications() { return apiFetch("/admin/verifications"); }
+export async function adminReviewVerification(id, status, notes) {
+  return apiFetch(`/admin/verifications/${id}/review`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, ...(notes ? { notes } : {}) }),
+  });
+}
+
+// Estado de la revisión por IA: si falta la clave, qué contestó el proveedor la
+// última vez y qué modelos hay disponibles. Sirve para saber por qué dejó de
+// funcionar la verificación de documentos sin entrar a los logs del deploy.
+export async function getAiHealth() { return apiFetch("/ai/health"); }

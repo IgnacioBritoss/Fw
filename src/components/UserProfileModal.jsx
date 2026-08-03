@@ -106,6 +106,18 @@ export default function UserProfileModal({ userId, onClose }) {
                     Identidad verificada
                   </span>
                 )}
+                {/*
+                  Los últimos cuatro dígitos del documento con el que se verificó.
+                  Le da a la otra persona algo concreto para cotejar si alguna vez
+                  hay un problema, sin mostrar el número entero ni las fotos del
+                  DNI —eso es material con el que se suplanta una identidad y solo
+                  lo ven el propio dueño de la cuenta y el equipo de administración.
+                */}
+                {profile.verified && profile.documentLast4 && (
+                  <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 5 }}>
+                    Documento ····{profile.documentLast4}
+                  </div>
+                )}
               </div>
             </div>
 
