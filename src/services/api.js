@@ -143,18 +143,26 @@ export async function resetPassword({ token, userId, newPassword }) {
     body: JSON.stringify({ token, userId, newPassword }),
   });
 }
-// Pide cambiar el email de la cuenta (dispara un código de confirmación).
+/**
+ * Cambiar la dirección de email de la cuenta. Son dos pasos y el código llega a
+ * la dirección NUEVA: así se comprueba que esa dirección existe y es de quien la
+ * está poniendo. Hasta confirmar, el email de la cuenta no se toca.
+ *
+ * Estas dos funciones ya existían pero ninguna pantalla las llamaba: se podía
+ * "editar" el email en Ajustes como un campo cualquiera, la pantalla mostraba el
+ * nuevo y el servidor seguía con el viejo.
+ */
 export async function requestEmailChange(newEmail) {
   return apiFetch("/auth/request-email-change", {
     method: "POST",
     body: JSON.stringify({ newEmail }),
   });
 }
-// Confirma el cambio de email con el código recibido.
-export async function confirmEmailChange(code, newEmail) {
+/** Confirma el cambio. La dirección la toma el backend del código guardado. */
+export async function confirmEmailChange(code) {
   return apiFetch("/auth/confirm-email-change", {
     method: "POST",
-    body: JSON.stringify({ code, newEmail }),
+    body: JSON.stringify({ code }),
   });
 }
 

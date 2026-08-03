@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import ChangeEmailCard from "../../components/ChangeEmailCard";
 import { updateMe } from "../../services/api";
 import { applyDarkMode } from "../../services/theme";
 
@@ -31,15 +32,15 @@ const Svg = ({ d, color = "currentColor", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
 
+// Solo lo que existe de verdad. Estaban además Notificaciones, Privacidad,
+// Accesibilidad y Ayuda y soporte: cuatro secciones que abrían un cartel de
+// "próximamente" y nada más. Un menú con la mitad de las puertas cerradas hace
+// perder tiempo y da la impresión de que la app está a medio hacer.
 const MENU = [
   { key: "cuenta", label: "Cuenta", icon: I.user },
   { key: "seguridad", label: "Seguridad", icon: I.lock },
-  { key: "notificaciones", label: "Notificaciones", icon: I.bell },
-  { key: "privacidad", label: "Privacidad", icon: I.shield },
   { key: "pagos", label: "Métodos de pago", icon: I.card },
-  { key: "idioma", label: "Idioma y región", icon: I.globe },
-  { key: "accesibilidad", label: "Accesibilidad", icon: I.access },
-  { key: "ayuda", label: "Ayuda y soporte", icon: I.help },
+  { key: "idioma", label: "Idioma", icon: I.globe },
 ];
 
 // Clave de localStorage y función para leer las preferencias guardadas.
@@ -58,7 +59,7 @@ export default function Settings() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refreshUser(); }, []);
   const checklist = user?.verification?.checklist || {};
-  const [prefs, setPrefs] = useState({ emailNotif: true, pushNotif: true, offers: true, twofa: false, dark: false, ...loadPrefs() });
+  const [prefs, setPrefs] = useState({ dark: false, ...loadPrefs() });
 
   // Cambia una preferencia, la guarda y aplica su efecto real (modo oscuro,
   // permiso de notificaciones, etc.).
@@ -66,17 +67,7 @@ export default function Settings() {
     const next = { ...prefs, [k]: v };
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
-    // Efectos reales según la preferencia
     if (k === "dark") applyDarkMode(v);
-    if (k === "pushNotif" && v) requestPushPermission();
-  };
-
-  // Pide permiso real de notificaciones del navegador y muestra una de prueba
-  const requestPushPermission = () => {
-    if (!("Notification" in window)) return;
-    Notification.requestPermission().then(p => {
-      if (p === "granted") new Notification("Freewheel", { body: "Las notificaciones están activadas." });
-    }).catch(() => {});
   };
 
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -171,7 +162,7 @@ export default function Settings() {
   return (
     <div style={{ padding: isMobile ? "16px" : "28px 32px", maxWidth: 1200, margin: "0 auto" }}>
       <div style={t.sectTitle}>Ajustes</div>
-      <div style={t.sectSub}>Gestioná tu cuenta, preferencias y privacidad</div>
+      <div style={t.sectSub}>Tu cuenta, tu verificación y cómo se ve la app</div>
 
       <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: "300px 1fr", gap: 22, alignItems: "start" }}>
         {/* Menú lateral */}
@@ -203,9 +194,16 @@ export default function Settings() {
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Información personal</div>
                 <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>Estos datos son visibles solo para vos y los dueños de autos que alquiles</div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
-                  <Field label="Nombre" value={firstName} fieldKey="firstName" />
-                  <Field label="Apellido" value={lastName} fieldKey="lastName" />
-                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}><Field label="Email" value={user?.email} fieldKey="email" type="email" /></div>
+                  {/* Nombre y apellido NO se editan: salen del DNI que se revisa al
+                      verificar la cuenta. Si se pudieran escribir a mano, el nombre
+                      que ve la otra persona en una reserva no tendría nada que ver
+                      con el documento, y la verificación de identidad dejaría de
+                      querer decir algo. */}
+                  <Field label="Nombre" value={firstName} fieldKey="firstName" editable={false} />
+                  <Field label="Apellido" value={lastName} fieldKey="lastName" editable={false} />
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+                    <ChangeEmailCard verified={checklist.emailVerified === true} />
+                  </div>
                   <Field label="Teléfono" value={user?.phone} fieldKey="phone" />
                   {/* La fecha de nacimiento la valida el backend al registrarse y
                       no se puede cambiar después (de ahí editable={false}). Antes
@@ -214,17 +212,22 @@ export default function Settings() {
                   <Field label="Fecha de nacimiento" editable={false} fieldKey="dateOfBirth"
                     value={user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("es-AR") : ""} />
                 </div>
+                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+                  El nombre, el apellido y la fecha de nacimiento salen de tu DNI y no
+                  se pueden cambiar acá. Si hay un error, escribinos desde el chat.
+                </div>
               </div>
 
               {/* Preferencias */}
               <div style={{ ...t.card, padding: 26 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Preferencias de cuenta</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>Controlá cómo Freewheel interactúa con vos</div>
-                <SwitchRow title="Notificaciones por email" desc="Recibí actualizaciones de reservas, promociones y mensajes" on={prefs.emailNotif} onChange={v => setPref("emailNotif", v)} />
-                <SwitchRow title="Notificaciones push" desc="Alertas en el navegador cuando hay novedades" on={prefs.pushNotif} onChange={v => setPref("pushNotif", v)} />
-                <SwitchRow title="Ofertas personalizadas" desc="Te mostramos autos similares a los que te interesan" on={prefs.offers} onChange={v => setPref("offers", v)} />
-                <SwitchRow title="Autenticación 2FA" desc="Agregá una capa extra de seguridad al iniciar sesión" on={prefs.twofa} onChange={v => setPref("twofa", v)} />
-                <SwitchRow title="Modo oscuro" desc="Usá la interfaz con colores oscuros" on={prefs.dark} onChange={v => setPref("dark", v)} last />
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Apariencia</div>
+                {/* Acá había cinco interruptores: notificaciones por email, push,
+                    ofertas personalizadas y 2FA, ninguno de los cuales hacía nada
+                    del otro lado —solo se guardaban en el navegador—. Un
+                    interruptor que se prende y no cambia nada es peor que no
+                    tenerlo. Queda el único que sí funciona. */}
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>Cómo se ve Freewheel en esta pantalla</div>
+                <SwitchRow title="Modo oscuro" desc="Colores oscuros, más cómodos de noche" on={prefs.dark} onChange={v => setPref("dark", v)} last />
               </div>
             </>
           ) : section === "seguridad" ? (

@@ -279,3 +279,31 @@ h1, h2, h3, h4, p, label, strong, td, th, li, a {
     padding-bottom: 76px;
   }
 }
+
+/* ============================================================================
+   El cursor titilando donde no se puede escribir
+   ----------------------------------------------------------------------------
+   Al tocar un campo de solo lectura (o uno deshabilitado) el navegador igual
+   pone el cursor de texto parpadeando adentro. Queda como una invitación a
+   escribir en algo que no acepta nada escrito: uno tipea, no pasa nada, y no
+   entiende por qué.
+
+   El campo sigue enfocable con el teclado y se puede seleccionar y copiar su
+   contenido, que es para lo que sirve un campo de solo lectura. Lo único que se
+   saca es la rayita que parpadea.
+   ========================================================================== */
+input[readonly],
+textarea[readonly],
+input:disabled,
+textarea:disabled,
+select:disabled {
+  caret-color: transparent;
+  cursor: default;
+}
+
+/* Los textos comunes de la página tampoco tienen que mostrar cursor de texto
+   cuando se los toca: no son campos, son etiquetas y títulos. */
+label,
+button {
+  caret-color: transparent;
+}
