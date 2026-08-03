@@ -182,6 +182,9 @@ export default function PublishCar() {
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingSuggestion, setPricingSuggestion] = useState(null);
   const [photos, setPhotos] = useState([]);
+  // Se marca cuando la IA no pudo revisar alguna foto y la persona confirma a
+  // mano que son del auto. Sin esto no se puede avanzar.
+  const [photosConfirmed, setPhotosConfirmed] = useState(false);
   const [photoValidations, setPhotoValidations] = useState({});
   const [uploadHover, setUploadHover] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -317,6 +320,32 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
   // IA #3 — Al subir fotos: las lee, las agrega a la grilla y por cada una llama
   // a groqVision para verificar que muestre un vehículo (marca "ok"/"invalid").
+  /**
+   * Revisa una foto y guarda el resultado con su motivo.
+   *
+   * El estado de cada foto es "loading" | {state:"ok"|"invalid"|"unknown", ...}.
+   * Antes se guardaba solo "ok"/"invalid"/null, y null —que quiere decir "no se
+   * pudo revisar"— no se mostraba en pantalla ni frenaba nada: la foto quedaba sin
+   * ningún cartel y el formulario la dejaba pasar. Así se publicó una foto de un
+   * perro como foto de un auto.
+   */
+  const revisarFoto = (dataUrl, photoIdx) => {
+    setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
+    groqVision(dataUrl)
+      .then(res => setPhotoValidations(v => ({
+        ...v,
+        [photoIdx]: res?.isVehicle === true
+          ? { state: "ok", detected: res.detected, reason: res.reason }
+          : res?.isVehicle === false
+            ? { state: "invalid", detected: res.detected, reason: res.reason }
+            : { state: "unknown", code: res?.code, reason: res?.reason },
+      })))
+      .catch(err => setPhotoValidations(v => ({
+        ...v,
+        [photoIdx]: { state: "unknown", reason: err?.message },
+      })));
+  };
+
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     if (photos.length + files.length > 6) { setError("Podés subir hasta 6 fotos."); return; }
@@ -326,16 +355,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       const reader = new FileReader();
       reader.onload = (ev) => {
         setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
-        setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
-        groqVision(ev.target.result)
-          .then(isVehicle => setPhotoValidations(v => ({
-            ...v,
-            [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
-          })))
-          .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
+        revisarFoto(ev.target.result, photoIdx);
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  /** Estado de una foto, en una sola palabra. */
+  const estadoFoto = (i) => {
+    const v = photoValidations[i];
+    if (v === "loading") return "loading";
+    return v?.state ?? "unknown";
   };
 
   // Elimina una foto y reordena los resultados de validación para que sigan
@@ -366,10 +396,20 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     }
     if (step === 1) {
       if (photos.length < 4) { setError("Subí al menos 4 fotos del vehículo."); return false; }
-      const hasLoading = photos.some((_, i) => photoValidations[i] === "loading");
-      if (hasLoading) { setError("Esperá a que terminen de validarse las fotos."); return false; }
-      const hasInvalid = photos.some((_, i) => photoValidations[i] === "invalid");
-      if (hasInvalid) { setError("Hay fotos que no parecen mostrar un vehículo. Reemplazalas o eliminalas."); return false; }
+      if (photos.some((_, i) => estadoFoto(i) === "loading")) {
+        setError("Esperá a que terminen de revisarse las fotos."); return false;
+      }
+      if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
+        setError("Hay fotos que no son de un vehículo real. Reemplazalas o eliminalas."); return false;
+      }
+      // Las que no se pudieron revisar tampoco pasan solas: hace falta que la
+      // persona se haga cargo marcando la casilla. Antes pasaban sin que nada lo
+      // dijera, que es como una foto de un perro llegó a una publicación.
+      const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
+      if (sinRevisar > 0 && !photosConfirmed) {
+        setError(`Hay ${sinRevisar} foto${sinRevisar !== 1 ? "s" : ""} que no pudimos revisar. Volvé a intentar la revisión, o confirmá abajo que son del auto que estás publicando.`);
+        return false;
+      }
     }
     if (step === 2) {
       if (!listingForm.title) { setError("Ingresá un título para el listing."); return false; }
@@ -736,7 +776,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         <div style={cardStyle}>
           <div style={s.sectionTitle}>Fotos del vehículo</div>
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
-            Subí entre 4 y 6 fotos del auto. La IA verifica que sean fotos de un vehículo. Se requieren mínimo 4.
+            Subí entre 4 y 6 fotos del auto. Cada foto se revisa automáticamente: tiene que ser un vehículo real, no un juguete, un dibujo ni una foto de catálogo. Se requieren mínimo 4.
           </p>
           <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
@@ -752,21 +792,47 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               {photos.map((p, i) => (
                 <div key={i} style={s.photoItem}>
                   <img src={p.url} alt="" style={s.photoImg} />
-                  {photoValidations[i] === "loading" && (
-                    <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.5)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+                  {/* El resultado de la revisión, con su motivo. Verde = sirve,
+                      rojo = no sirve, ámbar = no se pudo revisar (y NO pasa sola). */}
+                  {estadoFoto(i) === "loading" && (
+                    <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.55)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
                       <span style={{ ...s.spinner, width: 10, height: 10 }} />
-                      <span style={{ fontSize: 10, color: "#fff" }}>Validando</span>
+                      <span style={{ fontSize: 10, color: "#fff" }}>Revisando</span>
                     </div>
                   )}
-                  {photoValidations[i] === "ok" && (
-                    <div style={{ position: "absolute", top: 6, left: 6, background: "#16a34a", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 600 }}>✓ Auto</div>
-                  )}
-                  {photoValidations[i] === "invalid" && (
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.15)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", alignItems: "flex-end" }}>
-                      <div style={{ width: "100%", background: "rgba(220,38,38,.9)", color: "#fff", fontSize: 10, padding: "4px 6px", textAlign: "center", fontWeight: 600 }}>No parece un auto — reemplazá</div>
+                  {estadoFoto(i) === "ok" && (
+                    <div style={{ position: "absolute", inset: 0, border: "2px solid #16a34a", borderRadius: 10, display: "flex", alignItems: "flex-start", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "#16a34a", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                        {photoValidations[i]?.detected
+                          ? `Verificada: ${photoValidations[i].detected}`
+                          : "Verificada: es un auto real"}
+                      </div>
                     </div>
                   )}
-                  {i === 0 && photoValidations[i] !== "invalid" && (
+                  {estadoFoto(i) === "invalid" && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "#dc2626", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
+                        No válida
+                      </div>
+                      <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
+                        {photoValidations[i]?.reason || "No es la foto de un vehículo real."}
+                      </div>
+                    </div>
+                  )}
+                  {estadoFoto(i) === "unknown" && photos[i] && (
+                    <div style={{ position: "absolute", inset: 0, border: "2px solid #f59e0b", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div style={{ margin: 6, background: "#f59e0b", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
+                        Sin revisar
+                      </div>
+                      <button
+                        onClick={(ev) => { ev.stopPropagation(); revisarFoto(photos[i].url, i); }}
+                        style={{ width: "100%", background: "rgba(180,83,9,.94)", color: "#fff", fontSize: 10, padding: "5px 6px", fontWeight: 700, border: "none", cursor: "pointer" }}>
+                        Reintentar la revisión
+                      </button>
+                    </div>
+                  )}
+                  {i === 0 && estadoFoto(i) === "ok" && (
                     <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>Principal</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
@@ -778,6 +844,36 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={{ marginTop: 10, fontSize: 12, color: "#92400e", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
               Necesitás {4 - photos.length} foto{4 - photos.length !== 1 ? "s" : ""} más para continuar.
             </div>
+          )}
+
+          {/* Cuenta de cómo viene la revisión, para no tener que mirar foto por foto. */}
+          {photos.length > 0 && (() => {
+            const verificadas = photos.filter((_, i) => estadoFoto(i) === "ok").length;
+            const noValidas = photos.filter((_, i) => estadoFoto(i) === "invalid").length;
+            const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
+            return (
+              <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "#374151" }}>
+                <span style={{ color: "#166534", fontWeight: 600 }}>{verificadas} verificada{verificadas !== 1 ? "s" : ""}</span>
+                {noValidas > 0 && <span style={{ color: "#b91c1c", fontWeight: 600 }}>{noValidas} no válida{noValidas !== 1 ? "s" : ""}</span>}
+                {sinRevisar > 0 && <span style={{ color: "#92400e", fontWeight: 600 }}>{sinRevisar} sin revisar</span>}
+              </div>
+            );
+          })()}
+
+          {/* Si algo no se pudo revisar, no se avanza sin que la persona lo confirme.
+              Es la alternativa a dejarlo pasar en silencio (lo de antes) y a trabar
+              la publicación del todo cuando el servicio de IA está caído. */}
+          {photos.some((_, i) => estadoFoto(i) === "unknown") && (
+            <label style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", cursor: "pointer" }}>
+              <input type="checkbox" checked={photosConfirmed}
+                onChange={(e) => setPhotosConfirmed(e.target.checked)}
+                style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
+              <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                No pudimos revisar todas las fotos automáticamente. Confirmo que son
+                del auto que estoy publicando. Si no lo son, la publicación se puede
+                pausar y la cuenta suspender.
+              </span>
+            </label>
           )}
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>

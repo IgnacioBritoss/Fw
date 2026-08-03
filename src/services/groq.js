@@ -112,8 +112,33 @@ async function askVisionDirect(imageDataUrl, prompt, maxTokens) {
 // Texto de las preguntas. Están repetidos del backend a propósito: son los que
 // usa el respaldo del navegador, que tiene que preguntar exactamente lo mismo
 // para que el resultado sea comparable.
+// Tiene que ser exactamente el mismo que usa el backend (ai.service.ts): si las
+// dos preguntas fueran distintas, una foto podría pasar por un camino y no por el
+// otro sin que nada lo explique.
+//
+// La pregunta anterior era "¿esta imagen muestra un automóvil, camioneta, SUV,
+// moto u otro vehículo de motor? SI o NO", y con eso un auto de JUGUETE contesta
+// SI: es, literalmente, la imagen de un automóvil. También pasaban los dibujos,
+// las maquetas y las capturas de videojuegos. El control existía y no filtraba lo
+// único que hay que filtrar, que la foto sea del auto real que se publica.
 const VEHICLE_PROMPT =
-  "¿Esta imagen muestra un automóvil, camioneta, SUV, moto u otro vehículo de motor? Respondé únicamente SI o NO.";
+  "Mirá la imagen. Tiene que ser la foto de un vehículo REAL, de tamaño real, " +
+  "de los que una persona puede conducir y alquilar (auto, camioneta, SUV, " +
+  "pickup, van o moto).\n\n" +
+  "RECHAZALA si es cualquiera de estas cosas, aunque tenga forma de auto:\n" +
+  "- un juguete, un auto a escala, una maqueta o un auto a batería para chicos\n" +
+  "- un dibujo, una ilustración, un render 3D o una captura de un videojuego\n" +
+  "- la foto de un afiche, una pantalla, un catálogo o una publicidad\n" +
+  "- un vehículo que no se alquila así (tren, avión, barco, bicicleta, monopatín)\n" +
+  "- cualquier otra cosa (una persona, un animal, un paisaje, comida, una captura de pantalla)\n\n" +
+  "Pistas para darte cuenta de que NO es real: proporciones de juguete, " +
+  "plástico brillante, ruedas lisas sin dibujo, asiento de plástico, " +
+  "tamaño chico comparado con lo que está alrededor, fondo de estudio blanco " +
+  "tipo foto de producto, o que no tenga patente ni espejos ni picaportes reales.\n\n" +
+  "Respondé SOLO un JSON válido, sin texto alrededor, con esta forma exacta:\n" +
+  '{"es_vehiculo": true|false, "es_real": true|false, ' +
+  '"que_es": "en 2 o 3 palabras qué se ve", ' +
+  '"motivo": "una frase corta explicando la decisión"}';
 
 const DOCUMENT_EXPECTED = {
   DNI_FRONT: "el FRENTE de un documento nacional de identidad (DNI), con la foto de la persona, su nombre y el número de documento",
@@ -132,26 +157,64 @@ const documentPrompt = (kind) =>
   'una captura de pantalla o una persona sin documento), "corresponde" debe ser false.';
 
 /**
- * Verifica con IA si una foto muestra un vehículo. Se usa al publicar un auto.
- * Devuelve: true (es vehículo), false (no lo es) o null (no se pudo verificar).
+ * Verifica con IA si una foto muestra un vehículo REAL (no un juguete, ni un
+ * dibujo, ni una maqueta). Se usa al publicar un auto.
+ *
+ * Devuelve { isVehicle, reason, detected, code }:
+ *   · isVehicle true  → es la foto de un vehículo real
+ *   · isVehicle false → no sirve, y `reason` dice por qué (para mostrarlo)
+ *   · isVehicle null  → NO SE PUDO VERIFICAR, y `code` dice el motivo. Ojo: null
+ *     no es "está bien". Que se tratara como si estuviera bien es exactamente lo
+ *     que dejó publicar una foto de un perro como foto de un auto.
+ *
+ * Antes devolvía un booleano pelado, así que la pantalla no tenía con qué
+ * explicar el rechazo ni distinguir "no es un auto" de "no se pudo revisar".
+ *
+ * 768px en vez de 512: para ver si un auto es de juguete hacen falta los
+ * detalles chicos (el dibujo de las ruedas, los picaportes, el plástico), y a
+ * 512 se pierden.
  */
 export async function groqVision(imageDataUrl) {
-  const small = await shrinkImage(imageDataUrl, 512, 0.65);
+  const small = await shrinkImage(imageDataUrl, 768, 0.72);
 
-  let backendFailed = false;
+  let failure = null;
   try {
     const data = await apiAiVision(small);
-    if (data?.isVehicle === true || data?.isVehicle === false) return data.isVehicle;
-    backendFailed = notConfigured(data);
+    if (data?.isVehicle === true || data?.isVehicle === false) return data;
+    failure = data;
   } catch (err) {
-    backendFailed = notConfigured(err);
+    failure = err;
   }
 
-  if (!backendFailed) return null;
+  // El backend no pudo. Si es porque no tiene la clave, se intenta desde acá.
+  if (notConfigured(failure)) {
+    const content = await askVisionDirect(small, VEHICLE_PROMPT, 220);
+    if (content) {
+      try {
+        const parsed = extractJSON(content);
+        const esVehiculo = parsed.es_vehiculo === true;
+        const esReal = parsed.es_real !== false;
+        return {
+          isVehicle: esVehiculo && esReal,
+          reason: parsed.motivo || null,
+          detected: parsed.que_es || null,
+        };
+      } catch {
+        // El modelo contestó SI/NO en vez del JSON pedido.
+        const texto = content.trim().toUpperCase();
+        if (texto.startsWith("SI")) return { isVehicle: true };
+        if (texto.startsWith("NO")) {
+          return { isVehicle: false, reason: "La imagen no muestra un vehículo." };
+        }
+      }
+    }
+  }
 
-  const answer = (await askVisionDirect(small, VEHICLE_PROMPT, 5))?.trim().toUpperCase();
-  if (!answer) return null;
-  return answer.startsWith("SI") ? true : answer.startsWith("NO") ? false : null;
+  return {
+    isVehicle: null,
+    code: failure?.code || (notConfigured(failure) ? "not_configured" : "upstream_error"),
+    reason: failure?.message || null,
+  };
 }
 
 /**

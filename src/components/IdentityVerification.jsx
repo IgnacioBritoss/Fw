@@ -157,6 +157,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const [step, setStep] = useState(0);       // 0=DNI, 1=licencia, 2=teléfono, 3=confirmación
   const [docs, setDocs] = useState({ dniFront: null, dniBack: null, licFront: null, licBack: null });
   const [reviews, setReviews] = useState({}); // resultado de la revisión por foto
+  const [docsConfirmed, setDocsConfirmed] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
@@ -293,6 +294,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
   // Una foto que la revisión marcó como "no corresponde" bloquea el envío.
   const hasInvalid = Object.values(reviews).some(r => r?.state === "invalid");
   const isChecking = Object.values(reviews).some(r => r?.state === "checking");
+  // Fotos que la IA no pudo revisar. NO pasan solas: hace falta que la persona
+  // marque la casilla. Antes pasaban sin que nada lo dijera, y así una foto de un
+  // perro llegó a quedar como DNI el día que el modelo de Groq se dio de baja.
+  const sinRevisar = Object.values(reviews).filter(r => r?.state === "unknown").length;
+  const faltaConfirmar = sinRevisar > 0 && !docsConfirmed;
 
   return (
     <div>
@@ -325,10 +331,26 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 ))}
               </div>
             </div>
+            {/* Si la IA no pudo revisar una foto, no se avanza sin que la persona
+                lo confirme. Es la alternativa a dejarlo pasar en silencio (lo de
+                antes) y a trabar la verificación del todo cuando el servicio de IA
+                está caído. */}
+            {sinRevisar > 0 && (
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
+                <input type="checkbox" checked={docsConfirmed}
+                  onChange={(e) => setDocsConfirmed(e.target.checked)}
+                  style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
+                <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                  No pudimos revisar {sinRevisar === 1 ? "una foto" : `${sinRevisar} fotos`} automáticamente.
+                  Confirmo que son de mis documentos reales. Un administrador las va a
+                  mirar antes de verificar la cuenta.
+                </span>
+              </label>
+            )}
             <div style={st.actions}>
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>Cancelar</button>}
-              <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking ? "pointer" : "not-allowed" }}
-                disabled={!docsReady || hasInvalid || isChecking}
+              <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? "pointer" : "not-allowed" }}
+                disabled={!docsReady || hasInvalid || isChecking || faltaConfirmar}
                 onClick={() => { setError(""); setStep(1); }}>Continuar →</button>
             </div>
           </>
@@ -349,10 +371,26 @@ export default function IdentityVerification({ onDone, onCancel }) {
               Tus datos se usan únicamente para validar tu identidad. Del documento
               se registran el número, el nombre y el vencimiento.
             </div>
+                        {/* Si la IA no pudo revisar una foto, no se avanza sin que la persona
+                lo confirme. Es la alternativa a dejarlo pasar en silencio (lo de
+                antes) y a trabar la verificación del todo cuando el servicio de IA
+                está caído. */}
+            {sinRevisar > 0 && (
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
+                <input type="checkbox" checked={docsConfirmed}
+                  onChange={(e) => setDocsConfirmed(e.target.checked)}
+                  style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
+                <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                  No pudimos revisar {sinRevisar === 1 ? "una foto" : `${sinRevisar} fotos`} automáticamente.
+                  Confirmo que son de mis documentos reales. Un administrador las va a
+                  mirar antes de verificar la cuenta.
+                </span>
+              </label>
+            )}
             <div style={st.actions}>
               <button style={st.btnGhost} onClick={() => setStep(0)}>Atrás</button>
-              <button style={{ ...st.btnPrimary, opacity: licenseReady && !hasInvalid && !isChecking && !busy ? 1 : 0.5, cursor: licenseReady && !hasInvalid && !isChecking && !busy ? "pointer" : "not-allowed" }}
-                disabled={!licenseReady || hasInvalid || isChecking || busy} onClick={submitDocuments}>
+              <button style={{ ...st.btnPrimary, opacity: licenseReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? 1 : 0.5, cursor: licenseReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? "pointer" : "not-allowed" }}
+                disabled={!licenseReady || hasInvalid || isChecking || busy || faltaConfirmar} onClick={submitDocuments}>
                 {busy ? "Enviando documentación..." : "Enviar y continuar →"}
               </button>
             </div>
