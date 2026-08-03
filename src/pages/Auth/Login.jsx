@@ -9,6 +9,9 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GOOGLE_AUTH_URL } from "../../services/api";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { authFields } from "../../styles/authFields";
+import AuthShell from "../../components/AuthShell";
 
 // Ícono de Google (SVG) para el botón "Continuar con Google".
 const GoogleIcon = () => (
@@ -42,6 +45,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { isMobile } = useIsMobile();
+  const f = authFields(isMobile);
 
   // Si se llegó acá por una sesión vencida, se avisa en vez de dejar la pantalla
   // en blanco sin explicación.
@@ -68,99 +73,73 @@ export default function Login() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Left — dark hero */}
-      <div style={{
-        flex: "0 0 45%", background: "linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        padding: "48px 52px", position: "relative", overflow: "hidden",
-      }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 30% 70%,rgba(37,99,235,.18) 0%,transparent 60%)" }} />
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", position: "relative" }}>
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
-            <circle cx="16" cy="16" r="4" fill="#2563eb"/>
-            {[0,60,120,180,240,300].map((a,i) => { const r=a*Math.PI/180; return <line key={i} x1={16+5*Math.cos(r)} y1={16+5*Math.sin(r)} x2={16+11*Math.cos(r)} y2={16+11*Math.sin(r)} stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>; })}
-          </svg>
-          <span style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.5px" }}>
-            <span style={{ color:"#fff" }}>Free</span><span style={{ color:"#2563eb" }}>wheel</span>
-          </span>
-        </Link>
+    <AuthShell
+      hero={{
+        eyebrow: "BIENVENIDO",
+        title: <>Bienvenida<br />de nuevo.</>,
+        text: "La forma más simple de alquilar auto en Argentina. Sin complicaciones, seguro y rápido.",
+      }}
+      title="Iniciá sesión"
+      subtitle={
+        <>
+          ¿No tenés cuenta?{" "}
+          <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>
+            Registrate gratis →
+          </Link>
+        </>
+      }
+    >
+      {expired && !error && (
+        <div style={f.notice}>Tu sesión venció. Volvé a iniciar sesión para continuar.</div>
+      )}
+      {error && <div style={f.error}>{error}</div>}
 
+      <button onClick={() => { window.location.href = GOOGLE_AUTH_URL; }}
+        style={{ ...f.btnGhost, marginBottom: 20 }}>
+        <GoogleIcon /> Continuar con Google
+      </button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+        <span style={{ fontSize: 12, color: "#9ca3af" }}>o con email</span>
+        <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={f.label}>Email</label>
+        <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none"
+          placeholder="martin@email.com" value={form.email}
+          onChange={e => setForm(fm => ({ ...fm, email: e.target.value }))}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={f.input} />
+      </div>
+
+      <div style={{ marginBottom: 8 }}>
+        <label style={f.label}>Contraseña</label>
         <div style={{ position: "relative" }}>
-          <div style={{ fontSize:13, fontWeight:600, color:"#2563eb", textTransform:"uppercase", letterSpacing:".06em", marginBottom:16 }}>BIENVENIDO</div>
-          <h1 style={{ fontSize:40, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
-            Bienvenida<br/>de nuevo.
-          </h1>
-          <p style={{ fontSize:15, color:"rgba(255,255,255,.6)", lineHeight:1.6, maxWidth:300 }}>
-            La forma más simple de alquilar auto en Argentina. Sin complicaciones, seguro y rápido.
-          </p>
-        </div>
-
-        <div style={{ fontSize:12, color:"rgba(255,255,255,.25)", position:"relative" }}>© 2025 Freewheel</div>
-      </div>
-
-      {/* Right — form */}
-      <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:"48px 64px", background:"#fff" }}>
-        <div style={{ width:"100%", maxWidth:400 }}>
-          <div style={{ marginBottom:32 }}>
-            <h2 style={{ fontSize:28, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>Iniciá sesión</h2>
-            <p style={{ fontSize:14, color:"#6b7280" }}>
-              ¿No tenés cuenta?{" "}
-              <Link to="/register" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>Registrate gratis →</Link>
-            </p>
-          </div>
-
-          {expired && !error && <div style={{ background:"#fffbeb", border:"1.5px solid #fde68a", borderRadius:8, padding:"10px 14px", color:"#92400e", fontSize:13, marginBottom:20 }}>Tu sesión venció. Volvé a iniciar sesión para continuar.</div>}
-          {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 }}>{error}</div>}
-
-          <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
-            width:"100%", padding:"11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
-            borderRadius:10, fontSize:14, fontWeight:600, color:"#374151", cursor:"pointer",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:20,
-          }}>
-            <GoogleIcon /> Continuar con Google
-          </button>
-
-          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-            <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>o con email</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
-          </div>
-
-          <div style={{ marginBottom:16 }}>
-            <label style={{ display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 }}>Email</label>
-            <input type="email" placeholder="martin@email.com" value={form.email}
-              onChange={e => setForm(f => ({ ...f, email:e.target.value }))}
-              onKeyDown={e => e.key==="Enter" && handleSubmit()}
-              style={{ width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", boxSizing:"border-box" }} />
-          </div>
-
-          <div style={{ marginBottom:8 }}>
-            <label style={{ display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 }}>Contraseña</label>
-            <div style={{ position:"relative" }}>
-              <input type={showPassword?"text":"password"} placeholder="••••••••" value={form.password}
-                onChange={e => setForm(f => ({ ...f, password:e.target.value }))}
-                onKeyDown={e => e.key==="Enter" && handleSubmit()}
-                style={{ width:"100%", padding:"11px 42px 11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", boxSizing:"border-box" }} />
-              <button type="button" onClick={() => setShowPassword(v => !v)}
-                style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0 }}>
-                {showPassword ? <EyeClosed/> : <EyeOpen/>}
-              </button>
-            </div>
-          </div>
-
-          <div style={{ textAlign:"right", marginBottom:24 }}>
-            <Link to="/forgot-password" style={{ fontSize:12, color:"#2563eb", textDecoration:"none", fontWeight:500 }}>¿Olvidaste tu contraseña?</Link>
-          </div>
-
-          <button onClick={handleSubmit} disabled={loading} style={{
-            width:"100%", padding:13, background:"#2563eb", color:"#fff",
-            border:"none", borderRadius:10, fontSize:15, fontWeight:700,
-            cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
-          }}>
-            {loading ? "Ingresando..." : "Iniciar sesión →"}
+          <input type={showPassword ? "text" : "password"} autoComplete="current-password"
+            placeholder="••••••••" value={form.password}
+            onChange={e => setForm(fm => ({ ...fm, password: e.target.value }))}
+            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            style={{ ...f.input, paddingRight: 44 }} />
+          <button type="button" onClick={() => setShowPassword(v => !v)}
+            aria-label={showPassword ? "Ocultar la contraseña" : "Mostrar la contraseña"}
+            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 0 }}>
+            {showPassword ? <EyeClosed /> : <EyeOpen />}
           </button>
         </div>
       </div>
-    </div>
+
+      <div style={{ textAlign: "right", marginBottom: 24 }}>
+        <Link to="/forgot-password" style={{ fontSize: 12.5, color: "#2563eb", textDecoration: "none", fontWeight: 500 }}>
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
+
+      <button onClick={handleSubmit} disabled={loading}
+        style={{ ...f.btn, ...(loading ? f.btnDisabled : {}) }}>
+        {loading ? "Ingresando..." : "Iniciar sesión →"}
+      </button>
+    </AuthShell>
   );
 }

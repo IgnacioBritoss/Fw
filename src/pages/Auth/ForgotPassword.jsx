@@ -1,79 +1,144 @@
 // ============================================================================
 //  ForgotPassword — "Olvidé mi contraseña"
 // ----------------------------------------------------------------------------
-//  El usuario ingresa su email y el backend le envía un link para crear una
-//  contraseña nueva. Por seguridad, siempre mostramos el mismo mensaje de
-//  éxito (esté o no registrado ese email), para no revelar quién tiene cuenta.
+//  Se pide el email y el backend manda un link para crear una contraseña nueva.
+//
+//  El mensaje de éxito dice "SI ese email está registrado" a propósito: contestar
+//  distinto según exista o no la cuenta le permitiría a cualquiera averiguar qué
+//  direcciones están registradas probando una por una.
+//
+//  Antes esta pantalla era una tarjeta blanca con dos renglones de texto y nada
+//  más, la más pelada de toda la app. Ahora usa la misma carcasa que el resto de
+//  las pantallas de entrada, y cuando el mail sale muestra una confirmación de
+//  verdad: a qué dirección se mandó, qué hacer si no llega, y por cuánto tiempo
+//  sirve el link.
+//
+//  Además ya no dice "enviado" cuando el envío falló: si el servidor no tiene
+//  configurado el correo, contesta 503 y antes esta pantalla lo tapaba con el
+//  cartel de éxito, así que uno se quedaba esperando un mail que no salió nunca.
 // ============================================================================
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { authFields } from "../../styles/authFields";
+import AuthShell from "../../components/AuthShell";
 
-const s = {
-  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems:"center", justifyContent:"center", padding:24 },
-  card: { background:"#fff", borderRadius:16, padding:"40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
-  title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
-  sub: { color:"#6b7280", fontSize:14, marginBottom:24, lineHeight:1.6 },
-  label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
-  input: { width:"100%", padding:"11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", color:"#111827", marginBottom:16 },
-  btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
-  btnDisabled: { opacity:0.6, cursor:"not-allowed" },
-  error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-  success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"12px 16px", color:"#1e40af", fontSize:14, marginBottom:16, lineHeight:1.6 },
-  back: { textAlign:"center", fontSize:13 },
-};
+const MailIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <path d="m2 7 10 6 10-6" />
+  </svg>
+);
 
 export default function ForgotPassword() {
   const { forgotPassword } = useAuth();
+  const { isMobile } = useIsMobile();
+  const f = authFields(isMobile);
+
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
+  const [sentTo, setSentTo] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Dispara el envío del email de recuperación y muestra el mensaje de enviado.
   const handleSubmit = async () => {
-    if (!email) { setError("Ingresá tu email."); return; }
+    const address = email.trim();
+    if (!address) { setError("Ingresá tu email."); return; }
     setLoading(true);
     setError("");
-    await forgotPassword(email);
+
+    const result = await forgotPassword(address);
     setLoading(false);
-    setSent(true);
+
+    // Solo se muestra la confirmación si el envío realmente salió.
+    if (result && result.success === false) {
+      setError(result.error || "No pudimos enviar el mail. Probá de nuevo.");
+      return;
+    }
+    setSentTo(address);
   };
 
-  return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <div style={s.title}>Recuperar contraseña</div>
-        <div style={s.sub}>
-          Ingresá tu email y te enviamos un link para crear una nueva contraseña.
-        </div>
-
-        {error && <div style={s.error}>{error}</div>}
-
-        {sent ? (
-          <div style={s.success}>
-            Si ese email está registrado, te enviamos un link de recuperación.<br />
-            Revisá tu bandeja de entrada (y el spam).
-          </div>
-        ) : (
-          <>
-            <label style={s.label}>Email</label>
-            <input style={s.input} type="email" placeholder="tu@email.com"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
-            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
-              onClick={handleSubmit} disabled={loading}>
-              {loading ? "Enviando..." : "Enviar link de recuperación"}
-            </button>
-          </>
-        )}
-
-        <div style={s.back}>
-          <Link to="/login" style={{ color:"#2563eb", fontWeight:600, fontSize:13 }}>
-            ← Volver al inicio de sesión
-          </Link>
-        </div>
-      </div>
+  const volver = (
+    <div style={{ textAlign: "center" }}>
+      <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+        ← Volver al inicio de sesión
+      </Link>
     </div>
+  );
+
+  // ── Ya se mandó: confirmación con los pasos que siguen ──
+  if (sentTo) {
+    return (
+      <AuthShell
+        hero={{
+          eyebrow: "RECUPERAR ACCESO",
+          title: <>Revisá tu<br />correo.</>,
+          text: "El link te deja crear una contraseña nueva sin tener que acordarte de la anterior.",
+        }}
+        title="Listo, ya salió"
+        footer={volver}
+      >
+        <div style={{
+          display: "flex", gap: 12, alignItems: "flex-start",
+          background: "#eff6ff", border: "1px solid #bfdbfe",
+          borderLeft: "3px solid #2563eb", borderRadius: 10, padding: "14px 16px",
+          marginBottom: 18,
+        }}>
+          <div style={{ flexShrink: 0, marginTop: 1 }}><MailIcon /></div>
+          <div style={{ fontSize: 13.5, color: "#1e3a8a", lineHeight: 1.6 }}>
+            Si <strong>{sentTo}</strong> está registrado, te mandamos un link para
+            crear una contraseña nueva.
+          </div>
+        </div>
+
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 8 }}>
+          SI NO LO VES
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: "#374151", lineHeight: 1.9 }}>
+          <li>Mirá la carpeta de spam o correo no deseado.</li>
+          <li>Puede tardar un par de minutos en llegar.</li>
+          <li>El link sirve por una hora; después hay que pedir otro.</li>
+          <li>Fijate que la dirección esté bien escrita.</li>
+        </ul>
+
+        <button onClick={() => { setSentTo(""); setError(""); }}
+          style={{ ...f.btnGhost, marginTop: 20 }}>
+          Probar con otro email
+        </button>
+      </AuthShell>
+    );
+  }
+
+  // ── Formulario ──
+  return (
+    <AuthShell
+      hero={{
+        eyebrow: "RECUPERAR ACCESO",
+        title: <>¿Te olvidaste<br />la contraseña?</>,
+        text: "Pasa. Te mandamos un link al correo y creás una nueva en un minuto.",
+      }}
+      title="Recuperar contraseña"
+      subtitle="Poné el email con el que te registraste y te mandamos un link para crear una contraseña nueva."
+      footer={volver}
+    >
+      {error && <div style={f.error}>{error}</div>}
+
+      <label style={f.label}>Email</label>
+      <input style={{ ...f.input, marginBottom: 18 }} type="email" inputMode="email"
+        autoComplete="email" autoCapitalize="none" placeholder="tu@email.com"
+        value={email} onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
+
+      <button style={{ ...f.btn, ...(loading ? f.btnDisabled : {}) }}
+        onClick={handleSubmit} disabled={loading}>
+        {loading ? "Enviando..." : "Enviarme el link"}
+      </button>
+
+      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+        Por seguridad, la respuesta es la misma tengas cuenta o no: así nadie puede
+        usar esta pantalla para averiguar qué direcciones están registradas.
+      </div>
+    </AuthShell>
   );
 }

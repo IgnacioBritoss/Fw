@@ -14,7 +14,9 @@ import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
   getAdminReports, resolveReport,
+  adminGetVerifications, adminReviewVerification, getAiHealth,
 } from "../../services/api";
+import IdentityDocuments from "../../components/IdentityDocuments";
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
@@ -66,6 +68,13 @@ export default function Admin() {
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
   const [openReports, setOpenReports] = useState(0);
+  // Verificaciones de identidad: las fotos del DNI y la licencia solo se ven acá
+  // y en el perfil de cada dueño. `aiHealth` explica por qué la revisión
+  // automática no decidió, cuando no decidió.
+  const [verifications, setVerifications] = useState([]);
+  const [loadingVerifications, setLoadingVerifications] = useState(false);
+  const [pendingVerifications, setPendingVerifications] = useState(0);
+  const [aiHealth, setAiHealth] = useState(null);
 
   // Portón de seguridad: si no es admin, no muestra el panel.
   if (!user || user.role !== "ADMIN") {
@@ -108,12 +117,43 @@ export default function Admin() {
         .catch(() => showAlert("Error al cargar reportes", "err"))
         .finally(() => setLoadingReports(false));
     }
+    if (tab === "verifications") {
+      setLoadingVerifications(true);
+      adminGetVerifications()
+        .then(data => setVerifications(Array.isArray(data) ? data : []))
+        .catch(() => showAlert("Error al cargar las verificaciones", "err"))
+        .finally(() => setLoadingVerifications(false));
+      // Si la IA está caída, las solicitudes quedan esperando a un humano: hay
+      // que poder ver el motivo real acá y no en los logs del deploy.
+      getAiHealth().then(setAiHealth).catch(() => setAiHealth(null));
+    }
+
     // Cantidad sin resolver, para el número al lado de la pestaña. Se pide en
     // cada cambio de pestaña, que es cuando puede haber cambiado.
     getAdminReports("OPEN")
       .then(data => setOpenReports(Array.isArray(data) ? data.length : 0))
       .catch(() => setOpenReports(0));
+    adminGetVerifications()
+      .then(data => setPendingVerifications(
+        (Array.isArray(data) ? data : []).filter(v => v.status === "ID_SUBMITTED").length,
+      ))
+      .catch(() => setPendingVerifications(0));
   }, [tab]);
+
+  /** Aprueba o rechaza una verificación y refresca la lista. */
+  const doReviewVerification = async (id, status, label) => {
+    try {
+      await adminReviewVerification(id, status);
+      const fresh = await adminGetVerifications();
+      setVerifications(Array.isArray(fresh) ? fresh : []);
+      setPendingVerifications(
+        (Array.isArray(fresh) ? fresh : []).filter(v => v.status === "ID_SUBMITTED").length,
+      );
+      showAlert(label);
+    } catch (err) {
+      showAlert(err.message || "No se pudo registrar la decisión", "err");
+    }
+  };
 
   /** Resuelve un reporte y refresca la lista. */
   const doResolveReport = async (id, action, label) => {
@@ -180,6 +220,8 @@ export default function Admin() {
           ["listings", "Publicaciones"],
           ["users", "Usuarios"],
           ["reports", openReports > 0 ? `Reportes (${openReports})` : "Reportes"],
+          ["verifications", pendingVerifications > 0
+            ? `Verificaciones (${pendingVerifications})` : "Verificaciones"],
         ].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
@@ -377,6 +419,65 @@ export default function Admin() {
             </div>
           );
         })
+      )}
+
+      {/* VERIFICACIONES DE IDENTIDAD */}
+      {tab === "verifications" && (
+        <>
+          {/* Si la revisión automática está caída, decirlo acá: es la explicación
+              de por qué hay solicitudes esperando a que alguien las mire. */}
+          {aiHealth?.problem && (
+            <div style={{ ...s.alertErr, lineHeight: 1.6 }}>
+              <strong>La revisión automática no está funcionando.</strong> {aiHealth.problem}
+              {aiHealth.lastVisionError && (
+                <div style={{ fontSize: 11.5, marginTop: 6, opacity: .85 }}>
+                  Último error del proveedor: {aiHealth.lastVisionError}
+                </div>
+              )}
+              {aiHealth.availableVisionModels?.length > 0 && (
+                <div style={{ fontSize: 11.5, marginTop: 4, opacity: .85 }}>
+                  Modelos disponibles hoy: {aiHealth.availableVisionModels.join(", ")}
+                </div>
+              )}
+            </div>
+          )}
+
+          {loadingVerifications ? <div style={s.empty}>Cargando...</div>
+          : verifications.length === 0 ? <div style={s.empty}>No hay solicitudes de verificación.</div>
+          : verifications.map(v => {
+            const person = v.user || {};
+            const name = [person.firstName, person.lastName].filter(Boolean).join(" ")
+              || person.displayName || person.email || "Sin nombre";
+            const waiting = v.status === "ID_SUBMITTED";
+            return (
+              <div key={v.id} style={s.card}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{name}</div>
+                    {person.email && (
+                      <div style={{ fontSize: 12.5, color: "#6b7280", marginTop: 2 }}>{person.email}</div>
+                    )}
+                  </div>
+                </div>
+
+                <IdentityDocuments submission={v} compact />
+
+                {waiting && (
+                  <div style={s.btnRow}>
+                    <button style={s.btnRestore}
+                      onClick={() => doReviewVerification(v.id, "VERIFIED", "Identidad aprobada")}>
+                      Aprobar identidad
+                    </button>
+                    <button style={s.btnDelete}
+                      onClick={() => doReviewVerification(v.id, "REJECTED", "Identidad rechazada")}>
+                      Rechazar
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>
       )}
 
       {confirmModal && (
