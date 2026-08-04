@@ -32,19 +32,21 @@ import {
 } from "../../services/api";
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
+import StatusChip from "../../components/StatusChip";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
-  REQUESTED:           { label: "Pendiente",             bg: "#fef9c3", color: "#854d0e" },
-  ACCEPTED:            { label: "Aceptada",              bg: "#dbeafe", color: "#1e40af" },
-  REJECTED:            { label: "Rechazada",             bg: "#fef2f2", color: "#b91c1c" },
-  CANCELLED_BY_RENTER: { label: "Cancelada",             bg: "#f3f4f6", color: "#6b7280" },
-  CANCELLED_BY_OWNER:  { label: "Cancelada por dueño",   bg: "#f3f4f6", color: "#6b7280" },
-  READY_FOR_PICKUP:    { label: "Lista para retiro",     bg: "#fef3c7", color: "#92400e" },
-  IN_PROGRESS:         { label: "En curso",              bg: "#dcfce7", color: "#166534" },
-  RETURN_PENDING:      { label: "Devolución pendiente",  bg: "#fef3c7", color: "#92400e" },
-  COMPLETED:           { label: "Completada",            bg: "#dbeafe", color: "#1e40af" },
-  DISPUTED:            { label: "En disputa",            bg: "#fef2f2", color: "#b91c1c" },
+  REQUESTED:           { label: "Pendiente",            tone: "warn" },
+  ACCEPTED:            { label: "Aceptada",             tone: "info" },
+  REJECTED:            { label: "Rechazada",            tone: "danger" },
+  CANCELLED_BY_RENTER: { label: "Cancelada",            tone: "neutral" },
+  CANCELLED_BY_OWNER:  { label: "Cancelada por dueño",  tone: "neutral" },
+  READY_FOR_PICKUP:    { label: "Lista para retiro",    tone: "warn" },
+  // "live" es el único con el punto lleno: es lo que está pasando ahora.
+  IN_PROGRESS:         { label: "En curso",             tone: "live" },
+  RETURN_PENDING:      { label: "Devolución pendiente", tone: "warn" },
+  COMPLETED:           { label: "Completada",           tone: "info" },
+  DISPUTED:            { label: "En disputa",           tone: "danger" },
 };
 
 // Estados de pago que usa el backend (PENDING → DEPOSIT_PAID → FULLY_PAID).
@@ -68,7 +70,6 @@ const s = {
   cardMobile: { background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 10, border: "1px solid #f3f4f6" },
   carImg: { width: 100, height: 76, borderRadius: 8, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
   carImgMobile: { width: "100%", height: 140, borderRadius: 8, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
-  statusBadge: { display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
   btnRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
   btnAccept: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
   btnReject: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
@@ -175,7 +176,7 @@ export default function MyBookings() {
   // rol (dueño o conductor).
   const BookingCard = ({ b, isOwner }) => {
     const vehicle = getVehicleInfo(b);
-    const statusCfg = STATUS_CONFIG[b.status] || { label: b.status, bg: "#f3f4f6", color: "#6b7280" };
+    const statusCfg = STATUS_CONFIG[b.status] || { label: b.status, tone: "neutral" };
     const days = Math.max(Math.ceil((new Date(b.endDate) - new Date(b.startDate)) / 86400000), 1);
     const total = b.totalPriceSnapshot || (days * Number(vehicle.pricePerDay));
     const paid = b.paymentStatus === "FULLY_PAID";
@@ -262,13 +263,11 @@ export default function MyBookings() {
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (
-              <span style={{ ...s.statusBadge, background: paid ? "#dcfce7" : "#f3f4f6", color: paid ? "#166534" : "#6b7280", fontSize: 11 }}>
+              <StatusChip tone={paid ? "ok" : "neutral"}>
                 {PAYMENT_LABELS[b.paymentStatus] || b.paymentStatus}
-              </span>
+              </StatusChip>
             )}
-            <span style={{ ...s.statusBadge, background: statusCfg.bg, color: statusCfg.color, fontSize: isMobile ? 11 : 12 }}>
-              {statusCfg.label}
-            </span>
+            <StatusChip tone={statusCfg.tone || "neutral"}>{statusCfg.label}</StatusChip>
           </div>
         </div>
         {/* Guía del paso siguiente para cada rol. */}

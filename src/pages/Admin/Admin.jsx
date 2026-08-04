@@ -10,6 +10,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
@@ -20,10 +21,18 @@ import IdentityDocuments from "../../components/IdentityDocuments";
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
+  pageMobile: { maxWidth: 900, margin: "0 auto", padding: "20px 14px" },
   title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
   sub: { color: "#6b7280", fontSize: 14, marginTop: 2 },
-  tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6" },
-  tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent" },
+  tabs: {
+    display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6",
+    overflowX: "auto", overflowY: "hidden",
+    // Sin esto, en Chrome/Safari los hijos con flex se encogen y el texto se
+    // parte en dos renglones en vez de dejar desplazar la fila.
+    flexWrap: "nowrap", WebkitOverflowScrolling: "touch",
+    scrollbarWidth: "none",
+  },
+  tab: { padding: "10px 14px", fontSize: 13.5, whiteSpace: "nowrap", flexShrink: 0, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent" },
   tabActive: { color: "#2563eb", borderBottom: "3px solid #2563eb" },
   card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
   carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
@@ -53,6 +62,7 @@ const userStatusColor = (status) => {
 };
 
 export default function Admin() {
+  const { isMobile } = useIsMobile();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("listings");
@@ -207,7 +217,7 @@ export default function Admin() {
   const runConfirm = async () => { const m = confirmModal; setConfirmModal(null); if (m?.action) await m.action(); };
 
   return (
-    <div style={s.page}>
+    <div style={isMobile ? s.pageMobile : s.page}>
       <div style={{ marginBottom: 28 }}>
         <div style={s.title}>Panel de administración</div>
         <div style={s.sub}>Moderación y gestión de la plataforma</div>

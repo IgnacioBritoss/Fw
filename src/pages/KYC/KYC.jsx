@@ -14,16 +14,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import IdentityVerification from "../../components/IdentityVerification";
+import BrandLogo from "../../components/Logo";
 
-const Logo = () => (
-  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
-      <circle cx="16" cy="16" r="4" fill="#2563eb"/>
-    </svg>
-    <span style={{ fontWeight:800, fontSize:17, color:"#111827" }}>Freewheel</span>
-  </div>
-);
+const Logo = () => <BrandLogo size={17} />;
 
 export default function KYC() {
   const navigate = useNavigate();

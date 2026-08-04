@@ -22,6 +22,7 @@ import PhoneInput from "../../components/PhoneInput";
 import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
 import { GOOGLE_AUTH_URL } from "../../services/api";
 import IdentityVerification from "../../components/IdentityVerification";
+import BrandLogo from "../../components/Logo";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -45,15 +46,7 @@ const EyeClosed = () => (
   </svg>
 );
 
-const Logo = () => (
-  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2"/>
-      <circle cx="16" cy="16" r="4" fill="#2563eb"/>
-    </svg>
-    <span style={{ fontWeight:800, fontSize:17, color:"#111827" }}>Freewheel</span>
-  </div>
-);
+const Logo = () => <BrandLogo size={17} />;
 
 // Edad exacta en años a partir de la fecha de nacimiento (YYYY-MM-DD).
 function ageFrom(dateString) {

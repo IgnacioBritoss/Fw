@@ -221,16 +221,19 @@ export default function Home() {
   // ─────────────────────────────────────────── Estilos
   const t = {
     content: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1320, margin: "0 auto" },
-    hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "20px 16px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
+    hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 14px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
     searchRow: isMobile
       ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 14, padding: 8, marginTop: 20 }
       : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
+    // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
+    // padding generoso), así que las tres filas del buscador se comían media
+    // pantalla del teléfono y había que scrolear para ver los autos.
     searchCell: isMobile
-      ? { width: "100%", padding: "9px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
+      ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
       : { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
-    searchLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
+    searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
     carCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 16, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
@@ -331,14 +334,22 @@ export default function Home() {
   return (
     <div style={t.content}>
       {/* Hero */}
-      <div style={t.hero}>
+      {/*
+        data-no-invert: en modo oscuro la página entera se invierte, y este bloque
+        YA es oscuro (azul noche con letras blancas), así que la inversión lo dejaba
+        celeste con letras negras — justo al revés de lo que tiene que ser. Con esta
+        marca se lo vuelve a invertir y conserva sus colores reales.
+        La tarjeta blanca del buscador que va adentro se oscurece por CSS
+        (.fw-hero-search en theme.css), porque acá el filtro ya no la alcanza.
+      */}
+      <div style={t.hero} data-no-invert>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.12),transparent 60%)" }} />
         <div style={{ position: "relative" }}>
           <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● BUEN DÍA, {firstName.toUpperCase()}</div>
-          <div style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>¿A dónde vas hoy?</div>
+          <div style={{ fontSize: isMobile ? 25 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>¿A dónde vas hoy?</div>
           <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>Elegí las fechas y te mostramos solo los autos libres</div>
 
-          <div style={t.searchRow}>
+          <div className="fw-hero-search" style={t.searchRow}>
             <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>Dónde</div>
               <input style={t.searchInput} placeholder="Ciudad, barrio o modelo" value={search} onChange={e => setSearch(e.target.value)} />
@@ -418,7 +429,11 @@ export default function Home() {
       {loading ? (
         <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando autos...</div>
       ) : view === "lista" ? (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
+        // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba en 170px:
+        // el nombre del auto se partía en dos renglones y el precio con el botón
+        // "Reservar" no entraban en la misma fila, así que el botón aparecía
+        // cortado contra el borde de la tarjeta.
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(250px,1fr))", gap: isMobile ? 12 : 16 }}>
           {filtered.map(car => <CarCard key={car.id} car={car} />)}
           {filtered.length === 0 && (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>

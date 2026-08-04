@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { getPublicProfile, getUserReviews } from "../services/api";
 import UserReputation from "./UserReputation";
+import StatusChip from "./StatusChip";
 
 const nameOf = (person) =>
   person?.displayName
@@ -94,17 +95,9 @@ export default function UserProfileModal({ userId, onClose }) {
                   En Freewheel desde {format(new Date(profile.createdAt), "MMMM yyyy", { locale: es })}
                 </div>
                 {profile.verified && (
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6,
-                    fontSize: 11.5, fontWeight: 700, color: "#166534",
-                    background: "#dcfce7", borderRadius: 20, padding: "3px 10px",
-                  }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#166534"
-                      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
-                    Identidad verificada
-                  </span>
+                  <div style={{ marginTop: 7 }}>
+                    <StatusChip tone="ok">Identidad verificada</StatusChip>
+                  </div>
                 )}
                 {/*
                   Los últimos cuatro dígitos del documento con el que se verificó.

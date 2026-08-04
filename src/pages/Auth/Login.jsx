@@ -76,7 +76,7 @@ export default function Login() {
     <AuthShell
       hero={{
         eyebrow: "BIENVENIDO",
-        title: <>Bienvenida<br />de nuevo.</>,
+        title: <>Bienvenido<br />de nuevo.</>,
         text: "La forma más simple de alquilar auto en Argentina. Sin complicaciones, seguro y rápido.",
       }}
       title="Iniciá sesión"

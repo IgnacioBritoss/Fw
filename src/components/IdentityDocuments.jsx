@@ -16,6 +16,7 @@
 // ============================================================================
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import StatusChip from "./StatusChip";
 
 const PHOTOS = [
   { field: "dniFrontUrl", label: "Frente del DNI" },
@@ -26,9 +27,9 @@ const PHOTOS = [
 
 /** Cómo se muestra cada estado, en castellano y con el color que le corresponde. */
 const STATUS = {
-  VERIFIED: { label: "Aprobada", color: "#166534", bg: "#f0fdf4", border: "#bbf7d0" },
-  REJECTED: { label: "Rechazada", color: "#b91c1c", bg: "#fef2f2", border: "#fecaca" },
-  ID_SUBMITTED: { label: "Esperando revisión", color: "#92400e", bg: "#fffbeb", border: "#fde68a" },
+  VERIFIED: { label: "Aprobada", tone: "ok" },
+  REJECTED: { label: "Rechazada", tone: "danger" },
+  ID_SUBMITTED: { label: "Esperando revisión", tone: "warn" },
 };
 
 const prettyDate = (value) => {
@@ -44,8 +45,7 @@ export default function IdentityDocuments({ submission, compact = false }) {
   if (!submission) return null;
 
   const state = STATUS[submission.status] ?? {
-    label: submission.status,
-    color: "#374151", bg: "#f9fafb", border: "#e5e7eb",
+    label: submission.status, tone: "neutral",
   };
   const size = compact ? 96 : 132;
 
@@ -60,12 +60,7 @@ export default function IdentityDocuments({ submission, compact = false }) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-        <span style={{
-          fontSize: 11.5, fontWeight: 700, color: state.color, background: state.bg,
-          border: `1px solid ${state.border}`, borderRadius: 999, padding: "3px 10px",
-        }}>
-          {state.label}
-        </span>
+        <StatusChip tone={state.tone}>{state.label}</StatusChip>
         {submission.createdAt && (
           <span style={{ fontSize: 12, color: "#9ca3af" }}>
             Enviada el {prettyDate(submission.createdAt)}

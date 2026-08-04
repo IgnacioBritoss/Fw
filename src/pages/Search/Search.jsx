@@ -207,14 +207,17 @@ export default function Search() {
 
   const st = {
     barCell: isMobile
-      ? { width: "100%", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
+      ? { width: "100%", paddingBottom: 6, marginBottom: 6, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
       : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
     barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 3 },
     barInput: { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: isMobile ? "100%" : 140, boxSizing: "border-box" },
     card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
     ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
-    verif: { fontSize: 11, fontWeight: 600, color: "#166534", background: "#dcfce7", borderRadius: 20, padding: "3px 10px" },
+    // La categoría del auto. Antes esto se llamaba "verif" y era verde, así que
+    // "Sedan" parecía un sello de verificación.
+    categoria: { fontSize: 11, fontWeight: 700, color: "#374151", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 9px", letterSpacing: ".02em" },
+
     detail: { background: "#111827", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
     banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 16 },
   };
@@ -237,7 +240,7 @@ export default function Search() {
           <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
           <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
           <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-            {car.categoryLabel && <span style={st.verif}>{car.categoryLabel}</span>}
+            {car.categoryLabel && <span style={st.categoria}>{car.categoryLabel}</span>}
             {car.transmission && <span style={st.tag}>{car.transmission}</span>}
             {car.fuel && <span style={st.tag}>{car.fuel}</span>}
             {car.seats && <span style={st.tag}>{car.seats} asientos</span>}
@@ -266,7 +269,8 @@ export default function Search() {
   return (
     <div style={{ padding: isMobile ? "16px" : "24px 28px", maxWidth: 1360, margin: "0 auto" }}>
       {/* Barra de búsqueda: ubicación + fechas reales */}
-      <div style={{ display: "flex", alignItems: "center", gap: 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 16, flexWrap: "wrap" }}>
+      <div className="fw-compact-fields"
+        style={{ display: "flex", alignItems: "center", gap: isMobile ? 0 : 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? "12px 14px" : "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 14, flexWrap: "wrap" }}>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Dónde</div>
           <input style={st.barInput} placeholder="Toda Argentina" value={where} onChange={e => setWhere(e.target.value)} />

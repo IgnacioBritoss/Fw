@@ -24,39 +24,37 @@
 // ============================================================================
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { useThemeColor } from "../hooks/useThemeColor";
+import BrandLogo from "./Logo";
 
 const Logo = ({ light = true, size = 20 }) => (
-  <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", position: "relative" }}>
-    <svg width={size + 8} height={size + 8} viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2" />
-      <circle cx="16" cy="16" r="4" fill="#2563eb" />
-      {[0, 60, 120, 180, 240, 300].map((a, i) => {
-        const r = (a * Math.PI) / 180;
-        return (
-          <line key={i} x1={16 + 5 * Math.cos(r)} y1={16 + 5 * Math.sin(r)}
-            x2={16 + 11 * Math.cos(r)} y2={16 + 11 * Math.sin(r)}
-            stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" />
-        );
-      })}
-    </svg>
-    <span style={{ fontWeight: 800, fontSize: size, letterSpacing: "-0.5px" }}>
-      <span style={{ color: light ? "#fff" : "#111827" }}>Free</span>
-      <span style={{ color: "#2563eb" }}>wheel</span>
-    </span>
+  <Link to="/" style={{ textDecoration: "none", position: "relative" }}>
+    <BrandLogo size={size} light={light} />
   </Link>
 );
+
 
 const HERO_BG = "linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)";
 const HERO_GLOW = "radial-gradient(ellipse at 30% 70%,rgba(37,99,235,.18) 0%,transparent 60%)";
 
 export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 400, children }) {
   const { isMobile } = useIsMobile();
+  // La barra del navegador acompaña la franja oscura: sin esto, en iPhone quedaba
+  // una banda blanca de Safari encima y la franja no llegaba al borde de arriba.
+  useThemeColor("#0a0f1e");
 
   // ── CELULAR: una sola columna, el panel oscuro reducido a una franja ──
   if (isMobile) {
     return (
       <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
-        <div style={{ background: HERO_BG, padding: "22px 20px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{
+          background: HERO_BG,
+          // El área segura es el espacio que ocupan la barra de estado y el notch:
+          // se le suma al padding para que la franja pinte hasta arriba de todo sin
+          // que el logo quede tapado.
+          padding: "calc(22px + env(safe-area-inset-top)) 20px 24px",
+          position: "relative", overflow: "hidden",
+        }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: HERO_GLOW }} />
           <Logo size={18} />
           {hero?.title && (

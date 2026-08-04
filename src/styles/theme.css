@@ -307,3 +307,66 @@ label,
 button {
   caret-color: transparent;
 }
+
+/* ============================================================================
+   Modo oscuro: el bloque principal de la home
+   ----------------------------------------------------------------------------
+   El modo oscuro invierte la página entera (ver services/theme.js). Ese bloque
+   ya es oscuro de por sí —azul noche con letras blancas— así que la inversión lo
+   dejaba CELESTE CON LETRAS NEGRAS, exactamente al revés de lo que corresponde.
+
+   La solución es marcarlo con data-no-invert, que lo vuelve a invertir y le
+   devuelve sus colores reales. Pero entonces el filtro tampoco alcanza a la
+   tarjeta del buscador que vive adentro, y esa sí es blanca: quedaría un recuadro
+   blanco con letras negras en medio del modo oscuro. Por eso se la oscurece acá a
+   mano, con colores literales (dentro de un subárbol re-invertido, lo que se
+   escribe es lo que se ve).
+   ========================================================================== */
+html.fw-dark .fw-hero-search {
+  background: #111827 !important;
+  border: 1px solid #1f2937;
+}
+
+html.fw-dark .fw-hero-search input,
+html.fw-dark .fw-hero-search [role="combobox"] {
+  color: #f9fafb !important;
+  background: transparent !important;
+}
+
+html.fw-dark .fw-hero-search input::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Las líneas que separan un campo del otro adentro de la tarjeta. */
+html.fw-dark .fw-hero-search > div {
+  border-color: #1f2937 !important;
+}
+
+/* La lista que se abre en el desplegable de adentro de la tarjeta. */
+html.fw-dark .fw-hero-search [role="listbox"] {
+  background: #111827 !important;
+  border-color: #1f2937 !important;
+}
+html.fw-dark .fw-hero-search [role="option"] {
+  color: #e5e7eb !important;
+}
+
+/* ============================================================================
+   El buscador del bloque principal, más bajo en el celular
+   ----------------------------------------------------------------------------
+   Los campos de fecha con diseño propio llevan padding vertical de 11px y 36px a
+   la derecha para dejarle lugar a la flechita. Adentro de esta tarjeta eso hacía
+   que cada renglón midiera 72px de alto: las tres filas más el botón se comían
+   media pantalla del teléfono y para ver un auto había que scrolear.
+
+   Acá el campo va pegado a su etiqueta, que es lo que se lee bien apilado, y la
+   flechita se saca: el propio campo abre el calendario al tocarlo.
+   ========================================================================== */
+@media (max-width: 768px) {
+  .fw-hero-search input[type="date"],
+  .fw-compact-fields input[type="date"] {
+    padding: 1px 0;
+    background-image: none;
+    line-height: 1.25;
+  }
+}

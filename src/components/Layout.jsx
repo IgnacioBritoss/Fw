@@ -17,6 +17,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
+import BrandLogo from "./Logo";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
 // sistema y desentona con el resto de la interfaz.
@@ -53,13 +54,11 @@ const NAV = [
   ]},
 ];
 
+// La marca vive en components/Logo.jsx. Estaba copiada acá y en tres pantallas
+// más, así que arreglarla en un lado no la arreglaba en los otros.
 const Logo = () => (
-  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 12px 8px" }}>
-    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="13" stroke="#2563eb" strokeWidth="2" />
-      <circle cx="16" cy="16" r="4" fill="#2563eb" />
-    </svg>
-    <span style={{ fontWeight: 800, fontSize: 17, color: "#111827" }}>Freewheel</span>
+  <div style={{ display: "flex", alignItems: "center", padding: "0 12px 8px" }}>
+    <BrandLogo size={17} />
   </div>
 );
 
@@ -222,8 +221,17 @@ export default function Layout({ children }) {
       {!user && (
         /* Sin cuenta: registrarse / iniciar sesión */
         <>
-          <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Iniciar sesión</button>
-          <button onClick={() => navigate("/register")} style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Registrarse</button>
+          {/* En un teléfono de 390px, "Iniciar sesión" + "Registrarse" con 16px de
+              padding cada uno no entran: uno se partía en dos renglones y el otro
+              quedaba cortado contra el borde derecho. Textos cortos y sin envolver. */}
+          <button onClick={() => navigate("/login")}
+            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {isMobile ? "Entrar" : "Iniciar sesión"}
+          </button>
+          <button onClick={() => navigate("/register")}
+            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {isMobile ? "Crear cuenta" : "Registrarse"}
+          </button>
         </>
       )}
     </div>
@@ -250,7 +258,7 @@ export default function Layout({ children }) {
           background: "#fff", padding: "24px 16px", display: "flex", flexDirection: "column",
           boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform .22s ease",
+          transition: "transform .3s cubic-bezier(.32,.72,0,1)",
         } : {
           width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec",
           padding: "24px 16px", display: "flex", flexDirection: "column",
@@ -260,27 +268,55 @@ export default function Layout({ children }) {
         {sidebarInner()}
       </aside>
 
-      {/* Fondo oscuro detrás del cajón, solo en celular y con el menú abierto */}
-      {isMobile && drawerOpen && (
-        <div onClick={() => setDrawerOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 100 }} />
+      {/* Fondo oscuro detrás del cajón. Se deja siempre montado y se le cambia la
+          opacidad: si se monta y se desmonta, aparece y desaparece de golpe y el
+          panel parece deslizarse sobre nada. `pointerEvents` evita que tape los
+          clics cuando está invisible. */}
+      {isMobile && (
+        <div onClick={() => setDrawerOpen(false)} aria-hidden={!drawerOpen}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(3,7,18,.45)", zIndex: 100,
+            opacity: drawerOpen ? 1 : 0,
+            pointerEvents: drawerOpen ? "auto" : "none",
+            transition: "opacity .3s ease",
+          }} />
       )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          display: "flex", alignItems: "center", gap: 16, background: "#fff",
+          display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "#fff",
           borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
-          padding: isMobile ? "12px 16px" : "14px 32px",
+          padding: isMobile ? "12px 12px" : "14px 32px",
         }}>
+          {/* Las tres barritas se convierten en una X: la de arriba y la de abajo
+              rotan hasta cruzarse y la del medio se desvanece. Antes cambiaban de
+              golpe y no se entendía que el mismo botón cerraba el menú. */}
           {isMobile && (
-            <button onClick={() => setDrawerOpen(o => !o)} aria-label="Abrir menú"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
-              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
-              <span style={{ width: 20, height: 2, background: "#111827", borderRadius: 2 }} />
+            <button onClick={() => setDrawerOpen(o => !o)}
+              aria-label={drawerOpen ? "Cerrar el menú" : "Abrir el menú"}
+              aria-expanded={drawerOpen}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  position: "absolute", left: 6, width: 20, height: 2,
+                  background: "#111827", borderRadius: 2,
+                  transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
+                  top: drawerOpen ? 15 : 9 + i * 6,
+                  opacity: drawerOpen && i === 1 ? 0 : 1,
+                  transform: drawerOpen
+                    ? (i === 0 ? "rotate(45deg)" : i === 2 ? "rotate(-45deg)" : "scaleX(.4)")
+                    : "none",
+                }} />
+              ))}
             </button>
           )}
-          {isMobile && <Logo />}
+          {/* Solo el símbolo: con la palabra "Freewheel" al lado, los botones de
+              entrar y crear cuenta no entraban en 390px y quedaban cortados. */}
+          {isMobile && (
+            <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
+              <BrandLogo size={17} wordmark={false} />
+            </div>
+          )}
           <div style={{ flex: 1 }} />
           {topbarRight()}
         </div>

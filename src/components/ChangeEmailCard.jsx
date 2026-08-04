@@ -17,6 +17,7 @@ import { confirmEmailChange, requestEmailChange } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { authFields } from "../styles/authFields";
+import StatusChip from "./StatusChip";
 
 export default function ChangeEmailCard({ verified }) {
   const { user, refreshUser } = useAuth();
@@ -85,12 +86,9 @@ export default function ChangeEmailCard({ verified }) {
         <div style={{ fontSize: 15, fontWeight: 600, color: "#111827", minWidth: 0, wordBreak: "break-word" }}>
           {user?.email || "—"}
           {verified && (
-            <span style={{
-              marginLeft: 8, fontSize: 11, fontWeight: 700, color: "#166534",
-              background: "#dcfce7", borderRadius: 20, padding: "2px 8px",
-            }}>
-              verificado
-            </span>
+            <StatusChip tone="ok" style={{ marginLeft: 8, verticalAlign: "middle" }}>
+              Verificado
+            </StatusChip>
           )}
         </div>
         {phase === "idle" && (
