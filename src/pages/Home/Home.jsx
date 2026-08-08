@@ -379,7 +379,7 @@ export default function Home() {
                   ? { width: "100%", padding: "14px", marginTop: 8 }
                   : { padding: "14px 24px", margin: 4 }),
               }}
-              onClick={goToSearch}>{tr("home.searchCars")} →</button>
+              onClick={goToSearch}>{tr("home.searchCars")}</button>
           </div>
           {dateError && (
             <div style={{ marginTop: 12, fontSize: 13, background: "rgba(255,255,255,.16)", borderRadius: 8, padding: "8px 12px", display: "inline-block" }}>{dateError}</div>

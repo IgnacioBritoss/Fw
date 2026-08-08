@@ -33,6 +33,7 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import IdentityDocuments from "../../components/IdentityDocuments";
 import RankBadge from "../../components/RankBadge";
 import Avatar from "../../components/Avatar";
+import AvatarEditor from "../../components/AvatarEditor";
 import { initialsOf } from "../../services/people";
 import Spinner from "../../components/Spinner";
 import StatusChip from "../../components/StatusChip";
@@ -145,7 +146,12 @@ export default function Profile() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
-  const pickPhoto = async (event) => {
+  // La foto elegida, esperando que la persona la encuadre. Recién cuando confirma
+  // el encuadre se sube: antes se subía tal cual y el círculo la recortaba por el
+  // centro, así que una foto vertical de celular quedaba cortada por la cabeza.
+  const [porEncuadrar, setPorEncuadrar] = useState(null);
+
+  const pickPhoto = (event) => {
     const file = event.target.files?.[0];
     // El input se limpia siempre: si no, elegir la misma foto dos veces no dispara el change.
     event.target.value = "";
@@ -154,11 +160,18 @@ export default function Profile() {
     // 6 MB: una foto de celular entra de sobra y evita esperas de un minuto.
     if (file.size > 6 * 1024 * 1024) { setPhotoError(tr("profile.photoTooBig")); return; }
     setPhotoError("");
+    setPorEncuadrar(file);
+  };
+
+  /** Sube el recorte que devolvió el editor y lo guarda en el perfil. */
+  const guardarRecorte = async (recorte) => {
     setPhotoBusy(true);
+    setPhotoError("");
     try {
-      const url = await uploadImageToCloudinary(file);
+      const url = await uploadImageToCloudinary(recorte);
       await updateMe({ profilePhotoUrl: url });
       await refreshUser();
+      setPorEncuadrar(null);
     } catch (err) {
       setPhotoError(err?.message || tr("profile.photoFailed"));
     } finally {
@@ -391,6 +404,16 @@ export default function Profile() {
 
       {/* Verificaciones */}
       {verifications()}
+
+      {/* El encuadre de la foto, sobre todo lo demás */}
+      {porEncuadrar && (
+        <AvatarEditor
+          file={porEncuadrar}
+          busy={photoBusy}
+          onCancel={() => { if (!photoBusy) { setPorEncuadrar(null); setPhotoError(""); } }}
+          onConfirm={guardarRecorte}
+        />
+      )}
     </div>
   );
 }

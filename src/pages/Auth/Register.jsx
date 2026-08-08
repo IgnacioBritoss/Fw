@@ -178,7 +178,7 @@ export default function Register() {
               <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
               <p style={{ fontSize:14, color:"#6b7280" }}>
                 {t("auth.haveAccount")}{" "}
-                <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")} →</Link>
+                <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")}</Link>
               </p>
             </div>
 
@@ -267,7 +267,7 @@ export default function Register() {
               width:"100%", padding: isMobile ? 15 : 13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
               fontSize: isMobile ? 16 : 15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
-              {loading ? t("auth.sendingCode") : `${t("common.continue")} →`}
+              {loading ? t("auth.sendingCode") : t("common.continue")}
             </button>
             <div style={{ fontSize:12, color:"#9ca3af", textAlign:"center", marginTop:10 }}>
               {t("auth.codeWillArrive")}

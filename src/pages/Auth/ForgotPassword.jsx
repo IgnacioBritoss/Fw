@@ -64,7 +64,7 @@ export default function ForgotPassword() {
   const volver = (
     <div style={{ textAlign: "center" }}>
       <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
-        ← {t("auth.backToLogin")}
+        {t("auth.backToLogin")}
       </Link>
     </div>
   );

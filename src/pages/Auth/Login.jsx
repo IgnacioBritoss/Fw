@@ -86,7 +86,7 @@ export default function Login() {
         <>
           {t("auth.noAccount")}{" "}
           <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>
-            {t("auth.registerFree")} →
+            {t("auth.registerFree")}
           </Link>
         </>
       }
@@ -140,7 +140,7 @@ export default function Login() {
 
       <button onClick={handleSubmit} disabled={loading}
         style={{ ...f.btn, ...(loading ? f.btnDisabled : {}) }}>
-        {loading ? t("auth.loggingIn") : `${t("auth.loginBtn")} →`}
+        {loading ? t("auth.loggingIn") : t("auth.loginBtn")}
       </button>
     </AuthShell>
   );

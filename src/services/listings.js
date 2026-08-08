@@ -14,18 +14,34 @@
 
 // Categorías: el backend las guarda en el vehículo (enum VehicleCategory) y es
 // lo que alimenta el filtro por categoría del inicio y del buscador.
+//
+// LO QUE ESTABA MAL: la lista era SEDAN, SUV, BERLINA, PICKUP, ELECTRIC,
+// PREMIUM. "Berlina" es la palabra castellana (e italiana) para SEDÁN, o sea que
+// había DOS tarjetas para el mismo tipo de auto: quien publicaba tenía que
+// adivinar en cuál poner su Corolla, y quien buscaba se perdía la mitad de los
+// autos según lo que hubiera elegido el dueño. Y faltaba HATCHBACK, que en
+// Argentina es el tipo más común (Yaris, Gol, Onix, Argo): sin esa opción esos
+// autos se cargaban como sedán, que es otra cosa.
+//
+// El orden es a propósito: primero los tipos por CARROCERÍA, de más chico a más
+// grande, y al final los dos que no son carrocería sino una característica
+// (eléctrico y premium). Antes estaban mezclados.
 export const CATEGORIES = [
-  { id: "SEDAN", label: "Sedan", key: "cat.SEDAN" },
+  { id: "HATCHBACK", label: "Hatchback", key: "cat.HATCHBACK" },
+  { id: "SEDAN", label: "Sedán", key: "cat.SEDANS" },
   { id: "SUV", label: "SUV", key: "cat.SUV" },
-  { id: "BERLINA", label: "Berlinas", key: "cat.BERLINAS" },
   { id: "PICKUP", label: "Pickup", key: "cat.PICKUP" },
+  { id: "VAN", label: "Vans", key: "cat.VANS" },
   { id: "ELECTRIC", label: "Eléctricos", key: "cat.ELECTRICS" },
   { id: "PREMIUM", label: "Premium", key: "cat.PREMIUM" },
 ];
 
+// BERLINA ya no se ofrece al publicar, pero hay autos publicados que lo usan:
+// se sigue pudiendo MOSTRAR, y se muestra como "Sedán", que es lo que siempre fue.
 export const CATEGORY_LABELS = {
-  SEDAN: "Sedan", SUV: "SUV", BERLINA: "Berlina",
-  PICKUP: "Pickup", ELECTRIC: "Eléctrico", PREMIUM: "Premium", OTHER: "Otro",
+  SEDAN: "Sedán", HATCHBACK: "Hatchback", SUV: "SUV", PICKUP: "Pickup",
+  VAN: "Van", ELECTRIC: "Eléctrico", PREMIUM: "Premium",
+  BERLINA: "Sedán", OTHER: "Otro",
 };
 
 // Traducciones de los códigos del backend (en inglés) al texto que se muestra.
@@ -39,8 +55,12 @@ export const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", HYBRID: "Híbr
 // Las tablas de arriba se conservan como respaldo en castellano para el caso en
 // que un código nuevo del backend todavía no tenga clave.
 export const CATEGORY_KEYS = {
-  SEDAN: "cat.SEDAN", SUV: "cat.SUV", BERLINA: "cat.BERLINA",
-  PICKUP: "cat.PICKUP", ELECTRIC: "cat.ELECTRIC", PREMIUM: "cat.PREMIUM", OTHER: "cat.OTHER",
+  SEDAN: "cat.SEDAN", HATCHBACK: "cat.HATCHBACK", SUV: "cat.SUV",
+  PICKUP: "cat.PICKUP", VAN: "cat.VAN", ELECTRIC: "cat.ELECTRIC",
+  PREMIUM: "cat.PREMIUM",
+  // Un auto viejo cargado como "berlina" se muestra como sedán: es lo mismo.
+  BERLINA: "cat.SEDAN",
+  OTHER: "cat.OTHER",
 };
 export const TRANSMISSION_KEYS = { MANUAL: "trans.MANUAL", AUTOMATIC: "trans.AUTOMATIC" };
 export const FUEL_KEYS = {
@@ -70,10 +90,13 @@ export const TRANSMISSION_CODES = { Manual: "MANUAL", "Automático": "AUTOMATIC"
 export const FUEL_CODES = { Nafta: "GASOLINE", Diesel: "DIESEL", "Híbrido": "HYBRID", "Eléctrico": "ELECTRIC", GNC: "OTHER" };
 
 // Los autos de ejemplo traen la categoría en castellano; esto la lleva al enum.
+// "Berlina" cae en SEDAN: es la misma cosa y ya no es una categoría aparte.
 const LEGACY_CATEGORY_CODES = {
-  sedan: "SEDAN", suv: "SUV", berlina: "BERLINA", berlinas: "BERLINA",
-  pickup: "PICKUP", "eléctrico": "ELECTRIC", electrico: "ELECTRIC",
-  "eléctricos": "ELECTRIC", premium: "PREMIUM",
+  sedan: "SEDAN", "sedán": "SEDAN", berlina: "SEDAN", berlinas: "SEDAN",
+  hatchback: "HATCHBACK", suv: "SUV", pickup: "PICKUP",
+  van: "VAN", vans: "VAN", minivan: "VAN",
+  "eléctrico": "ELECTRIC", electrico: "ELECTRIC", "eléctricos": "ELECTRIC",
+  premium: "PREMIUM",
 };
 
 /**
@@ -84,7 +107,16 @@ const LEGACY_CATEGORY_CODES = {
 function inferCategory(vehicle = {}) {
   if (vehicle.fuelType === "ELECTRIC") return "ELECTRIC";
   if (vehicle.drivetrain === "FOUR_BY_FOUR" && Number(vehicle.lengthMm) >= 4900) return "PICKUP";
-  if (Number(vehicle.seats) >= 7 || Number(vehicle.heightMm) >= 1650) return "SUV";
+  if (Number(vehicle.seats) >= 7) return "VAN";
+  // 1550 mm de alto y no 1650: los SUV compactos que más se alquilan acá andan en
+  // 1560-1590 (T-Cross 1568, Kicks 1590), así que con 1650 quedaban como autos
+  // chicos. Un hatchback está en 1465-1495, bien por debajo.
+  if (Number(vehicle.heightMm) >= 1550) return "SUV";
+  // Menos de 4,25 m es un hatchback: es el largo que separa un Yaris o un Gol de
+  // un Corolla. Antes todo lo que no era SUV ni pickup caía en sedán, así que los
+  // autos chicos —la mayoría del parque argentino— quedaban mal clasificados.
+  const largo = Number(vehicle.lengthMm);
+  if (largo && largo < 4250) return "HATCHBACK";
   return "SEDAN";
 }
 

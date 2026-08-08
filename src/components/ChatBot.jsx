@@ -84,8 +84,19 @@ export default function ChatBot() {
 
   const { t: tr, lang } = useI18n();
   const [open, setOpen] = useState(false);              // ¿está abierto el asistente?
-  // El saludo se arma con el idioma que esté elegido al abrir el chat.
-  const [messages, setMessages] = useState(() => [{ role: "assistant", text: tr("chat.greeting") }]);
+  /**
+   * El saludo NO se guarda como texto: se guarda una marca y se traduce al
+   * dibujarlo. Antes se armaba con `useState(() => tr("chat.greeting"))`, o sea
+   * una sola vez, así que si después se cambiaba el idioma en Ajustes el primer
+   * mensaje se quedaba en el idioma anterior —el resto de la conversación sí
+   * cambiaba, y quedaba mezclado—.
+   *
+   * Los mensajes que escribe la persona y los que contesta la IA sí son texto
+   * literal: esos no se traducen, son lo que se dijo.
+   */
+  const [messages, setMessages] = useState([{ role: "assistant", key: "chat.greeting" }]);
+  /** El texto de un mensaje: el literal si lo tiene, o la clave traducida. */
+  const textoDe = (m) => (m.key ? tr(m.key) : m.text);
   const [input, setInput] = useState("");               // texto que se está escribiendo
   const [loading, setLoading] = useState(false);        // esperando respuesta de la IA
   const [viewport, setViewport] = useState(getViewportData());
@@ -185,7 +196,7 @@ export default function ChatBot() {
       // Formato que espera la IA: primero las instrucciones, luego la charla.
       const groqMessages = [
         { role: "system", content: SYSTEM_PROMPT.replace("{IDIOMA}", NOMBRE_IDIOMA[lang] || "español") },
-        ...newMessages.map((m) => ({ role: m.role, content: m.text })),
+        ...newMessages.map((m) => ({ role: m.role, content: textoDe(m) })),
       ];
 
       const { groqChat } = await import("../services/groq");
@@ -374,7 +385,7 @@ export default function ChatBot() {
                 }
           }
         >
-          {m.text}
+          {textoDe(m)}
         </div>
       ))}
 

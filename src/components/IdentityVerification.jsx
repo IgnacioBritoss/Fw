@@ -351,7 +351,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>{tr("common.cancel")}</button>}
               <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? "pointer" : "not-allowed" }}
                 disabled={!docsReady || hasInvalid || isChecking || faltaConfirmar}
-                onClick={() => { setError(""); setStep(1); }}>{tr("common.continue")} →</button>
+                onClick={() => { setError(""); setStep(1); }}>{tr("common.continue")}</button>
             </div>
           </>
         )}
@@ -388,7 +388,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
               <button style={st.btnGhost} onClick={() => setStep(0)}>{tr("common.back")}</button>
               <button style={{ ...st.btnPrimary, opacity: licenseReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? 1 : 0.5, cursor: licenseReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? "pointer" : "not-allowed" }}
                 disabled={!licenseReady || hasInvalid || isChecking || busy || faltaConfirmar} onClick={submitDocuments}>
-                {busy ? tr("kyc.sending") : `${tr("kyc.sendAndContinue")} →`}
+                {busy ? tr("kyc.sending") : tr("kyc.sendAndContinue")}
               </button>
             </div>
           </>

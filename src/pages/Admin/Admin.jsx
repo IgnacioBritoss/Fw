@@ -15,11 +15,13 @@ import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
   getAdminReports, resolveReport,
-  adminGetVerifications, adminReviewVerification, getAiHealth,
+  adminGetVerifications, adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
+import Avatar from "../../components/Avatar";
+import { initialsOf } from "../../services/people";
 import { shortDate } from "../../i18n/dates";
 
 const s = {
@@ -89,6 +91,8 @@ export default function Admin() {
   const [loadingVerifications, setLoadingVerifications] = useState(false);
   const [pendingVerifications, setPendingVerifications] = useState(0);
   const [aiHealth, setAiHealth] = useState(null);
+  const [probed, setProbed] = useState(null);
+  const [probing, setProbing] = useState(false);
 
   // Portón de seguridad: si no es admin, no muestra el panel.
   if (!user || user.role !== "ADMIN") {
@@ -106,6 +110,20 @@ export default function Admin() {
   const showAlert = (msg, type = "ok") => {
     setAlert({ msg, type });
     setTimeout(() => setAlert({ msg: "", type: "ok" }), 4000);
+  };
+
+  /** Prueba cada modelo de visión y muestra cuál contesta. Gasta cuota: a pedido. */
+  const runProbe = async () => {
+    setProbing(true);
+    try {
+      const data = await probeAiModels();
+      setAiHealth(data);
+      setProbed(Array.isArray(data?.probed) ? data.probed : []);
+    } catch (err) {
+      showAlert(err.message || tr("admin.errModels"), "err");
+    } finally {
+      setProbing(false);
+    }
   };
 
   // Al cambiar de pestaña, carga las publicaciones o los usuarios según corresponda.
@@ -297,9 +315,7 @@ export default function Admin() {
           <div key={u.id} style={{ ...s.card, cursor: "pointer" }}
             onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#2563eb", fontSize: 16 }}>
-                {(u.firstName?.[0] || u.email[0]).toUpperCase()}
-              </div>
+              <Avatar src={u.profilePhotoUrl} initials={initialsOf(u) } size={40} alt="" />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                   {u.firstName} {u.lastName}
@@ -455,6 +471,57 @@ export default function Admin() {
               )}
             </div>
           )}
+
+          {/* Estado de los modelos de visión.
+              Antes solo se avisaba cuando algo ya estaba roto, y el aviso decía
+              "cargá uno de estos en GROQ_VISION_MODEL" sin poder decir CUÁL
+              funciona: la lista de Groq incluye modelos que igual contestan 401 o
+              429. Este botón los prueba con una imagen mínima y muestra el
+              resultado de cada uno, que es lo que hace falta para configurarlo. */}
+          <div style={{ ...s.card, display: "block" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#111827" }}>
+                  {tr("admin.modelsTitle")}
+                </div>
+                <div style={{ fontSize: 12.5, color: "#6b7280", marginTop: 2 }}>
+                  {aiHealth
+                    ? tr("admin.modelsConfigured", { list: (aiHealth.visionModels || []).join(", ") || "—" })
+                    : tr("admin.modelsUnknown")}
+                </div>
+              </div>
+              <button style={s.btnRestore} disabled={probing} onClick={runProbe}>
+                {probing ? tr("admin.modelsTesting") : tr("admin.modelsTest")}
+              </button>
+            </div>
+
+            {probed && (
+              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                {probed.map(p => (
+                  <div key={p.model} style={{
+                    display: "flex", alignItems: "center", gap: 10, fontSize: 12.5,
+                    background: p.ok ? "#f0fdf4" : "#fef2f2",
+                    border: `1px solid ${p.ok ? "#bbf7d0" : "#fecaca"}`,
+                    borderRadius: 8, padding: "8px 11px",
+                  }}>
+                    <span style={{
+                      fontSize: 10, fontWeight: 800, letterSpacing: ".06em",
+                      color: p.ok ? "#166534" : "#b91c1c", flexShrink: 0,
+                    }}>
+                      {p.ok ? tr("admin.modelOk") : tr("admin.modelBad")}
+                    </span>
+                    <code style={{ color: "#374151", wordBreak: "break-all" }}>{p.model}</code>
+                    {p.error && (
+                      <span style={{ color: "#9ca3af", fontSize: 11.5, wordBreak: "break-all" }}>{p.error}</span>
+                    )}
+                  </div>
+                ))}
+                <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2, lineHeight: 1.6 }}>
+                  {tr("admin.modelsHelp")}
+                </div>
+              </div>
+            )}
+          </div>
 
           {loadingVerifications ? <Spinner block label={tr("common.loading")} />
           : verifications.length === 0 ? <div style={s.empty}>{tr("admin.noVerifications")}</div>

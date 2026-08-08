@@ -276,7 +276,7 @@ export default function Search() {
           }}>
             <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
             <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
-              onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")} →</button>
+              onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")}</button>
           </div>
         </div>
       </div>
@@ -399,7 +399,7 @@ export default function Search() {
                     <div style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 8px" }}>{selectedCar.location}{selectedCar.rating > 0 ? ` · ${selectedCar.rating} ★` : ""}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(selectedCar).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
-                      <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>{tr("search.viewDetail")} →</button>
+                      <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>{tr("search.viewDetail")}</button>
                     </div>
                   </div>
                 </div>

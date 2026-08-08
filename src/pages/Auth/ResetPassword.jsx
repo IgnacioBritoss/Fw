@@ -133,7 +133,7 @@ export default function ResetPassword() {
         )}
 
         <div style={s.back}>
-          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>← {t("auth.backToLogin")}</Link>
+          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>{t("auth.backToLogin")}</Link>
         </div>
       </div>
     </div>

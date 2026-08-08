@@ -303,12 +303,7 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
  * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
  */
 export async function aiDocument(image, kind) {
-  // El idioma va en el pedido: el motivo del rechazo lo escribe la IA y la
-  // persona lo LEE, así que tiene que estar en el idioma que eligió en la app.
-  return apiFetch("/ai/document", {
-    method: "POST",
-    body: JSON.stringify({ image, kind, lang: idiomaInicial() }),
-  });
+  return postConIdioma("/ai/document", { image, kind });
 }
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
@@ -333,6 +328,44 @@ export async function getCloudinarySignature(folder = "freewheel") {
 }
 
 // ── INTELIGENCIA ARTIFICIAL (proxy del backend) ────────────────
+/**
+ * ¿Este backend entiende el campo `lang`?
+ *
+ * El motivo por el que una foto no sirve lo escribe la IA y la persona lo LEE,
+ * así que se le manda el idioma elegido. Pero el backend valida los pedidos con
+ * `forbidNonWhitelisted`: un backend que todavía no conoce `lang` NO lo ignora,
+ * responde 400 y la revisión de la foto no se hace.
+ *
+ * Y el front y el backend se despliegan por separado, así que hay un rato en el
+ * que el front nuevo le habla a un backend viejo. Sin esto, en ese rato ninguna
+ * foto se revisa (pasó: "0 verificadas, 4 sin revisar" y cinco 400 en la consola).
+ *
+ * Entonces: se prueba una vez CON idioma; si el backend lo rechaza por ese
+ * campo, se recuerda y se reintenta sin él —y no se vuelve a mandar en toda la
+ * sesión—. La revisión funciona igual; lo único que se pierde es que el motivo
+ * venga traducido, y para eso el front tiene sus propios textos de respaldo.
+ */
+let backendEntiendeIdioma = true;
+
+/** ¿Este 400 es por el campo `lang` y no por la foto? */
+const rechazaElIdioma = (err) =>
+  err?.status === 400 && /\blang\b/i.test(String(err?.message ?? ""));
+
+async function postConIdioma(path, payload) {
+  if (backendEntiendeIdioma) {
+    try {
+      return await apiFetch(path, {
+        method: "POST",
+        body: JSON.stringify({ ...payload, lang: idiomaInicial() }),
+      });
+    } catch (err) {
+      if (!rechazaElIdioma(err)) throw err;
+      backendEntiendeIdioma = false;
+    }
+  }
+  return apiFetch(path, { method: "POST", body: JSON.stringify(payload) });
+}
+
 // La clave de la IA vive únicamente en el servidor: el navegador le pide al
 // backend y el backend habla con el proveedor. Antes el front llamaba a la API
 // de IA directo con la clave incluida en el bundle, a la vista de cualquiera.
@@ -343,11 +376,7 @@ export async function aiChat(messages, temperature) {
   });
 }
 export async function aiVision(imageDataUrl) {
-  // Ídem: el "parece un auto de juguete" que se muestra en pantalla sale de acá.
-  return apiFetch("/ai/vision", {
-    method: "POST",
-    body: JSON.stringify({ imageDataUrl, lang: idiomaInicial() }),
-  });
+  return postConIdioma("/ai/vision", { imageDataUrl });
 }
 export async function aiTranscribe(audioUrl) {
   return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });
@@ -593,3 +622,10 @@ export async function adminReviewVerification(id, status, notes) {
 // última vez y qué modelos hay disponibles. Sirve para saber por qué dejó de
 // funcionar la verificación de documentos sin entrar a los logs del deploy.
 export async function getAiHealth() { return apiFetch("/ai/health"); }
+/**
+ * Igual que getAiHealth() pero además PRUEBA cada modelo de visión con una imagen
+ * mínima y dice cuál contesta. Sirve para saber qué poner en GROQ_VISION_MODEL:
+ * un modelo puede estar en la lista de Groq y contestar 401 o 429 igual.
+ * Consume cuota de la clave, así que se pide a mano desde el panel, no solo.
+ */
+export async function probeAiModels() { return apiFetch("/ai/health?probe=1"); }

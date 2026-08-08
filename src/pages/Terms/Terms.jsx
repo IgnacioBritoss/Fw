@@ -49,7 +49,7 @@ export default function Terms() {
   return (
     <div style={s.page}>
       <div style={isMobile ? s.containerMobile : s.container}>
-        <Link to="/register" style={s.back}>← {tr("terms.back")}</Link>
+        <Link to="/register" style={s.back}>{tr("terms.back")}</Link>
 
         <h1 style={s.h1}>{tr("terms.title")}</h1>
         <div style={s.date}>{tr("terms.updated")}</div>

@@ -741,13 +741,13 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           <div style={{ marginBottom: 16 }}>
             <label style={s.label}>{tr("publish.features")}</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-              {[["bluetooth", "Bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
+              {[["bluetooth", "spec.bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
                   {vehicleForm[key]
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5" /></svg>}
-                  {label}
+                  {tr(label)}
                 </button>
               ))}
             </div>
@@ -795,7 +795,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.btnRow}>
-            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -905,8 +905,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </label>
           )}
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
-            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -971,8 +971,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               onChange={(e) => setL("pricePerDay", e.target.value)} />
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
-            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -1014,7 +1014,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             {tr("publish.willCreate")}
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
               {loading ? <Spinner size={14} color="#fff" label={tr("publish.publishing")} /> : tr("publish.publishNow")}
             </button>

@@ -18,6 +18,8 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
 import BrandLogo from "./Logo";
+import CarIcon from "./CarIcon";
+import Avatar from "./Avatar";
 import { useI18n } from "../i18n/core";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
@@ -33,7 +35,8 @@ const HomeIcon = icon(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5
 const SearchIcon = icon(<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>);
 const CalendarIcon = icon(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></>);
 const HeartIcon = icon(<path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7 3.7c0 4.9-7 9.3-7 9.3z" />);
-const CarIcon = icon(<><path d="M5 17h14M4 17v-4l2-5h12l2 5v4" /><circle cx="7.5" cy="17.5" r="1.5" /><circle cx="16.5" cy="17.5" r="1.5" /></>);
+// El auto ahora vive en su propio componente (components/CarIcon): antes era un
+// trapecio con dos círculos apoyados al lado, que no se leía como un auto.
 const PlusIcon = icon(<><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>);
 const ShieldIcon = icon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />);
 
@@ -172,7 +175,9 @@ export default function Layout({ children }) {
 
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
-          <div onClick={() => go("/profile")} style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>{initials}</div>
+          <div onClick={() => go("/profile")} style={{ cursor: "pointer", flexShrink: 0 }}>
+            <Avatar src={user?.profilePhotoUrl} initials={initials} size={36} alt="" />
+          </div>
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
             <div style={{ fontSize: 11, color: "#9ca3af" }}>{tr("nav.profile")}</div>

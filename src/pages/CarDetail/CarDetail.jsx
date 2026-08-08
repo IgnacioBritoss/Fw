@@ -32,6 +32,8 @@ import { normalizeListing, transmissionLabel, fuelLabel } from "../../services/l
 import { addMonths, format } from "date-fns";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
+import Avatar from "../../components/Avatar";
+import { initialsOf } from "../../services/people";
 import { localeFor, shortDate } from "../../i18n/dates";
 
 // Caja, combustible y tracción son texto que el usuario LEE, así que se guardan
@@ -86,7 +88,8 @@ function apiListingToCar(listing, ownerFallback = "Dueño") {
     observations: v.observations,
     ownerId: owner.id || "",
     ownerName: getName(owner, ownerFallback),
-    ownerInitial: getName(owner, ownerFallback)[0]?.toUpperCase() || "D",
+    ownerInitials: initialsOf(owner),
+    ownerPhotoUrl: owner.profilePhotoUrl || null,
   };
 }
 
@@ -123,11 +126,6 @@ const s = {
   ownerBox: {
     display: "flex", alignItems: "center", gap: 12,
     padding: "14px 0", borderTop: "1px solid #f3f4f6", marginTop: 14,
-  },
-  ownerAvatar: {
-    width: 44, height: 44, borderRadius: "50%", background: "#eff6ff",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 700, fontSize: 18, color: "#2563eb",
   },
   ownerName: { fontWeight: 700, fontSize: 14, color: "#111827" },
   ownerMeta: { fontSize: 12, color: "#6b7280" },
@@ -545,7 +543,7 @@ export default function CarDetail() {
       )}
 
       <div style={s.ownerBox}>
-        <div style={s.ownerAvatar}>{car.ownerInitial}</div>
+        <Avatar src={car.ownerPhotoUrl} initials={car.ownerInitials} size={44} alt={car.ownerName} />
         <div style={{ flex: 1 }}>
           <div style={s.ownerName}>{car.ownerName}</div>
           <div style={s.ownerMeta}>{tr("car.memberOf")}</div>

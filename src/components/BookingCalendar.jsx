@@ -170,7 +170,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
             disabled={!canConfirm}
             style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "#2563eb" : "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
             onClick={() => canConfirm && onConfirm({ start, end, days, total, commission, deposit, totalFinal: total + commission + deposit })}>
-            {tr("cal.confirmBooking")} →
+            {tr("cal.confirmBooking")}
           </button>
           <div style={{ fontSize: 11.5, color: "#9ca3af", textAlign: "center", marginTop: 8 }}>
             {tr("cal.ownerFirst")}

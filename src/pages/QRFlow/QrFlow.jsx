@@ -197,7 +197,7 @@ export default function QRFlow() {
         {tr("qr.refresh")}
       </button>
       <br />
-      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>← {tr("qr.backToBookings")}</button>
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("qr.backToBookings")}</button>
     </div>
   );
 }

@@ -19,6 +19,8 @@ import { uploadAudioToCloudinary, uploadFileToCloudinary } from "../../services/
 import UserProfileModal from "../../components/UserProfileModal";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
+import Avatar from "../../components/Avatar";
+import { initialsOf } from "../../services/people";
 
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
 // Además, debajo tiene un botón "Transcribir mensaje" que convierte el audio a
@@ -142,17 +144,6 @@ function getViewportData() {
     offsetTop: window.visualViewport.offsetTop || 0,
   };
   return { height: window.innerHeight, offsetTop: 0 };
-}
-
-// Avatar circular con la inicial del nombre y un color elegido según la letra.
-function Avatar({ name, size = 40, fontSize = 15 }) {
-  const colors = ["#2563eb", "#7c3aed", "#059669", "#dc2626", "#d97706"];
-  const color = colors[(name.charCodeAt(0) || 0) % colors.length];
-  return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fff", fontSize, flexShrink: 0 }}>
-      {name[0]?.toUpperCase()}
-    </div>
-  );
 }
 
 export default function Chat() {
@@ -556,7 +547,7 @@ export default function Chat() {
           <div key={conv.id} onClick={() => setActiveConvId(conv.id)}
             style={{ padding: "13px 18px", cursor: "pointer", borderBottom: "1px solid #f9fafb", background: isActive ? "#eff6ff" : "transparent", display: "flex", gap: 12, alignItems: "center", transition: "background .1s" }}>
             <div style={{ position: "relative", flexShrink: 0 }}>
-              <Avatar name={name} size={42} fontSize={16} />
+              <Avatar src={other?.profilePhotoUrl} initials={initialsOf(other)} size={42} alt={name} />
               {unread && (
                 <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
               )}
@@ -591,7 +582,7 @@ export default function Chat() {
           title={tr("chat.viewProfile")}
           style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: otherUser?.id ? "pointer" : "default", textAlign: "left" }}
         >
-          <Avatar name={otherName} size={40} fontSize={15} />
+          <Avatar src={otherUser?.profilePhotoUrl} initials={initialsOf(otherUser)} size={40} alt={otherName} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
             {listingLabel && <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 500 }}>{listingLabel}</div>}
