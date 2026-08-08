@@ -18,8 +18,10 @@ import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { authFields } from "../styles/authFields";
 import StatusChip from "./StatusChip";
+import { useI18n } from "../i18n/core";
 
 export default function ChangeEmailCard({ verified }) {
+  const { t: tr } = useI18n();
   const { user, refreshUser } = useAuth();
   const { isMobile } = useIsMobile();
   const f = authFields(isMobile);
@@ -41,7 +43,7 @@ export default function ChangeEmailCard({ verified }) {
   const pedirCodigo = async () => {
     const direccion = newEmail.trim().toLowerCase();
     if (!direccion || !direccion.includes("@")) {
-      setError("Escribí una dirección de email válida."); return;
+      setError(tr("email.errBad")); return;
     }
     setBusy(true); setError(""); setInfo("");
     try {
@@ -50,22 +52,22 @@ export default function ChangeEmailCard({ verified }) {
       setPhase("confirming");
       setInfo("");
     } catch (err) {
-      setError(err.message || "No pudimos enviar el código.");
+      setError(err.message || tr("email.errSend"));
     } finally {
       setBusy(false);
     }
   };
 
   const confirmar = async () => {
-    if (code.trim().length !== 6) { setError("El código tiene 6 dígitos."); return; }
+    if (code.trim().length !== 6) { setError(tr("reg.errCode")); return; }
     setBusy(true); setError("");
     try {
       await confirmEmailChange(code.trim());
       await refreshUser();
       reset();
-      setInfo("Listo: tu cuenta ya usa la dirección nueva.");
+      setInfo(tr("email.done"));
     } catch (err) {
-      setError(err.message || "No pudimos confirmar el cambio.");
+      setError(err.message || tr("car.errConfirm"));
     } finally {
       setBusy(false);
     }
@@ -79,7 +81,7 @@ export default function ChangeEmailCard({ verified }) {
         fontSize: 11, fontWeight: 700, color: "#9ca3af",
         letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4,
       }}>
-        Email
+        {tr("auth.email")}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -87,14 +89,14 @@ export default function ChangeEmailCard({ verified }) {
           {user?.email || "—"}
           {verified && (
             <StatusChip tone="ok" style={{ marginLeft: 8, verticalAlign: "middle" }}>
-              Verificado
+              {tr("status.verified")}
             </StatusChip>
           )}
         </div>
         {phase === "idle" && (
           <button onClick={() => setPhase("asking")}
             style={{ fontSize: 14, fontWeight: 600, color: "#2563eb", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
-            Cambiar
+            {tr("email.change")}
           </button>
         )}
       </div>
@@ -109,29 +111,27 @@ export default function ChangeEmailCard({ verified }) {
 
           {phase === "asking" ? (
             <>
-              <label style={f.label}>Dirección nueva</label>
+              <label style={f.label}>{tr("email.newAddress")}</label>
               <input style={{ ...f.input, marginBottom: 6 }} type="email" inputMode="email"
-                autoComplete="email" autoCapitalize="none" placeholder="tu.nueva@direccion.com"
+                autoComplete="email" autoCapitalize="none" placeholder={tr("email.phNew")}
                 value={newEmail} autoFocus
                 onChange={(e) => setNewEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && pedirCodigo()} />
               <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 14, lineHeight: 1.6 }}>
-                Te mandamos un código de 6 dígitos <strong>a esa dirección</strong>. Tu
-                email actual no cambia hasta que lo confirmes.
+                {tr("email.codeNote")}
               </div>
               <div style={{ display: "flex", gap: 10, flexDirection: isMobile ? "column-reverse" : "row" }}>
-                <button onClick={reset} style={{ ...f.btnGhost, flex: 1 }}>Cancelar</button>
+                <button onClick={reset} style={{ ...f.btnGhost, flex: 1 }}>{tr("common.cancel")}</button>
                 <button onClick={pedirCodigo} disabled={busy}
                   style={{ ...f.btn, flex: 1, ...(busy ? f.btnDisabled : {}) }}>
-                  {busy ? "Enviando..." : "Enviarme el código"}
+                  {busy ? tr("common.sending") : tr("email.sendCode")}
                 </button>
               </div>
             </>
           ) : (
             <>
               <div style={{ fontSize: 13.5, color: "#374151", marginBottom: 12, lineHeight: 1.6 }}>
-                Mandamos un código a <strong>{sentTo}</strong>. Escribilo acá para
-                terminar el cambio.
+                {tr("email.sentTo")} <strong>{sentTo}</strong>. {tr("email.writeItHere")}
               </div>
               {info && (
                 <div style={{ ...f.notice, marginBottom: 12 }}>{info}</div>
@@ -144,15 +144,15 @@ export default function ChangeEmailCard({ verified }) {
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 onKeyDown={(e) => e.key === "Enter" && confirmar()} />
               <div style={{ display: "flex", gap: 10, flexDirection: isMobile ? "column-reverse" : "row" }}>
-                <button onClick={reset} style={{ ...f.btnGhost, flex: 1 }}>Cancelar</button>
+                <button onClick={reset} style={{ ...f.btnGhost, flex: 1 }}>{tr("common.cancel")}</button>
                 <button onClick={confirmar} disabled={busy}
                   style={{ ...f.btn, flex: 1, ...(busy ? f.btnDisabled : {}) }}>
-                  {busy ? "Confirmando..." : "Confirmar el cambio"}
+                  {busy ? tr("car.confirming") : tr("email.confirmChange")}
                 </button>
               </div>
               <button onClick={() => { setPhase("asking"); setCode(""); setError(""); }}
                 style={{ background: "none", border: "none", color: "#6b7280", fontSize: 12.5, cursor: "pointer", padding: 0, marginTop: 12, textDecoration: "underline" }}>
-                Usar otra dirección
+                {tr("email.useAnother")}
               </button>
             </>
           )}

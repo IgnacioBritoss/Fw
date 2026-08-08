@@ -9,8 +9,13 @@
 //  Props: cars (lista de autos), onCarClick (callback), height (alto del mapa).
 // ============================================================================
 import { useEffect, useRef } from "react";
+import { useI18n } from "../i18n/core";
 
 export default function MapView({ cars, onCarClick, height = "500px" }) {
+  // El globo del pin se arma con HTML a mano (Leaflet no es de React), así que la
+  // traducción se resuelve acá y se interpola.
+  const { t: tr } = useI18n();
+  const perDayLabel = tr("common.perDay");
   const mapRef = useRef(null);       // el <div> donde se dibuja el mapa
   const instanceRef = useRef(null);  // la instancia de Leaflet ya creada
 
@@ -100,7 +105,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
             ${car.location}
           </div>
           <div style="font-weight:700;font-size:16px;color:#1d4ed8">
-            $${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
+            $${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">${perDayLabel}</span>
           </div>
           ${car.rating ? `<div style="font-size:12px;color:#f59e0b;margin-top:4px">★ ${car.rating}</div>` : ""}
         </div>
@@ -109,7 +114,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       marker.bindPopup(popup);
       marker.addTo(map);
     });
-  }, [cars]);
+  }, [cars, perDayLabel]);
 
   // 3) El popup del mapa es HTML "plano" (no React), así que exponemos una
   //    función global window.fwOpenCar para que su onclick pueda avisar a React.

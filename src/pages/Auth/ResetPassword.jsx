@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useI18n } from "../../i18n/core";
 
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -44,6 +45,7 @@ const styles = (isMobile) => ({
 
 export default function ResetPassword() {
   const { isMobile } = useIsMobile();
+  const { t } = useI18n();
   const s = styles(isMobile);
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -63,9 +65,9 @@ export default function ResetPassword() {
     return (
       <div style={s.page}>
         <div style={s.card}>
-          <div style={s.error}>Link inválido o expirado.</div>
+          <div style={s.error}>{t("reset.badLink")}</div>
           <Link to="/forgot-password" style={{ color:"#2563eb", fontWeight:600, fontSize:14 }}>
-            Solicitá un nuevo link
+            {t("reset.askNewLink")}
           </Link>
         </div>
       </div>
@@ -74,9 +76,9 @@ export default function ResetPassword() {
 
   // Valida (largo mínimo y que ambas coincidan) y guarda la nueva contraseña.
   const handleSubmit = async () => {
-    if (!form.password) { setError("Ingresá una nueva contraseña."); return; }
-    if (form.password.length < 6) { setError("Mínimo 6 caracteres."); return; }
-    if (form.password !== form.confirm) { setError("Las contraseñas no coinciden."); return; }
+    if (!form.password) { setError(t("reset.errEmpty")); return; }
+    if (form.password.length < 6) { setError(t("reset.errShort")); return; }
+    if (form.password !== form.confirm) { setError(t("reg.errPassMatch")); return; }
     setLoading(true);
     setError("");
     const result = await resetPassword({ token, userId, newPassword: form.password });
@@ -89,20 +91,20 @@ export default function ResetPassword() {
   return (
     <div style={s.page}>
       <div style={s.card}>
-        <div style={s.title}>Nueva contraseña</div>
-        <div style={s.sub}>Elegí una contraseña segura para tu cuenta.</div>
+        <div style={s.title}>{t("reset.title")}</div>
+        <div style={s.sub}>{t("reset.sub")}</div>
 
         {error && <div style={s.error}>{error}</div>}
 
         {done ? (
-          <div style={s.success}>Contraseña actualizada. Redirigiendo al login...</div>
+          <div style={s.success}>{t("reset.done")}</div>
         ) : (
           <>
-            <label style={s.label}>Nueva contraseña</label>
+            <label style={s.label}>{t("reset.title")}</label>
             <div style={s.wrapper}>
               <input style={{ ...s.input, paddingRight:40 }}
                 type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t("reset.phMin")}
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
@@ -110,11 +112,11 @@ export default function ResetPassword() {
               </button>
             </div>
 
-            <label style={s.label}>Confirmar contraseña</label>
+            <label style={s.label}>{t("auth.confirmPassword")}</label>
             <div style={s.wrapper}>
               <input style={{ ...s.input, paddingRight:40 }}
                 type={showConfirm ? "text" : "password"}
-                placeholder="Repetí la contraseña"
+                placeholder={t("reset.phRepeat")}
                 value={form.confirm}
                 onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
@@ -125,13 +127,13 @@ export default function ResetPassword() {
 
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
               onClick={handleSubmit} disabled={loading}>
-              {loading ? "Guardando..." : "Cambiar contraseña"}
+              {loading ? t("common.saving") : t("reset.submit")}
             </button>
           </>
         )}
 
         <div style={s.back}>
-          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>← Volver al login</Link>
+          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>← {t("auth.backToLogin")}</Link>
         </div>
       </div>
     </div>

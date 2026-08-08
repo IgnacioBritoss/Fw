@@ -23,8 +23,10 @@ import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { addDays, addMonths, differenceInCalendarDays, format } from "date-fns";
-import { es } from "date-fns/locale";
 import { getListingAvailability } from "../services/api";
+import { useI18n } from "../i18n/core";
+import Spinner from "./Spinner";
+import { localeFor } from "../i18n/dates";
 
 // Estilos en línea del componente (agrupados acá para no ensuciar el JSX).
 const s = {
@@ -44,6 +46,7 @@ const s = {
 const dayKey = (date) => format(date, "yyyy-MM-dd");
 
 export default function BookingCalendar({ listingId, car, onConfirm }) {
+  const { t: tr, lang } = useI18n();
   const [range, setRange] = useState([null, null]); // [fechaInicio, fechaFin] elegidas
   const [start, end] = range;
   const [unavailable, setUnavailable] = useState([]); // días ocupados (YYYY-MM-DD)
@@ -69,12 +72,12 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
       .catch((err) => {
         if (!active) return;
         // Si no se pudo consultar, se avisa: es mejor que dejar elegir a ciegas.
-        setAvailError(err.message || "No pudimos verificar la disponibilidad.");
+        setAvailError(err.message || tr("cal.availFailed"));
       })
       .finally(() => { if (active) setLoadingAvail(false); });
 
     return () => { active = false; };
-  }, [listingId]);
+  }, [listingId, tr]);
 
   const unavailableSet = useMemo(() => new Set(unavailable), [unavailable]);
 
@@ -111,24 +114,22 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
 
   return (
     <div style={s.wrap}>
-      <div style={s.title}>
-        Seleccioná las fechas
-        {loadingAvail && (
-          <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 8, fontWeight: 400 }}>
-            Cargando disponibilidad...
-          </span>
-        )}
+      <div style={{ ...s.title, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {tr("cal.pickDates")}
+        {/* El círculo mientras se consulta la disponibilidad: un texto quieto no
+            dice si está pasando algo o si se colgó. */}
+        {loadingAvail && <Spinner size={14} label={tr("cal.loadingAvail")} />}
       </div>
       <div style={s.legend}>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#111827" }} /> Disponible</div>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#d1d5db" }} /> Ocupado</div>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#2563eb" }} /> Seleccionado</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "#111827" }} /> {tr("cal.free")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "#d1d5db" }} /> {tr("cal.taken")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "#2563eb" }} /> {tr("cal.chosen")}</div>
       </div>
 
       {availError && <div style={s.warn}>{availError}</div>}
       {!loadingAvail && !availError && unavailable.length > 0 && (
         <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 12 }}>
-          Los días en gris ya están reservados o el dueño los marcó como no disponibles.
+          {tr("cal.greyNote")}
         </div>
       )}
 
@@ -138,27 +139,27 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
         minDate={addDays(new Date(), 1)}
         filterDate={(date) => !isDayBlocked(date)}
         excludeDates={excludeDates}
-        inline locale={es} monthsShown={2}
+        inline locale={localeFor(lang)} monthsShown={2}
       />
 
       {rangeHasBlockedDay && (
         <div style={s.warn}>
-          El rango elegido incluye días que ya están ocupados. Elegí otras fechas.
+          {tr("cal.rangeBlocked")}
         </div>
       )}
 
       {start && end && days > 0 && (
         <div style={s.summary}>
           <div style={s.summaryRow}>
-            <span>${pricePerDay.toLocaleString()} x {days} día{days !== 1 ? "s" : ""}</span>
+            <span>${pricePerDay.toLocaleString()} x {days} {tr(days === 1 ? "common.day" : "common.days")}</span>
             <span>${total.toLocaleString()}</span>
           </div>
           <div style={s.summaryRow}>
-            <span>Comisión Freewheel (10%)</span>
+            <span>{tr("cal.fee")}</span>
             <span>${commission.toLocaleString()}</span>
           </div>
           <div style={s.summaryRow}>
-            <span>Depósito de garantía (se devuelve)</span>
+            <span>{tr("payment.guarantee")}</span>
             <span>${deposit.toLocaleString()}</span>
           </div>
           <div style={s.summaryTotal}>
@@ -169,10 +170,10 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
             disabled={!canConfirm}
             style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "#2563eb" : "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
             onClick={() => canConfirm && onConfirm({ start, end, days, total, commission, deposit, totalFinal: total + commission + deposit })}>
-            Confirmar reserva →
+            {tr("cal.confirmBooking")} →
           </button>
           <div style={{ fontSize: 11.5, color: "#9ca3af", textAlign: "center", marginTop: 8 }}>
-            El dueño tiene que aceptar la solicitud antes de que pagues.
+            {tr("cal.ownerFirst")}
           </div>
         </div>
       )}

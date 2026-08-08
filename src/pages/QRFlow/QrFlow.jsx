@@ -20,6 +20,8 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { getBookingTokens, confirmPickup, confirmReturn, getBookingById } from "../../services/api";
+import Spinner from "../../components/Spinner";
+import { useI18n } from "../../i18n/core";
 
 const s = {
   page: { maxWidth: 480, margin: "0 auto", padding: "40px 24px", textAlign: "center" },
@@ -47,7 +49,7 @@ function QRDisplay({ token }) {
   return (
     <img
       src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(token)}&bgcolor=ffffff&color=000000&qzone=1`}
-      alt="Código QR"
+      alt=""
       style={{ width: size, height: size, borderRadius: 10, display: "block", margin: "0 auto 12px" }}
       onError={(e) => { e.target.style.display = "none"; }}
     />
@@ -55,6 +57,7 @@ function QRDisplay({ token }) {
 }
 
 export default function QRFlow() {
+  const { t: tr } = useI18n();
   const { bookingId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,7 +77,7 @@ export default function QRFlow() {
     setLoading(true);
     Promise.all([getBookingById(bookingId), getBookingTokens(bookingId).catch(() => null)])
       .then(([b, t]) => { setBooking(b); setTokens(t); })
-      .catch((err) => setError(err.message || "No se pudo cargar la reserva."))
+      .catch((err) => setError(err.message || tr("qr.loadFailed")))
       .finally(() => setLoading(false));
   };
 
@@ -92,7 +95,7 @@ export default function QRFlow() {
   const myToken = mode === "pickup" ? tokens?.pickupQrToken : tokens?.returnQrToken;
 
   const handleConfirm = async () => {
-    if (!tokenInput.trim()) { setError("Ingresá el código que te muestra la otra persona."); return; }
+    if (!tokenInput.trim()) { setError(tr("qr.errEmpty")); return; }
     setConfirming(true);
     setError(null);
     try {
@@ -100,19 +103,19 @@ export default function QRFlow() {
       else await confirmReturn(bookingId, tokenInput.trim());
       setConfirmed(true);
     } catch (err) {
-      setError(err.message || "El código no es válido o la reserva no está en el estado correcto.");
+      setError(err.message || tr("qr.errBadCode"));
     } finally {
       setConfirming(false);
     }
   };
 
-  if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#9ca3af" }}>Cargando...</div>;
+  if (loading) return <Spinner block label={tr("common.loading")} />;
 
   if (!booking) return (
     <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
-      {error || "No encontramos la reserva."}
+      {error || tr("qr.notFound")}
       <br />
-      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>Mis reservas</button>
+      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>{tr("nav.bookings")}</button>
     </div>
   );
 
@@ -120,13 +123,11 @@ export default function QRFlow() {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
         <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
-        <div style={s.title}>{mode === "pickup" ? "Retiro confirmado" : "Devolución confirmada"}</div>
+        <div style={s.title}>{tr(mode === "pickup" ? "qr.pickupDone" : "qr.returnDone")}</div>
         <div style={s.sub}>
-          {mode === "pickup"
-            ? "El auto quedó entregado y el alquiler está en curso."
-            : "La devolución quedó registrada y la reserva está completada."}
+          {tr(mode === "pickup" ? "qr.pickupDoneNote" : "qr.returnDoneNote")}
         </div>
-        <button style={{ padding: "12px 28px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>Ver mis reservas</button>
+        <button style={{ padding: "12px 28px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
       </div>
     );
   }
@@ -135,19 +136,17 @@ export default function QRFlow() {
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
-      <div style={s.title}>{mode === "pickup" ? "Retiro del vehículo" : "Devolución del vehículo"}</div>
+      <div style={s.title}>{tr(mode === "pickup" ? "qr.pickupTitle" : "qr.returnTitle")}</div>
       <div style={s.sub}>
         {`${vehicle.brand || ""} ${vehicle.model || ""}`.trim()}
         {" — "}
-        {iConfirm
-          ? "Pedile el código a la otra persona e ingresalo acá."
-          : "Mostrale este código a la otra persona."}
+        {tr(iConfirm ? "qr.askCode" : "qr.showCode")}
       </div>
 
       <div style={s.tabRow}>
-        {[["pickup", "Retiro"], ["return", "Devolución"]].map(([k, l]) => (
+        {[["pickup", "qr.pickup"], ["return", "qr.return"]].map(([k, l]) => (
           <button key={k} style={{ ...s.tab, background: mode === k ? "#fff" : "transparent", color: mode === k ? "#2563eb" : "#6b7280", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
-            onClick={() => { setMode(k); setError(null); setTokenInput(""); }}>{l}</button>
+            onClick={() => { setMode(k); setError(null); setTokenInput(""); }}>{tr(l)}</button>
         ))}
       </div>
 
@@ -156,21 +155,19 @@ export default function QRFlow() {
         myToken ? (
           <div style={s.qrBox}>
             <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 12, fontWeight: 600 }}>
-              {mode === "pickup" ? "Tu QR de retiro" : "Tu QR de devolución"}
+              {tr(mode === "pickup" ? "qr.myPickupQr" : "qr.myReturnQr")}
             </div>
             <QRDisplay token={myToken} />
-            <div style={s.tokenLabel}>Código</div>
+            <div style={s.tokenLabel}>{tr("qr.code")}</div>
             <div style={s.tokenDisplay}>{myToken}</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>
-              Mostrale este código al {mode === "pickup" ? "dueño" : "conductor"} para confirmar.
+              {tr(mode === "pickup" ? "qr.showToOwner" : "qr.showToDriver")}
             </div>
           </div>
         ) : (
           <div style={s.infoBox}>
-            Todavía no hay código para este paso.
-            {mode === "pickup"
-              ? " El dueño tiene que marcar el auto como listo para retiro."
-              : " El código de devolución aparece cuando el alquiler está en curso."}
+            {tr("qr.noCodeYet")}
+            {" "}{tr(mode === "pickup" ? "qr.noCodePickup" : "qr.noCodeReturn")}
           </div>
         )
       )}
@@ -179,17 +176,17 @@ export default function QRFlow() {
       {iConfirm && (
         <div style={{ ...s.qrBox, textAlign: "left" }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#111827", marginBottom: 6 }}>
-            Confirmar {mode === "pickup" ? "el retiro" : "la devolución"}
+            {tr(mode === "pickup" ? "qr.confirmPickup" : "qr.confirmReturn")}
           </div>
           <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 12 }}>
-            Ingresá el código que aparece en la pantalla del {mode === "pickup" ? "conductor" : "dueño"}.
+            {tr(mode === "pickup" ? "qr.enterDriverCode" : "qr.enterOwnerCode")}
           </div>
-          <input style={s.input} placeholder="Pegá o escribí el código..." value={tokenInput}
+          <input style={s.input} placeholder={tr("qr.phCode")} value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleConfirm()} />
           {error && <div style={s.errorBox}>{error}</div>}
           <button style={confirming ? s.btnDisabled : s.btn} disabled={confirming} onClick={handleConfirm}>
-            {confirming ? "Confirmando..." : mode === "pickup" ? "Confirmar retiro" : "Confirmar devolución"}
+            {confirming ? tr("car.confirming") : tr(mode === "pickup" ? "qr.confirmPickup" : "qr.confirmReturn")}
           </button>
         </div>
       )}
@@ -197,10 +194,10 @@ export default function QRFlow() {
       {!iConfirm && error && <div style={s.errorBox}>{error}</div>}
 
       <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#2563eb", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
-        Actualizar estado
+        {tr("qr.refresh")}
       </button>
       <br />
-      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>← Volver a mis reservas</button>
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>← {tr("qr.backToBookings")}</button>
     </div>
   );
 }

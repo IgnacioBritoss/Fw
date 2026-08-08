@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { buildNotifications, getReadIds, markRead, markAllRead } from "../../services/notifications";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
 
 // ── Íconos SVG por categoría (sin emojis) ──
 const Icon = ({ name, color = "#374151" }) => {
@@ -26,19 +28,19 @@ const Icon = ({ name, color = "#374151" }) => {
 };
 
 const CAT_META = {
-  reserva: { label: "Reservas", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
-  mensaje: { label: "Mensajes", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
-  sistema: { label: "Sistema", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
-  promo: { label: "Promos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },
-  review: { label: "Reseñas", icon: "review", bg: "#fff7ed", fg: "#ea580c" },
+  reserva: { key: "notif.catBookings", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
+  mensaje: { key: "notif.catMessages", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
+  sistema: { key: "notif.catSystem", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
+  promo: { key: "notif.catPromos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },
+  review: { key: "notif.catReviews", icon: "review", bg: "#fff7ed", fg: "#ea580c" },
 };
 
 const TABS = [
-  { key: "todas", label: "Todas" },
-  { key: "reserva", label: "Reservas" },
-  { key: "mensaje", label: "Mensajes" },
-  { key: "promo", label: "Promos" },
-  { key: "sistema", label: "Sistema" },
+  { key: "todas", label: "notif.tabAll" },
+  { key: "reserva", label: "notif.catBookings" },
+  { key: "mensaje", label: "notif.catMessages" },
+  { key: "promo", label: "notif.catPromos" },
+  { key: "sistema", label: "notif.catSystem" },
 ];
 
 // Devuelve la hora/fecha corta que se muestra al costado de cada notificación
@@ -49,7 +51,7 @@ function timeLabel(ts) {
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   const yest = new Date(now); yest.setDate(now.getDate() - 1);
   if (sameDay(d, now)) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-  if (sameDay(d, yest)) return "Ayer";
+  if (sameDay(d, yest)) return "notif.yesterday";
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
 }
 // Devuelve el título del grupo al que pertenece una notificación: Hoy / Ayer / Anteriores.
@@ -58,12 +60,13 @@ function groupLabel(ts) {
   const now = new Date();
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   const yest = new Date(now); yest.setDate(now.getDate() - 1);
-  if (sameDay(d, now)) return "Hoy";
-  if (sameDay(d, yest)) return "Ayer";
+  if (sameDay(d, now)) return "notif.today";
+  if (sameDay(d, yest)) return "notif.yesterday";
   return "Anteriores";
 }
 
 export default function Notifications() {
+  const { t: tr } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -135,17 +138,17 @@ export default function Notifications() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={s.title}>Notificaciones</div>
-          <div style={s.sub}>{loading ? "Cargando…" : `${unreadCount} sin leer · ${notifs.length} en total`}</div>
+          <div style={s.title}>{tr("nav.notifications")}</div>
+          <div style={s.sub}>{loading ? tr("common.loading") : tr("notif.counts", { unread: unreadCount, total: notifs.length })}</div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button style={s.btnGhost} onClick={markAll} disabled={unreadCount === 0}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#374151" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Marcar leídas
+            {tr("notif.markAll")}
           </button>
           <button style={s.btnDark} onClick={() => navigate("/ajustes")}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#fff" strokeWidth="2" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Preferencias
+            {tr("notif.prefs")}
           </button>
         </div>
       </div>
@@ -154,23 +157,26 @@ export default function Notifications() {
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 20, borderBottom: "1px solid #ececec", paddingBottom: 12 }}>
         {TABS.map(t => (
           <button key={t.key} style={s.tab(tab === t.key)} onClick={() => setTab(t.key)}>
-            {t.label}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
+            {tr(t.label)}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
           </button>
         ))}
       </div>
 
       {/* Lista */}
+      {/* Mientras carga, el círculo: antes la lista aparecía vacía sin ningún aviso. */}
+      {loading && <Spinner block label={tr("common.loading")} />}
+
       {!loading && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "70px 20px", color: "#9ca3af" }}>
           <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 12 }}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" /></svg>
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>No tenés notificaciones acá</div>
-          <div style={{ fontSize: 13, marginTop: 4 }}>Cuando pase algo con tus reservas o mensajes, aparecerá en esta sección.</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>{tr("notif.empty")}</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>{tr("notif.emptyHint")}</div>
         </div>
       )}
 
       {groups.map(([label, items]) => (
         <div key={label}>
-          <div style={s.groupLabel}>{label}</div>
+          <div style={s.groupLabel}>{tr(label)}</div>
           {items.map(n => {
             const meta = CAT_META[n.cat] || CAT_META.sistema;
             const read = isRead(n);
@@ -183,13 +189,13 @@ export default function Notifications() {
                   <Icon name={meta.icon} color={meta.fg} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.title}</div>
-                  <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.body}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.titleKey ? tr(n.titleKey, n.vars) : n.title}</div>
+                  <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.bodyKey ? tr(n.bodyKey, n.vars) : n.body}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                   <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts)}</span>
                   {!read && (
-                    <button onClick={e => markOne(e, n)} title="Marcar como leída"
+                    <button onClick={e => markOne(e, n)} title={tr("notif.markOne")}
                       style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#6b7280" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>

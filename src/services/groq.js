@@ -45,7 +45,7 @@ export async function groqChat(messages, temperature = 0.7) {
 // recorta desde la primera "{" hasta la última "}" y lo convierte en objeto.
 export function extractJSON(text) {
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No se pudo parsear la respuesta de IA");
+  if (!match) throw new Error("AI response is not valid JSON");
   return JSON.parse(match[0]);
 }
 
@@ -204,7 +204,7 @@ export async function groqVision(imageDataUrl) {
         const texto = content.trim().toUpperCase();
         if (texto.startsWith("SI")) return { isVehicle: true };
         if (texto.startsWith("NO")) {
-          return { isVehicle: false, reason: "La imagen no muestra un vehículo." };
+          return { isVehicle: false, reasonKey: "ai.notAVehicle" };
         }
       }
     }
@@ -249,9 +249,9 @@ export async function checkDocument(imageDataUrl, kind) {
         const matches = parsed.corresponde === true && parsed.legible !== false;
         return {
           matches,
-          reason: parsed.motivo || (matches
-            ? "El documento coincide con lo esperado."
-            : "La imagen no corresponde al documento pedido."),
+          // Sin motivo del modelo se usa una clave, que la pantalla traduce.
+          reasonKey: parsed.motivo ? undefined : (matches ? "ai.docOk" : "ai.docBad"),
+          reason: parsed.motivo || "",
         };
       } catch { /* respuesta ilegible: cae al retorno de abajo */ }
     }
@@ -260,7 +260,8 @@ export async function checkDocument(imageDataUrl, kind) {
   return {
     matches: null,
     code: failure?.code || (failure?.status === 503 ? "not_configured" : "upstream_error"),
-    reason: failure?.reason || failure?.message || "No se pudo revisar la foto.",
+    reason: failure?.reason || failure?.message || "",
+    reasonKey: (failure?.reason || failure?.message) ? undefined : "ai.cannotReview",
   };
 }
 
@@ -268,7 +269,7 @@ export async function checkDocument(imageDataUrl, kind) {
 // el backend se encarga de descargarlo y mandarlo al modelo.
 export async function groqTranscribe(audioUrl) {
   if (typeof audioUrl !== "string" || !audioUrl) {
-    throw new Error("Se necesita la URL del audio para transcribir");
+    throw new Error("audioUrl is required");
   }
   const data = await apiAiTranscribe(audioUrl);
   return (data?.text || "").trim();

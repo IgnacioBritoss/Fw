@@ -22,10 +22,11 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useAuth } from "../../context/AuthContext";
 import { useListings } from "../../hooks/useListings";
-import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
+import { CATEGORIES, filterCars, priceOf, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import { firstBookableInput } from "../../services/dates";
 import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
 
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
@@ -82,13 +83,13 @@ export default function Home() {
   // Avisa si el rango de fechas está al revés o incompleto.
   useEffect(() => {
     if (pickup && dropoff && new Date(dropoff) < new Date(pickup)) {
-      setDateError("La devolución no puede ser antes del retiro.");
+      setDateError(tr("home.dateBackwards"));
     } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
-      setDateError("Completá las dos fechas para filtrar por disponibilidad.");
+      setDateError(tr("home.dateIncomplete"));
     } else {
       setDateError("");
     }
-  }, [pickup, dropoff]);
+  }, [pickup, dropoff, tr]);
 
   // Carga la librería del mapa (Leaflet) una sola vez.
   useEffect(() => {
@@ -252,9 +253,9 @@ export default function Home() {
       <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "#e5e7eb" }}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
-        {car.categoryLabel && (
-          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{car.categoryLabel}</div>
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+        {car.category && (
+          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{categoryLabel(tr, car.category)}</div>
         )}
         {/* Corazón: es un botón que corta el clic, así no abre la publicación. */}
         <FavoriteButton listingId={car.id} disabled={car.isMock} />
@@ -263,10 +264,10 @@ export default function Home() {
         <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
           {car.location && `${car.location} · `}
-          {car.rating > 0 && `${car.rating} ★ · `}{car.transmission}
+          {car.rating > 0 && `${car.rating} ★ · `}{transmissionLabel(tr, car.transmissionCode)}
         </div>
         <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-          {car.fuel && <span style={t.tag}>{car.fuel}</span>}
+          {car.fuelCode && <span style={t.tag}>{fuelLabel(tr, car.fuelCode)}</span>}
           {car.seats && <span style={t.tag}>{tr("common.seats", { count: car.seats })}</span>}
         </div>
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -300,7 +301,7 @@ export default function Home() {
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "#ececec"; }}
             >
               <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#2563eb" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{c.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
               <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
                 {min ? tr("home.from", { price: `$${min.toLocaleString()}` }) : count > 0 ? `${count}` : tr("home.noneYet")}
@@ -314,19 +315,19 @@ export default function Home() {
 
   const StepsSection = () => (
     <>
-      <div style={{ ...t.sectionTitle, marginBottom: 4 }}>¿Primera vez?</div>
-      <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>Alquilar con Freewheel es así de simple</div>
+      <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>
+      <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {[
-          ["01", "Buscá", "Elegí ubicación y fechas, aplicá filtros."],
-          ["02", "Reservá", "El dueño acepta y pagás online."],
-          ["03", "Retirá", "Coordinás la entrega y confirman con el QR."],
-          ["04", "Devolvé", "Al devolver se cierra la reserva y se libera el depósito."],
+          ["01", "home.step1", "home.step1Sub"],
+          ["02", "home.step2", "home.step2Sub"],
+          ["03", "home.step3", "home.step3Sub"],
+          ["04", "home.step4", "home.step4Sub"],
         ].map(([n, ti, d]) => (
           <div key={n} style={t.stepCard}>
             <div style={{ fontSize: 26, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>{n}</div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{ti}</div>
-            <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{d}</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{tr(ti)}</div>
+            <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{tr(d)}</div>
           </div>
         ))}
       </div>
@@ -388,10 +389,7 @@ export default function Home() {
 
       {/* Avisos de estado: datos de ejemplo o backend caído */}
       {showingMocks && (
-        <div style={t.banner}>
-          Todavía no hay autos publicados, así que estás viendo <strong>autos de ejemplo</strong>.
-          {" "}En cuanto alguien publique un auto, aparecen los reales.
-        </div>
+        <div style={t.banner}>{tr("home.sampleCars")}</div>
       )}
       {error && !showingMocks && (
         <div style={{ ...t.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
@@ -403,7 +401,7 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={t.sectionTitle}>
-            {cat ? `${tr("home.available")} · ${CATEGORIES.find(c => c.id === cat)?.label}` : tr("home.available")}
+            {cat ? `${tr("home.available")} · ${categoryLabel(tr, cat)}` : tr("home.available")}
           </div>
           <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
             {loading ? tr("common.loading") : tr("home.availableCount", { count: filtered.length })}
@@ -414,7 +412,7 @@ export default function Home() {
           {(cat || search || pickup || dropoff) && (
             <button onClick={() => { setCat(""); setSearch(""); setPickup(""); setDropoff(""); }}
               style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151" }}>
-              Limpiar filtros
+              {tr("search.clearFilters")}
             </button>
           )}
           {[["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
@@ -429,7 +427,7 @@ export default function Home() {
 
       {/* Resultados */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando autos...</div>
+        <Spinner block label={tr("common.loading")} />
       ) : view === "lista" ? (
         // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba en 170px:
         // el nombre del auto se partía en dos renglones y el precio con el botón
@@ -440,7 +438,7 @@ export default function Home() {
           {filtered.length === 0 && (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
               {tr("home.noResults")}
-              {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>Probá con otras fechas o con otra categoría.</div>}
+              {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>{tr("home.tryOther")}</div>}
             </div>
           )}
         </div>

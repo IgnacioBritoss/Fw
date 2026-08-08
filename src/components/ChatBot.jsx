@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useDraggableFab } from "../hooks/useDraggableFab";
+import { useI18n } from "../i18n/core";
 
 // "System prompt": instrucciones ocultas que definen la personalidad y los
 // límites del asistente. Se envían antes de cada conversación con la IA.
@@ -25,20 +26,30 @@ Tu rol es ayudar a usuarios con dudas sobre:
 - Qué pasa en caso de accidentes o daños
 - Documentación necesaria (DNI, licencia)
 
-Respondé siempre en español, de forma clara, profesional y sin emojis. Máximo 3 párrafos por respuesta. Si te preguntan algo que no tiene que ver con Freewheel o alquiler de autos, redirigí la conversación amablemente.`;
+Respondé SIEMPRE en {IDIOMA}, sin importar en qué idioma esté escrita la pregunta, de forma clara, profesional y sin emojis. Máximo 3 párrafos por respuesta. Si te preguntan algo que no tiene que ver con Freewheel o alquiler de autos, redirigí la conversación amablemente.`;
 
-// Primer mensaje de bienvenida que ve el usuario al abrir el chat.
-const INITIAL_MESSAGE = {
-  role: "assistant",
-  text: "Hola, soy el asistente de Freewheel. Puedo ayudarte con dudas sobre seguridad, pagos, cómo publicar tu auto, cancelaciones y más. ¿En qué puedo ayudarte?",
+/**
+ * Cómo se le nombra el idioma al modelo.
+ *
+ * Se le dice en castellano ("responde siempre en inglés") y no en el idioma de
+ * destino, porque el resto del prompt está en castellano y mezclar idiomas dentro
+ * de la misma instrucción hace que el modelo dude sobre en cuál tiene que
+ * contestar. Además se aclara "sin importar en qué idioma esté escrita la
+ * pregunta": si no, contesta en el idioma de quien escribe y no en el que la
+ * persona eligió en Ajustes.
+ */
+const NOMBRE_IDIOMA = {
+  es: "español", en: "inglés", pt: "portugués", it: "italiano", zh: "chino simplificado",
 };
 
+// Primer mensaje de bienvenida que ve el usuario al abrir el chat.
 // Preguntas frecuentes que se ofrecen como botones al iniciar la conversación.
+// Son claves: se traducen al dibujarse, igual que el saludo.
 const SUGGESTIONS = [
-  "¿Cómo funciona la garantía?",
-  "¿Qué pasa si hay un accidente?",
-  "¿Cómo cancelo una reserva?",
-  "¿Qué documentos necesito?",
+  "chat.q.warranty",
+  "chat.q.accident",
+  "chat.q.cancel",
+  "chat.q.documents",
 ];
 
 // Devuelve el alto y la posición del área visible de la pantalla. En el celular,
@@ -71,8 +82,10 @@ export default function ChatBot() {
   const isChat = location.pathname === "/chat";     // ¿estamos en la pantalla de chat?
   const hideFab = isMobile && isChat;               // ocultar el botón para no tapar el chat real
 
+  const { t: tr, lang } = useI18n();
   const [open, setOpen] = useState(false);              // ¿está abierto el asistente?
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]); // historial de la charla
+  // El saludo se arma con el idioma que esté elegido al abrir el chat.
+  const [messages, setMessages] = useState(() => [{ role: "assistant", text: tr("chat.greeting") }]);
   const [input, setInput] = useState("");               // texto que se está escribiendo
   const [loading, setLoading] = useState(false);        // esperando respuesta de la IA
   const [viewport, setViewport] = useState(getViewportData());
@@ -171,7 +184,7 @@ export default function ChatBot() {
     try {
       // Formato que espera la IA: primero las instrucciones, luego la charla.
       const groqMessages = [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT.replace("{IDIOMA}", NOMBRE_IDIOMA[lang] || "español") },
         ...newMessages.map((m) => ({ role: m.role, content: m.text })),
       ];
 
@@ -186,8 +199,8 @@ export default function ChatBot() {
         {
           role: "assistant",
           text: isRateLimit
-            ? "Estás enviando muchos mensajes muy rápido. Esperá un momento antes de seguir."
-            : "Hubo un problema al conectarme. Intentá de nuevo en un momento.",
+            ? tr("chat.rateLimit")
+            : tr("chat.connectError"),
         },
       ]);
     } finally {
@@ -288,10 +301,10 @@ export default function ChatBot() {
 
         <div>
           <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
-            Asistente Freewheel
+            {tr("chat.title")}
           </div>
           <div style={{ color: "rgba(255,255,255,.7)", fontSize: 11 }}>
-            En línea
+            {tr("chat.online")}
           </div>
         </div>
       </div>
@@ -425,7 +438,7 @@ export default function ChatBot() {
       {SUGGESTIONS.map((sg) => (
         <button
           key={sg}
-          onClick={() => send(sg)}
+          onClick={() => send(tr(sg))}
           style={{
             padding: "5px 12px",
             borderRadius: 20,
@@ -437,7 +450,7 @@ export default function ChatBot() {
             fontWeight: 600,
           }}
         >
-          {sg}
+          {tr(sg)}
         </button>
       ))}
     </div>
@@ -467,7 +480,7 @@ export default function ChatBot() {
           outline: "none",
           color: "#111827",
         }}
-        placeholder="Escribí tu pregunta..."
+        placeholder={tr("chat.placeholder")}
         value={input}
         enterKeyHint="send"
         onChange={(e) => setInput(e.target.value)}
@@ -592,8 +605,8 @@ export default function ChatBot() {
         <button
           style={{ ...fabStyle, ...fab.style }}
           {...fab.handlers}
-          aria-label={open ? "Cerrar el asistente" : "Abrir el asistente (se puede arrastrar)"}
-          title="Tocá para abrir. Sostené y arrastrá para moverlo."
+          aria-label={tr(open ? "chat.closeAssistant" : "chat.openAssistant")}
+          title={tr("chat.dragHint")}
           onMouseEnter={(e) => {
             if (fab.dragging) return;
             e.currentTarget.style.transform = "scale(1.08)";

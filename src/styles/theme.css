@@ -370,3 +370,15 @@ html.fw-dark .fw-hero-search [role="option"] {
     line-height: 1.25;
   }
 }
+
+/* ============================================================================
+   La animación del círculo de carga (components/Spinner.jsx)
+   ----------------------------------------------------------------------------
+   Va en CSS y no en un estilo en línea porque los keyframes no se pueden
+   declarar inline. Un solo giro para toda la app: antes cada pantalla que quería
+   un spinner se declaraba su propio @keyframes, con nombres distintos y
+   velocidades distintas.
+   ========================================================================== */
+@keyframes fw-spin {
+  to { transform: rotate(360deg); }
+}

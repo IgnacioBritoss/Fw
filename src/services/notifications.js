@@ -49,21 +49,24 @@ export async function buildNotifications(userId) {
   for (const b of asArray(bookingsRaw)) {
     const car = carLabel(b);
     const status = String(b.status || "").toUpperCase();
-    let title, body, cat = "reserva";
+    // Se guardan CLAVES de traducción, no texto: este servicio no sabe en qué
+    // idioma está la app, y la pantalla que las muestra sí. Antes las armaba en
+    // castellano y las notificaciones quedaban en castellano en los cinco idiomas.
+    let titleKey, bodyKey, cat = "reserva";
     if (status === "CONFIRMED" || status === "ACCEPTED") {
-      title = "Reserva confirmada"; body = `Se confirmó tu reserva de ${car}`;
+      titleKey = "notif.bookingConfirmed"; bodyKey = "notif.bookingConfirmedBody";
     } else if (status === "PENDING") {
-      title = "Reserva pendiente"; body = `Tu reserva de ${car} está esperando confirmación`;
+      titleKey = "notif.bookingPending"; bodyKey = "notif.bookingPendingBody";
     } else if (status === "REJECTED" || status === "CANCELLED" || status === "CANCELED") {
-      title = "Reserva cancelada"; body = `Tu reserva de ${car} fue cancelada`;
+      titleKey = "notif.bookingCancelled"; bodyKey = "notif.bookingCancelledBody";
     } else {
-      title = "Actualización de reserva"; body = car;
+      titleKey = "notif.bookingUpdated"; bodyKey = "";
     }
     const ts = new Date(b.updatedAt || b.createdAt || Date.now()).getTime();
-    list.push({ id: `booking-${b.id}-${status}`, cat, title, body, ts, link: "/my-bookings" });
+    list.push({ id: `booking-${b.id}-${status}`, cat, titleKey, bodyKey, body: bodyKey ? "" : car, vars: { car }, ts, link: "/my-bookings" });
 
     if (b.paymentStatus === "PAID" || b.paid === true) {
-      list.push({ id: `pay-${b.id}`, cat: "sistema", title: "Pago procesado", body: `Pago confirmado para ${car}`, ts, link: "/my-bookings" });
+      list.push({ id: `pay-${b.id}`, cat: "sistema", titleKey: "notif.paid", bodyKey: "notif.paidBody", vars: { car }, ts, link: "/my-bookings" });
     }
   }
 
@@ -73,13 +76,17 @@ export async function buildNotifications(userId) {
     if (!last) continue;
     if (userId && last.senderId === userId) continue; // solo mensajes entrantes
     const other = c.otherUser || c.owner || c.renter || last.sender || {};
-    const name = other.firstName ? `${other.firstName} ${other.lastName || ""}`.trim() : "un usuario";
+    const name = other.firstName ? `${other.firstName} ${other.lastName || ""}`.trim() : "";
     const ts = new Date(last.createdAt || c.updatedAt || Date.now()).getTime();
     list.push({
       id: `msg-${c.id}-${last.id || ts}`,
       cat: "mensaje",
-      title: `Nuevo mensaje de ${name}`,
-      body: last.content || last.text || "Tenés un mensaje nuevo",
+      titleKey: name ? "notif.newMessageFrom" : "notif.newMessage",
+      vars: { name },
+      // El cuerpo es el mensaje real de la otra persona: eso no se traduce.
+      // Si el mensaje era un audio o una foto no hay texto, y ahí sí va una frase.
+      body: last.content || last.text || "",
+      bodyKey: (last.content || last.text) ? "" : "notif.newMessage",
       ts, link: "/chat",
     });
   }

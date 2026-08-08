@@ -24,17 +24,20 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getMyListings, getMyBookings, acceptBooking, rejectBooking, updateListing,
 } from "../../services/api";
-import { itemsOf, normalizeListing, priceOf } from "../../services/listings";
+import { itemsOf, normalizeListing, priceOf, categoryLabel } from "../../services/listings";
 import AvailabilityManager from "../../components/AvailabilityManager";
 import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import Spinner from "../../components/Spinner";
+import { localeFor, shortDate } from "../../i18n/dates";
+import { useI18n } from "../../i18n/core";
 
 // Etiquetas de los estados de una reserva (mismas que en "Mis reservas").
-const STATUS_LABELS = {
-  REQUESTED: "Pendiente", ACCEPTED: "Aceptada", REJECTED: "Rechazada",
-  CANCELLED_BY_RENTER: "Cancelada", CANCELLED_BY_OWNER: "Cancelada por vos",
-  READY_FOR_PICKUP: "Lista para retiro", IN_PROGRESS: "En curso",
-  RETURN_PENDING: "Devolución pendiente", COMPLETED: "Completada", DISPUTED: "En disputa",
+// Claves de traducción: son las mismas etiquetas que usa "Mis reservas".
+const STATUS_KEYS = {
+  REQUESTED: "status.REQUESTED", ACCEPTED: "status.ACCEPTED", REJECTED: "status.REJECTED",
+  CANCELLED_BY_RENTER: "status.CANCELLED", CANCELLED_BY_OWNER: "dash.cancelledByYou",
+  READY_FOR_PICKUP: "status.READY_FOR_PICKUP", IN_PROGRESS: "status.IN_PROGRESS",
+  RETURN_PENDING: "status.RETURN_PENDING", COMPLETED: "status.COMPLETED", DISPUTED: "status.DISPUTED",
 };
 
 const s = {
@@ -65,6 +68,7 @@ const s = {
 };
 
 export default function Dashboard() {
+  const { t: tr, lang } = useI18n();
   const { user, isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -85,9 +89,9 @@ export default function Dashboard() {
     setLoadingCars(true);
     getMyListings()
       .then(data => setMyCars(itemsOf(data).map(normalizeListing)))
-      .catch(err => setError(err.message || "No pudimos cargar tus autos."))
+      .catch(err => setError(err.message || tr("dash.errCars")))
       .finally(() => setLoadingCars(false));
-  }, []);
+  }, [tr]);
 
   const loadBookings = useCallback(() => {
     setLoadingBookings(true);
@@ -127,7 +131,7 @@ export default function Dashboard() {
       else await rejectBooking(id);
       loadBookings();
     } catch (err) {
-      setError(err.message || "No pudimos actualizar la solicitud.");
+      setError(err.message || tr("dash.errRequest"));
     } finally {
       setActionLoading(null);
     }
@@ -142,7 +146,7 @@ export default function Dashboard() {
       await updateListing(car.id, { status: car.status === "ACTIVE" ? "PAUSED" : "ACTIVE" });
       loadCars();
     } catch (err) {
-      setError(err.message || "No pudimos cambiar el estado de la publicación.");
+      setError(err.message || tr("dash.errStatus"));
     } finally {
       setActionLoading(null);
     }
@@ -155,7 +159,7 @@ export default function Dashboard() {
   const personName = (p) => p?.displayName || `${p?.firstName || ""} ${p?.lastName || ""}`.trim() || p?.email || "";
   const dateRange = (b) => {
     try {
-      return `${format(parseISO(b.startDate), "d MMM", { locale: es })} - ${format(parseISO(b.endDate), "d MMM yyyy", { locale: es })}`;
+      return `${format(parseISO(b.startDate), "d MMM", { locale: localeFor(lang) })} - ${shortDate(b.endDate, lang)}`;
     } catch { return ""; }
   };
 
@@ -164,9 +168,9 @@ export default function Dashboard() {
       <div style={s.header}>
         <div>
           <div style={isMobile ? s.titleMobile : s.title}>
-            Hola, {user?.firstName || user?.name?.split(" ")[0] || ""}
+            {tr("dash.hello", { name: user?.firstName || user?.name?.split(" ")[0] || "" })}
           </div>
-          <div style={s.sub}>Panel de control de tus autos</div>
+          <div style={s.sub}>{tr("dash.subtitle")}</div>
         </div>
         <button style={s.btn} onClick={() => navigate("/publish")}>+ Publicar</button>
       </div>
@@ -186,9 +190,9 @@ export default function Dashboard() {
 
       <div style={s.statsRow}>
         {[
-          [loadingCars ? "..." : myCars.length, "Autos publicados"],
-          [loadingBookings ? "..." : requests.length, "Solicitudes"],
-          [loadingBookings ? "..." : `$${earnings.toLocaleString()}`, "Ganancias"],
+          [loadingCars ? "..." : myCars.length, tr("dash.publishedCars")],
+          [loadingBookings ? "..." : requests.length, tr("dash.requests")],
+          [loadingBookings ? "..." : `$${earnings.toLocaleString()}`, tr("dash.earnings")],
         ].map(([num, label]) => (
           <div key={label} style={s.stat}>
             <div style={{ ...s.statNum, fontSize: isMobile ? 19 : 26 }}>{num}</div>
@@ -199,9 +203,9 @@ export default function Dashboard() {
 
       <div style={s.tabs}>
         {[
-          ["autos", `Mis autos (${myCars.length})`],
-          ["solicitudes", `Solicitudes (${requests.length})`],
-          ["historial", "Historial"],
+          ["autos", `${tr("dash.myCars")} (${myCars.length})`],
+          ["solicitudes", `${tr("dash.requests")} (${requests.length})`],
+          ["historial", tr("dash.history")],
         ].map(([k, l]) => (
           <button key={k} style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
         ))}
@@ -210,11 +214,11 @@ export default function Dashboard() {
       {/* ── MIS AUTOS ── */}
       {tab === "autos" && (
         loadingCars ? (
-          <div style={s.empty}>Cargando tus autos...</div>
+          <Spinner block label={tr("common.loading")} />
         ) : myCars.length === 0 ? (
           <div style={s.empty}>
-            <div style={{ fontSize: 13, marginBottom: 16 }}>Todavía no publicaste ningún auto.</div>
-            <button style={s.btn} onClick={() => navigate("/publish")}>Publicar mi primer auto</button>
+            <div style={{ fontSize: 13, marginBottom: 16 }}>{tr("dash.noCars")}.</div>
+            <button style={s.btn} onClick={() => navigate("/publish")}>{tr("dash.publishFirst")}</button>
           </div>
         ) : myCars.map(car => (
           <div key={car.id} style={s.card}>
@@ -222,17 +226,17 @@ export default function Dashboard() {
               <div style={{ width: 74, height: 56, borderRadius: 8, overflow: "hidden", background: "#f3f4f6", flexShrink: 0 }}>
                 {car.photos?.length > 0
                   ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 10 }}>Sin foto</div>}
+                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 10 }}>{tr("common.noPhoto")}</div>}
               </div>
               <div style={{ flex: 1, minWidth: 160 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{car.brand} {car.model} {car.year}</div>
                 <div style={{ color: "#6b7280", fontSize: 13 }}>
-                  {car.location} · ${priceOf(car).toLocaleString()}/día
-                  {car.categoryLabel ? ` · ${car.categoryLabel}` : ""}
+                  {car.location} · ${priceOf(car).toLocaleString()}{tr("common.perDay")}
+                  {car.category ? ` · ${categoryLabel(tr, car.category)}` : ""}
                 </div>
               </div>
               <span style={{ ...s.badge, ...(car.status === "ACTIVE" ? s.active : s.paused) }}>
-                {car.status === "ACTIVE" ? "Activo" : car.status === "PAUSED" ? "Pausado" : "Borrador"}
+                {car.status === "ACTIVE" ? tr("dash.active") : car.status === "PAUSED" ? tr("dash.paused") : tr("dash.draft")}
               </span>
             </div>
 
@@ -241,11 +245,11 @@ export default function Dashboard() {
                   filtro de fechas para tener datos que consultar. */}
               <button style={{ ...s.linkBtn, ...(openAvailability === car.id ? { borderColor: "#2563eb", color: "#2563eb" } : {}) }}
                 onClick={() => setOpenAvailability(openAvailability === car.id ? null : car.id)}>
-                {openAvailability === car.id ? "Cerrar disponibilidad" : "Disponibilidad por fechas"}
+                {openAvailability === car.id ? tr("common.close") : tr("dash.dateAvailability")}
               </button>
-              <button style={s.linkBtn} onClick={() => navigate(`/cars/${car.id}`)}>Ver publicación</button>
+              <button style={s.linkBtn} onClick={() => navigate(`/cars/${car.id}`)}>{tr("dash.viewListing")}</button>
               <button style={s.linkBtn} disabled={actionLoading === car.id} onClick={() => toggleListingStatus(car)}>
-                {actionLoading === car.id ? "..." : car.status === "ACTIVE" ? "Pausar" : "Activar"}
+                {actionLoading === car.id ? "..." : car.status === "ACTIVE" ? tr("dash.pause") : tr("dash.activate")}
               </button>
             </div>
 
@@ -257,9 +261,9 @@ export default function Dashboard() {
       {/* ── SOLICITUDES ── */}
       {tab === "solicitudes" && (
         loadingBookings ? (
-          <div style={s.empty}>Cargando solicitudes...</div>
+          <Spinner block label={tr("common.loading")} />
         ) : requests.length === 0 ? (
-          <div style={s.empty}>No hay solicitudes pendientes.</div>
+          <div style={s.empty}>{tr("dash.noRequests")}</div>
         ) : requests.map(r => (
           <div key={r.id} style={s.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
@@ -273,13 +277,13 @@ export default function Dashboard() {
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
               <button style={s.accept} disabled={actionLoading === r.id} onClick={() => respond(r.id, "accept")}>
-                {actionLoading === r.id ? "..." : "Aceptar"}
+                {actionLoading === r.id ? "..." : tr("bookings.accept")}
               </button>
-              <button style={s.reject} disabled={actionLoading === r.id} onClick={() => respond(r.id, "reject")}>Rechazar</button>
-              <button style={s.linkBtn} onClick={() => navigate("/my-bookings")}>Ver en mis reservas</button>
+              <button style={s.reject} disabled={actionLoading === r.id} onClick={() => respond(r.id, "reject")}>{tr("bookings.reject")}</button>
+              <button style={s.linkBtn} onClick={() => navigate("/my-bookings")}>{tr("dash.seeInBookings")}</button>
             </div>
             <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 10 }}>
-              Al aceptar, el conductor paga y después coordinan la entrega con el código QR.
+              {tr("dash.acceptNote")}
             </div>
           </div>
         ))
@@ -288,9 +292,9 @@ export default function Dashboard() {
       {/* ── HISTORIAL ── */}
       {tab === "historial" && (
         loadingBookings ? (
-          <div style={s.empty}>Cargando historial...</div>
+          <Spinner block label={tr("common.loading")} />
         ) : ownerBookings.length === 0 ? (
-          <div style={s.empty}>Todavía no hubo reservas en tus autos.</div>
+          <div style={s.empty}>{tr("dash.noHistory")}</div>
         ) : ownerBookings.map(b => (
           <div key={b.id} style={{ ...s.card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
@@ -303,7 +307,7 @@ export default function Dashboard() {
               <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                 ${Number(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0).toLocaleString()}
               </div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_LABELS[b.status] || b.status}</div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
             </div>
           </div>
         ))

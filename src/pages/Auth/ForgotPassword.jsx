@@ -46,7 +46,7 @@ export default function ForgotPassword() {
 
   const handleSubmit = async () => {
     const address = email.trim();
-    if (!address) { setError("Ingresá tu email."); return; }
+    if (!address) { setError(t("reg.errEmail")); return; }
     setLoading(true);
     setError("");
 
@@ -55,7 +55,7 @@ export default function ForgotPassword() {
 
     // Solo se muestra la confirmación si el envío realmente salió.
     if (result && result.success === false) {
-      setError(result.error || "No pudimos enviar el mail. Probá de nuevo.");
+      setError(result.error || t("auth.mailFailed"));
       return;
     }
     setSentTo(address);
@@ -127,7 +127,7 @@ export default function ForgotPassword() {
 
       <label style={f.label}>{t("auth.email")}</label>
       <input style={{ ...f.input, marginBottom: 18 }} type="email" inputMode="email"
-        autoComplete="email" autoCapitalize="none" placeholder="tu@email.com"
+        autoComplete="email" autoCapitalize="none" placeholder={t("auth.phYourEmail")}
         value={email} onChange={(e) => setEmail(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
 

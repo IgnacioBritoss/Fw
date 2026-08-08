@@ -14,47 +14,40 @@
 //    · submission → una fila de UserVerification (la que devuelve el backend)
 //    · compact    → miniaturas más chicas, para la lista del panel admin
 // ============================================================================
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
 import StatusChip from "./StatusChip";
+import { useI18n } from "../i18n/core";
+import { longDate } from "../i18n/dates";
 
 const PHOTOS = [
-  { field: "dniFrontUrl", label: "Frente del DNI" },
-  { field: "dniBackUrl", label: "Dorso del DNI" },
-  { field: "licenseFrontUrl", label: "Frente de la licencia" },
-  { field: "licenseBackUrl", label: "Dorso de la licencia" },
+  { field: "dniFrontUrl", key: "kyc.dniFront" },
+  { field: "dniBackUrl", key: "kyc.dniBack" },
+  { field: "licenseFrontUrl", key: "kyc.licFront" },
+  { field: "licenseBackUrl", key: "kyc.licBack" },
 ];
 
-/** Cómo se muestra cada estado, en castellano y con el color que le corresponde. */
+/** Cómo se muestra cada estado, con el color que le corresponde. */
 const STATUS = {
-  VERIFIED: { label: "Aprobada", tone: "ok" },
-  REJECTED: { label: "Rechazada", tone: "danger" },
-  ID_SUBMITTED: { label: "Esperando revisión", tone: "warn" },
-};
-
-const prettyDate = (value) => {
-  if (!value) return null;
-  try {
-    return format(parseISO(value), "d 'de' MMMM 'de' yyyy", { locale: es });
-  } catch {
-    return null;
-  }
+  VERIFIED: { key: "kyc.approved", tone: "ok" },
+  REJECTED: { key: "kyc.rejected", tone: "danger" },
+  ID_SUBMITTED: { key: "kyc.waitingReview", tone: "warn" },
 };
 
 export default function IdentityDocuments({ submission, compact = false }) {
+  const { t: tr, lang } = useI18n();
+  const prettyDate = (value) => longDate(value, lang) || null;
   if (!submission) return null;
 
-  const state = STATUS[submission.status] ?? {
-    label: submission.status, tone: "neutral",
-  };
+  const state = STATUS[submission.status]
+    ? { label: tr(STATUS[submission.status].key), tone: STATUS[submission.status].tone }
+    : { label: submission.status, tone: "neutral" };
   const size = compact ? 96 : 132;
 
   // Los datos que la IA leyó de las fotos. No se los pide al usuario justamente
   // para que no pueda escribir un número que no es el de su documento.
   const scanned = [
-    ["Número de documento", submission.documentNumber],
-    ["Nombre en el documento", submission.fullNameOnDocument],
-    ["Vence la licencia", prettyDate(submission.licenseExpiresAt)],
+    [tr("kyc.docNumber"), submission.documentNumber],
+    [tr("kyc.docName"), submission.fullNameOnDocument],
+    [tr("kyc.licExpires"), prettyDate(submission.licenseExpiresAt)],
   ].filter(([, value]) => Boolean(value));
 
   return (
@@ -63,24 +56,24 @@ export default function IdentityDocuments({ submission, compact = false }) {
         <StatusChip tone={state.tone}>{state.label}</StatusChip>
         {submission.createdAt && (
           <span style={{ fontSize: 12, color: "#9ca3af" }}>
-            Enviada el {prettyDate(submission.createdAt)}
+            {tr("kyc.sentOn", { date: prettyDate(submission.createdAt) })}
           </span>
         )}
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: scanned.length ? 12 : 0 }}>
-        {PHOTOS.map(({ field, label }) => {
+        {PHOTOS.map(({ field, key }) => {
           const url = submission[field];
           if (!url) return null;
           return (
             <a key={field} href={url} target="_blank" rel="noopener noreferrer"
-              title="Abrir en grande"
+              title={tr("kyc.openBig")}
               style={{ textDecoration: "none", color: "inherit" }}>
-              <img src={url} alt={label} style={{
+              <img src={url} alt={tr(key)} style={{
                 width: size, height: size * 0.66, objectFit: "cover",
                 borderRadius: 8, border: "1px solid #e5e7eb", display: "block", background: "#f3f4f6",
               }} />
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, maxWidth: size }}>{label}</div>
+              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
             </a>
           );
         })}
@@ -92,7 +85,7 @@ export default function IdentityDocuments({ submission, compact = false }) {
           borderRadius: 8, padding: "10px 12px",
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 6 }}>
-            LEÍDO DE LAS FOTOS
+            {tr("kyc.readFromPhotos")}
           </div>
           {scanned.map(([label, value]) => (
             <div key={label} style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.7 }}>

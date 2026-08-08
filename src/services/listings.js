@@ -15,12 +15,12 @@
 // Categorías: el backend las guarda en el vehículo (enum VehicleCategory) y es
 // lo que alimenta el filtro por categoría del inicio y del buscador.
 export const CATEGORIES = [
-  { id: "SEDAN", label: "Sedan" },
-  { id: "SUV", label: "SUV" },
-  { id: "BERLINA", label: "Berlinas" },
-  { id: "PICKUP", label: "Pickup" },
-  { id: "ELECTRIC", label: "Eléctricos" },
-  { id: "PREMIUM", label: "Premium" },
+  { id: "SEDAN", label: "Sedan", key: "cat.SEDAN" },
+  { id: "SUV", label: "SUV", key: "cat.SUV" },
+  { id: "BERLINA", label: "Berlinas", key: "cat.BERLINAS" },
+  { id: "PICKUP", label: "Pickup", key: "cat.PICKUP" },
+  { id: "ELECTRIC", label: "Eléctricos", key: "cat.ELECTRICS" },
+  { id: "PREMIUM", label: "Premium", key: "cat.PREMIUM" },
 ];
 
 export const CATEGORY_LABELS = {
@@ -31,6 +31,39 @@ export const CATEGORY_LABELS = {
 // Traducciones de los códigos del backend (en inglés) al texto que se muestra.
 export const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
 export const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", HYBRID: "Híbrido", ELECTRIC: "Eléctrico", OTHER: "GNC" };
+
+// ── El mismo vocabulario, como CLAVES de traducción ──────────────────────────
+// El tipo de auto, la caja y el combustible son texto que el usuario LEE, así que
+// también tienen que cambiar de idioma. Antes las tarjetas del inicio mostraban
+// "Eléctricos" y "Automático" en castellano incluso con la app en inglés.
+// Las tablas de arriba se conservan como respaldo en castellano para el caso en
+// que un código nuevo del backend todavía no tenga clave.
+export const CATEGORY_KEYS = {
+  SEDAN: "cat.SEDAN", SUV: "cat.SUV", BERLINA: "cat.BERLINA",
+  PICKUP: "cat.PICKUP", ELECTRIC: "cat.ELECTRIC", PREMIUM: "cat.PREMIUM", OTHER: "cat.OTHER",
+};
+export const TRANSMISSION_KEYS = { MANUAL: "trans.MANUAL", AUTOMATIC: "trans.AUTOMATIC" };
+export const FUEL_KEYS = {
+  GASOLINE: "fuel.GASOLINE", DIESEL: "fuel.DIESEL", HYBRID: "fuel.HYBRID",
+  ELECTRIC: "fuel.ELECTRIC", OTHER: "fuel.OTHER",
+};
+
+/**
+ * Texto de un código del backend en el idioma elegido.
+ * `tr` es la función de traducción; si el código no tiene clave se cae en la
+ * tabla castellana, y si tampoco está ahí se devuelve el código tal cual.
+ */
+export function labelFor(tr, keys, labels, code) {
+  if (!code) return "";
+  const key = keys[code];
+  if (!key) return labels[code] || code;
+  const text = tr(key);
+  // translate() devuelve la clave cuando no la encuentra: ahí se usa el respaldo.
+  return text === key ? (labels[code] || code) : text;
+}
+export const categoryLabel = (tr, code) => labelFor(tr, CATEGORY_KEYS, CATEGORY_LABELS, code);
+export const transmissionLabel = (tr, code) => labelFor(tr, TRANSMISSION_KEYS, TRANSMISSION_LABELS, code);
+export const fuelLabel = (tr, code) => labelFor(tr, FUEL_KEYS, FUEL_LABELS, code);
 
 // Las mismas tablas al revés: de lo que elige el usuario al código del backend.
 export const TRANSMISSION_CODES = { Manual: "MANUAL", "Automático": "AUTOMATIC" };
@@ -80,10 +113,16 @@ export function normalizeListing(listing) {
     lng: listing.longitude ?? listing.lng,
     category,
     categoryLabel: CATEGORY_LABELS[category] || "",
+    // La clave para traducir la categoría; el label de arriba es el respaldo.
+    categoryKey: CATEGORY_KEYS[category] || "",
     // Se guardan el código y la etiqueta: el código sirve para filtrar contra el
     // backend y la etiqueta para mostrar.
     transmissionCode: vehicle.transmission || TRANSMISSION_CODES[listing.transmission] || "",
     fuelCode: vehicle.fuelType || FUEL_CODES[listing.fuel] || "",
+    // Estos dos quedan como respaldo en castellano. Las pantallas dibujan
+    // `transmissionCode` / `fuelCode` traducidos con transmissionLabel() y
+    // fuelLabel(): antes mostraban estos, y con la app en inglés se leía
+    // "Automático" y "Nafta" en medio de una pantalla en inglés.
     transmission: TRANSMISSION_LABELS[vehicle.transmission] || listing.transmission || "",
     fuel: FUEL_LABELS[vehicle.fuelType] || listing.fuel || "",
     seats: vehicle.seats ?? listing.seats,

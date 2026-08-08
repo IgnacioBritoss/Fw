@@ -13,9 +13,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useFavorites } from "../../context/FavoritesContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { getMyFavorites } from "../../services/api";
-import { itemsOf, normalizeListing, priceOf } from "../../services/listings";
+import { itemsOf, normalizeListing, priceOf, categoryLabel, transmissionLabel } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
 
 export default function Favorites() {
   const { t: tr } = useI18n();
@@ -33,10 +34,10 @@ export default function Favorites() {
     let active = true;
     getMyFavorites()
       .then(data => { if (active) setCars(itemsOf(data).map(normalizeListing)); })
-      .catch(err => { if (active) setError(err.message || "No pudimos cargar tus favoritos."); })
+      .catch(err => { if (active) setError(err.message || tr("favorites.loadFailed")); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [tr]);
 
   // Al quitar un favorito desde el corazón, el auto sale de la lista sin
   // necesidad de recargar la pantalla.
@@ -57,8 +58,8 @@ export default function Favorites() {
       <div style={t.page}>
         <div style={t.title}>{tr("favorites.title")}</div>
         <div style={t.empty}>
-          <div style={{ fontSize: 14, marginBottom: 16 }}>Iniciá sesión para guardar tus autos favoritos.</div>
-          <button style={t.btn} onClick={() => navigate("/login")}>Iniciar sesión</button>
+          <div style={{ fontSize: 14, marginBottom: 16 }}>{tr("favorites.needLogin")}</div>
+          <button style={t.btn} onClick={() => navigate("/login")}>{tr("auth.loginBtn")}</button>
         </div>
       </div>
     );
@@ -68,7 +69,7 @@ export default function Favorites() {
     <div style={t.page}>
       <div style={t.title}>{tr("favorites.title")}</div>
       <div style={t.sub}>
-        {loading ? "Cargando tus favoritos..." : `${visible.length} auto${visible.length !== 1 ? "s" : ""} guardado${visible.length !== 1 ? "s" : ""}`}
+        {loading ? tr("favorites.loading") : tr(visible.length === 1 ? "favorites.countOne" : "favorites.countMany", { count: visible.length })}
       </div>
 
       {error && (
@@ -76,13 +77,13 @@ export default function Favorites() {
       )}
 
       {loading ? (
-        <div style={t.empty}>Cargando...</div>
+        <Spinner block label={tr("common.loading")} />
       ) : visible.length === 0 ? (
         <div style={t.empty}>
           <svg width="42" height="42" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 12px", display: "block" }}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z" stroke="#d1d5db" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
           <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>{tr("favorites.empty")}</div>
-          <div style={{ fontSize: 13, marginBottom: 20 }}>Tocá el corazón de cualquier auto para tenerlo a mano acá.</div>
-          <button style={t.btn} onClick={() => navigate("/buscar")}>Buscar autos</button>
+          <div style={{ fontSize: 13, marginBottom: 20 }}>{tr("favorites.emptyHint")}</div>
+          <button style={t.btn} onClick={() => navigate("/buscar")}>{tr("favorites.explore")}</button>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
@@ -91,7 +92,7 @@ export default function Favorites() {
               <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "#e5e7eb" }}>
                 {car.photos?.length > 0
                   ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
+                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
                 <FavoriteButton listingId={car.id} />
                 {car.status !== "ACTIVE" && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(17,24,39,.82)", color: "#fff", fontSize: 11, fontWeight: 600, padding: "5px 10px", textAlign: "center" }}>
@@ -103,13 +104,13 @@ export default function Favorites() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
                 <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>{car.location}</div>
                 <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-                  {car.categoryLabel && <span style={t.tag}>{car.categoryLabel}</span>}
-                  {car.transmission && <span style={t.tag}>{car.transmission}</span>}
+                  {car.category && <span style={t.tag}>{categoryLabel(tr, car.category)}</span>}
+                  {car.transmissionCode && <span style={t.tag}>{transmissionLabel(tr, car.transmissionCode)}</span>}
                 </div>
                 <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
+                  <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
                   <button style={{ background: "#111827", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                    onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Ver auto</button>
+                    onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("favorites.viewCar")}</button>
                 </div>
               </div>
             </div>

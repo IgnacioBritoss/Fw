@@ -64,7 +64,7 @@ export default function Login() {
    * respuesta que no había llegado.
    */
   const handleSubmit = async () => {
-    if (!form.email || !form.password) { setError("Completá todos los campos."); return; }
+    if (!form.email || !form.password) { setError(t("auth.errAllFields")); return; }
     setLoading(true); setError("");
     const result = await loginWithCredentials(form.email.trim(), form.password);
     setLoading(false);
@@ -110,7 +110,7 @@ export default function Login() {
       <div style={{ marginBottom: 16 }}>
         <label style={f.label}>{t("auth.email")}</label>
         <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none"
-          placeholder="martin@email.com" value={form.email}
+          placeholder={t("reg.phEmail")} value={form.email}
           onChange={e => setForm(fm => ({ ...fm, email: e.target.value }))}
           onKeyDown={e => e.key === "Enter" && handleSubmit()}
           style={f.input} />

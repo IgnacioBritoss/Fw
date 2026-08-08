@@ -15,6 +15,8 @@
 // Dirección base del backend. Por defecto apunta al que está desplegado en
 // Vercel; con VITE_API_URL se puede apuntar a un backend local para desarrollo
 // (por ejemplo VITE_API_URL=http://localhost:3000 en un archivo .env.local).
+import { tSync, idiomaInicial } from "../i18n/core";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "https://free-wheel-back.vercel.app";
 
 // URL a la que se redirige al usuario para iniciar sesión con Google (OAuth).
@@ -60,7 +62,7 @@ async function apiFetch(path, options = {}) {
   } catch {
     // Falló la red (sin internet, backend caído): mensaje claro en vez de
     // "Failed to fetch", que no le dice nada al usuario.
-    const err = new Error("No pudimos conectarnos con el servidor. Revisá tu conexión e intentá de nuevo.");
+    const err = new Error(tSync("net.offline"));
     err.status = 0;
     throw err;
   }
@@ -169,8 +171,20 @@ export async function confirmEmailChange(code) {
 // ── USUARIOS ───────────────────────────────────────────────────
 // getMe(): trae los datos del usuario logueado. updateMe(): edita el perfil.
 export async function getMe() { return apiFetch("/users/me"); }
-export async function updateMe({ firstName, lastName, phone }) {
-  return apiFetch("/users/me", { method: "PATCH", body: JSON.stringify({ firstName, lastName, phone }) });
+/**
+ * Edita el perfil. Solo se manda lo que se pasó: el backend valida con
+ * `forbidNonWhitelisted`, y mandar `phone: undefined` en un cambio de foto
+ * hacía que se pisara con vacío lo que no se estaba tocando.
+ *
+ * `profilePhotoUrl` es la foto de perfil pública (null la quita).
+ */
+export async function updateMe(fields = {}) {
+  const allowed = ["firstName", "lastName", "phone", "profilePhotoUrl"];
+  const body = {};
+  for (const key of allowed) {
+    if (fields[key] !== undefined) body[key] = fields[key];
+  }
+  return apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(body) });
 }
 
 // ── VEHÍCULOS ──────────────────────────────────────────────────
@@ -289,7 +303,12 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
  * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
  */
 export async function aiDocument(image, kind) {
-  return apiFetch("/ai/document", { method: "POST", body: JSON.stringify({ image, kind }) });
+  // El idioma va en el pedido: el motivo del rechazo lo escribe la IA y la
+  // persona lo LEE, así que tiene que estar en el idioma que eligió en la app.
+  return apiFetch("/ai/document", {
+    method: "POST",
+    body: JSON.stringify({ image, kind, lang: idiomaInicial() }),
+  });
 }
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
@@ -324,7 +343,11 @@ export async function aiChat(messages, temperature) {
   });
 }
 export async function aiVision(imageDataUrl) {
-  return apiFetch("/ai/vision", { method: "POST", body: JSON.stringify({ imageDataUrl }) });
+  // Ídem: el "parece un auto de juguete" que se muestra en pantalla sale de acá.
+  return apiFetch("/ai/vision", {
+    method: "POST",
+    body: JSON.stringify({ imageDataUrl, lang: idiomaInicial() }),
+  });
 }
 export async function aiTranscribe(audioUrl) {
   return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });

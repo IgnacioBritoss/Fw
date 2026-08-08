@@ -116,10 +116,10 @@ export default function Settings() {
         </div>
         {editable && (editing
           ? <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...t.edit, color: "#9ca3af" }} onClick={() => { setVal(value || ""); setEditing(false); }}>Cancelar</button>
-              <button style={t.edit} onClick={commit} disabled={saving}>{saving ? "..." : "Guardar"}</button>
+              <button style={{ ...t.edit, color: "#9ca3af" }} onClick={() => { setVal(value || ""); setEditing(false); }}>{tr("common.cancel")}</button>
+              <button style={t.edit} onClick={commit} disabled={saving}>{saving ? "..." : tr("common.save")}</button>
             </div>
-          : <button style={t.edit} onClick={() => setEditing(true)}>Editar</button>)}
+          : <button style={t.edit} onClick={() => setEditing(true)}>{tr("common.edit")}</button>)}
       </div>
     );
   };
@@ -127,7 +127,7 @@ export default function Settings() {
   // Interruptor visual (switch) on/off reutilizable.
   const Toggle = ({ on, onChange }) => (
     <button onClick={() => onChange(!on)}
-      style={{ width: 46, height: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#2563eb" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0 }}>
+      style={{ width: 46, height: 27, minHeight: 27, maxHeight: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#2563eb" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0, boxSizing: "border-box" }}>
       <span style={{ position: "absolute", top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left .2s cubic-bezier(.22,1,.36,1)" }} />
     </button>
   );
@@ -144,9 +144,9 @@ export default function Settings() {
         </div>
       </div>
       {verified ? (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#dcfce7", color: "#166534", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>Verificado</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#dcfce7", color: "#166534", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>{tr("status.verified")}</span>
       ) : (
-        <button onClick={onVerify} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>Verificar ahora</button>
+        <button onClick={onVerify} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
       )}
     </div>
   );
@@ -179,7 +179,7 @@ export default function Settings() {
           <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 8, paddingTop: 8 }}>
             <div style={{ ...t.menuItem(false), color: "#dc2626" }} onClick={() => { logout(); navigate("/"); }}>
               <Svg d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>} color="#dc2626" />
-              Cerrar sesión
+              {tr("nav.logout")}
             </div>
           </div>
         </div>
@@ -233,37 +233,37 @@ export default function Settings() {
             </>
           ) : section === "seguridad" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>Seguridad y verificación</div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>Validá tu identidad para poder alquilar y publicar autos</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>{tr("settings.securityTitle")}</div>
+              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>{tr("settings.securitySub")}</div>
 
               <div style={{ ...t.card, padding: 26 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Verificación de identidad</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 18 }}>Subí tu documentación para verificar tu cuenta</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.identityTitle")}</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 18 }}>{tr("settings.identitySub")}</div>
 
                 {/* Estado REAL de la verificación (GET /verification/me/status).
                     Antes se leían marcas guardadas en el navegador: acá decía
                     "Verificado" y el servidor igual rechazaba publicar y reservar. */}
                 <VerifRow
-                  title="Email"
-                  desc="Confirmación de tu dirección de correo"
+                  title={tr("auth.email")}
+                  desc={tr("settings.emailDesc")}
                   verified={checklist.emailVerified === true}
                   onVerify={() => navigate("/verify-email")}
                 />
                 <VerifRow
-                  title={user?.verification?.phoneRequired ? "Teléfono" : "Teléfono (opcional)"}
-                  desc="El código llega a tu email: el envío por SMS es un servicio pago que todavía no está contratado"
+                  title={user?.verification?.phoneRequired ? tr("auth.phone") : `${tr("auth.phone")} (${tr("common.optional")})`}
+                  desc={tr("settings.phoneDesc")}
                   verified={checklist.phoneVerified === true}
                   onVerify={() => navigate("/kyc")}
                 />
                 <VerifRow
-                  title="DNI y licencia de conducir"
-                  desc="Frente y dorso de ambos documentos"
+                  title={tr("settings.docsTitle")}
+                  desc={tr("settings.docsDesc")}
                   verified={checklist.documentsSubmitted === true}
                   onVerify={() => navigate("/kyc")}
                 />
                 <VerifRow
-                  title="Fecha de nacimiento"
-                  desc="Necesaria para validar que sos mayor de 18"
+                  title={tr("profile.birthDate")}
+                  desc={tr("settings.birthDesc")}
                   verified={checklist.dateOfBirthProvided === true}
                   onVerify={() => navigate("/complete-profile")}
                   last
@@ -272,12 +272,12 @@ export default function Settings() {
                 {isVerified ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
                     <Svg d={<path d="M20 6L9 17l-5-5" />} color="#16a34a" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>Tu cuenta está completamente verificada: ya podés publicar y reservar.</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>{tr("settings.allVerified")}</span>
                   </div>
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
                     <Svg d={<><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>} color="#ea580c" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#9a3412" }}>Completá los pasos pendientes para poder publicar autos y reservar.</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#9a3412" }}>{tr("settings.pendingSteps")}</span>
                   </div>
                 )}
               </div>

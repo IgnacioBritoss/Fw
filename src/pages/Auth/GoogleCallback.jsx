@@ -17,8 +17,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
 
 export default function GoogleCallback() {
+  const { t } = useI18n();
   const [params] = useSearchParams();
   const { loginWithGoogleToken } = useAuth();
   const navigate = useNavigate();
@@ -30,9 +33,9 @@ export default function GoogleCallback() {
 
   // Errores que se saben antes de llamar a nadie: se calculan en el render.
   const initialError = oauthError
-    ? "Google canceló el inicio de sesión. Probá de nuevo."
+    ? t("auth.googleCancelled")
     : !token
-      ? "No recibimos el token de Google. Probá iniciar sesión de nuevo."
+      ? t("auth.googleNoToken")
       : "";
   const [loginError, setLoginError] = useState("");
   const error = initialError || loginError;
@@ -55,15 +58,15 @@ export default function GoogleCallback() {
           {error}
         </div>
         <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"#2563eb", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
-          Volver al login
+          {t("auth.backToLogin")}
         </Link>
       </div>
     </div>
   );
 
   return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", color:"#6b7280" }}>
-      Iniciando sesión con Google...
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <Spinner block label={t("auth.googleSigningIn")} />
     </div>
   );
 }

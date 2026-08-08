@@ -19,9 +19,11 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing, createMediaAsset } from "../../services/api";
-import { CATEGORIES } from "../../services/listings";
+import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
 
 // Colores predefinidos que se ofrecen como "chips" al elegir el color del auto.
 const PRESET_COLORS = [
@@ -96,17 +98,18 @@ function validateArgentinePlate(plate) {
 // completa la IA. No bloquea: solo advierte.
 function getSpecWarnings(form) {
   const checks = [
-    ["doors", 2, 7, "Puertas"],
-    ["seats", 2, 9, "Asientos"],
-    ["horsePower", 40, 1500, "Potencia (HP)"],
-    ["engineDisplacementCC", 400, 8000, "Cilindrada (cc)"],
-    ["trunkCapacityLiters", 50, 3000, "Baúl (litros)"],
-    ["fuelConsumptionLitersPer100Km", 2, 35, "Consumo (l/100km)"],
-    ["weightKg", 500, 6000, "Peso (kg)"],
+    ["doors", 2, 7, "spec.doors"],
+    ["seats", 2, 9, "spec.seats"],
+    ["horsePower", 40, 1500, "spec.powerHp"],
+    ["engineDisplacementCC", 400, 8000, "spec.displacementCc"],
+    ["trunkCapacityLiters", 50, 3000, "spec.trunkL"],
+    ["fuelConsumptionLitersPer100Km", 2, 35, "spec.consumption100"],
+    ["weightKg", 500, 6000, "spec.weightKg"],
   ];
+  // Devuelve la clave y los valores; el texto se arma con la traducción al dibujar.
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
-    .map(([key, min, max, label]) => `${label}: ${form[key]} parece fuera del rango normal (${min}–${max})`);
+    .map(([key, min, max, label]) => ({ label, value: form[key], min, max }));
 }
 
 // Normaliza un texto de ubicación (minúsculas, sin espacios de más) para poder
@@ -114,10 +117,29 @@ function getSpecWarnings(form) {
 const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
 // Nombres de los pasos y traducciones de las opciones a los códigos del backend.
-const STEPS = ["Vehículo", "Fotos", "Listing", "Confirmar"];
-const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
-const FUEL_MAP = { Nafta: "GASOLINE", Diesel: "DIESEL", Eléctrico: "ELECTRIC", GNC: "OTHER" };
-const DRIVETRAIN_MAP = { Delantera: "FRONT", Trasera: "REAR", "4x4": "FOUR_BY_FOUR", AWD: "AWD" };
+// Claves: los pasos se traducen al dibujarse.
+const STEPS = ["publish.step.vehicle", "publish.step.photos", "publish.step.listing", "publish.step.confirm"];
+// Caja, combustible y tracción: el formulario guarda el CÓDIGO del backend y la
+// lista muestra el texto traducido. Antes guardaba la palabra en castellano y la
+// convertía al enviar, así que la lista quedaba en castellano en los cinco
+// idiomas y traducirla habría roto la conversión.
+const TRANSMISSION_OPTS = [
+  { code: "MANUAL", key: "trans.MANUAL" },
+  { code: "AUTOMATIC", key: "trans.AUTOMATIC" },
+];
+const FUEL_OPTS = [
+  { code: "GASOLINE", key: "fuel.GASOLINE" },
+  { code: "DIESEL", key: "fuel.DIESEL" },
+  { code: "HYBRID", key: "fuel.HYBRID" },
+  { code: "ELECTRIC", key: "fuel.ELECTRIC" },
+  { code: "OTHER", key: "fuel.OTHER" },
+];
+const DRIVETRAIN_OPTS = [
+  { code: "FRONT", key: "drive.FRONT" },
+  { code: "REAR", key: "drive.REAR" },
+  { code: "FOUR_BY_FOUR", key: "drive.4X4" },
+  { code: "AWD", key: "drive.AWD" },
+];
 
 /**
  * Borrador de la publicación, guardado en el navegador.
@@ -139,7 +161,8 @@ const EMPTY_VEHICLE = {
   // el buscador. Antes no se cargaba en ninguna parte, así que los autos
   // publicados quedaban afuera de ese filtro.
   category: "",
-  transmission: "Manual", fuel: "Nafta", drivetrain: "Delantera",
+  // Códigos del backend, no la palabra en castellano.
+  transmission: "MANUAL", fuel: "GASOLINE", drivetrain: "FRONT",
   seats: "5", doors: "4", color: "", plate: "",
   bluetooth: false, rearCamera: false, parkingSensors: false,
   trunkCapacityLiters: "", fuelConsumptionLitersPer100Km: "",
@@ -168,6 +191,7 @@ function clearDraft() {
 }
 
 export default function PublishCar() {
+  const { t: tr } = useI18n();
   const { isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -228,7 +252,7 @@ export default function PublishCar() {
   // localStorage para no volver a pedir lo mismo.
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
-      setError("Completá marca, modelo y año antes de autocompletar.");
+      setError(tr("publish.errBeforeAi"));
       return;
     }
     setError("");
@@ -258,7 +282,7 @@ Si no sabés un dato, usá null.`;
         data = extractJSON(response);
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
-        setError("No se pudieron obtener las especificaciones. Completalas manualmente.");
+        setError(tr("publish.errSpecs"));
         setAiLoading(false);
         return;
       }
@@ -305,10 +329,10 @@ Devolvé SOLO un JSON válido sin texto adicional:
 Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
         const response = await groqChat([{ role: "user", content: prompt }], 0);
         data = extractJSON(response);
-        if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error("Precio inválido");
+        if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error(tr("publish.errBadPrice"));
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
-        setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
+        setError(tr("publish.errPriceAi"));
         setPricingLoading(false);
         return;
       }
@@ -348,7 +372,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
-    if (photos.length + files.length > 6) { setError("Podés subir hasta 6 fotos."); return; }
+    if (photos.length + files.length > 6) { setError(tr("publish.errMaxPhotos")); return; }
     const startIdx = photos.length;
     files.forEach((file, fileIdx) => {
       const photoIdx = startIdx + fileIdx;
@@ -387,35 +411,35 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   // (datos obligatorios, mínimo 4 fotos válidas, precio y ubicación, etc.).
   const validateStep = () => {
     if (step === 0) {
-      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError("Completá marca, modelo y año."); return false; }
-      if (!vehicleForm.category) { setError("Elegí la categoría del vehículo (es lo que usa el buscador para filtrarlo)."); return false; }
-      if (!vehicleForm.color) { setError("Seleccioná el color del vehículo."); return false; }
-      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { setError("Ingresá la cantidad de asientos."); return false; }
-      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { setError("Patente inválida. Formato: ABC123 (viejo) o AB123CD (Mercosur)."); return false; }
-      if (specWarnings.length > 0) { setError("Corregí las especificaciones fuera de rango antes de continuar."); return false; }
+      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError(tr("publish.errBrandModel")); return false; }
+      if (!vehicleForm.category) { setError(tr("publish.errCategory")); return false; }
+      if (!vehicleForm.color) { setError(tr("publish.errColor")); return false; }
+      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { setError(tr("publish.errSeats")); return false; }
+      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { setError(tr("publish.errPlate")); return false; }
+      if (specWarnings.length > 0) { setError(tr("publish.errSpecRange")); return false; }
     }
     if (step === 1) {
-      if (photos.length < 4) { setError("Subí al menos 4 fotos del vehículo."); return false; }
+      if (photos.length < 4) { setError(tr("publish.errMinPhotos")); return false; }
       if (photos.some((_, i) => estadoFoto(i) === "loading")) {
-        setError("Esperá a que terminen de revisarse las fotos."); return false;
+        setError(tr("publish.errWaitReview")); return false;
       }
       if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
-        setError("Hay fotos que no son de un vehículo real. Reemplazalas o eliminalas."); return false;
+        setError(tr("publish.errBadPhotos")); return false;
       }
       // Las que no se pudieron revisar tampoco pasan solas: hace falta que la
       // persona se haga cargo marcando la casilla. Antes pasaban sin que nada lo
       // dijera, que es como una foto de un perro llegó a una publicación.
       const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
       if (sinRevisar > 0 && !photosConfirmed) {
-        setError(`Hay ${sinRevisar} foto${sinRevisar !== 1 ? "s" : ""} que no pudimos revisar. Volvé a intentar la revisión, o confirmá abajo que son del auto que estás publicando.`);
+        setError(tr(sinRevisar === 1 ? "publish.errUnreviewedOne" : "publish.errUnreviewedMany", { count: sinRevisar }));
         return false;
       }
     }
     if (step === 2) {
-      if (!listingForm.title) { setError("Ingresá un título para el listing."); return false; }
-      if (!listingForm.description) { setError("Ingresá una descripción."); return false; }
-      if (!listingForm.pricePerDay) { setError("Ingresá el precio por día."); return false; }
-      if (!listingForm.locationText) { setError("Seleccioná una ubicación."); return false; }
+      if (!listingForm.title) { setError(tr("publish.errTitle")); return false; }
+      if (!listingForm.description) { setError(tr("publish.errDescription")); return false; }
+      if (!listingForm.pricePerDay) { setError(tr("publish.errPrice")); return false; }
+      if (!listingForm.locationText) { setError(tr("publish.errLocation")); return false; }
     }
     setError(""); return true;
   };
@@ -448,9 +472,9 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(vehicleForm.color && { color: vehicleForm.color }),
         seats: Number(vehicleForm.seats) || undefined,
         doors: Number(vehicleForm.doors) || undefined,
-        transmission: TRANSMISSION_MAP[vehicleForm.transmission] || "MANUAL",
-        fuelType: FUEL_MAP[vehicleForm.fuel] || "GASOLINE",
-        drivetrain: DRIVETRAIN_MAP[vehicleForm.drivetrain] || "FRONT",
+        transmission: vehicleForm.transmission || "MANUAL",
+        fuelType: vehicleForm.fuel || "GASOLINE",
+        drivetrain: vehicleForm.drivetrain || "FRONT",
         bluetooth: vehicleForm.bluetooth, rearCamera: vehicleForm.rearCamera, parkingSensors: vehicleForm.parkingSensors,
         ...(vehicleForm.horsePower && { horsePower: Number(vehicleForm.horsePower) }),
         ...(vehicleForm.engineDisplacementCC && { engineDisplacementCC: Number(vehicleForm.engineDisplacementCC) }),
@@ -470,7 +494,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         })));
       } catch (photoError) {
         throw new Error(
-          `${photoError.message || "No pudimos subir las fotos"}. Tu vehículo quedó guardado: reintentá la publicación desde "Mis autos".`,
+          tr("publish.errUpload", { detail: photoError.message || tr("publish.errUploadShort") }),
         );
       }
 
@@ -494,9 +518,9 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       // verificada: se explica qué hacer en vez de mostrar el error crudo.
       if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
         setNeedsVerification(true);
-        setError("Para publicar un auto necesitás verificar tu cuenta (teléfono, DNI y licencia).");
+        setError(tr("publish.errNeedVerified"));
       } else {
-        setError(err.message || "Error al publicar.");
+        setError(err.message || tr("publish.errPublish"));
       }
     } finally {
       setLoading(false);
@@ -516,24 +540,25 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <div style={s.successTitle}>Auto publicado</div>
+        <div style={s.successTitle}>{tr("publish.published")}</div>
         <div style={s.successSub}>
           Tu auto ya está publicado y visible para otros usuarios.<br />
-          Desde "Mis autos" podés bloquear las fechas en las que no esté disponible.
+          {tr("publish.blockDatesNote")}
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>Ir a mis autos</button>
-          <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>Ver el inicio</button>
+          <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>{tr("publish.goToMyCars")}</button>
+          <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>{tr("publish.seeHome")}</button>
         </div>
       </div>
     </div>
   );
 
   // Botón tipo "chip" reutilizable: se pinta de azul si es la opción seleccionada.
-  const chipBtn = (val, current, onClick) => (
+  // `val` es el CÓDIGO que se guarda; `label` el texto traducido que se lee.
+  const chipBtn = (val, current, onClick, label = val) => (
     <button key={val} type="button" onClick={() => onClick(val)}
       style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: current === val ? "#2563eb" : "#fff", color: current === val ? "#fff" : "#374151" }}>
-      {val}
+      {label}
     </button>
   );
 
@@ -545,8 +570,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
       `}</style>
 
-      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Publicar mi auto</div>
-      <div style={s.sub}>Completá los datos del vehículo</div>
+      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>{tr("publish.title")}</div>
+      <div style={s.sub}>{tr("publish.subtitle")}</div>
 
       {/* Stepper */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
@@ -568,7 +593,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 ) : i + 1}
               </div>
               <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "#2563eb" : i < step ? "#1d4ed8" : "#9ca3af" }}>
-                {st}
+                {tr(st)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -583,7 +608,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {draftRestored && !done && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 }}>
           <span style={{ flex: 1, minWidth: 200 }}>
-            Retomamos la carga donde la habías dejado. Las fotos hay que elegirlas de nuevo.
+            {tr("publish.draftResumed")}
           </span>
           <button type="button"
             onClick={() => {
@@ -594,7 +619,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               setListingForm(EMPTY_LISTING);
             }}
             style={{ background: "#fff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-            Empezar de cero
+            {tr("publish.startOver")}
           </button>
         </div>
       )}
@@ -606,64 +631,64 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {(needsVerification || !isVerified) && (
         <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div style={{ fontSize: 13, color: "#9a3412" }}>
-            Para publicar un auto tu cuenta tiene que estar verificada (teléfono, DNI y licencia).
+            {tr("publish.verifyFirst")}
           </div>
           <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-            onClick={() => navigate("/kyc")}>Verificar ahora</button>
+            onClick={() => navigate("/kyc")}>{tr("profile.verifyNow")}</button>
         </div>
       )}
 
       {/* PASO 0 */}
       {step === 0 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Datos del vehículo</div>
+          <div style={s.sectionTitle}>{tr("publish.vehicleData")}</div>
           <div style={isMobile ? s.grid3Mobile : s.grid3}>
             <div style={s.field}>
-              <label style={s.label}>Marca *</label>
+              <label style={s.label}>{tr("publish.brand")} *</label>
               <input style={s.input} placeholder="Toyota" value={vehicleForm.brand} onChange={(e) => setV("brand", e.target.value)} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Modelo *</label>
+              <label style={s.label}>{tr("publish.model")} *</label>
               <input style={s.input} placeholder="Corolla" value={vehicleForm.model} onChange={(e) => setV("model", e.target.value)} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Año *</label>
+              <label style={s.label}>{tr("publish.year")} *</label>
               <input style={s.input} type="number" min="2000" max="2025" value={vehicleForm.year} onChange={(e) => setV("year", e.target.value)} />
             </div>
           </div>
 
           {/* Categoría: alimenta el filtro por categoría del inicio y del buscador. */}
           <div style={s.field}>
-            <label style={s.label}>Categoría *</label>
+            <label style={s.label}>{tr("publish.category")} *</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {CATEGORIES.map(c => chipBtn(c.label, CATEGORIES.find(x => x.id === vehicleForm.category)?.label, () => setV("category", c.id)))}
+              {CATEGORIES.map(c => chipBtn(c.id, vehicleForm.category, () => setV("category", c.id), tr(c.key)))}
             </div>
             <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
-              Es lo que permite encontrar tu auto cuando alguien filtra por tipo de vehículo.
+              {tr("publish.categoryHint")}
             </div>
           </div>
 
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
-              <label style={s.label}>Transmisión</label>
+              <label style={s.label}>{tr("publish.transmission")}</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                {["Manual", "Automático"].map(opt => chipBtn(opt, vehicleForm.transmission, v => setV("transmission", v)))}
+                {TRANSMISSION_OPTS.map(o => chipBtn(o.code, vehicleForm.transmission, v => setV("transmission", v), tr(o.key)))}
               </div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Combustible</label>
+              <label style={s.label}>{tr("publish.fuel")}</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                {["Nafta", "Diesel", "Eléctrico", "GNC"].map(opt => chipBtn(opt, vehicleForm.fuel, v => setV("fuel", v)))}
+                {FUEL_OPTS.map(o => chipBtn(o.code, vehicleForm.fuel, v => setV("fuel", v), tr(o.key)))}
               </div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Tracción</label>
+              <label style={s.label}>{tr("publish.drivetrain")}</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                {["Delantera", "Trasera", "4x4", "AWD"].map(opt => chipBtn(opt, vehicleForm.drivetrain, v => setV("drivetrain", v)))}
+                {DRIVETRAIN_OPTS.map(o => chipBtn(o.code, vehicleForm.drivetrain, v => setV("drivetrain", v), tr(o.key)))}
               </div>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Asientos *</label>
+              <label style={s.label}>{tr("publish.seats")} *</label>
               <input style={{ ...s.input, appearance: "none", MozAppearance: "textfield" }} type="number" min="1" max="12"
                 value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)}
                 onBlur={(e) => { const v = parseInt(e.target.value); if (isNaN(v) || v < 1) setV("seats", ""); }} />
@@ -671,7 +696,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.field}>
-            <label style={s.label}>Color *</label>
+            <label style={s.label}>{tr("publish.color")} *</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {PRESET_COLORS.map(({ name, hex }) => {
                 const sel = vehicleForm.color === name;
@@ -701,7 +726,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.field}>
-            <label style={s.label}>Patente</label>
+            <label style={s.label}>{tr("publish.plate")}</label>
             <input style={s.input} placeholder="AB123CD" value={vehicleForm.plate}
               onChange={(e) => setV("plate", e.target.value.toUpperCase())}
               onBlur={(e) => { const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase(); setV("plate", clean); }} />
@@ -714,9 +739,9 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={s.label}>Características</label>
+            <label style={s.label}>{tr("publish.features")}</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-              {[["bluetooth", "Bluetooth"], ["rearCamera", "Cámara de reversa"], ["parkingSensors", "Sensores de estac."]].map(([key, label]) => (
+              {[["bluetooth", "Bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
                   {vehicleForm[key]
@@ -729,21 +754,21 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Especificaciones técnicas</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{tr("publish.specs")}</div>
             <button style={{ padding: "8px 16px", background: aiLoading ? "#e5e7eb" : "#111827", color: aiLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
               onClick={fetchSpecs} disabled={aiLoading}>
-              {aiLoading ? <><span style={s.spinner} /> Completando...</> : "Autocompletar con IA"}
+              {aiLoading ? <Spinner size={14} label={tr("publish.filling")} /> : tr("publish.autofillAi")}
             </button>
           </div>
 
           <div style={s.specGrid}>
             {[
-              ["doors", "Puertas"], ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
-              ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
-              ["weightKg", "Peso (kg)"],
+              ["doors", "spec.doors"], ["horsePower", "spec.powerHp"], ["engineDisplacementCC", "spec.displacementCc"],
+              ["trunkCapacityLiters", "spec.trunkL"], ["fuelConsumptionLitersPer100Km", "spec.consumption100"],
+              ["weightKg", "spec.weightKg"],
             ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
-                <div style={s.specLabel}>{label}</div>
+                <div style={s.specLabel}>{tr(label)}</div>
                 <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent" }}
                   placeholder="—" value={vehicleForm[key] || ""} onChange={(e) => setV(key, e.target.value)} />
               </div>
@@ -752,21 +777,25 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
           {specWarnings.length > 0 && (
             <div style={{ ...s.warning, marginTop: 12 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>Revisá estas especificaciones:</div>
-              {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>{tr("publish.checkSpecs")}</div>
+              {specWarnings.map((w) => (
+                <div key={w.label} style={{ fontSize: 12 }}>
+                  · {tr("publish.outOfRange", { label: tr(w.label), value: w.value, min: w.min, max: w.max })}
+                </div>
+              ))}
             </div>
           )}
 
           <div style={{ ...s.field, marginTop: 16 }}>
-            <label style={s.label}>Observaciones</label>
+            <label style={s.label}>{tr("publish.notes")}</label>
             <textarea style={{ ...s.input, height: 72, resize: "none" }}
-              placeholder="Service al día, cubiertas nuevas..."
+              placeholder={tr("publish.phObservations")}
               value={vehicleForm.observations}
               onChange={(e) => setV("observations", e.target.value)} />
           </div>
 
           <div style={s.btnRow}>
-            <button style={s.btn} onClick={next}>Siguiente →</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
           </div>
         </div>
       )}
@@ -774,9 +803,9 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 1 */}
       {step === 1 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Fotos del vehículo</div>
+          <div style={s.sectionTitle}>{tr("publish.photos")}</div>
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
-            Subí entre 4 y 6 fotos del auto. Cada foto se revisa automáticamente: tiene que ser un vehículo real, no un juguete, un dibujo ni una foto de catálogo. Se requieren mínimo 4.
+            {tr("publish.photosHint")}
           </p>
           <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
@@ -784,7 +813,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Hacé clic para subir fotos</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
           {photos.length > 0 && (
@@ -796,8 +825,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                       rojo = no sirve, ámbar = no se pudo revisar (y NO pasa sola). */}
                   {estadoFoto(i) === "loading" && (
                     <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.55)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ ...s.spinner, width: 10, height: 10 }} />
-                      <span style={{ fontSize: 10, color: "#fff" }}>Revisando</span>
+                      <Spinner size={10} color="#fff" />
+                      <span style={{ fontSize: 10, color: "#fff" }}>{tr("publish.reviewing")}</span>
                     </div>
                   )}
                   {estadoFoto(i) === "ok" && (
@@ -805,35 +834,35 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                       <div style={{ margin: 6, background: "#16a34a", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                         {photoValidations[i]?.detected
-                          ? `Verificada: ${photoValidations[i].detected}`
-                          : "Verificada: es un auto real"}
+                          ? `${tr("publish.verified")}: ${photoValidations[i].detected}`
+                          : tr("publish.photoOk")}
                       </div>
                     </div>
                   )}
                   {estadoFoto(i) === "invalid" && (
                     <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
                       <div style={{ margin: 6, background: "#dc2626", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
-                        No válida
+                        {tr("publish.notValid")}
                       </div>
                       <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
-                        {photoValidations[i]?.reason || "No es la foto de un vehículo real."}
+                        {photoValidations[i]?.reasonKey ? tr(photoValidations[i].reasonKey) : (photoValidations[i]?.reason || tr("publish.photoBad"))}
                       </div>
                     </div>
                   )}
                   {estadoFoto(i) === "unknown" && photos[i] && (
                     <div style={{ position: "absolute", inset: 0, border: "2px solid #f59e0b", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div style={{ margin: 6, background: "#f59e0b", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
-                        Sin revisar
+                        {tr("publish.unreviewed")}
                       </div>
                       <button
                         onClick={(ev) => { ev.stopPropagation(); revisarFoto(photos[i].url, i); }}
                         style={{ width: "100%", background: "rgba(180,83,9,.94)", color: "#fff", fontSize: 10, padding: "5px 6px", fontWeight: 700, border: "none", cursor: "pointer" }}>
-                        Reintentar la revisión
+                        {tr("publish.retryReview")}
                       </button>
                     </div>
                   )}
                   {i === 0 && estadoFoto(i) === "ok" && (
-                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>Principal</div>
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
@@ -876,8 +905,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </label>
           )}
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
-            <button style={s.btn} onClick={next}>Siguiente →</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
           </div>
         </div>
       )}
@@ -885,18 +914,18 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 2 */}
       {step === 2 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Datos del listing</div>
+          <div style={s.sectionTitle}>{tr("publish.listingData")}</div>
           <div style={s.field}>
-            <label style={s.label}>Título del anuncio *</label>
+            <label style={s.label}>{tr("publish.adTitle")} *</label>
             <input style={s.input}
               placeholder={`${vehicleForm.brand} ${vehicleForm.model} en excelente estado`}
               value={listingForm.title}
               onChange={(e) => setL("title", e.target.value)} />
           </div>
           <div style={s.field}>
-            <label style={s.label}>Descripción *</label>
+            <label style={s.label}>{tr("car.description")} *</label>
             <textarea style={{ ...s.input, height: 90, resize: "none" }}
-              placeholder="Contá el estado del auto, extras, condiciones..."
+              placeholder={tr("publish.phDescription")}
               value={listingForm.description}
               onChange={(e) => setL("description", e.target.value)} />
           </div>
@@ -912,29 +941,29 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           />
           <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            La ubicación se muestra como zona aproximada para proteger tu privacidad
+            {tr("publish.locPrivacy")}
           </div>
           <div style={{ ...s.field, marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <label style={{ ...s.label, marginBottom: 0 }}>Precio por día ($ARS) *</label>
+              <label style={{ ...s.label, marginBottom: 0 }}>{tr("publish.priceArs")} *</label>
               <button style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
                 onClick={fetchPricing} disabled={pricingLoading}>
-                {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "Sugerir con IA"}
+                {pricingLoading ? <Spinner size={11} label={tr("publish.analyzing")} /> : tr("publish.suggestAi")}
               </button>
             </div>
             {pricingSuggestion && (
               <div style={s.aiBox}>
-                <div style={s.aiBoxTitle}>Sugerencia de precio</div>
+                <div style={s.aiBoxTitle}>{tr("publish.priceSuggestion")}</div>
                 <div style={s.aiBoxRow}>
-                  <span style={s.aiBoxLabel}>Rango sugerido</span>
-                  <span style={s.aiBoxValue}>${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS/día</span>
+                  <span style={s.aiBoxLabel}>{tr("publish.priceRange")}</span>
+                  <span style={s.aiBoxValue}>${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
                 <div style={s.aiBoxRow}>
-                  <span style={s.aiBoxLabel}>Precio recomendado</span>
-                  <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS/día</span>
+                  <span style={s.aiBoxLabel}>{tr("publish.priceAdvised")}</span>
+                  <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
-                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>El precio fue cargado automáticamente. Podés modificarlo abajo.</div>
+                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
               </div>
             )}
             <input style={s.input} type="number" placeholder="45000"
@@ -942,8 +971,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               onChange={(e) => setL("pricePerDay", e.target.value)} />
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
-            <button style={s.btn} onClick={next}>Siguiente →</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")} →</button>
           </div>
         </div>
       )}
@@ -951,30 +980,30 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 3 */}
       {step === 3 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Revisá tu publicación</div>
+          <div style={s.sectionTitle}>{tr("publish.review")}</div>
           {photos.length > 0 && (
             <img src={photos[0].url} alt="principal"
               style={{ width: "100%", height: isMobile ? 160 : 210, objectFit: "cover", borderRadius: 12, marginBottom: 20 }} />
           )}
           {[
-            ["Vehículo", `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
-            ["Categoría", CATEGORIES.find(c => c.id === vehicleForm.category)?.label || "—"],
-            ["Color", vehicleForm.color],
-            ["Transmisión", vehicleForm.transmission],
-            ["Combustible", vehicleForm.fuel],
-            ["Asientos", vehicleForm.seats],
-            ...(vehicleForm.plate ? [["Patente", vehicleForm.plate]] : []),
-            ...(vehicleForm.horsePower ? [["Potencia", `${vehicleForm.horsePower} HP`]] : []),
-            ...(vehicleForm.engineDisplacementCC ? [["Cilindrada", `${vehicleForm.engineDisplacementCC} cc`]] : []),
-            ["Título listing", listingForm.title || "(se usará marca + modelo)"],
-            ["Ubicación", listingForm.locationText || "No especificada"],
-            ["Precio/día", `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
-            ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
+            [tr("payment.vehicle"), `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
+            [tr("publish.category"), categoryLabel(tr, vehicleForm.category) || "—"],
+            [tr("spec.color"), vehicleForm.color],
+            [tr("spec.transmission"), transmissionLabel(tr, vehicleForm.transmission)],
+            [tr("spec.fuel"), fuelLabel(tr, vehicleForm.fuel)],
+            [tr("spec.seats"), vehicleForm.seats],
+            ...(vehicleForm.plate ? [[tr("publish.plate"), vehicleForm.plate]] : []),
+            ...(vehicleForm.horsePower ? [[tr("spec.power"), `${vehicleForm.horsePower} HP`]] : []),
+            ...(vehicleForm.engineDisplacementCC ? [[tr("spec.displacement"), `${vehicleForm.engineDisplacementCC} cc`]] : []),
+            [tr("publish.listingTitle"), listingForm.title || tr("publish.titleAuto")],
+            [tr("loc.short"), listingForm.locationText || tr("publish.noLocation")],
+            [tr("publish.pricePerDay"), `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
+            [tr("publish.photos"), tr(photos.length === 1 ? "publish.photoCountOne" : "publish.photoCountMany", { count: photos.length })],
           ].map(([k, v]) => (
             <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f3f4f6", fontSize: isMobile ? 13 : 14 }}>
               <span style={{ color: "#6b7280" }}>{k}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {k === "Color" && colorHex && (
+                {k === tr("spec.color") && colorHex && (
                   <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db" }} />
                 )}
                 <span style={{ fontWeight: 600, color: "#111827" }}>{v}</span>
@@ -982,12 +1011,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
           ))}
           <div style={{ marginTop: 16, padding: "12px 16px", background: "#eff6ff", borderRadius: 10, fontSize: 13, color: "#2563eb", fontWeight: 500 }}>
-            Se creará el vehículo y el listing activo en la plataforma.
+            {tr("publish.willCreate")}
           </div>
           <div style={s.btnRow}>
-            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← {tr("common.back")}</button>
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
-              {loading ? <><span style={s.spinner} /> Publicando...</> : "Publicar ahora"}
+              {loading ? <Spinner size={14} color="#fff" label={tr("publish.publishing")} /> : tr("publish.publishNow")}
             </button>
           </div>
         </div>  

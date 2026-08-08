@@ -11,13 +11,15 @@
 //  pero no había ninguna pantalla que las usara.
 // ============================================================================
 import { useCallback, useEffect, useState } from "react";
-import { addMonths, format } from "date-fns";
-import { es } from "date-fns/locale";
+import { addMonths } from "date-fns";
 import {
   createAvailabilityBlock, deleteAvailabilityBlock,
   getAvailabilityBlocks, getListingAvailability,
 } from "../services/api";
 import { today, toInputDate } from "../services/dates";
+import Spinner from "./Spinner";
+import { useI18n } from "../i18n/core";
+import { shortDate } from "../i18n/dates";
 
 const s = {
   panel: { background: "#f9fafb", border: "1px solid #ececec", borderRadius: 12, padding: 16, marginTop: 12 },
@@ -42,9 +44,10 @@ const s = {
 // para alguien en Argentina (UTC-3) eso significaba que después de las 21:00 el
 // mínimo saltaba al día siguiente.
 const todayInput = () => toInputDate(today());
-const fmt = (date) => format(new Date(date), "d MMM yyyy", { locale: es });
-
 export default function AvailabilityManager({ listingId }) {
+  const { t: tr, lang } = useI18n();
+  // La fecha se escribe en el idioma elegido.
+  const fmt = (date) => shortDate(date, lang);
   const [blocks, setBlocks] = useState([]);
   const [bookedRanges, setBookedRanges] = useState([]);
   const [from, setFrom] = useState("");
@@ -69,11 +72,11 @@ export default function AvailabilityManager({ listingId }) {
       setBlocks(Array.isArray(blockList) ? blockList : []);
       setBookedRanges(availability?.blockingBookings || []);
     } catch (err) {
-      setError(err.message || "No pudimos cargar la disponibilidad.");
+      setError(err.message || tr("avail.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [listingId]);
+  }, [listingId, tr]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -81,8 +84,8 @@ export default function AvailabilityManager({ listingId }) {
   // del inicio y que no se pise con otro bloqueo.
   const addBlock = async () => {
     setError(""); setInfo("");
-    if (!from || !to) { setError("Elegí las dos fechas del período."); return; }
-    if (new Date(to) <= new Date(from)) { setError("La fecha de fin tiene que ser posterior a la de inicio."); return; }
+    if (!from || !to) { setError(tr("avail.errDates")); return; }
+    if (new Date(to) <= new Date(from)) { setError(tr("avail.errOrder")); return; }
 
     setSaving(true);
     try {
@@ -93,10 +96,10 @@ export default function AvailabilityManager({ listingId }) {
         reason: reason.trim() || undefined,
       });
       setFrom(""); setTo(""); setReason("");
-      setInfo("Período agregado: el auto no va a aparecer en las búsquedas de esas fechas.");
+      setInfo(tr("avail.added"));
       await load();
     } catch (err) {
-      setError(err.message || "No pudimos guardar el período.");
+      setError(err.message || tr("avail.errSave"));
     } finally {
       setSaving(false);
     }
@@ -108,16 +111,15 @@ export default function AvailabilityManager({ listingId }) {
       await deleteAvailabilityBlock(listingId, blockId);
       await load();
     } catch (err) {
-      setError(err.message || "No pudimos eliminar el período.");
+      setError(err.message || tr("avail.errDelete"));
     }
   };
 
   return (
     <div style={s.panel}>
-      <div style={s.title}>Disponibilidad por fechas</div>
+      <div style={s.title}>{tr("avail.title")}</div>
       <div style={s.sub}>
-        Marcá los períodos en los que tu auto NO está disponible. Esas fechas
-        dejan de aparecer en las búsquedas y quedan bloqueadas en el calendario.
+        {tr("avail.sub")}
       </div>
 
       {error && <div style={s.error}>{error}</div>}
@@ -126,34 +128,34 @@ export default function AvailabilityManager({ listingId }) {
       {/* Alta de un período */}
       <div style={s.row}>
         <div style={s.field}>
-          <span style={s.label}>Desde</span>
+          <span style={s.label}>{tr("payment.from")}</span>
           <input type="date" style={s.input} min={todayInput()} value={from}
             onChange={e => { setFrom(e.target.value); if (to && new Date(to) <= new Date(e.target.value)) setTo(""); }} />
         </div>
         <div style={s.field}>
-          <span style={s.label}>Hasta</span>
+          <span style={s.label}>{tr("payment.to")}</span>
           <input type="date" style={s.input} min={from || todayInput()} value={to}
             onChange={e => setTo(e.target.value)} />
         </div>
         <div style={{ ...s.field, flex: 1, minWidth: 160 }}>
-          <span style={s.label}>Motivo (opcional)</span>
-          <input style={s.input} placeholder="Viaje, service..." value={reason} maxLength={120}
+          <span style={s.label}>{tr("avail.reason")}</span>
+          <input style={s.input} placeholder={tr("avail.phReason")} value={reason} maxLength={120}
             onChange={e => setReason(e.target.value)} />
         </div>
         <button style={{ ...s.btn, opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={addBlock}>
-          {saving ? "Guardando..." : "Bloquear fechas"}
+          {saving ? tr("common.saving") : tr("avail.block")}
         </button>
       </div>
 
       {/* Períodos bloqueados por el dueño */}
       <div style={{ marginTop: 18 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: "#374151", marginBottom: 8 }}>
-          Períodos bloqueados por vos
+          {tr("avail.yourBlocks")}
         </div>
         {loading ? (
-          <div style={{ fontSize: 12.5, color: "#9ca3af" }}>Cargando...</div>
+          <Spinner size={16} />
         ) : blocks.length === 0 ? (
-          <div style={{ fontSize: 12.5, color: "#9ca3af" }}>No bloqueaste ninguna fecha: el auto está disponible todos los días.</div>
+          <div style={{ fontSize: 12.5, color: "#9ca3af" }}>{tr("avail.none")}</div>
         ) : blocks.map(block => (
           <div key={block.id} style={s.item}>
             <div>
@@ -162,7 +164,7 @@ export default function AvailabilityManager({ listingId }) {
               </div>
               {block.reason && <div style={{ fontSize: 12, color: "#6b7280" }}>{block.reason}</div>}
             </div>
-            <button style={s.del} onClick={() => removeBlock(block.id)}>Quitar</button>
+            <button style={s.del} onClick={() => removeBlock(block.id)}>{tr("avail.remove")}</button>
           </div>
         ))}
       </div>
@@ -171,12 +173,12 @@ export default function AvailabilityManager({ listingId }) {
       {bookedRanges.length > 0 && (
         <div style={{ marginTop: 18 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: "#374151", marginBottom: 8 }}>
-            Ocupado por reservas
+            {tr("avail.bookedBy")}
           </div>
           {bookedRanges.map(booking => (
             <div key={booking.id} style={s.booked}>
               <span>{fmt(booking.startDate)} → {fmt(booking.endDate)}</span>
-              <span style={{ fontWeight: 700 }}>Reservado</span>
+              <span style={{ fontWeight: 700 }}>{tr("avail.booked")}</span>
             </div>
           ))}
         </div>

@@ -23,6 +23,7 @@
 //  CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET.
 // ============================================================================
 import { getCloudinarySignature } from "./api";
+import { tSync } from "../i18n/core";
 
 // Respaldo para cuando el backend no tiene Cloudinary configurado.
 const FALLBACK_CLOUD_NAME = "djvokvxt1";
@@ -76,7 +77,7 @@ async function upload(file, { resourceType = "image", folder = "freewheel", file
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch { /* respuesta no JSON */ }
-    throw new Error(detail || "No se pudo subir el archivo. Probá de nuevo.");
+    throw new Error(detail || tSync("net.uploadFailed"));
   }
   return res.json();
 }

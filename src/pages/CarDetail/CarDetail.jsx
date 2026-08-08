@@ -28,25 +28,31 @@ import {
 } from "../../services/api";
 import FavoriteButton from "../../components/FavoriteButton";
 import OccupiedDates from "../../components/OccupiedDates";
-import { normalizeListing } from "../../services/listings";
+import { normalizeListing, transmissionLabel, fuelLabel } from "../../services/listings";
 import { addMonths, format } from "date-fns";
-import { es } from "date-fns/locale";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
+import { localeFor, shortDate } from "../../i18n/dates";
 
-const TRANSMISSION_LABELS = { MANUAL: "Manual", AUTOMATIC: "Automático" };
-const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", ELECTRIC: "Eléctrico", OTHER: "GNC" };
-const DRIVETRAIN_LABELS = { FRONT: "Delantera", REAR: "Trasera", FOUR_BY_FOUR: "4x4", AWD: "Integral" };
+// Caja, combustible y tracción son texto que el usuario LEE, así que se guardan
+// como CÓDIGO del backend y se traducen al dibujar. Antes esta pantalla tenía su
+// propia copia de las tablas en castellano y quedaba en castellano en los cinco
+// idiomas.
+const DRIVETRAIN_KEYS = { FRONT: "drive.FRONT", REAR: "drive.REAR", FOUR_BY_FOUR: "drive.4X4", AWD: "drive.AWD" };
 
 // Arma el nombre visible del dueño a partir de sus datos.
-function getName(owner) {
-  if (!owner) return "Dueño";
+function getName(owner, fallback) {
+  if (!owner) return fallback;
   return owner.displayName ||
     `${owner.firstName || ""} ${owner.lastName || ""}`.trim() ||
-    "Dueño";
+    fallback;
 }
 
 // Convierte una publicación del backend al formato "car" que usa esta pantalla,
 // juntando datos del vehículo, del listing y del dueño en un solo objeto plano.
-function apiListingToCar(listing) {
+// `ownerFallback` es el texto de "Dueño" en el idioma elegido: esta función vive
+// fuera del componente, así que la traducción se le pasa desde arriba.
+function apiListingToCar(listing, ownerFallback = "Dueño") {
   const v = listing.vehicle || {};
   const owner = listing.owner || {};
   return {
@@ -61,9 +67,9 @@ function apiListingToCar(listing) {
     ratingAverage: listing.ratingAverage ?? null,
     ratingCount: listing.ratingCount ?? 0,
     location: listing.locationText || "",
-    transmission: TRANSMISSION_LABELS[v.transmission] || v.transmission || "",
-    drivetrain: DRIVETRAIN_LABELS[v.drivetrain] || "",
-    fuel: FUEL_LABELS[v.fuelType] || v.fuelType || "",
+    transmissionCode: v.transmission || "",
+    drivetrainKey: DRIVETRAIN_KEYS[v.drivetrain] || "",
+    fuelCode: v.fuelType || "",
     seats: v.seats,
     doors: v.doors,
     color: v.color,
@@ -79,8 +85,8 @@ function apiListingToCar(listing) {
     weightKg: v.weightKg,
     observations: v.observations,
     ownerId: owner.id || "",
-    ownerName: getName(owner),
-    ownerInitial: getName(owner)[0]?.toUpperCase() || "D",
+    ownerName: getName(owner, ownerFallback),
+    ownerInitial: getName(owner, ownerFallback)[0]?.toUpperCase() || "D",
   };
 }
 
@@ -169,6 +175,8 @@ const s = {
 };
 
 export default function CarDetail() {
+  const { t: tr, lang } = useI18n();
+  const dateLocale = localeFor(lang);
   const { id } = useParams();
   const { user } = useAuth();
   const { isMobile } = useIsMobile();
@@ -214,7 +222,7 @@ export default function CarDetail() {
     getListingById(id)
       .then(listing => {
         if (!active) return;
-        if (listing) setCar(apiListingToCar(listing));
+        if (listing) setCar(apiListingToCar(listing, tr("car.owner")));
       })
       .catch(() => { /* no existe o no está disponible: se muestra "no encontrado" */ })
       .finally(() => { if (active) setLoading(false); });
@@ -255,7 +263,7 @@ export default function CarDetail() {
       const conv = await startConversation(id);
       navigate(`/chat?conv=${conv.id}`);
     } catch (err) {
-      alert(err.message || "Error al iniciar la conversación");
+      alert(err.message || tr("car.chatFailed"));
       setContactLoading(false);
     }
   };
@@ -275,7 +283,7 @@ export default function CarDetail() {
     if (status?.pendingPricePerDay) {
       setEditPrice(String(status.pendingPricePerDay));
       setPriceStep("code");
-      setPriceInfo("Tenías un cambio de precio sin confirmar. Ingresá el código que te llegó por email.");
+      setPriceInfo(tr("car.pendingPriceCode"));
     }
   };
 
@@ -289,7 +297,7 @@ export default function CarDetail() {
     const priceChanged = pricePerDay && Math.round(pricePerDay) !== Math.round(car.price_per_day);
 
     if (editPrice !== "" && (!pricePerDay || pricePerDay <= 0)) {
-      setEditError("Ingresá un precio por día válido.");
+      setEditError(tr("car.errPrice"));
       setSavingEdit(false);
       return;
     }
@@ -312,7 +320,7 @@ export default function CarDetail() {
         setEditing(false);
       }
     } catch (err) {
-      setEditError(err.message || "No pudimos guardar los cambios.");
+      setEditError(err.message || tr("car.errSave"));
     } finally {
       setSavingEdit(false);
     }
@@ -330,7 +338,7 @@ export default function CarDetail() {
       setPriceInfo("");
       setEditing(false);
     } catch (err) {
-      setEditError(err.message || "No pudimos confirmar el cambio.");
+      setEditError(err.message || tr("car.errConfirm"));
     } finally {
       setSavingEdit(false);
     }
@@ -354,21 +362,17 @@ export default function CarDetail() {
       await deleteListing(id);
       navigate("/dashboard");
     } catch (err) {
-      setEditError(err.message || "No pudimos eliminar la publicación.");
+      setEditError(err.message || tr("car.errDelete"));
       setDeleting(false);
       setConfirmDelete(false);
     }
   };
 
-  if (loading) return (
-    <div style={{ padding: 60, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
-      Cargando...
-    </div>
-  );
+  if (loading) return <Spinner block label={tr("common.loading")} />;
 
   if (!car) return (
     <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
-      Auto no encontrado.
+      {tr("car.notFound")}
     </div>
   );
 
@@ -388,15 +392,15 @@ export default function CarDetail() {
 
   // Lista de specs técnicas, descartando las que el auto no tenga cargadas.
   const techSpecs = [
-    ["Color", car.color],
+    ["spec.color", car.color],
     // La tracción se cargaba al publicar y no se mostraba en ninguna parte.
-    ["Tracción", car.drivetrain],
-    ["Puertas", car.doors],
-    ["Potencia", car.horsePower ? `${car.horsePower} HP` : null],
-    ["Cilindrada", car.engineDisplacementCC ? `${car.engineDisplacementCC} cc` : null],
-    ["Baúl", car.trunkCapacityLiters ? `${car.trunkCapacityLiters} L` : null],
-    ["Consumo", car.fuelConsumptionLitersPer100Km ? `${car.fuelConsumptionLitersPer100Km} l/100km` : null],
-    ["Peso", car.weightKg ? `${car.weightKg} kg` : null],
+    ["spec.drivetrain", car.drivetrainKey ? tr(car.drivetrainKey) : null],
+    ["spec.doors", car.doors],
+    ["spec.power", car.horsePower ? `${car.horsePower} HP` : null],
+    ["spec.displacement", car.engineDisplacementCC ? `${car.engineDisplacementCC} cc` : null],
+    ["spec.trunk", car.trunkCapacityLiters ? `${car.trunkCapacityLiters} L` : null],
+    ["spec.consumption", car.fuelConsumptionLitersPer100Km ? `${car.fuelConsumptionLitersPer100Km} l/100km` : null],
+    ["spec.weight", car.weightKg ? `${car.weightKg} kg` : null],
   ].filter(([, val]) => val);
 
   // Tarjeta lateral de precio. Muestra el desglose (base + comisión + depósito)
@@ -421,26 +425,26 @@ export default function CarDetail() {
   const priceCard = () => (
     <div style={isMobile ? s.priceCardMobile : s.priceCard}>
       <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>
-      <div style={s.priceSub}>por día</div>
+      <div style={s.priceSub}>{tr("car.perDay")}</div>
       {/* Ejemplo de 3 días, aclarado como tal: el total real depende de las
           fechas que se elijan y lo calcula el servidor al reservar. */}
       <div style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>
-        Ejemplo para 3 días
+        {tr("car.example3")}
       </div>
       <div style={s.row}>
-        <span>Alquiler (3 días)</span>
+        <span>{tr("car.rent3")}</span>
         <span>${(car.price_per_day * 3).toLocaleString()}</span>
       </div>
       <div style={s.row}>
-        <span>Comisión Freewheel</span>
+        <span>{tr("car.fee")}</span>
         <span>${Math.round(car.price_per_day * 3 * 0.1).toLocaleString()}</span>
       </div>
       <div style={s.row}>
-        <span>Depósito garantía (se devuelve)</span>
+        <span>{tr("car.deposit")}</span>
         <span>${(car.price_per_day * 2).toLocaleString()}</span>
       </div>
       <div style={s.total}>
-        <span>Total estimado</span>
+        <span>{tr("car.estTotal")}</span>
         <span>
           ${Math.round(car.price_per_day * 3 * 1.1 + car.price_per_day * 2).toLocaleString()}
         </span>
@@ -470,13 +474,13 @@ export default function CarDetail() {
                 {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
                 <button style={{ ...s.btn, opacity: savingEdit || priceCode.length !== 6 ? 0.6 : 1 }}
                   onClick={handleConfirmPrice} disabled={savingEdit || priceCode.length !== 6}>
-                  {savingEdit ? "Confirmando..." : "Confirmar precio nuevo"}
+                  {savingEdit ? tr("car.confirming") : tr("car.confirmNewPrice")}
                 </button>
-                <button style={s.chatBtn} onClick={handleCancelPrice}>Descartar el cambio</button>
+                <button style={s.chatBtn} onClick={handleCancelPrice}>{tr("car.discardChange")}</button>
               </>
             ) : (
               <>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Precio por día ($)</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("car.pricePerDay")}</div>
                 <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
                   disabled={priceStatus ? !priceStatus.canChange : false}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 6, background: priceStatus && !priceStatus.canChange ? "#f9fafb" : "#fff" }} />
@@ -486,30 +490,33 @@ export default function CarDetail() {
                   {priceStatus && priceStatus.blockedByBookings
                     ? `No se puede cambiar el precio con ${priceStatus.activeBookings} reserva${priceStatus.activeBookings === 1 ? "" : "s"} en curso.`
                     : priceStatus && priceStatus.nextAllowedChangeAt
-                      ? `El precio se cambia una vez cada ${priceStatus.cooldownHours} horas. Vas a poder cambiarlo el ${format(new Date(priceStatus.nextAllowedChangeAt), "d MMM 'a las' HH:mm", { locale: es })}.`
-                      : "Al cambiar el precio te mandamos un código por email para confirmarlo."}
+                      ? tr("car.priceCooldown", {
+                        hours: priceStatus.cooldownHours,
+                        when: `${shortDate(priceStatus.nextAllowedChangeAt, lang)} ${format(new Date(priceStatus.nextAllowedChangeAt), "HH:mm")}`,
+                      })
+                      : tr("car.priceCodeNote")}
                 </div>
 
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Descripción</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("car.description")}</div>
                 <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
                   style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "vertical", marginBottom: 10 }} />
                 {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
                 <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
-                  {savingEdit ? "Guardando..." : "Guardar cambios"}
+                  {savingEdit ? tr("common.saving") : tr("car.saveChanges")}
                 </button>
-                <button style={s.chatBtn} onClick={() => setEditing(false)}>Cancelar</button>
+                <button style={s.chatBtn} onClick={() => setEditing(false)}>{tr("common.cancel")}</button>
               </>
             )}
           </div>
         ) : (
           <>
-            <button style={s.btn} onClick={startEdit}>Editar publicación</button>
+            <button style={s.btn} onClick={startEdit}>{tr("car.editListing")}</button>
             <button
               style={{ width: "100%", padding: "11px", background: "transparent", border: "2px solid #fecaca", color: "#dc2626", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
             >
-              {deleting ? "Eliminando..." : "Eliminar publicación"}
+              {deleting ? tr("car.deleting") : tr("car.deleteListing")}
             </button>
           </>
         )
@@ -524,7 +531,7 @@ export default function CarDetail() {
               style={s.btn}
               onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
             >
-              {user ? "Reservar ahora" : "Iniciá sesión para reservar"}
+              {user ? tr("car.bookNow") : tr("car.loginToBook")}
             </button>
           )}
           <button
@@ -532,7 +539,7 @@ export default function CarDetail() {
             onClick={handleContact}
             disabled={contactLoading || car.isMock}
           >
-            {contactLoading ? "Abriendo chat..." : "Contactar al dueño"}
+            {contactLoading ? tr("car.openingChat") : tr("car.contactOwner")}
           </button>
         </>
       )}
@@ -541,7 +548,7 @@ export default function CarDetail() {
         <div style={s.ownerAvatar}>{car.ownerInitial}</div>
         <div style={{ flex: 1 }}>
           <div style={s.ownerName}>{car.ownerName}</div>
-          <div style={s.ownerMeta}>Miembro de Freewheel</div>
+          <div style={s.ownerMeta}>{tr("car.memberOf")}</div>
         </div>
         {!isOwner && (
           <button
@@ -573,7 +580,7 @@ export default function CarDetail() {
           {photos.length > 0
             ? <img src={photos[currentPhoto]} alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ color: "#9ca3af", fontSize: 14 }}>Sin fotos</span>}
+            : <span style={{ color: "#9ca3af", fontSize: 14 }}>{tr("car.noPhotos")}</span>}
 
           {/* Corazón de favoritos. Va a la IZQUIERDA: arriba a la derecha está
               el contador de fotos ("2 / 4") y se pisaban entre sí. */}
@@ -631,9 +638,9 @@ export default function CarDetail() {
           {isMobile && priceCard()}
 
           <div style={s.section}>
-            <div style={s.sectionTitle}>Descripción</div>
+            <div style={s.sectionTitle}>{tr("car.description")}</div>
             <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.7 }}>
-              {car.description || "Sin descripción."}
+              {car.description || tr("car.noDescription")}
             </p>
             {car.observations && (
               <p style={{ fontSize: 13, color: "#6b7280", marginTop: 8, fontStyle: "italic" }}>
@@ -643,15 +650,15 @@ export default function CarDetail() {
           </div>
 
           <div style={s.section}>
-            <div style={s.sectionTitle}>Especificaciones</div>
+            <div style={s.sectionTitle}>{tr("car.specs")}</div>
             <div style={s.specGrid}>
               {[
-                ["Transmisión", car.transmission],
-                ["Combustible", car.fuel],
-                ["Asientos", car.seats],
+                ["spec.transmission", transmissionLabel(tr, car.transmissionCode)],
+                ["spec.fuel", fuelLabel(tr, car.fuelCode)],
+                ["spec.seats", car.seats],
               ].filter(([, v]) => v).map(([label, val]) => (
                 <div key={label} style={s.spec}>
-                  <div style={s.specLabel}>{label}</div>
+                  <div style={s.specLabel}>{tr(label)}</div>
                   <strong>{val}</strong>
                 </div>
               ))}
@@ -660,11 +667,11 @@ export default function CarDetail() {
 
           {techSpecs.length > 0 && (
             <div style={s.section}>
-              <div style={s.sectionTitle}>Especificaciones técnicas</div>
+              <div style={s.sectionTitle}>{tr("spec.techTitle")}</div>
               <div style={s.specGrid}>
                 {techSpecs.map(([label, val]) => (
                   <div key={label} style={s.spec}>
-                    <div style={s.specLabel}>{label}</div>
+                    <div style={s.specLabel}>{tr(label)}</div>
                     <strong>{val}</strong>
                   </div>
                 ))}
@@ -674,18 +681,18 @@ export default function CarDetail() {
 
           {(car.bluetooth || car.rearCamera || car.parkingSensors) && (
             <div style={s.section}>
-              <div style={s.sectionTitle}>Equipamiento</div>
+              <div style={s.sectionTitle}>{tr("spec.equipment")}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {car.bluetooth && <span style={s.badge}>Bluetooth</span>}
-                {car.rearCamera && <span style={s.badge}>Cámara de reversa</span>}
-                {car.parkingSensors && <span style={s.badge}>Sensores de estac.</span>}
+                {car.rearCamera && <span style={s.badge}>{tr("spec.rearCamera")}</span>}
+                {car.parkingSensors && <span style={s.badge}>{tr("spec.parkingSensors")}</span>}
               </div>
             </div>
           )}
 
           <div style={s.section}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-              <div style={s.sectionTitle}>Reseñas ({car.ratingCount})</div>
+              <div style={s.sectionTitle}>{tr("car.reviews", { count: car.ratingCount })}</div>
               {/* Promedio real: sale de las puntuaciones guardadas, no de un número fijo. */}
               {car.ratingAverage !== null && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -696,10 +703,7 @@ export default function CarDetail() {
             </div>
             {reviews.length === 0
               ? (
-                <p style={{ color: "#9ca3af", fontSize: 13 }}>
-                  Todavía no hay reseñas. Las escriben las personas que alquilaron
-                  este auto, cuando la reserva termina y el pago está completo.
-                </p>
+                <p style={{ color: "#9ca3af", fontSize: 13 }}>{tr("car.noReviews")}</p>
               )
               : reviews.map(r => (
                 <div key={r.id} style={s.review}>
@@ -707,13 +711,13 @@ export default function CarDetail() {
                     <span style={s.reviewAuthor}>
                       {r.author?.displayName
                         || `${r.author?.firstName || ""} ${r.author?.lastName || ""}`.trim()
-                        || "Usuario"}
+                        || tr("profile.userFallback")}
                     </span>
                     <span style={s.stars}>{"★".repeat(r.rating)}</span>
                   </div>
                   {r.comment && <div style={s.reviewText}>{r.comment}</div>}
                   <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
-                    {format(new Date(r.createdAt), "d MMM yyyy", { locale: es })}
+                    {format(new Date(r.createdAt), "d MMM yyyy", { locale: dateLocale })}
                   </div>
                 </div>
               ))}
@@ -757,18 +761,18 @@ export default function CarDetail() {
           <div onClick={e => e.stopPropagation()}
             style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>Eliminar publicación</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{tr("car.deleteListing")}</div>
             <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
-              ¿Seguro que querés eliminar <strong>{car.brand} {car.model} {car.year}</strong>? Esta acción no se puede deshacer.
+              {tr("car.deleteConfirm")} <strong>{car.brand} {car.model} {car.year}</strong>? {tr("car.cannotUndo")}
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setConfirmDelete(false)} disabled={deleting}
                 style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                Cancelar
+                {tr("common.cancel")}
               </button>
               <button onClick={handleDelete} disabled={deleting}
                 style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>
-                {deleting ? "Eliminando..." : "Sí, eliminar"}
+                {deleting ? tr("car.deleting") : tr("car.yesDelete")}
               </button>
             </div>
           </div>

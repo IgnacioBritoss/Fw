@@ -14,18 +14,22 @@
 //  el backend (GET /users/:id devuelve únicamente el perfil público).
 // ============================================================================
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { monthYear, shortDate } from "../i18n/dates";
 import { getPublicProfile, getUserReviews } from "../services/api";
+import { useI18n } from "../i18n/core";
 import UserReputation from "./UserReputation";
 import StatusChip from "./StatusChip";
-
-const nameOf = (person) =>
-  person?.displayName
-  || `${person?.firstName || ""} ${person?.lastName || ""}`.trim()
-  || "Usuario";
+import RankBadge from "./RankBadge";
+import Avatar from "./Avatar";
+import { initialsOf } from "../services/people";
+import Spinner from "./Spinner";
 
 export default function UserProfileModal({ userId, onClose }) {
+  const { t: tr, lang } = useI18n();
+  const nameOf = (person) =>
+    person?.displayName
+    || `${person?.firstName || ""} ${person?.lastName || ""}`.trim()
+    || tr("profile.userFallback");
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +50,8 @@ export default function UserProfileModal({ userId, onClose }) {
   }, [userId]);
 
   const name = nameOf(profile);
+  // Sin reseñas no hay promedio ni rango: no se inventa un puntaje.
+  const ratingCount = Number(profile?.ratingCount) || 0;
 
   return (
     <div
@@ -63,42 +69,38 @@ export default function UserProfileModal({ userId, onClose }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 0" }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>Perfil</div>
-          <button onClick={onClose} aria-label="Cerrar"
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{tr("profile.title")}</div>
+          <button onClick={onClose} aria-label={tr("common.close")}
             style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#6b7280", lineHeight: 1 }}>
             ×
           </button>
         </div>
 
         {loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>
-            Cargando perfil...
-          </div>
+          <Spinner block label={tr("profile.loading")} />
         ) : !profile ? (
           <div style={{ padding: 40, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>
-            No pudimos cargar este perfil.
+            {tr("profile.loadFailed")}
           </div>
         ) : (
           <div style={{ padding: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: "50%", flexShrink: 0,
-                background: "linear-gradient(135deg,#2563eb,#1d4ed8)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontWeight: 700, fontSize: 21,
-              }}>
-                {name[0]?.toUpperCase()}
-              </div>
+              {/* La foto de perfil pública, o las iniciales si todavía no subió ninguna. */}
+              <Avatar src={profile.profilePhotoUrl} initials={initialsOf(profile)} size={56} alt={name} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#111827" }}>{name}</div>
                 <div style={{ fontSize: 12.5, color: "#6b7280", marginTop: 2 }}>
-                  En Freewheel desde {format(new Date(profile.createdAt), "MMMM yyyy", { locale: es })}
+                  {tr("profile.memberSince", { date: monthYear(profile.createdAt, lang) })}
                 </div>
-                {profile.verified && (
-                  <div style={{ marginTop: 7 }}>
-                    <StatusChip tone="ok">Identidad verificada</StatusChip>
-                  </div>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 7, flexWrap: "wrap" }}>
+                  {profile.verified && (
+                    <StatusChip tone="ok">{tr("profile.identityVerified")}</StatusChip>
+                  )}
+                  {/* El rango sale de las reseñas reales: sin reseñas no se muestra. */}
+                  {ratingCount > 0 && (
+                    <RankBadge count={ratingCount} average={profile.ratingAverage} size="sm" />
+                  )}
+                </div>
                 {/*
                   Los últimos cuatro dígitos del documento con el que se verificó.
                   Le da a la otra persona algo concreto para cotejar si alguna vez
@@ -108,7 +110,7 @@ export default function UserProfileModal({ userId, onClose }) {
                 */}
                 {profile.verified && profile.documentLast4 && (
                   <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 5 }}>
-                    Documento ····{profile.documentLast4}
+                    {tr("profile.document")} ····{profile.documentLast4}
                   </div>
                 )}
               </div>
@@ -120,19 +122,18 @@ export default function UserProfileModal({ userId, onClose }) {
               borderLeft: "3px solid #2563eb", borderRadius: 10, padding: "12px 14px", marginBottom: 18,
             }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
-                Calificaciones
+                {tr("profile.ratings")}
               </div>
               <UserReputation userId={userId} role="both" />
             </div>
 
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#111827", marginBottom: 10 }}>
-              Reseñas recibidas ({reviews.length})
+              {tr("profile.reviewsReceived", { count: reviews.length })}
             </div>
 
             {reviews.length === 0 ? (
               <p style={{ fontSize: 12.5, color: "#9ca3af", margin: 0, lineHeight: 1.6 }}>
-                Todavía no tiene reseñas. Se escriben cuando una reserva termina y
-                el pago está completo.
+                {tr("profile.noReviewsYet")}
               </p>
             ) : (
               reviews.map(review => (
@@ -148,9 +149,9 @@ export default function UserProfileModal({ userId, onClose }) {
                   {/* Aclara desde qué lado se escribió: no es lo mismo que te
                       califique el dueño de un auto que alguien que alquiló el tuyo. */}
                   <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
-                    {review.listingId ? "Como dueño del auto" : "Como conductor"}
+                    {review.listingId ? tr("profile.asOwner") : tr("profile.asDriver")}
                     {" · "}
-                    {format(new Date(review.createdAt), "d MMM yyyy", { locale: es })}
+                    {shortDate(review.createdAt, lang)}
                   </div>
                   {review.comment && (
                     <div style={{ fontSize: 13, color: "#4b5563", marginTop: 6, lineHeight: 1.6 }}>

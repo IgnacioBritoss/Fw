@@ -77,3 +77,12 @@ export function useI18n() {
   }
   return ctx;
 }
+
+/**
+ * Traducción para el código que NO es un componente de React —los servicios que
+ * hablan con el backend, por ejemplo—, donde no hay hook al que llamar.
+ * Lee el idioma guardado en el navegador, que es el mismo que puso el selector.
+ */
+export function tSync(key, vars) {
+  return translate(idiomaInicial(), key, vars);
+}

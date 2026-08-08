@@ -21,6 +21,7 @@
 //  aunque se recargue la página.
 // ============================================================================
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { useI18n } from "../i18n/core";
 import {
   loginUser, registerStart, registerComplete, getMe,
   verifyEmail as apiVerifyEmail,
@@ -56,6 +57,9 @@ function loadStoredUser() {
 
 // Provider: envuelve a toda la app (ver App.jsx) y "provee" la sesión.
 export function AuthProvider({ children }) {
+  // AuthProvider vive dentro de I18nProvider (ver main.jsx), así que los avisos
+  // de error también salen en el idioma elegido.
+  const { t: tr } = useI18n();
   // La sesión se lee del navegador en el primer render (no en un efecto), así la
   // app nunca aparece "deslogueada" por un instante al recargar la página.
   const [user, setUser] = useState(loadStoredUser);
@@ -83,7 +87,7 @@ export function AuthProvider({ children }) {
    * paso más (verificar email / cargar fecha de nacimiento).
    */
   const applyAuthResponse = useCallback((data) => {
-    if (!data) return { success: false, error: "El servidor no devolvió una respuesta válida." };
+    if (!data) return { success: false, error: tr("auth.errBadResponse") };
 
     // Alta incompleta: se guarda el token de onboarding aparte, nunca como
     // accessToken, y se le dice a la pantalla a dónde tiene que ir.
@@ -103,7 +107,7 @@ export function AuthProvider({ children }) {
     }
 
     if (!data.accessToken) {
-      return { success: false, error: "No pudimos abrir la sesión. Intentá de nuevo." };
+      return { success: false, error: tr("auth.errNoSession") };
     }
 
     saveUser({
@@ -113,16 +117,16 @@ export function AuthProvider({ children }) {
       onboardingToken: null,
     });
     return { success: true, pending: null };
-  }, [saveUser]);
+  }, [saveUser, tr]);
 
   // ── Inicio de sesión ────────────────────────────────────────────────────
   const loginWithCredentials = useCallback(async (email, password) => {
     try {
       return applyAuthResponse(await loginUser({ email, password }));
     } catch (err) {
-      return { success: false, error: err.message || "Email o contraseña incorrectos." };
+      return { success: false, error: err.message || tr("auth.errBadLogin") };
     }
-  }, [applyAuthResponse]);
+  }, [applyAuthResponse, tr]);
 
   // ── Registro: paso 1 (pedir el código al email) ─────────────────────────
   const startRegistration = useCallback(async (email) => {
@@ -130,9 +134,9 @@ export function AuthProvider({ children }) {
       await registerStart({ email });
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.message || "No pudimos enviar el código." };
+      return { success: false, error: err.message || tr("email.errSend") };
     }
-  }, []);
+  }, [tr]);
 
   // ── Registro: paso 2 (crear la cuenta con el código) ────────────────────
   // La cuenta nace con el email ya verificado, así que acá queda la sesión abierta.
@@ -140,9 +144,9 @@ export function AuthProvider({ children }) {
     try {
       return applyAuthResponse(await registerComplete(form));
     } catch (err) {
-      return { success: false, error: err.message || "No pudimos crear la cuenta." };
+      return { success: false, error: err.message || tr("auth.errRegister") };
     }
-  }, [applyAuthResponse]);
+  }, [applyAuthResponse, tr]);
 
   // ── Login con Google ────────────────────────────────────────────────────
   // Google no da la fecha de nacimiento, así que muchas veces el backend
@@ -160,18 +164,18 @@ export function AuthProvider({ children }) {
       return { success: true, pending: null };
     } catch (err) {
       logout();
-      return { success: false, error: err.message || "Error al iniciar sesión con Google." };
+      return { success: false, error: err.message || tr("auth.errGoogle") };
     }
-  }, [saveUser, logout]);
+  }, [saveUser, logout, tr]);
 
   // ── Verificación del email (cuentas viejas y de Google) ─────────────────
   const verifyEmail = useCallback(async (code) => {
     try {
       return applyAuthResponse(await apiVerifyEmail({ code }));
     } catch (err) {
-      return { success: false, error: err.message || "Código incorrecto." };
+      return { success: false, error: err.message || tr("auth.errBadCode") };
     }
-  }, [applyAuthResponse]);
+  }, [applyAuthResponse, tr]);
 
   const resendVerification = useCallback(async () => {
     try {
@@ -187,9 +191,9 @@ export function AuthProvider({ children }) {
     try {
       return applyAuthResponse(await apiCompleteProfile({ dateOfBirth }));
     } catch (err) {
-      return { success: false, error: err.message || "No pudimos guardar tus datos." };
+      return { success: false, error: err.message || tr("auth.errSaveData") };
     }
-  }, [applyAuthResponse]);
+  }, [applyAuthResponse, tr]);
 
   // ── Contraseña olvidada ─────────────────────────────────────────────────
   const forgotPassword = useCallback(async (email) => {

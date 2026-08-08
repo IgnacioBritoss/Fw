@@ -12,8 +12,10 @@
 //  puntúa a quien alquiló. El promedio lo recalcula y lo guarda el servidor.
 // ============================================================================
 import { useState } from "react";
+import { useI18n } from "../i18n/core";
 
 export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
+  const { t: tr } = useI18n();
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
@@ -29,7 +31,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
     try {
       await onSubmit({ rating, comment: comment.trim() });
     } catch (err) {
-      setError(err.message || "No pudimos guardar tu reseña.");
+      setError(err.message || tr("review.saveFailed"));
       setSending(false);
     }
   };
@@ -37,7 +39,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   return (
     <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, marginTop: 10 }}>
       <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
-        {isOwner ? "¿Cómo fue con el conductor?" : "¿Cómo fue tu experiencia?"}
+        {tr(isOwner ? "review.askOwner" : "review.askRenter")}
       </div>
 
       {/* Estrellas. Son botones de verdad para que se puedan usar con el teclado. */}
@@ -48,7 +50,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
             type="button"
             onClick={() => setRating(value)}
             onMouseEnter={() => setHover(value)}
-            aria-label={`${value} de 5`}
+            aria-label={tr("review.outOf5", { value })}
             aria-pressed={rating === value}
             style={{
               background: "none", border: "none", padding: 0, cursor: "pointer",
@@ -62,7 +64,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
         ))}
         {rating > 0 && (
           <span style={{ alignSelf: "center", marginLeft: 8, fontSize: 12.5, color: "#6b7280" }}>
-            {rating} de 5
+            {tr("review.outOf5", { value: rating })}
           </span>
         )}
       </div>
@@ -71,9 +73,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
         value={comment}
         onChange={e => setComment(e.target.value)}
         maxLength={1000}
-        placeholder={isOwner
-          ? "Contá cómo cuidó el auto y cómo fue la entrega (opcional)."
-          : "Contá cómo estaba el auto y cómo fue el trato (opcional)."}
+        placeholder={tr(isOwner ? "review.phOwner" : "review.phRenter")}
         style={{
           width: "100%", height: 70, padding: "9px 12px", borderRadius: 8,
           border: "1.5px solid #e5e7eb", fontSize: 13.5, outline: "none",
@@ -100,14 +100,14 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
             opacity: !rating || sending ? 0.6 : 1,
           }}
         >
-          {sending ? "Enviando..." : "Publicar reseña"}
+          {sending ? tr("common.sending") : tr("review.submit")}
         </button>
         <button
           type="button"
           onClick={onCancel}
           style={{ padding: "9px 18px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
         >
-          Cancelar
+          {tr("common.cancel")}
         </button>
       </div>
     </div>

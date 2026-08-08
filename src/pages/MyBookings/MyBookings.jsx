@@ -25,7 +25,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
 import {
   getMyBookings, cancelBooking, acceptBooking, rejectBooking, markReadyForPickup,
   getMyPendingReviews, createReview,
@@ -34,6 +33,8 @@ import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import StatusChip from "../../components/StatusChip";
 import { useI18n } from "../../i18n/core";
+import { localeFor } from "../../i18n/dates";
+import Spinner from "../../components/Spinner";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
@@ -107,23 +108,24 @@ function nextStepFor(booking, isOwner) {
   const paid = booking.paymentStatus === "FULLY_PAID";
   switch (booking.status) {
     case "REQUESTED":
-      return isOwner ? "Aceptá o rechazá la solicitud." : "Esperando que el dueño acepte.";
+      return isOwner ? "step.ownerDecide" : "step.waitOwner";
     case "ACCEPTED":
-      if (!paid) return isOwner ? "Esperando que el conductor pague." : "Pagá para confirmar la reserva.";
-      return isOwner ? "Ya está pago: marcá el auto listo para retiro." : "Pago confirmado. El dueño va a preparar el auto.";
+      if (!paid) return isOwner ? "step.waitPay" : "step.payNow";
+      return isOwner ? "step.markReady" : "step.paidWaitOwner";
     case "READY_FOR_PICKUP":
-      return isOwner ? "Al entregar el auto, pedile el QR de retiro y confirmalo." : "Mostrale tu QR de retiro al dueño cuando retires el auto.";
+      return isOwner ? "step.ownerScanPickup" : "step.renterShowPickup";
     case "IN_PROGRESS":
-      return isOwner ? "Al recibir el auto, mostrale tu QR de devolución al conductor." : "Al devolver el auto, escaneá el QR del dueño para cerrar la reserva.";
+      return isOwner ? "step.ownerShowReturn" : "step.renterScanReturn";
     case "COMPLETED":
-      return "Reserva completada.";
+      return "step.done";
     default:
       return "";
   }
 }
 
 export default function MyBookings() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const dateLocale = localeFor(lang);
   const { user } = useAuth();
   // Qué reservas se pueden reseñar y cuáles ya se reseñaron. Lo decide el
   // backend (reserva completada y pago cerrado), así la pantalla no adivina.
@@ -144,14 +146,14 @@ export default function MyBookings() {
     setError(null);
     getMyBookings()
       .then((data) => setBookings(Array.isArray(data) ? data : (data?.data ?? [])))
-      .catch((err) => setError(err.message || "Error al cargar reservas."))
+      .catch((err) => setError(err.message || t("bookings.loadFailed")))
       .finally(() => setLoading(false));
     // En paralelo: qué reservas se pueden reseñar. Si falla, simplemente no se
     // muestra el botón; no es motivo para romper la pantalla.
     getMyPendingReviews()
       .then((data) => setReviewable(Array.isArray(data) ? data : []))
       .catch(() => setReviewable([]));
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -171,7 +173,7 @@ export default function MyBookings() {
   const handleReject = (id) => runAction(`${id}-reject`, () => rejectBooking(id));
   const handleReady = (id) => runAction(`${id}-ready`, () => markReadyForPickup(id));
   const handleCancel = (id) => {
-    if (!window.confirm("¿Cancelar esta reserva?")) return;
+    if (!window.confirm(t("bookings.confirmCancel"))) return;
     runAction(`${id}-cancel`, () => cancelBooking(id));
   };
 
@@ -202,39 +204,39 @@ export default function MyBookings() {
         {canAcceptOwner && (
           <>
             <button style={s.btnAccept} disabled={!!actionLoading} onClick={() => handleAccept(b.id)}>
-              {actionLoading === `${b.id}-accept` ? "..." : "Aceptar"}
+              {actionLoading === `${b.id}-accept` ? "..." : t("bookings.accept")}
             </button>
             <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleReject(b.id)}>
-              {actionLoading === `${b.id}-reject` ? "..." : "Rechazar"}
+              {actionLoading === `${b.id}-reject` ? "..." : t("bookings.reject")}
             </button>
           </>
         )}
-        {canPayRenter && <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>Pagar</button>}
+        {canPayRenter && <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>{t("bookings.pay")}</button>}
         {canMarkReady && (
           <button style={s.btnReady} disabled={!!actionLoading} onClick={() => handleReady(b.id)}>
-            {actionLoading === `${b.id}-ready` ? "..." : "Marcar listo para retiro"}
+            {actionLoading === `${b.id}-ready` ? "..." : t("bookings.markReady")}
           </button>
         )}
         {showPickupQR && (
           <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}?mode=pickup`)}>
-            {isOwner ? "Confirmar retiro" : "Mi QR de retiro"}
+            {isOwner ? t("bookings.confirmPickup") : t("bookings.myPickupQr")}
           </button>
         )}
         {showReturnQR && (
           <button style={s.btnQR} onClick={() => navigate(`/qr/${b.id}?mode=return`)}>
-            {isOwner ? "Mi QR de devolución" : "Confirmar devolución"}
+            {isOwner ? t("bookings.myReturnQr") : t("bookings.confirmReturn")}
           </button>
         )}
         {canCancel && (
           <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>
-            {actionLoading === `${b.id}-cancel` ? "..." : "Cancelar"}
+            {actionLoading === `${b.id}-cancel` ? "..." : t("common.cancel")}
           </button>
         )}
         {/* La reseña se habilita solo cuando la reserva terminó y el pago se
             completó: es lo que hace que las puntuaciones signifiquen algo. */}
         {canReview && (
           <button style={s.btnQR} onClick={() => setReviewingId(b.id)}>
-            {isOwner ? "Calificar al conductor" : "Dejar reseña"}
+            {isOwner ? t("bookings.rateDriver") : t("bookings.leaveReview")}
           </button>
         )}
       </div>
@@ -246,10 +248,10 @@ export default function MyBookings() {
           {vehicle.brand} {vehicle.model} {vehicle.year}
         </div>
         <div style={{ fontSize: isMobile ? 12 : 13, color: "#6b7280", marginBottom: 4 }}>
-          {format(parseISO(b.startDate), "d MMM", { locale: es })} — {format(parseISO(b.endDate), "d MMM yyyy", { locale: es })} · {days} día{days !== 1 ? "s" : ""}
+          {format(parseISO(b.startDate), "d MMM", { locale: dateLocale })} — {format(parseISO(b.endDate), "d MMM yyyy", { locale: dateLocale })} · {days} {t(days === 1 ? "common.day" : "common.days")}
         </div>
         <div style={{ fontSize: isMobile ? 12 : 13, color: "#374151", marginBottom: 4 }}>
-          {isOwner ? "Conductor: " : "Dueño: "}<strong>{getPersonName(isOwner ? b.renter : b.owner)}</strong>
+          {isOwner ? `${t("bookings.driver")}: ` : `${t("car.owner")}: `}<strong>{getPersonName(isOwner ? b.renter : b.owner)}</strong>
         </div>
         {/* La calificación de la otra persona, en el momento en que hace falta:
             el dueño la ve al decidir si acepta la solicitud, y quien alquila la
@@ -274,7 +276,7 @@ export default function MyBookings() {
           </div>
         </div>
         {/* Guía del paso siguiente para cada rol. */}
-        {nextStepFor(b, isOwner) && <div style={s.nextStep}>{nextStepFor(b, isOwner)}</div>}
+        {nextStepFor(b, isOwner) && <div style={s.nextStep}>{t(nextStepFor(b, isOwner))}</div>}
         {reviewingId === b.id ? (
           <ReviewForm
             isOwner={isOwner}
@@ -295,7 +297,7 @@ export default function MyBookings() {
           <div style={s.carImgMobile}>
             {vehicle.photos?.length > 0
               ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <div style={{ color: "#9ca3af", fontSize: 12 }}>Sin foto</div>}
+              : <div style={{ color: "#9ca3af", fontSize: 12 }}>{t("common.noPhoto")}</div>}
           </div>
           {details}
         </div>
@@ -307,7 +309,7 @@ export default function MyBookings() {
         <div style={s.carImg}>
           {vehicle.photos?.length > 0
             ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <div style={{ color: "#9ca3af", fontSize: 12 }}>Sin foto</div>}
+            : <div style={{ color: "#9ca3af", fontSize: 12 }}>{t("common.noPhoto")}</div>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>{details}</div>
       </div>
@@ -321,24 +323,24 @@ export default function MyBookings() {
       {error && <div style={s.errorBox}>{error}</div>}
       <div style={s.tabs}>
         {[
-          ["mis-reservas", isMobile ? `Alquileres (${myRentals.length})` : `Mis alquileres (${myRentals.length})`],
-          ["solicitudes", isMobile ? `Solicitudes (${myOwnerBookings.length})` : `Solicitudes recibidas (${myOwnerBookings.length})`],
+          ["mis-reservas", `${t(isMobile ? "bookings.tabRentalsShort" : "bookings.tabRentals")} (${myRentals.length})`],
+          ["solicitudes", `${t(isMobile ? "bookings.tabRequestsShort" : "bookings.tabRequests")} (${myOwnerBookings.length})`],
         ].map(([k, l]) => (
           <button key={k} style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
       {loading ? (
-        <div style={s.empty}>Cargando reservas...</div>
+        <Spinner block label={t("common.loading")} />
       ) : tab === "mis-reservas" ? (
         myRentals.length === 0 ? (
           <div style={s.empty}>
             <div style={{ fontSize: 13, marginBottom: 16 }}>{t("bookings.none")}</div>
-            <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>Explorar autos</button>
+            <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
           </div>
         ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)
       ) : (
         myOwnerBookings.length === 0 ? (
-          <div style={s.empty}>No hay solicitudes para tus autos.</div>
+          <div style={s.empty}>{t("bookings.noRequests")}</div>
         ) : myOwnerBookings.map((b) => <BookingCard key={b.id} b={b} isOwner={true} />)
       )}
     </div>

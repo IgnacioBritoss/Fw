@@ -192,7 +192,7 @@ export default function Layout({ children }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       {user ? (
         /* Mensajes (con puntito azul si hay no leídos) */
-        <div style={t.iconBtn} onClick={() => navigate("/chat")} title="Mensajes"
+        <div style={t.iconBtn} onClick={() => navigate("/chat")} title={tr("nav.messages")}
           onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
           <MessageIcon />
@@ -312,11 +312,16 @@ export default function Layout({ children }) {
               ))}
             </button>
           )}
-          {/* Solo el símbolo: con la palabra "Freewheel" al lado, los botones de
-              entrar y crear cuenta no entraban en 390px y quedaban cortados. */}
+          {/*
+            Con sesión abierta va el símbolo Y la palabra: los botones de entrar y
+            crear cuenta ya no están, así que sobra lugar y la barra no puede
+            quedar con el logo suelto y un hueco al lado.
+            Sin sesión va solo el símbolo, porque con "Freewheel" escrito los dos
+            botones no entran en 390px y uno queda cortado contra el borde.
+          */}
           {isMobile && (
             <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
-              <BrandLogo size={17} wordmark={false} />
+              <BrandLogo size={user ? 14 : 17} wordmark={Boolean(user)} />
             </div>
           )}
           <div style={{ flex: 1 }} />

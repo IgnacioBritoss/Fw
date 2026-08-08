@@ -17,11 +17,14 @@ import {
 } from "../../services/api";
 import { uploadAudioToCloudinary, uploadFileToCloudinary } from "../../services/cloudinary";
 import UserProfileModal from "../../components/UserProfileModal";
+import Spinner from "../../components/Spinner";
+import { useI18n } from "../../i18n/core";
 
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
 // Además, debajo tiene un botón "Transcribir mensaje" que convierte el audio a
 // texto usando Whisper (IA de Groq) y muestra el resultado.
 function AudioMsg({ src }) {
+  const { t: tr } = useI18n();
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -90,7 +93,7 @@ function AudioMsg({ src }) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 7h16M4 12h10M4 17h7" />
           </svg>
-          {transcribing ? "Transcribiendo..." : transcribeError ? "Error — reintentar" : "Transcribir mensaje"}
+          {transcribing ? tr("chat.transcribing") : transcribeError ? tr("chat.transcribeRetry") : tr("chat.transcribe")}
         </button>
       )}
     </div>
@@ -98,9 +101,9 @@ function AudioMsg({ src }) {
 }
 
 // Nombre visible de un usuario.
-function getDisplayName(u) {
-  if (!u) return "Usuario";
-  return u.displayName || `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Usuario";
+function getDisplayName(u, fallback = "Usuario") {
+  if (!u) return fallback;
+  return u.displayName || `${u.firstName || ""} ${u.lastName || ""}`.trim() || fallback;
 }
 
 // Hora de un mensaje (HH:mm).
@@ -153,6 +156,7 @@ function Avatar({ name, size = 40, fontSize = 15 }) {
 }
 
 export default function Chat() {
+  const { t: tr } = useI18n();
   const { user } = useAuth();
   const { isMobile } = useIsMobile();
   const [searchParams] = useSearchParams();
@@ -192,7 +196,7 @@ export default function Chat() {
   const filteredConversations = conversations.filter(conv => {
     if (!searchQuery.trim()) return true;
     const other = conv.renterId === user?.id ? conv.owner : conv.renter;
-    const name = getDisplayName(other).toLowerCase();
+    const name = getDisplayName(other, tr("profile.userFallback")).toLowerCase();
     return name.includes(searchQuery.toLowerCase().trim());
   });
 
@@ -304,7 +308,7 @@ export default function Chat() {
       setRecording(true);
       setRecordingSeconds(0);
       recordTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
-    } catch { alert("No se pudo acceder al micrófono"); }
+    } catch { alert(tr("chat.micFailed")); }
   };
 
   // Detiene la grabación en curso.
@@ -324,7 +328,7 @@ export default function Chat() {
       const cloudUrl = await uploadAudioToCloudinary(blob);
       const msg = await sendMessage(activeConvId, { content: cloudUrl, type: "AUDIO" });
       setMessages(prev => [...prev, msg]);
-    } catch { alert("Error al enviar el audio"); }
+    } catch { alert(tr("chat.audioFailed")); }
     setUploading(false);
   };
 
@@ -346,7 +350,7 @@ export default function Chat() {
       const { url } = await uploadFileToCloudinary(file);
       const msg = await sendMessage(activeConvId, { content: url, type: "TEXT" });
       setMessages(prev => [...prev, msg]);
-    } catch { alert("Error al subir el archivo"); }
+    } catch { alert(tr("chat.uploadFailed")); }
     setUploading(false);
   };
 
@@ -426,7 +430,7 @@ export default function Chat() {
           <audio controls src={pendingAudio.url} style={{ flex: 1, height: 36, minWidth: 0 }} />
           <button onClick={handleSendAudio} disabled={uploading}
             style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-            {uploading ? "..." : "Enviar ✓"}
+            {uploading ? "..." : `${tr("chat.send")} ✓`}
           </button>
           <button onClick={handleCancelAudio}
             style={{ padding: "9px 14px", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, flexShrink: 0 }}>
@@ -465,7 +469,7 @@ export default function Chat() {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Escribí un mensaje..."
+          placeholder={tr("chat.phMessage")}
           enterKeyHint="send"
           style={{ flex: 1, padding: isMobile ? "10px 16px" : "10px 18px", borderRadius: 24, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "#111827", background: "#f9fafb" }}
         />
@@ -489,7 +493,7 @@ export default function Chat() {
     );
   };
 
-  const otherName = getDisplayName(otherUser);
+  const otherName = getDisplayName(otherUser, tr("profile.userFallback"));
   const v = activeConv?.listing?.vehicle;
   const listingLabel = v ? `${v.brand} ${v.model} ${v.year}` : activeConv?.listing?.title || "";
 
@@ -498,7 +502,7 @@ export default function Chat() {
   const convListJSX = (
     <div style={{ background: "#fff", width: isMobile ? "100%" : 300, borderRight: "1px solid #f3f4f6", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto" }}>
       <div style={{ padding: "18px 20px", borderBottom: "1px solid #f3f4f6" }}>
-        <div style={{ fontWeight: 800, fontSize: 17, color: "#111827", letterSpacing: "-.3px" }}>Mensajes</div>
+        <div style={{ fontWeight: 800, fontSize: 17, color: "#111827", letterSpacing: "-.3px" }}>{tr("nav.messages")}</div>
       </div>
       <div style={{ padding: "10px 14px", borderBottom: "1px solid #f3f4f6" }}>
         <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 22, padding: "8px 14px", gap: 8 }}>
@@ -508,7 +512,7 @@ export default function Chat() {
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Buscar conversación"
+            placeholder={tr("chat.searchConv")}
             style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: "#111827" }}
           />
           {searchQuery && (
@@ -517,19 +521,19 @@ export default function Chat() {
           )}
         </div>
       </div>
-      {loading && <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Cargando...</div>}
+      {loading && <Spinner block label={tr("common.loading")} />}
       {!loading && conversations.length === 0 && (
         <div style={{ padding: 32, textAlign: "center" }}>
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 10px", display: "block" }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="#9ca3af" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>No tenés conversaciones aún.</div>
+          <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>{tr("chat.noConversations")}</div>
         </div>
       )}
       {!loading && filteredConversations.length === 0 && conversations.length > 0 && (
-        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Sin resultados.</div>
+        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>{tr("chat.noResults")}</div>
       )}
       {filteredConversations.map(conv => {
         const other = conv.renterId === user?.id ? conv.owner : conv.renter;
-        const name = getDisplayName(other);
+        const name = getDisplayName(other, tr("profile.userFallback"));
         const cv = conv.listing?.vehicle;
         const label = cv ? `${cv.brand} ${cv.model} ${cv.year}` : conv.listing?.title || "";
         const lastMsg = conv.messages?.[0];
@@ -545,7 +549,7 @@ export default function Chat() {
                 Audio
               </span>
             : lastMsg.content)
-          : "Sin mensajes";
+          : tr("chat.noMessages");
         const isActive = conv.id === activeConvId;
         const unread = hasUnread(conv);
         return (
@@ -584,7 +588,7 @@ export default function Chat() {
         <button
           type="button"
           onClick={() => otherUser?.id && setProfileUserId(otherUser.id)}
-          title="Ver perfil y reseñas"
+          title={tr("chat.viewProfile")}
           style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: otherUser?.id ? "pointer" : "default", textAlign: "left" }}
         >
           <Avatar name={otherName} size={40} fontSize={15} />
@@ -639,8 +643,8 @@ export default function Chat() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", textAlign: "center" }}>Tus mensajes</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", marginTop: 4 }}>Seleccioná una conversación</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", textAlign: "center" }}>{tr("chat.yourMessages")}</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", marginTop: 4 }}>{tr("chat.pickConversation")}</div>
               </div>
             </div>
           ) : chatAreaJSX}

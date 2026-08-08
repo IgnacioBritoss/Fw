@@ -18,6 +18,9 @@ import {
   adminGetVerifications, adminReviewVerification, getAiHealth,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
+import Spinner from "../../components/Spinner";
+import { useI18n } from "../../i18n/core";
+import { shortDate } from "../../i18n/dates";
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
@@ -62,6 +65,7 @@ const userStatusColor = (status) => {
 };
 
 export default function Admin() {
+  const { t: tr, lang } = useI18n();
   const { isMobile } = useIsMobile();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -90,10 +94,10 @@ export default function Admin() {
   if (!user || user.role !== "ADMIN") {
     return (
       <div style={s.accessDenied}>
-        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Acceso restringido</div>
-        <div style={{ color: "#6b7280", marginBottom: 24 }}>No tenés permisos para ver esta página.</div>
+        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{tr("admin.denied")}</div>
+        <div style={{ color: "#6b7280", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
         <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
-          onClick={() => navigate("/")}>Volver al inicio</button>
+          onClick={() => navigate("/")}>{tr("common.goHome")}</button>
       </div>
     );
   }
@@ -110,28 +114,28 @@ export default function Admin() {
       setLoadingListings(true);
       adminGetListings()
         .then(data => setListings(data || []))
-        .catch(() => showAlert("Error al cargar publicaciones", "err"))
+        .catch(() => showAlert(tr("admin.errListings"), "err"))
         .finally(() => setLoadingListings(false));
     }
     if (tab === "users") {
       setLoadingUsers(true);
       adminGetUsers()
         .then(data => setUsers(data || []))
-        .catch(() => showAlert("Error al cargar usuarios", "err"))
+        .catch(() => showAlert(tr("admin.errUsers"), "err"))
         .finally(() => setLoadingUsers(false));
     }
     if (tab === "reports") {
       setLoadingReports(true);
       getAdminReports()
         .then(data => setReports(Array.isArray(data) ? data : []))
-        .catch(() => showAlert("Error al cargar reportes", "err"))
+        .catch(() => showAlert(tr("admin.errReports"), "err"))
         .finally(() => setLoadingReports(false));
     }
     if (tab === "verifications") {
       setLoadingVerifications(true);
       adminGetVerifications()
         .then(data => setVerifications(Array.isArray(data) ? data : []))
-        .catch(() => showAlert("Error al cargar las verificaciones", "err"))
+        .catch(() => showAlert(tr("admin.errVerifications"), "err"))
         .finally(() => setLoadingVerifications(false));
       // Si la IA está caída, las solicitudes quedan esperando a un humano: hay
       // que poder ver el motivo real acá y no en los logs del deploy.
@@ -148,7 +152,7 @@ export default function Admin() {
         (Array.isArray(data) ? data : []).filter(v => v.status === "ID_SUBMITTED").length,
       ))
       .catch(() => setPendingVerifications(0));
-  }, [tab]);
+  }, [tab, tr]);
 
   /** Aprueba o rechaza una verificación y refresca la lista. */
   const doReviewVerification = async (id, status, label) => {
@@ -161,7 +165,7 @@ export default function Admin() {
       );
       showAlert(label);
     } catch (err) {
-      showAlert(err.message || "No se pudo registrar la decisión", "err");
+      showAlert(err.message || tr("admin.errDecision"), "err");
     }
   };
 
@@ -173,7 +177,7 @@ export default function Admin() {
       setOpenReports(prev => Math.max(0, prev - 1));
       showAlert(label);
     } catch (err) {
-      showAlert(err.message || "No pudimos resolver el reporte", "err");
+      showAlert(err.message || tr("admin.errResolve"), "err");
     }
   };
 
@@ -182,36 +186,36 @@ export default function Admin() {
     try {
       await adminUpdateListingStatus(id, "DELETED");
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: "DELETED" } : l));
-      showAlert(`Publicación "${label}" eliminada.`);
-    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
+      showAlert(tr("admin.listingDeleted", { label }));
+    } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
   const handleRestoreListing = async (id, label) => {
     try {
       await adminUpdateListingStatus(id, "ACTIVE");
       setListings(prev => prev.map(l => l.id === id ? { ...l, status: "ACTIVE" } : l));
-      showAlert(`Publicación "${label}" recuperada.`);
-    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
+      showAlert(tr("admin.listingRestored", { label }));
+    } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
   const doSuspendUser = async (id, name) => {
     try {
       await adminUpdateUserStatus(id, "SUSPENDED");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "SUSPENDED" } : u));
-      showAlert(`Usuario "${name}" suspendido.`);
-    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
+      showAlert(tr("admin.userSuspended", { name }));
+    } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
   const doDeleteUser = async (id, name) => {
     try {
       await adminUpdateUserStatus(id, "DELETED");
       setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "DELETED" } : u));
-      showAlert(`Usuario "${name}" eliminado.`);
-    } catch (err) { showAlert("Error: " + (err.message || ""), "err"); }
+      showAlert(tr("admin.userDeleted", { name }));
+    } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
 
   // Abren el modal de confirmación (en vez de alert nativo). Guardan la acción
   // a ejecutar; recién se corre cuando el usuario confirma en el modal.
-  const handleDeleteListing = (id, label) => setConfirmModal({ title: "Eliminar publicación", msg: `¿Eliminar "${label}"? Dejará de verse en la plataforma. Podés recuperarla después desde acá.`, confirmLabel: "Eliminar", action: () => doDeleteListing(id, label) });
-  const handleSuspendUser = (id, name) => setConfirmModal({ title: "Suspender usuario", msg: `¿Querés suspender a "${name}"? No podrá operar hasta reactivarlo.`, confirmLabel: "Suspender", action: () => doSuspendUser(id, name) });
-  const handleDeleteUser = (id, name) => setConfirmModal({ title: "Eliminar usuario", msg: `¿Querés eliminar a "${name}"? Esta acción es delicada.`, confirmLabel: "Eliminar", action: () => doDeleteUser(id, name) });
+  const handleDeleteListing = (id, label) => setConfirmModal({ title: tr("car.deleteListing"), msg: tr("admin.confirmDeleteListing", { label }), confirmLabel: tr("common.delete"), action: () => doDeleteListing(id, label) });
+  const handleSuspendUser = (id, name) => setConfirmModal({ title: tr("admin.suspendUser"), msg: tr("admin.confirmSuspend", { name }), confirmLabel: tr("admin.suspend"), action: () => doSuspendUser(id, name) });
+  const handleDeleteUser = (id, name) => setConfirmModal({ title: tr("admin.deleteUser"), msg: tr("admin.confirmDeleteUser", { name }), confirmLabel: tr("common.delete"), action: () => doDeleteUser(id, name) });
 
   // Ejecuta la acción guardada en el modal y lo cierra.
   const runConfirm = async () => { const m = confirmModal; setConfirmModal(null); if (m?.action) await m.action(); };
@@ -219,19 +223,19 @@ export default function Admin() {
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={{ marginBottom: 28 }}>
-        <div style={s.title}>Panel de administración</div>
-        <div style={s.sub}>Moderación y gestión de la plataforma</div>
+        <div style={s.title}>{tr("admin.title")}</div>
+        <div style={s.sub}>{tr("admin.sub")}</div>
       </div>
 
       {alert.msg && <div style={alert.type === "err" ? s.alertErr : s.alertOk}>{alert.msg}</div>}
 
       <div style={s.tabs}>
         {[
-          ["listings", "Publicaciones"],
-          ["users", "Usuarios"],
-          ["reports", openReports > 0 ? `Reportes (${openReports})` : "Reportes"],
+          ["listings", tr("admin.tabListings")],
+          ["users", tr("admin.tabUsers")],
+          ["reports", openReports > 0 ? `${tr("admin.tabReports")} (${openReports})` : tr("admin.tabReports")],
           ["verifications", pendingVerifications > 0
-            ? `Verificaciones (${pendingVerifications})` : "Verificaciones"],
+            ? `${tr("admin.tabVerifications")} (${pendingVerifications})` : tr("admin.tabVerifications")],
         ].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
@@ -241,8 +245,8 @@ export default function Admin() {
 
       {/* PUBLICACIONES */}
       {tab === "listings" && (
-        loadingListings ? <div style={s.empty}>Cargando...</div>
-        : listings.length === 0 ? <div style={s.empty}>No hay publicaciones.</div>
+        loadingListings ? <Spinner block label={tr("common.loading")} />
+        : listings.length === 0 ? <div style={s.empty}>{tr("admin.noListings")}</div>
         : listings.map(listing => {
           const v = listing.vehicle || {};
           const label = `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim() || listing.title;
@@ -253,7 +257,7 @@ export default function Admin() {
               <div style={s.carImg}>
                 {listing.photos?.length > 0
                   ? <img src={listing.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : "Sin foto"}
+                  : tr("common.noPhoto")}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -261,21 +265,21 @@ export default function Admin() {
                   <span style={{ ...s.badge, ...(listingStatusColors[listing.status] || {}) }}>{listing.status}</span>
                 </div>
                 <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 2 }}>
-                  {listing.locationText} · ${Number(listing.pricePerDay).toLocaleString()}/día
+                  {listing.locationText} · ${Number(listing.pricePerDay).toLocaleString()}{tr("common.perDay")}
                 </div>
                 <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
-                  {new Date(listing.createdAt).toLocaleDateString("es-AR")}
+                  {shortDate(listing.createdAt, lang)}
                 </div>
                 <div style={s.btnRow}>
                   {listing.status !== "DELETED" ? (
                     <button style={s.btnDelete}
                       onClick={e => { e.stopPropagation(); handleDeleteListing(listing.id, label); }}>
-                      Eliminar
+                      {tr("common.delete")}
                     </button>
                   ) : (
                     <button style={s.btnRestore}
                       onClick={e => { e.stopPropagation(); handleRestoreListing(listing.id, label); }}>
-                      ↻ Recuperar
+                      ↻ {tr("admin.restore")}
                     </button>
                   )}
                 </div>
@@ -287,8 +291,8 @@ export default function Admin() {
 
       {/* USUARIOS */}
       {tab === "users" && (
-        loadingUsers ? <div style={s.empty}>Cargando...</div>
-        : users.length === 0 ? <div style={s.empty}>No hay usuarios.</div>
+        loadingUsers ? <Spinner block label={tr("common.loading")} />
+        : users.length === 0 ? <div style={s.empty}>{tr("admin.noUsers")}</div>
         : users.map(u => (
           <div key={u.id} style={{ ...s.card, cursor: "pointer" }}
             onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}>
@@ -311,19 +315,19 @@ export default function Admin() {
             {expandedUser === u.id && (
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f3f4f6", fontSize: 12, color: "#6b7280", display: "flex", flexDirection: "column", gap: 4 }}>
                 <div><strong>ID:</strong> {u.id}</div>
-                <div><strong>Teléfono:</strong> {u.phone || "—"}</div>
-                <div><strong>Registrado:</strong> {new Date(u.createdAt).toLocaleDateString("es-AR")}</div>
+                <div><strong>{tr("auth.phone")}:</strong> {u.phone || "—"}</div>
+                <div><strong>{tr("admin.registered")}:</strong> {shortDate(u.createdAt, lang)}</div>
                 {u.id !== user.id && u.status !== "DELETED" && (
                   <div style={{ ...s.btnRow, marginTop: 8 }}>
                     {u.status !== "SUSPENDED" && (
                       <button style={s.btnSuspend}
                         onClick={e => { e.stopPropagation(); handleSuspendUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                        Suspender
+                        {tr("admin.suspend")}
                       </button>
                     )}
                     <button style={s.btnDelete}
                       onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                      Eliminar
+                      {tr("common.delete")}
                     </button>
                   </div>
                 )}
@@ -338,35 +342,35 @@ export default function Admin() {
           relación con la publicación, así el admin no tiene que leer de cero los
           que no tienen nada que ver. La decisión siempre la toma el admin. */}
       {tab === "reports" && (
-        loadingReports ? <div style={s.empty}>Cargando...</div>
-        : reports.length === 0 ? <div style={s.empty}>No hay reportes.</div>
+        loadingReports ? <Spinner block label={tr("common.loading")} />
+        : reports.length === 0 ? <div style={s.empty}>{tr("admin.noReports")}</div>
         : reports.map(r => {
           const ai = {
-            COHERENT: { label: "La IA lo ve coherente con la publicación", bg: "#fef3c7", color: "#92400e" },
-            INCOHERENT: { label: "La IA no le ve relación con la publicación", bg: "#f3f4f6", color: "#4b5563" },
-            UNCLEAR: { label: "La IA no pudo decidir", bg: "#eff6ff", color: "#1e40af" },
+            COHERENT: { label: tr("admin.aiCoherent"), bg: "#fef3c7", color: "#92400e" },
+            INCOHERENT: { label: tr("admin.aiIncoherent"), bg: "#f3f4f6", color: "#4b5563" },
+            UNCLEAR: { label: tr("admin.aiUnclear"), bg: "#eff6ff", color: "#1e40af" },
           }[r.aiVerdict];
           const reporterName = r.reporter?.displayName
             || `${r.reporter?.firstName || ""} ${r.reporter?.lastName || ""}`.trim()
-            || "Usuario";
+            || tr("profile.userFallback");
 
           return (
             <div key={r.id} style={{ ...s.card, display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
                 <span style={{ ...s.badge, background: r.status === "OPEN" ? "#fee2e2" : "#f3f4f6", color: r.status === "OPEN" ? "#991b1b" : "#4b5563" }}>
-                  {r.status === "OPEN" ? "SIN RESOLVER" : r.status}
+                  {r.status === "OPEN" ? tr("admin.unresolved") : r.status}
                 </span>
                 <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{r.reason}</span>
                 <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: "auto" }}>
-                  {new Date(r.createdAt).toLocaleDateString("es-AR")}
+                  {shortDate(r.createdAt, lang)}
                 </span>
               </div>
 
               <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 8 }}>
                 {r.targetType === "LISTING"
-                  ? <>Publicación: <strong style={{ color: "#374151" }}>{r.listing?.title || "(eliminada)"}</strong></>
-                  : <>Cuenta reportada: <strong style={{ color: "#374151" }}>{r.targetUser?.firstName} {r.targetUser?.lastName}</strong></>}
-                {" · "}reportó {reporterName}
+                  ? <>{tr("admin.reportedListing")}: <strong style={{ color: "#374151" }}>{r.listing?.title || tr("admin.deletedListing")}</strong></>
+                  : <>{tr("admin.reportedAccount")}: <strong style={{ color: "#374151" }}>{r.targetUser?.firstName} {r.targetUser?.lastName}</strong></>}
+                {" · "}{tr("admin.reportedBy", { name: reporterName })}
               </div>
 
               <div style={{ fontSize: 13.5, color: "#374151", lineHeight: 1.6, background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
@@ -380,13 +384,13 @@ export default function Admin() {
               {r.evidenceUrls?.length > 0 && (
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>
-                    PRUEBAS ADJUNTAS ({r.evidenceUrls.length}) · tocá para ver en grande
+                    {tr("admin.evidence", { count: r.evidenceUrls.length })}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {r.evidenceUrls.map((url, i) => (
+                    {r.evidenceUrls.map((url) => (
                       <a key={url} href={url} target="_blank" rel="noopener noreferrer"
                         style={{ display: "block", width: 84, height: 84, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-                        <img src={url} alt={`Prueba ${i + 1}`}
+                        <img src={url} alt=""
                           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </a>
                     ))}
@@ -405,24 +409,24 @@ export default function Admin() {
                   {r.listing && (
                     <>
                       <button style={s.btnSuspend}
-                        onClick={() => doResolveReport(r.id, "PAUSE_LISTING", "Publicación pausada.")}>
-                        Pausar publicación
+                        onClick={() => doResolveReport(r.id, "PAUSE_LISTING", tr("admin.listingPaused"))}>
+                        {tr("admin.pauseListing")}
                       </button>
                       <button style={s.btnDelete}
-                        onClick={() => doResolveReport(r.id, "DELETE_LISTING", "Publicación eliminada.")}>
-                        Eliminar publicación
+                        onClick={() => doResolveReport(r.id, "DELETE_LISTING", tr("admin.listingDeletedShort"))}>
+                        {tr("car.deleteListing")}
                       </button>
                     </>
                   )}
                   {r.targetUser && (
                     <button style={s.btnSuspend}
-                      onClick={() => doResolveReport(r.id, "SUSPEND_USER", "Cuenta suspendida.")}>
-                      Suspender cuenta
+                      onClick={() => doResolveReport(r.id, "SUSPEND_USER", tr("admin.accountSuspended"))}>
+                      {tr("admin.suspendAccount")}
                     </button>
                   )}
                   <button style={{ ...s.btnSuspend, background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151" }}
-                    onClick={() => doResolveReport(r.id, "DISMISS", "Reporte descartado.")}>
-                    Descartar
+                    onClick={() => doResolveReport(r.id, "DISMISS", tr("admin.reportDismissed"))}>
+                    {tr("admin.dismiss")}
                   </button>
                 </div>
               )}
@@ -438,26 +442,26 @@ export default function Admin() {
               de por qué hay solicitudes esperando a que alguien las mire. */}
           {aiHealth?.problem && (
             <div style={{ ...s.alertErr, lineHeight: 1.6 }}>
-              <strong>La revisión automática no está funcionando.</strong> {aiHealth.problem}
+              <strong>{tr("admin.aiDown")}</strong> {aiHealth.problem}
               {aiHealth.lastVisionError && (
                 <div style={{ fontSize: 11.5, marginTop: 6, opacity: .85 }}>
-                  Último error del proveedor: {aiHealth.lastVisionError}
+                  {tr("admin.lastError")}: {aiHealth.lastVisionError}
                 </div>
               )}
               {aiHealth.availableVisionModels?.length > 0 && (
                 <div style={{ fontSize: 11.5, marginTop: 4, opacity: .85 }}>
-                  Modelos disponibles hoy: {aiHealth.availableVisionModels.join(", ")}
+                  {tr("admin.modelsToday")}: {aiHealth.availableVisionModels.join(", ")}
                 </div>
               )}
             </div>
           )}
 
-          {loadingVerifications ? <div style={s.empty}>Cargando...</div>
-          : verifications.length === 0 ? <div style={s.empty}>No hay solicitudes de verificación.</div>
+          {loadingVerifications ? <Spinner block label={tr("common.loading")} />
+          : verifications.length === 0 ? <div style={s.empty}>{tr("admin.noVerifications")}</div>
           : verifications.map(v => {
             const person = v.user || {};
             const name = [person.firstName, person.lastName].filter(Boolean).join(" ")
-              || person.displayName || person.email || "Sin nombre";
+              || person.displayName || person.email || tr("admin.noName");
             const waiting = v.status === "ID_SUBMITTED";
             return (
               <div key={v.id} style={s.card}>
@@ -475,12 +479,12 @@ export default function Admin() {
                 {waiting && (
                   <div style={s.btnRow}>
                     <button style={s.btnRestore}
-                      onClick={() => doReviewVerification(v.id, "VERIFIED", "Identidad aprobada")}>
-                      Aprobar identidad
+                      onClick={() => doReviewVerification(v.id, "VERIFIED", tr("admin.identityApproved"))}>
+                      {tr("admin.approveIdentity")}
                     </button>
                     <button style={s.btnDelete}
-                      onClick={() => doReviewVerification(v.id, "REJECTED", "Identidad rechazada")}>
-                      Rechazar
+                      onClick={() => doReviewVerification(v.id, "REJECTED", tr("admin.identityRejected"))}>
+                      {tr("bookings.reject")}
                     </button>
                   </div>
                 )}
@@ -501,7 +505,7 @@ export default function Admin() {
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setConfirmModal(null)}
                 style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-                Cancelar
+                {tr("common.cancel")}
               </button>
               <button onClick={runConfirm}
                 style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>

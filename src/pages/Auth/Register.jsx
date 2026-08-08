@@ -94,21 +94,21 @@ export default function Register() {
 
   // Valida los datos del paso 0. Devuelve el mensaje de error, o null si está ok.
   const validateForm = () => {
-    if (!form.firstName.trim()) return "Ingresá tu nombre.";
-    if (!form.lastName.trim()) return "Ingresá tu apellido.";
-    if (!form.email.trim()) return "Ingresá tu email.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return "El email no parece válido.";
+    if (!form.firstName.trim()) return t("reg.errFirstName");
+    if (!form.lastName.trim()) return t("reg.errLastName");
+    if (!form.email.trim()) return t("reg.errEmail");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return t("reg.errEmailBad");
     if (!isArgentinePhone(`54${form.phone}`)) {
       return "El teléfono tiene que ser un celular argentino completo: 9 + código de área + número (ejemplo 9 11 3289 5416). El servicio funciona solo en Argentina.";
     }
-    if (!form.dateOfBirth) return "Ingresá tu fecha de nacimiento.";
+    if (!form.dateOfBirth) return t("reg.errBirth");
     const age = ageFrom(form.dateOfBirth);
-    if (age === null) return "La fecha de nacimiento no es válida.";
-    if (age < 18) return "Tenés que ser mayor de 18 años para usar Freewheel.";
-    if (age > 100) return "Revisá la fecha de nacimiento.";
-    if (form.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
-    if (form.password !== form.confirmPassword) return "Las contraseñas no coinciden.";
-    if (!form.acceptedTerms) return "Debés aceptar los términos y condiciones.";
+    if (age === null) return t("reg.errBirthBad");
+    if (age < 18) return t("reg.err18");
+    if (age > 100) return t("reg.errBirthCheck");
+    if (form.password.length < 6) return t("reg.errPassShort");
+    if (form.password !== form.confirmPassword) return t("reg.errPassMatch");
+    if (!form.acceptedTerms) return t("reg.errTerms");
     return null;
   };
 
@@ -127,7 +127,7 @@ export default function Register() {
 
   // Paso 1 → 2: con el código, crea la cuenta y deja la sesión abierta.
   const handleCreateAccount = async () => {
-    if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
+    if (code.length !== 6) { setError(t("reg.errCode")); return; }
     setLoading(true); setError(""); setInfo("");
     const result = await completeRegistration({
       email: form.email.trim(),
@@ -149,7 +149,7 @@ export default function Register() {
     setResending(true); setError(""); setInfo("");
     const result = await startRegistration(form.email.trim());
     setResending(false);
-    if (result.success) setInfo("Te enviamos un código nuevo. Revisá tu bandeja (y el spam).");
+    if (result.success) setInfo(t("reg.codeResent"));
     else setError(result.error);
   };
 
@@ -203,20 +203,20 @@ export default function Register() {
               </div>
               <div>
                 <label style={labelStyle}>{t("auth.lastName")} *</label>
-                <input style={inputStyle} placeholder="García" value={form.lastName} onChange={e => set("lastName", e.target.value)} />
+                <input style={inputStyle} placeholder={t("reg.phLastName")} value={form.lastName} onChange={e => set("lastName", e.target.value)} />
               </div>
             </div>
 
             <div style={{ marginBottom:16 }}>
               <label style={labelStyle}>{t("auth.email")} *</label>
-              <input style={inputStyle} type="email" placeholder="martin@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
+              <input style={inputStyle} type="email" placeholder={t("reg.phEmail")} value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
 
             <div style={twoCols}>
               <div>
                 {/* Teléfono argentino completo: el +54 es fijo y no se puede
                     continuar con un número a medias (antes "123" pasaba). */}
-                <PhoneInput label="Teléfono *" value={form.phone} showError={phoneTouched}
+                <PhoneInput label={`${t("auth.phone")} *`} value={form.phone} showError={phoneTouched}
                   onChange={v => set("phone", v)} />
               </div>
               <div>
@@ -230,7 +230,7 @@ export default function Register() {
 
             <div style={twoCols}>
               <div>
-                <label style={labelStyle}>Contraseña *</label>
+                <label style={labelStyle}>{t("auth.password")} *</label>
                 <div style={{ position:"relative" }}>
                   <input type={showPassword?"text":"password"} placeholder="••••••" value={form.password}
                     onChange={e => set("password", e.target.value)} style={{ ...inputStyle, paddingRight:40 }} />
@@ -241,7 +241,7 @@ export default function Register() {
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Confirmar contraseña *</label>
+                <label style={labelStyle}>{t("auth.confirmPassword")} *</label>
                 <div style={{ position:"relative" }}>
                   <input type={showConfirm?"text":"password"} placeholder="••••••" value={form.confirmPassword}
                     onChange={e => set("confirmPassword", e.target.value)} style={{ ...inputStyle, paddingRight:40 }} />
@@ -258,7 +258,7 @@ export default function Register() {
                 style={{ marginTop:3, width:16, height:16, accentColor:"#2563eb", cursor:"pointer", flexShrink:0 }} />
               <label htmlFor="terms" style={{ fontSize:13, color:"#374151", lineHeight:1.6, cursor:"pointer" }}>
                 Acepto los{" "}
-                <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>términos y condiciones</Link>
+                <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
                 {" "}y la política de privacidad de Freewheel *
               </label>
             </div>
@@ -283,7 +283,7 @@ export default function Register() {
           <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(ellipse at 70% 40%,rgba(37,99,235,.18) 0%,transparent 60%)" }} />
           <div style={{ position:"relative" }}>
             <h2 style={{ fontSize:36, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
-              La plataforma para<br/>alquilar autos entre<br/>personas, verificada,<br/>segura y sin multas.
+              {t("reg.tagline")}
             </h2>
             <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.7 }}>
               Conectamos conductores con dueños de autos. Todo verificado, todo seguro.
@@ -301,13 +301,13 @@ export default function Register() {
       <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
           <Logo />
-          <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICÁ TU EMAIL</div>
-          <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>Cambiar email</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.verifyEyebrow")}</div>
+          <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>{t("reg.changeEmail")}</div>
         </div>
         <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ width:"100%", maxWidth:420, background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid #f0f0f0" }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
-            <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>Confirmá tu email</h2>
+            <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>{t("reg.confirmEmail")}</h2>
             <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
               Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para crear tu cuenta.
             </p>
@@ -325,14 +325,14 @@ export default function Register() {
 
             <button onClick={handleCreateAccount} disabled={loading}
               style={{ width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
-              {loading ? "Creando cuenta..." : "Crear mi cuenta"}
+              {loading ? t("reg.creating") : t("reg.createMyAccount")}
             </button>
 
             <div style={{ fontSize:13, color:"#6b7280" }}>
               ¿No te llegó?{" "}
               <button onClick={handleResend} disabled={resending}
                 style={{ background:"none", border:"none", color:"#2563eb", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
-                {resending ? "Enviando..." : "Reenviar código"}
+                {resending ? t("common.sending") : t("reg.resendCode")}
               </button>
             </div>
           </div>
@@ -346,7 +346,7 @@ export default function Register() {
     <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
         <Logo />
-        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>VERIFICACIÓN DE LA CUENTA</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.accountEyebrow")}</div>
         <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
       </div>
 
