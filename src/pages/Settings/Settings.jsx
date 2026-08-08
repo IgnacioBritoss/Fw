@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
+import { LANGUAGES, useI18n } from "../../i18n/core";
 import { updateMe } from "../../services/api";
 import { applyDarkMode } from "../../services/theme";
 
@@ -37,10 +38,10 @@ const Svg = ({ d, color = "currentColor", size = 18 }) => (
 // "próximamente" y nada más. Un menú con la mitad de las puertas cerradas hace
 // perder tiempo y da la impresión de que la app está a medio hacer.
 const MENU = [
-  { key: "cuenta", label: "Cuenta", icon: I.user },
-  { key: "seguridad", label: "Seguridad", icon: I.lock },
-  { key: "pagos", label: "Métodos de pago", icon: I.card },
-  { key: "idioma", label: "Idioma", icon: I.globe },
+  { key: "cuenta", label: "settings.account", icon: I.user },
+  { key: "seguridad", label: "settings.security", icon: I.lock },
+  { key: "pagos", label: "settings.payments", icon: I.card },
+  { key: "idioma", label: "settings.language", icon: I.globe },
 ];
 
 // Clave de localStorage y función para leer las preferencias guardadas.
@@ -50,6 +51,7 @@ const loadPrefs = () => {
 };
 
 export default function Settings() {
+  const { t: tr, lang, setLang } = useI18n();
   const { user, login, logout, refreshUser, isVerified } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -161,8 +163,8 @@ export default function Settings() {
 
   return (
     <div style={{ padding: isMobile ? "16px" : "28px 32px", maxWidth: 1200, margin: "0 auto" }}>
-      <div style={t.sectTitle}>Ajustes</div>
-      <div style={t.sectSub}>Tu cuenta, tu verificación y cómo se ve la app</div>
+      <div style={t.sectTitle}>{tr("settings.title")}</div>
+      <div style={t.sectSub}>{tr("settings.subtitle")}</div>
 
       <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: "300px 1fr", gap: 22, alignItems: "start" }}>
         {/* Menú lateral */}
@@ -170,7 +172,7 @@ export default function Settings() {
           {MENU.map(m => (
             <div key={m.key} style={t.menuItem(section === m.key)} onClick={() => setSection(m.key)}>
               <Svg d={m.icon} color={section === m.key ? "#fff" : "#374151"} />
-              <span style={{ flex: 1 }}>{m.label}</span>
+              <span style={{ flex: 1 }}>{tr(m.label)}</span>
               {section === m.key && <span style={{ opacity: .6 }}>›</span>}
             </div>
           ))}
@@ -186,48 +188,47 @@ export default function Settings() {
         <div>
           {section === "cuenta" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>Cuenta</div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>Tu información personal y preferencias básicas</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>{tr("settings.accountTitle")}</div>
+              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>{tr("settings.accountSub")}</div>
 
               {/* Info personal */}
               <div style={{ ...t.card, padding: 26, marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Información personal</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>Estos datos son visibles solo para vos y los dueños de autos que alquiles</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.personalInfo")}</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>{tr("settings.personalInfoSub")}</div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                   {/* Nombre y apellido NO se editan: salen del DNI que se revisa al
                       verificar la cuenta. Si se pudieran escribir a mano, el nombre
                       que ve la otra persona en una reserva no tendría nada que ver
                       con el documento, y la verificación de identidad dejaría de
                       querer decir algo. */}
-                  <Field label="Nombre" value={firstName} fieldKey="firstName" editable={false} />
-                  <Field label="Apellido" value={lastName} fieldKey="lastName" editable={false} />
+                  <Field label={tr("auth.firstName")} value={firstName} fieldKey="firstName" editable={false} />
+                  <Field label={tr("auth.lastName")} value={lastName} fieldKey="lastName" editable={false} />
                   <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
                     <ChangeEmailCard verified={checklist.emailVerified === true} />
                   </div>
-                  <Field label="Teléfono" value={user?.phone} fieldKey="phone" />
+                  <Field label={tr("auth.phone")} value={user?.phone} fieldKey="phone" />
                   {/* La fecha de nacimiento la valida el backend al registrarse y
                       no se puede cambiar después (de ahí editable={false}). Antes
                       leía `birthdate`, un campo que la API nunca devuelve, y por
                       eso siempre aparecía vacía. */}
-                  <Field label="Fecha de nacimiento" editable={false} fieldKey="dateOfBirth"
+                  <Field label={tr("auth.birthDate")} editable={false} fieldKey="dateOfBirth"
                     value={user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("es-AR") : ""} />
                 </div>
                 <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
-                  El nombre, el apellido y la fecha de nacimiento salen de tu DNI y no
-                  se pueden cambiar acá. Si hay un error, escribinos desde el chat.
+                  {tr("settings.fromDni")}
                 </div>
               </div>
 
               {/* Preferencias */}
               <div style={{ ...t.card, padding: 26 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Apariencia</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.appearance")}</div>
                 {/* Acá había cinco interruptores: notificaciones por email, push,
                     ofertas personalizadas y 2FA, ninguno de los cuales hacía nada
                     del otro lado —solo se guardaban en el navegador—. Un
                     interruptor que se prende y no cambia nada es peor que no
                     tenerlo. Queda el único que sí funciona. */}
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>Cómo se ve Freewheel en esta pantalla</div>
-                <SwitchRow title="Modo oscuro" desc="Colores oscuros, más cómodos de noche" on={prefs.dark} onChange={v => setPref("dark", v)} last />
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>{tr("settings.appearanceSub")}</div>
+                <SwitchRow title={tr("settings.darkMode")} desc={tr("settings.darkModeSub")} on={prefs.dark} onChange={v => setPref("dark", v)} last />
               </div>
             </>
           ) : section === "seguridad" ? (
@@ -281,10 +282,60 @@ export default function Settings() {
                 )}
               </div>
             </>
+          ) : section === "idioma" ? (
+            <>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>
+                {tr("settings.languageTitle")}
+              </div>
+              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>
+                {tr("settings.languageSub")}
+              </div>
+
+              <div style={{ ...t.card, padding: isMobile ? 18 : 26 }}>
+                {/* Una fila por idioma, cada uno escrito EN SU PROPIO IDIOMA: si
+                    alguien abrió la app en un idioma que no entiende, "中文" lo
+                    encuentra igual, y "Chino" no le sirve de nada. */}
+                {LANGUAGES.map((idioma, i) => {
+                  const elegido = lang === idioma.code;
+                  return (
+                    <button key={idioma.code} onClick={() => setLang(idioma.code)}
+                      aria-pressed={elegido}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 14, width: "100%",
+                        padding: "14px 4px", background: "none", border: "none",
+                        borderBottom: i === LANGUAGES.length - 1 ? "none" : "1px solid #f3f4f6",
+                        cursor: "pointer", textAlign: "left",
+                      }}>
+                      <span style={{
+                        width: 38, height: 28, borderRadius: 6, flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
+                        background: elegido ? "#2563eb" : "#f3f4f6",
+                        color: elegido ? "#fff" : "#6b7280",
+                      }}>
+                        {idioma.flagless}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: elegido ? 700 : 500, color: "#111827" }}>
+                        {idioma.label}
+                      </span>
+                      {elegido && (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+                          strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+                  {tr("settings.languageNote")}
+                </div>
+              </div>
+            </>
           ) : (
             <div style={{ ...t.card, padding: 40, textAlign: "center" }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{MENU.find(m => m.key === section)?.label}</div>
-              <div style={{ fontSize: 14, color: "#9ca3af" }}>Esta sección estará disponible próximamente.</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{tr(MENU.find(m => m.key === section)?.label)}</div>
+              <div style={{ fontSize: 14, color: "#9ca3af" }}>{tr("settings.comingSoon")}</div>
             </div>
           )}
         </div>

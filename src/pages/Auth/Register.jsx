@@ -23,6 +23,7 @@ import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone"
 import { GOOGLE_AUTH_URL } from "../../services/api";
 import IdentityVerification from "../../components/IdentityVerification";
 import BrandLogo from "../../components/Logo";
+import { useI18n } from "../../i18n/core";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -67,6 +68,7 @@ function maxBirthDate() {
 }
 
 export default function Register() {
+  const { t } = useI18n();
   const { isMobile } = useIsMobile();
   const { startRegistration, completeRegistration, user } = useAuth();
   const navigate = useNavigate();
@@ -173,10 +175,10 @@ export default function Register() {
             </Link>
 
             <div style={{ marginBottom:28 }}>
-              <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>Creá tu cuenta<br/>en un minuto.</h2>
+              <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
               <p style={{ fontSize:14, color:"#6b7280" }}>
-                ¿Ya tenés cuenta?{" "}
-                <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>Iniciá sesión →</Link>
+                {t("auth.haveAccount")}{" "}
+                <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")} →</Link>
               </p>
             </div>
 
@@ -187,26 +189,26 @@ export default function Register() {
               borderRadius:10, fontSize: isMobile ? 15 : 14, fontWeight:600, color:"#374151", cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:20,
             }}>
-              <GoogleIcon /> Continuar con Google
+              <GoogleIcon /> {t("auth.withGoogle")}
             </button>
 
             <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-              <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>o registrate con email</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
+              <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>{t("auth.orRegisterEmail")}</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
             </div>
 
             <div style={twoCols}>
               <div>
-                <label style={labelStyle}>Nombre *</label>
+                <label style={labelStyle}>{t("auth.firstName")} *</label>
                 <input style={inputStyle} placeholder="Martin" value={form.firstName} onChange={e => set("firstName", e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Apellido *</label>
+                <label style={labelStyle}>{t("auth.lastName")} *</label>
                 <input style={inputStyle} placeholder="García" value={form.lastName} onChange={e => set("lastName", e.target.value)} />
               </div>
             </div>
 
             <div style={{ marginBottom:16 }}>
-              <label style={labelStyle}>Email *</label>
+              <label style={labelStyle}>{t("auth.email")} *</label>
               <input style={inputStyle} type="email" placeholder="martin@email.com" value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
 
@@ -220,7 +222,7 @@ export default function Register() {
               <div>
                 {/* La fecha de nacimiento es obligatoria: la plataforma es solo
                     para mayores de 18 y el backend rechaza el registro sin ella. */}
-                <label style={labelStyle}>Fecha de nacimiento *</label>
+                <label style={labelStyle}>{t("auth.birthDate")} *</label>
                 <input style={inputStyle} type="date" max={maxBirthDate()} value={form.dateOfBirth}
                   onChange={e => set("dateOfBirth", e.target.value)} />
               </div>
@@ -265,10 +267,10 @@ export default function Register() {
               width:"100%", padding: isMobile ? 15 : 13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
               fontSize: isMobile ? 16 : 15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
-              {loading ? "Enviando código..." : "Continuar →"}
+              {loading ? t("auth.sendingCode") : `${t("common.continue")} →`}
             </button>
             <div style={{ fontSize:12, color:"#9ca3af", textAlign:"center", marginTop:10 }}>
-              Te vamos a enviar un código de 6 dígitos para confirmar tu email.
+              {t("auth.codeWillArrive")}
             </div>
           </div>
         </div>

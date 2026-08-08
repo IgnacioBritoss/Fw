@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { authFields } from "../../styles/authFields";
 import AuthShell from "../../components/AuthShell";
+import { useI18n } from "../../i18n/core";
 
 const MailIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
@@ -33,6 +34,7 @@ const MailIcon = () => (
 );
 
 export default function ForgotPassword() {
+  const { t } = useI18n();
   const { forgotPassword } = useAuth();
   const { isMobile } = useIsMobile();
   const f = authFields(isMobile);
@@ -62,7 +64,7 @@ export default function ForgotPassword() {
   const volver = (
     <div style={{ textAlign: "center" }}>
       <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
-        ← Volver al inicio de sesión
+        ← {t("auth.backToLogin")}
       </Link>
     </div>
   );
@@ -72,11 +74,11 @@ export default function ForgotPassword() {
     return (
       <AuthShell
         hero={{
-          eyebrow: "RECUPERAR ACCESO",
-          title: <>Revisá tu<br />correo.</>,
-          text: "El link te deja crear una contraseña nueva sin tener que acordarte de la anterior.",
+          eyebrow: t("auth.recoverEyebrow").toUpperCase(),
+          title: t("auth.recoverCheckMail"),
+          text: t("auth.recoverHeroText"),
         }}
-        title="Listo, ya salió"
+        title={t("auth.recoverSentTitle")}
         footer={volver}
       >
         <div style={{
@@ -87,24 +89,23 @@ export default function ForgotPassword() {
         }}>
           <div style={{ flexShrink: 0, marginTop: 1 }}><MailIcon /></div>
           <div style={{ fontSize: 13.5, color: "#1e3a8a", lineHeight: 1.6 }}>
-            Si <strong>{sentTo}</strong> está registrado, te mandamos un link para
-            crear una contraseña nueva.
+            {t("auth.recoverSentText", { email: sentTo })}
           </div>
         </div>
 
         <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 8 }}>
-          SI NO LO VES
+          {t("auth.ifYouDontSeeIt").toUpperCase()}
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: "#374151", lineHeight: 1.9 }}>
-          <li>Mirá la carpeta de spam o correo no deseado.</li>
-          <li>Puede tardar un par de minutos en llegar.</li>
-          <li>El link sirve por una hora; después hay que pedir otro.</li>
-          <li>Fijate que la dirección esté bien escrita.</li>
+          <li>{t("auth.checkSpam")}</li>
+          <li>{t("auth.mayTake")}</li>
+          <li>{t("auth.linkOneHour")}</li>
+          <li>{t("auth.checkAddress")}</li>
         </ul>
 
         <button onClick={() => { setSentTo(""); setError(""); }}
           style={{ ...f.btnGhost, marginTop: 20 }}>
-          Probar con otro email
+          {t("auth.tryAnotherEmail")}
         </button>
       </AuthShell>
     );
@@ -114,17 +115,17 @@ export default function ForgotPassword() {
   return (
     <AuthShell
       hero={{
-        eyebrow: "RECUPERAR ACCESO",
-        title: <>¿Te olvidaste<br />la contraseña?</>,
-        text: "Pasa. Te mandamos un link al correo y creás una nueva en un minuto.",
+        eyebrow: t("auth.recoverEyebrow").toUpperCase(),
+        title: t("auth.recoverTitle"),
+        text: t("auth.recoverHeroText"),
       }}
-      title="Recuperar contraseña"
-      subtitle="Poné el email con el que te registraste y te mandamos un link para crear una contraseña nueva."
+      title={t("auth.recoverHeading")}
+      subtitle={t("auth.recoverSubtitle")}
       footer={volver}
     >
       {error && <div style={f.error}>{error}</div>}
 
-      <label style={f.label}>Email</label>
+      <label style={f.label}>{t("auth.email")}</label>
       <input style={{ ...f.input, marginBottom: 18 }} type="email" inputMode="email"
         autoComplete="email" autoCapitalize="none" placeholder="tu@email.com"
         value={email} onChange={(e) => setEmail(e.target.value)}
@@ -132,12 +133,11 @@ export default function ForgotPassword() {
 
       <button style={{ ...f.btn, ...(loading ? f.btnDisabled : {}) }}
         onClick={handleSubmit} disabled={loading}>
-        {loading ? "Enviando..." : "Enviarme el link"}
+        {loading ? t("common.sending") : t("auth.sendLink")}
       </button>
 
       <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
-        Por seguridad, la respuesta es la misma tengas cuenta o no: así nadie puede
-        usar esta pantalla para averiguar qué direcciones están registradas.
+        {t("auth.sameAnswerNote")}
       </div>
     </AuthShell>
   );

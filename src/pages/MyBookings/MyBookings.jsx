@@ -33,27 +33,29 @@ import {
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import StatusChip from "../../components/StatusChip";
+import { useI18n } from "../../i18n/core";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
-  REQUESTED:           { label: "Pendiente",            tone: "warn" },
-  ACCEPTED:            { label: "Aceptada",             tone: "info" },
-  REJECTED:            { label: "Rechazada",            tone: "danger" },
-  CANCELLED_BY_RENTER: { label: "Cancelada",            tone: "neutral" },
-  CANCELLED_BY_OWNER:  { label: "Cancelada por dueño",  tone: "neutral" },
-  READY_FOR_PICKUP:    { label: "Lista para retiro",    tone: "warn" },
+  REQUESTED: { label: "status.REQUESTED", tone: "warn" },
+  ACCEPTED: { label: "status.ACCEPTED", tone: "info" },
+  REJECTED: { label: "status.REJECTED", tone: "danger" },
+  CANCELLED_BY_RENTER: { label: "status.CANCELLED_BY_RENTER", tone: "neutral" },
+  CANCELLED_BY_OWNER: { label: "status.CANCELLED_BY_OWNER", tone: "neutral" },
+  READY_FOR_PICKUP: { label: "status.READY_FOR_PICKUP", tone: "warn" },
   // "live" es el único con el punto lleno: es lo que está pasando ahora.
-  IN_PROGRESS:         { label: "En curso",             tone: "live" },
-  RETURN_PENDING:      { label: "Devolución pendiente", tone: "warn" },
-  COMPLETED:           { label: "Completada",           tone: "info" },
-  DISPUTED:            { label: "En disputa",           tone: "danger" },
+  IN_PROGRESS: { label: "status.IN_PROGRESS", tone: "live" },
+  RETURN_PENDING: { label: "status.RETURN_PENDING", tone: "warn" },
+  COMPLETED: { label: "status.COMPLETED", tone: "info" },
+  DISPUTED: { label: "status.DISPUTED", tone: "danger" },
 };
 
 // Estados de pago que usa el backend (PENDING → DEPOSIT_PAID → FULLY_PAID).
+// Claves de traducción, no textos: el idioma se resuelve al dibujar.
 const PAYMENT_LABELS = {
-  UNPAID: "Sin pagar", PENDING: "Pago pendiente", DEPOSIT_PAID: "Seña paga",
-  FULLY_PAID: "Pago completo", REFUNDED: "Reintegrado",
-  PARTIALLY_REFUNDED: "Reintegro parcial", FAILED: "Pago fallido",
+  UNPAID: "payment.UNPAID", PENDING: "payment.PENDING", DEPOSIT_PAID: "payment.DEPOSIT_PAID",
+  FULLY_PAID: "payment.FULLY_PAID", REFUNDED: "payment.REFUNDED",
+  PARTIALLY_REFUNDED: "payment.PARTIALLY_REFUNDED", FAILED: "payment.FAILED",
 };
 
 const s = {
@@ -121,6 +123,7 @@ function nextStepFor(booking, isOwner) {
 }
 
 export default function MyBookings() {
+  const { t } = useI18n();
   const { user } = useAuth();
   // Qué reservas se pueden reseñar y cuáles ya se reseñaron. Lo decide el
   // backend (reserva completada y pago cerrado), así la pantalla no adivina.
@@ -264,10 +267,10 @@ export default function MyBookings() {
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (
               <StatusChip tone={paid ? "ok" : "neutral"}>
-                {PAYMENT_LABELS[b.paymentStatus] || b.paymentStatus}
+                {PAYMENT_LABELS[b.paymentStatus] ? t(PAYMENT_LABELS[b.paymentStatus]) : b.paymentStatus}
               </StatusChip>
             )}
-            <StatusChip tone={statusCfg.tone || "neutral"}>{statusCfg.label}</StatusChip>
+            <StatusChip tone={statusCfg.tone || "neutral"}>{t(statusCfg.label)}</StatusChip>
           </div>
         </div>
         {/* Guía del paso siguiente para cada rol. */}
@@ -313,8 +316,8 @@ export default function MyBookings() {
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
-      <div style={isMobile ? s.titleMobile : s.title}>Mis reservas</div>
-      <div style={s.sub}>Gestioná tus alquileres y las solicitudes de tus autos</div>
+      <div style={isMobile ? s.titleMobile : s.title}>{t("bookings.title")}</div>
+      <div style={s.sub}>{t("bookings.subtitle")}</div>
       {error && <div style={s.errorBox}>{error}</div>}
       <div style={s.tabs}>
         {[
@@ -329,7 +332,7 @@ export default function MyBookings() {
       ) : tab === "mis-reservas" ? (
         myRentals.length === 0 ? (
           <div style={s.empty}>
-            <div style={{ fontSize: 13, marginBottom: 16 }}>Todavía no hiciste ninguna reserva.</div>
+            <div style={{ fontSize: 13, marginBottom: 16 }}>{t("bookings.none")}</div>
             <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>Explorar autos</button>
           </div>
         ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)

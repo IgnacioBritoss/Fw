@@ -25,11 +25,13 @@ import { useListings } from "../../hooks/useListings";
 import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import { firstBookableInput } from "../../services/dates";
+import { useI18n } from "../../i18n/core";
 
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
 
 export default function Home() {
+  const { t: tr } = useI18n();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const { user } = useAuth();
@@ -145,16 +147,16 @@ export default function Home() {
           <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
           <div style="font-weight:700;font-size:15px;color:#2563eb">
             $${priceOf(car).toLocaleString()}
-            <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
+            <span style="font-weight:400;font-size:12px;color:#6b7280">${tr("common.perDay")}</span>
           </div>
-          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">Ver auto</div>
+          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">${tr("car.bookNow")}</div>
         </div>
       `));
       marker.addTo(map);
       markersRef.current[car.id] = { marker, circle };
     });
     window.__fwOpen = (id) => navigate(`/cars/${id}`);
-  }, [filtered, navigate]);
+  }, [filtered, navigate, tr]);
 
   // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
   useEffect(() => {
@@ -265,11 +267,11 @@ export default function Home() {
         </div>
         <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
           {car.fuel && <span style={t.tag}>{car.fuel}</span>}
-          {car.seats && <span style={t.tag}>{car.seats} asientos</span>}
+          {car.seats && <span style={t.tag}>{tr("common.seats", { count: car.seats })}</span>}
         </div>
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
-          <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Reservar</button>
+          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+          <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("home.book")}</button>
         </div>
       </div>
     </div>
@@ -278,7 +280,7 @@ export default function Home() {
   // Grilla de categorías: cada tarjeta filtra por ese tipo de auto al clickearla.
   const CategoriesSection = () => (
     <>
-      <div style={{ ...t.sectionTitle, marginBottom: 16 }}>Explorá por categoría</div>
+      <div style={{ ...t.sectionTitle, marginBottom: 16 }}>{tr("home.categories")}</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(6,1fr)", gap: 14, marginBottom: 32 }}>
         {CATEGORIES.map((c) => {
           const min = priceByCategory[c.id];
@@ -301,7 +303,7 @@ export default function Home() {
               <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{c.label}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
               <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
-                {min ? `Desde $${min.toLocaleString()}` : count > 0 ? `${count} auto${count !== 1 ? "s" : ""}` : "Sin autos por ahora"}
+                {min ? tr("home.from", { price: `$${min.toLocaleString()}` }) : count > 0 ? `${count}` : tr("home.noneYet")}
               </div>
             </div>
           );
@@ -345,23 +347,23 @@ export default function Home() {
       <div style={t.hero} data-no-invert>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.12),transparent 60%)" }} />
         <div style={{ position: "relative" }}>
-          <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● BUEN DÍA, {firstName.toUpperCase()}</div>
-          <div style={{ fontSize: isMobile ? 25 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>¿A dónde vas hoy?</div>
-          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>Elegí las fechas y te mostramos solo los autos libres</div>
+          <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● {tr("home.greeting", { name: firstName || tr("home.guest") }).toUpperCase()}</div>
+          <div style={{ fontSize: isMobile ? 25 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
+          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>{tr("home.subtitle")}</div>
 
           <div className="fw-hero-search" style={t.searchRow}>
             <div className="fw-plain-field" style={t.searchCell}>
-              <div style={t.searchLabel}>Dónde</div>
-              <input style={t.searchInput} placeholder="Ciudad, barrio o modelo" value={search} onChange={e => setSearch(e.target.value)} />
+              <div style={t.searchLabel}>{tr("home.where")}</div>
+              <input style={t.searchInput} placeholder={tr("home.wherePlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
             <div className="fw-plain-field" style={t.searchCell}>
-              <div style={t.searchLabel}>Retiro</div>
+              <div style={t.searchLabel}>{tr("home.pickup")}</div>
               <input type="date" style={t.searchInput} min={firstBookableInput()} value={pickup}
                 onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
             <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }) }}>
-              <div style={t.searchLabel}>Devolución</div>
+              <div style={t.searchLabel}>{tr("home.dropoff")}</div>
               <input type="date" style={t.searchInput} min={pickup || firstBookableInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
             </div>
@@ -376,7 +378,7 @@ export default function Home() {
                   ? { width: "100%", padding: "14px", marginTop: 8 }
                   : { padding: "14px 24px", margin: 4 }),
               }}
-              onClick={goToSearch}>Buscar autos →</button>
+              onClick={goToSearch}>{tr("home.searchCars")} →</button>
           </div>
           {dateError && (
             <div style={{ marginTop: 12, fontSize: 13, background: "rgba(255,255,255,.16)", borderRadius: 8, padding: "8px 12px", display: "inline-block" }}>{dateError}</div>
@@ -401,10 +403,10 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={t.sectionTitle}>
-            {cat ? `Autos ${CATEGORIES.find(c => c.id === cat)?.label}` : "Autos disponibles"}
+            {cat ? `${tr("home.available")} · ${CATEGORIES.find(c => c.id === cat)?.label}` : tr("home.available")}
           </div>
           <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
-            {loading ? "Buscando autos..." : `${filtered.length} auto${filtered.length !== 1 ? "s" : ""} disponible${filtered.length !== 1 ? "s" : ""}`}
+            {loading ? tr("common.loading") : tr("home.availableCount", { count: filtered.length })}
             {pickup && dropoff && !dateError && " en las fechas elegidas"}
           </div>
         </div>
@@ -415,7 +417,7 @@ export default function Home() {
               Limpiar filtros
             </button>
           )}
-          {[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, l]) => (
+          {[["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
             <button key={k} onClick={() => setView(k)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
               border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
@@ -437,7 +439,7 @@ export default function Home() {
           {filtered.map(car => <CarCard key={car.id} car={car} />)}
           {filtered.length === 0 && (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
-              No se encontraron autos con estos filtros.
+              {tr("home.noResults")}
               {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>Probá con otras fechas o con otra categoría.</div>}
             </div>
           )}

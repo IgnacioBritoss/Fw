@@ -15,8 +15,10 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { getMyFavorites } from "../../services/api";
 import { itemsOf, normalizeListing, priceOf } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
+import { useI18n } from "../../i18n/core";
 
 export default function Favorites() {
+  const { t: tr } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { favoriteIds } = useFavorites();
@@ -53,7 +55,7 @@ export default function Favorites() {
   if (!user) {
     return (
       <div style={t.page}>
-        <div style={t.title}>Favoritos</div>
+        <div style={t.title}>{tr("favorites.title")}</div>
         <div style={t.empty}>
           <div style={{ fontSize: 14, marginBottom: 16 }}>Iniciá sesión para guardar tus autos favoritos.</div>
           <button style={t.btn} onClick={() => navigate("/login")}>Iniciar sesión</button>
@@ -64,7 +66,7 @@ export default function Favorites() {
 
   return (
     <div style={t.page}>
-      <div style={t.title}>Favoritos</div>
+      <div style={t.title}>{tr("favorites.title")}</div>
       <div style={t.sub}>
         {loading ? "Cargando tus favoritos..." : `${visible.length} auto${visible.length !== 1 ? "s" : ""} guardado${visible.length !== 1 ? "s" : ""}`}
       </div>
@@ -78,7 +80,7 @@ export default function Favorites() {
       ) : visible.length === 0 ? (
         <div style={t.empty}>
           <svg width="42" height="42" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 12px", display: "block" }}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z" stroke="#d1d5db" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Todavía no guardaste ningún auto</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 6 }}>{tr("favorites.empty")}</div>
           <div style={{ fontSize: 13, marginBottom: 20 }}>Tocá el corazón de cualquier auto para tenerlo a mano acá.</div>
           <button style={t.btn} onClick={() => navigate("/buscar")}>Buscar autos</button>
         </div>

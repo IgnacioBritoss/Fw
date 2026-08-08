@@ -28,6 +28,7 @@ import {
 import FavoriteButton from "../../components/FavoriteButton";
 import Select from "../../components/Select";
 import { firstBookableInput } from "../../services/dates";
+import { useI18n } from "../../i18n/core";
 
 const SORT_OPTIONS = [
   { id: "newest", label: "Más nuevos" },
@@ -75,6 +76,7 @@ function Dropdown({ label, value, options, onChange, active }) {
 }
 
 export default function Search() {
+  const { t: tr } = useI18n();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [urlParams, setUrlParams] = useSearchParams();
@@ -272,21 +274,21 @@ export default function Search() {
       <div className="fw-compact-fields"
         style={{ display: "flex", alignItems: "center", gap: isMobile ? 0 : 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? "12px 14px" : "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 14, flexWrap: "wrap" }}>
         <div className="fw-plain-field" style={st.barCell}>
-          <div style={st.barLbl}>Dónde</div>
+          <div style={st.barLbl}>{tr("home.where")}</div>
           <input style={st.barInput} placeholder="Toda Argentina" value={where} onChange={e => setWhere(e.target.value)} />
         </div>
         <div className="fw-plain-field" style={st.barCell}>
-          <div style={st.barLbl}>Retiro</div>
+          <div style={st.barLbl}>{tr("home.pickup")}</div>
           <input type="date" style={st.barInput} min={firstBookableInput()} value={pickup}
             onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
         </div>
         <div className="fw-plain-field" style={st.barCell}>
-          <div style={st.barLbl}>Devolución</div>
+          <div style={st.barLbl}>{tr("home.dropoff")}</div>
           <input type="date" style={st.barInput} min={pickup || firstBookableInput()} value={dropoff}
             onChange={e => setDropoff(e.target.value)} />
         </div>
         <div className="fw-plain-field" style={{ ...st.barCell, ...(isMobile ? { borderBottom: "none", marginBottom: 0 } : { borderRight: "none" }) }}>
-          <div style={st.barLbl}>Categoría</div>
+          <div style={st.barLbl}>{tr("search.category")}</div>
           {/* Desplegable propio: el <select> nativo abre la lista que dibuja el
               sistema operativo, y en Windows eso se veía como un menú cuadrado
               con el celeste del sistema, sin nada del diseño de la página. */}
@@ -326,14 +328,14 @@ export default function Search() {
 
       {/* Filtros con menús desplegables */}
       <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
-        <input placeholder="Buscar marca o modelo..." value={search} onChange={e => setSearch(e.target.value)}
+        <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
           style={{ padding: "9px 16px", borderRadius: 22, border: "1px solid #e5e7eb", fontSize: 13, outline: "none", minWidth: 210 }} />
         <Dropdown label="Ordenar" active value={SORT_OPTIONS.find(o => o.id === sort)?.label}
           options={SORT_OPTIONS.map(o => o.label)}
           onChange={(label) => setSort(SORT_OPTIONS.find(o => o.label === label)?.id || "newest")} />
         <Dropdown label="Transmisión" value={trans !== "Todas" ? trans : ""} active={trans !== "Todas"} options={TRANSMISSION_OPTIONS} onChange={setTrans} />
         <Dropdown label="Combustible" value={fuel !== "Todos" ? fuel : ""} active={fuel !== "Todos"} options={FUEL_OPTIONS} onChange={setFuel} />
-        <input type="number" min="0" placeholder="Precio máx. por día" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+        <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
           style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #2563eb" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
         {anyFilter && <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>Limpiar filtros</div>}
       </div>
