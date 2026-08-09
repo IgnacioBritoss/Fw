@@ -990,7 +990,7 @@ export default {
   "admin.modelsTesting": "Testando...",
   "admin.modelOk": "FUNCIONA",
   "admin.modelBad": "FALHA",
-  "admin.modelsHelp": "Coloque na variável GROQ_VISION_MODEL do backend um dos que dizem FUNCIONA (pode colocar vários separados por vírgula: são usados nessa ordem). 401 significa que a chave não serve; 429, que a cota acabou.",
+  "admin.modelsHelp": "Coloque na variável GROQ_VISION_MODEL do backend um dos que dizem FUNCIONA (pode colocar vários separados por vírgula: são usados nessa ordem). 401 significa que a chave não serve; 429, que a cota acabou. SEM TESTAR quer dizer que o modelo e a chave estão certos, mas ele recusou a imagem de teste: isso não significa que a revisão esteja quebrada.",
   "admin.errModels": "Não conseguimos testar os modelos.",
   "profile.framePreview": "É assim que vai aparecer ao lado do seu nome. O mesmo recorte, menor.",
   "profile.photoWho": "Quem vê a sua foto",
@@ -1003,4 +1003,5 @@ export default {
   "cat.COUPES": "Cupês",
   "cat.CONVERTIBLE": "Conversível",
   "cat.CONVERTIBLES": "Conversíveis",
+  "admin.modelUntested": "SEM TESTAR",
 };

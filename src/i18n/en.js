@@ -991,7 +991,7 @@ export default {
   "admin.modelsTesting": "Testing...",
   "admin.modelOk": "WORKS",
   "admin.modelBad": "FAILS",
-  "admin.modelsHelp": "Put one of the models marked WORKS into the backend's GROQ_VISION_MODEL variable (several can be listed, comma-separated: they are tried in that order). 401 means the key is not valid; 429 means the quota ran out.",
+  "admin.modelsHelp": "Put one of the models marked WORKS into the backend's GROQ_VISION_MODEL variable (several can be listed, comma-separated: they are tried in that order). 401 means the key is not valid; 429 means the quota ran out. UNTESTED means the model and the key are fine but it refused the test image: that does not mean the review is broken.",
   "admin.errModels": "We could not test the models.",
   "profile.framePreview": "This is how it will look next to your name. Same crop, smaller.",
   "profile.photoWho": "Who sees your photo",
@@ -1004,4 +1004,5 @@ export default {
   "cat.COUPES": "Coupes",
   "cat.CONVERTIBLE": "Convertible",
   "cat.CONVERTIBLES": "Convertibles",
+  "admin.modelUntested": "UNTESTED",
 };

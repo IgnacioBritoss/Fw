@@ -990,7 +990,7 @@ export default {
   "admin.modelsTesting": "Prova in corso...",
   "admin.modelOk": "FUNZIONA",
   "admin.modelBad": "NON VA",
-  "admin.modelsHelp": "Metti nella variabile GROQ_VISION_MODEL del backend uno di quelli che dicono FUNZIONA (se ne possono elencare più di uno separati da virgola: si usano in quell'ordine). 401 vuol dire che la chiave non è valida; 429, che la quota è esaurita.",
+  "admin.modelsHelp": "Metti nella variabile GROQ_VISION_MODEL del backend uno di quelli che dicono FUNZIONA (se ne possono elencare più di uno separati da virgola: si usano in quell'ordine). 401 vuol dire che la chiave non è valida; 429, che la quota è esaurita. NON PROVATO vuol dire che il modello e la chiave vanno bene, ma ha rifiutato l’immagine di prova: non significa che il controllo sia rotto.",
   "admin.errModels": "Non siamo riusciti a provare i modelli.",
   "profile.framePreview": "Così apparirà accanto al tuo nome. Lo stesso taglio, più piccolo.",
   "profile.photoWho": "Chi vede la tua foto",
@@ -1003,4 +1003,5 @@ export default {
   "cat.COUPES": "Coupé",
   "cat.CONVERTIBLE": "Cabriolet",
   "cat.CONVERTIBLES": "Cabriolet",
+  "admin.modelUntested": "NON PROVATO",
 };

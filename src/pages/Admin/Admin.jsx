@@ -497,25 +497,48 @@ export default function Admin() {
 
             {probed && (
               <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                {probed.map(p => (
-                  <div key={p.model} style={{
-                    display: "flex", alignItems: "center", gap: 10, fontSize: 12.5,
-                    background: p.ok ? "#f0fdf4" : "#fef2f2",
-                    border: `1px solid ${p.ok ? "#bbf7d0" : "#fecaca"}`,
-                    borderRadius: 8, padding: "8px 11px",
-                  }}>
-                    <span style={{
-                      fontSize: 10, fontWeight: 800, letterSpacing: ".06em",
-                      color: p.ok ? "#166534" : "#b91c1c", flexShrink: 0,
+                {/* TRES estados, no dos. El tercero existe porque hacía falta: qwen
+                    contestaba "400 invalid image data" a la imagen de prueba, y
+                    mostrarlo como FALLA decía que la revisión estaba rota cuando el
+                    modelo existía y la clave funcionaba. Ahora eso se muestra en
+                    naranja como "no se pudo probar", que es la verdad. */}
+                {probed.map(p => {
+                  const tono = p.ok
+                    ? { fondo: "#f0fdf4", borde: "#bbf7d0", texto: "#166534", etiqueta: "admin.modelOk" }
+                    : p.testImageRejected
+                      ? { fondo: "#fff7ed", borde: "#fed7aa", texto: "#9a3412", etiqueta: "admin.modelUntested" }
+                      : { fondo: "#fef2f2", borde: "#fecaca", texto: "#b91c1c", etiqueta: "admin.modelBad" };
+                  return (
+                    <div key={p.model} style={{
+                      display: "flex", alignItems: "center", gap: 10, fontSize: 12.5,
+                      background: tono.fondo,
+                      border: `1px solid ${tono.borde}`,
+                      borderRadius: 8, padding: "8px 11px",
                     }}>
-                      {p.ok ? tr("admin.modelOk") : tr("admin.modelBad")}
-                    </span>
-                    <code style={{ color: "#374151", wordBreak: "break-all" }}>{p.model}</code>
-                    {p.error && (
-                      <span style={{ color: "#9ca3af", fontSize: 11.5, wordBreak: "break-all" }}>{p.error}</span>
-                    )}
+                      <span style={{
+                        fontSize: 10, fontWeight: 800, letterSpacing: ".06em",
+                        color: tono.texto, flexShrink: 0,
+                      }}>
+                        {tr(tono.etiqueta)}
+                      </span>
+                      <code style={{ color: "#374151", wordBreak: "break-all" }}>{p.model}</code>
+                      {p.error && (
+                        <span style={{ color: "#9ca3af", fontSize: 11.5, wordBreak: "break-all" }}>{p.error}</span>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Cuando no hay nada roto pero la prueba no fue concluyente, el
+                    backend explica qué hacer para saberlo de verdad. */}
+                {aiHealth?.note && (
+                  <div style={{
+                    fontSize: 12, color: "#9a3412", background: "#fff7ed",
+                    border: "1px solid #fed7aa", borderRadius: 8,
+                    padding: "9px 11px", lineHeight: 1.6,
+                  }}>
+                    {aiHealth.note}
                   </div>
-                ))}
+                )}
                 <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2, lineHeight: 1.6 }}>
                   {tr("admin.modelsHelp")}
                 </div>

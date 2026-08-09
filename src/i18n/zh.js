@@ -994,7 +994,7 @@ export default {
   "admin.modelsTesting": "正在测试…",
   "admin.modelOk": "可用",
   "admin.modelBad": "不可用",
-  "admin.modelsHelp": "把标记为「可用」的模型填进后端的 GROQ_VISION_MODEL 变量（可以用逗号填多个，按顺序尝试）。401 表示密钥无效；429 表示配额已用尽。",
+  "admin.modelsHelp": "把标记为「可用」的模型填进后端的 GROQ_VISION_MODEL 变量（可以用逗号填多个，按顺序尝试）。401 表示密钥无效；429 表示配额已用尽。 未测试表示模型和密钥都正常，只是拒绝了测试图片，并不意味着审核出了问题。",
   "admin.errModels": "无法测试模型。",
   "profile.framePreview": "这就是它在你名字旁边的样子。同一个裁剪，只是更小。",
   "profile.photoWho": "谁能看到你的照片",
@@ -1007,4 +1007,5 @@ export default {
   "cat.COUPES": "轿跑",
   "cat.CONVERTIBLE": "敞篷车",
   "cat.CONVERTIBLES": "敞篷车",
+  "admin.modelUntested": "未测试",
 };

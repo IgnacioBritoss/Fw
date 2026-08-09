@@ -1017,7 +1017,7 @@ export default {
   "admin.modelsTesting": "Probando...",
   "admin.modelOk": "ANDA",
   "admin.modelBad": "FALLA",
-  "admin.modelsHelp": "Poné en la variable GROQ_VISION_MODEL del backend uno de los que dicen ANDA (se pueden poner varios separados por coma: se usan en ese orden). 401 quiere decir que la clave no sirve; 429, que se agotó la cuota.",
+  "admin.modelsHelp": "Poné en la variable GROQ_VISION_MODEL del backend uno de los que dicen ANDA (se pueden poner varios separados por coma: se usan en ese orden). 401 quiere decir que la clave no sirve; 429, que se agotó la cuota. SIN PROBAR quiere decir que el modelo y la clave están bien, pero rechazó la imagen de prueba: eso no significa que la revisión esté rota.",
   "admin.errModels": "No pudimos probar los modelos.",
   "profile.framePreview": "Así se va a ver al lado de tu nombre. Es el mismo recorte, más chico.",
   "profile.photoWho": "Quién ve tu foto",
@@ -1030,4 +1030,5 @@ export default {
   "cat.COUPES": "Coupés",
   "cat.CONVERTIBLE": "Cabriolet",
   "cat.CONVERTIBLES": "Cabriolets",
+  "admin.modelUntested": "SIN PROBAR",
 };
