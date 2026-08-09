@@ -24,3 +24,20 @@ export function nameOf(person, fallback = "") {
     || person?.email
     || fallback;
 }
+
+// ── Quién ve la foto de perfil ───────────────────────────────────────────────
+// Los dos valores del enum PhotoVisibility del backend. Están acá y no escritos
+// a mano en cada pantalla para que no haya un "BOOKED" mal tipeado que el backend
+// rechace con un 400 imposible de entender.
+export const FOTO_TODOS = "EVERYONE";
+export const FOTO_RESERVAS = "BOOKED";
+
+/**
+ * El ajuste de una persona, tolerando que no venga.
+ *
+ * El front y el backend se publican por separado: mientras el backend viejo siga
+ * arriba, `/users/me` no devuelve este campo. En ese caso vale "todo el mundo",
+ * que es cómo se venía comportando la app hasta ahora.
+ */
+export const visibilidadDeFoto = (user) =>
+  user?.profilePhotoVisibility === FOTO_RESERVAS ? FOTO_RESERVAS : FOTO_TODOS;

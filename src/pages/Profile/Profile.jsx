@@ -16,8 +16,13 @@
 //  2. RANGOS por reputación real (RankBadge), como cualquier app que lleva
 //     historial. Se calcula con cantidad de reseñas Y promedio.
 //
-//  3. FOTO DE PERFIL PÚBLICA: se puede subir, cambiar y quitar. Se guarda en
+//  3. FOTO DE PERFIL: se puede subir, encuadrar, cambiar y quitar. Se guarda en
 //     `profilePhotoUrl`, que el backend ya aceptaba pero el front nunca mandaba.
+//     Y se elige QUIÉN LA VE: todo el mundo, o solo la gente con la que hay una
+//     reserva. Antes había una sola respuesta posible —se veía siempre—, así que
+//     quien no estuviera de acuerdo no tenía más opción que no subir ninguna.
+//     La opción aparece en dos lugares: al poner la foto (elegirla es parte de
+//     ponerla) y acá abajo, para cambiarla cuando se quiera.
 //
 //  4. Cada fila de verificación tiene el ICONO de lo que verifica (documento,
 //     sobre para el email, teléfono, +18 para la edad) en vez del cuadrado vacío
@@ -34,7 +39,8 @@ import IdentityDocuments from "../../components/IdentityDocuments";
 import RankBadge from "../../components/RankBadge";
 import Avatar from "../../components/Avatar";
 import AvatarEditor from "../../components/AvatarEditor";
-import { initialsOf } from "../../services/people";
+import PhotoVisibilityChoice from "../../components/PhotoVisibilityChoice";
+import { initialsOf, visibilidadDeFoto } from "../../services/people";
 import Spinner from "../../components/Spinner";
 import StatusChip from "../../components/StatusChip";
 
@@ -163,19 +169,59 @@ export default function Profile() {
     setPorEncuadrar(file);
   };
 
-  /** Sube el recorte que devolvió el editor y lo guarda en el perfil. */
-  const guardarRecorte = async (recorte) => {
+  /**
+   * Sube el recorte que devolvió el editor y lo guarda en el perfil, junto con
+   * quién eligió que la vea. Las dos cosas van en el mismo PATCH: si se mandaran
+   * por separado y la segunda llamada fallara, la foto quedaría publicada con una
+   * visibilidad que la persona no eligió.
+   */
+  const guardarRecorte = async (recorte, quienLaVe) => {
     setPhotoBusy(true);
     setPhotoError("");
     try {
       const url = await uploadImageToCloudinary(recorte);
-      await updateMe({ profilePhotoUrl: url });
+      await updateMe({ profilePhotoUrl: url, profilePhotoVisibility: quienLaVe });
       await refreshUser();
       setPorEncuadrar(null);
     } catch (err) {
       setPhotoError(err?.message || tr("profile.photoFailed"));
     } finally {
       setPhotoBusy(false);
+    }
+  };
+
+  // ── Cambiar quién ve la foto, ya con la foto puesta ──
+  // Se guarda al instante y se muestra elegido antes de que conteste el servidor:
+  // es un botón de radio, y esperar medio segundo a que se marque se siente roto.
+  // Si falla, vuelve a lo que estaba y lo dice.
+  const [quienVeLaFoto, setQuienVeLaFoto] = useState(() => visibilidadDeFoto(user));
+  const [visibilityBusy, setVisibilityBusy] = useState(false);
+
+  // El valor que manda es el del backend; esto lo sigue cuando cambia el usuario
+  // (al entrar, o después de guardar).
+  const visibilidadGuardada = visibilidadDeFoto(user);
+  const visibilidadPrevia = useRef(visibilidadGuardada);
+  useEffect(() => {
+    if (visibilidadPrevia.current !== visibilidadGuardada) {
+      visibilidadPrevia.current = visibilidadGuardada;
+      setQuienVeLaFoto(visibilidadGuardada);
+    }
+  }, [visibilidadGuardada]);
+
+  const cambiarQuienVeLaFoto = async (valor) => {
+    if (valor === quienVeLaFoto || visibilityBusy) return;
+    const anterior = quienVeLaFoto;
+    setQuienVeLaFoto(valor);
+    setVisibilityBusy(true);
+    setPhotoError("");
+    try {
+      await updateMe({ profilePhotoVisibility: valor });
+      await refreshUser();
+    } catch (err) {
+      setQuienVeLaFoto(anterior);
+      setPhotoError(err?.message || tr("profile.photoFailed"));
+    } finally {
+      setVisibilityBusy(false);
     }
   };
 
@@ -395,6 +441,23 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Quién ve la foto. Solo tiene sentido si hay una foto puesta: sin foto no
+          hay nada que mostrar ni que esconder. */}
+      {user?.profilePhotoUrl && (
+        <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{tr("profile.photoWho")}</div>
+            {visibilityBusy && <Spinner size={14} />}
+          </div>
+          <div style={{ fontSize: 12.5, color: "#9ca3af", marginBottom: 14 }}>{tr("profile.photoWhoSub")}</div>
+          <PhotoVisibilityChoice
+            value={quienVeLaFoto}
+            onChange={cambiarQuienVeLaFoto}
+            disabled={visibilityBusy || photoBusy}
+          />
+        </div>
+      )}
+
       {/* Rango: qué medalla tiene y qué le falta para la siguiente */}
       <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{tr("profile.rank")}</div>
@@ -410,6 +473,7 @@ export default function Profile() {
         <AvatarEditor
           file={porEncuadrar}
           busy={photoBusy}
+          visibility={quienVeLaFoto}
           onCancel={() => { if (!photoBusy) { setPorEncuadrar(null); setPhotoError(""); } }}
           onConfirm={guardarRecorte}
         />

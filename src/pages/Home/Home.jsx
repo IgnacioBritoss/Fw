@@ -282,7 +282,11 @@ export default function Home() {
   const CategoriesSection = () => (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 16 }}>{tr("home.categories")}</div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(6,1fr)", gap: 14, marginBottom: 32 }}>
+      {/* Cuatro columnas y no seis: son ocho categorías, así quedan dos filas
+          parejas de cuatro. Con seis columnas quedaban seis arriba y las que
+          sobraban solas abajo, que se ve como si faltara algo. En el celular,
+          dos por fila. */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {CATEGORIES.map((c) => {
           const min = priceByCategory[c.id];
           const count = countByCategory[c.id] || 0;

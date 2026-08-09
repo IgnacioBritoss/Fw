@@ -176,15 +176,50 @@ export async function getMe() { return apiFetch("/users/me"); }
  * `forbidNonWhitelisted`, y mandar `phone: undefined` en un cambio de foto
  * hacía que se pisara con vacío lo que no se estaba tocando.
  *
- * `profilePhotoUrl` es la foto de perfil pública (null la quita).
+ * `profilePhotoUrl` es la foto de perfil (null la quita) y
+ * `profilePhotoVisibility` es quién puede verla ("EVERYONE" | "BOOKED").
+ *
+ * SOBRE EL BACKEND VIEJO: el front y el backend se publican por separado, así que
+ * hay un rato en el que este front le habla a un backend que todavía no conoce
+ * `profilePhotoVisibility`. Ese backend NO ignora el campo: valida con
+ * `forbidNonWhitelisted` y contesta 400. Sin el reintento de abajo, en ese rato no
+ * se podría ni cambiar la foto (ya pasó con otro campo: la revisión de fotos
+ * quedó devolviendo 400 y ninguna foto se revisaba). Entonces, si el 400 es por
+ * ese campo, se guarda lo demás y se recuerda para no volver a mandarlo en toda
+ * la sesión; el ajuste se aplica cuando el backend nuevo esté publicado.
  */
+let backendEntiendeVisibilidad = true;
+
+/** ¿Este 400 es por `profilePhotoVisibility` y no por lo que se quiso guardar? */
+const rechazaLaVisibilidad = (err) =>
+  err?.status === 400 && /profilePhotoVisibility/i.test(String(err?.message ?? ""));
+
 export async function updateMe(fields = {}) {
-  const allowed = ["firstName", "lastName", "phone", "profilePhotoUrl"];
+  const allowed = ["firstName", "lastName", "phone", "profilePhotoUrl", "profilePhotoVisibility"];
   const body = {};
   for (const key of allowed) {
     if (fields[key] !== undefined) body[key] = fields[key];
   }
-  return apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(body) });
+
+  const enviar = (payload) =>
+    apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
+
+  if (body.profilePhotoVisibility === undefined) return enviar(body);
+
+  if (backendEntiendeVisibilidad) {
+    try {
+      return await enviar(body);
+    } catch (err) {
+      if (!rechazaLaVisibilidad(err)) throw err;
+      backendEntiendeVisibilidad = false;
+    }
+  }
+
+  // Sin el campo nuevo. Si lo único que se estaba cambiando era eso, no queda
+  // nada que mandar: se devuelve el perfil como está en vez de un PATCH vacío.
+  const { profilePhotoVisibility: _visibilidad, ...resto } = body;
+  if (Object.keys(resto).length === 0) return getMe();
+  return enviar(resto);
 }
 
 // ── VEHÍCULOS ──────────────────────────────────────────────────

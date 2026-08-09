@@ -23,25 +23,38 @@
 // Argentina es el tipo más común (Yaris, Gol, Onix, Argo): sin esa opción esos
 // autos se cargaban como sedán, que es otra cosa.
 //
+// Y PREMIUM tampoco iba: no es un tipo de auto, es una opinión sobre el precio.
+// No dice si el auto tiene dos puertas o cinco ni si entra una familia, y un
+// particular no alquila un deportivo de colección, así que la tarjeta estaba
+// vacía y ocupaba lugar. En su lugar van las dos carrocerías REALES de un auto
+// deportivo, que además son cosas que un particular sí tiene y sí alquila:
+//   · COUPE       → dos puertas, techo fijo
+//   · CONVERTIBLE → dos puertas, techo rebatible
+//
 // El orden es a propósito: primero los tipos por CARROCERÍA, de más chico a más
-// grande, y al final los dos que no son carrocería sino una característica
-// (eléctrico y premium). Antes estaban mezclados.
+// grande, después los dos deportivos, y al final eléctrico, que no es una
+// carrocería sino una característica. Antes estaban mezclados.
+//
+// Y son OCHO, que es un número que entra parejo en la grilla: cuatro y cuatro en
+// la computadora, dos por fila en el celular. Con siete quedaban seis arriba y
+// uno solo abajo.
 export const CATEGORIES = [
   { id: "HATCHBACK", label: "Hatchback", key: "cat.HATCHBACK" },
   { id: "SEDAN", label: "Sedán", key: "cat.SEDANS" },
   { id: "SUV", label: "SUV", key: "cat.SUV" },
   { id: "PICKUP", label: "Pickup", key: "cat.PICKUP" },
   { id: "VAN", label: "Vans", key: "cat.VANS" },
+  { id: "COUPE", label: "Coupés", key: "cat.COUPES" },
+  { id: "CONVERTIBLE", label: "Cabriolets", key: "cat.CONVERTIBLES" },
   { id: "ELECTRIC", label: "Eléctricos", key: "cat.ELECTRICS" },
-  { id: "PREMIUM", label: "Premium", key: "cat.PREMIUM" },
 ];
 
 // BERLINA ya no se ofrece al publicar, pero hay autos publicados que lo usan:
 // se sigue pudiendo MOSTRAR, y se muestra como "Sedán", que es lo que siempre fue.
 export const CATEGORY_LABELS = {
   SEDAN: "Sedán", HATCHBACK: "Hatchback", SUV: "SUV", PICKUP: "Pickup",
-  VAN: "Van", ELECTRIC: "Eléctrico", PREMIUM: "Premium",
-  BERLINA: "Sedán", OTHER: "Otro",
+  VAN: "Van", COUPE: "Coupé", CONVERTIBLE: "Cabriolet", ELECTRIC: "Eléctrico",
+  PREMIUM: "Premium", BERLINA: "Sedán", OTHER: "Otro",
 };
 
 // Traducciones de los códigos del backend (en inglés) al texto que se muestra.
@@ -56,10 +69,13 @@ export const FUEL_LABELS = { GASOLINE: "Nafta", DIESEL: "Diesel", HYBRID: "Híbr
 // que un código nuevo del backend todavía no tenga clave.
 export const CATEGORY_KEYS = {
   SEDAN: "cat.SEDAN", HATCHBACK: "cat.HATCHBACK", SUV: "cat.SUV",
-  PICKUP: "cat.PICKUP", VAN: "cat.VAN", ELECTRIC: "cat.ELECTRIC",
-  PREMIUM: "cat.PREMIUM",
+  PICKUP: "cat.PICKUP", VAN: "cat.VAN", COUPE: "cat.COUPE",
+  CONVERTIBLE: "cat.CONVERTIBLE", ELECTRIC: "cat.ELECTRIC",
   // Un auto viejo cargado como "berlina" se muestra como sedán: es lo mismo.
   BERLINA: "cat.SEDAN",
+  // PREMIUM ya no se usa (normalizeListing lo cambia por la carrocería que
+  // deduce de las medidas), pero la clave queda por si aparece por otro camino.
+  PREMIUM: "cat.PREMIUM",
   OTHER: "cat.OTHER",
 };
 export const TRANSMISSION_KEYS = { MANUAL: "trans.MANUAL", AUTOMATIC: "trans.AUTOMATIC" };
@@ -95,14 +111,20 @@ const LEGACY_CATEGORY_CODES = {
   sedan: "SEDAN", "sedán": "SEDAN", berlina: "SEDAN", berlinas: "SEDAN",
   hatchback: "HATCHBACK", suv: "SUV", pickup: "PICKUP",
   van: "VAN", vans: "VAN", minivan: "VAN",
+  coupe: "COUPE", "coupé": "COUPE", cupe: "COUPE",
+  cabriolet: "CONVERTIBLE", convertible: "CONVERTIBLE",
+  descapotable: "CONVERTIBLE", "cabriolé": "CONVERTIBLE",
   "eléctrico": "ELECTRIC", electrico: "ELECTRIC", "eléctricos": "ELECTRIC",
-  premium: "PREMIUM",
 };
 
 /**
  * Deduce la categoría de un vehículo que se publicó antes de que el campo
- * existiera, para que no quede afuera de los filtros. Es la misma regla que usa
- * el backfill de la migración en el backend.
+ * existiera —o que se cargó como "Premium", que no es una carrocería—, para que
+ * no quede afuera de los filtros.
+ *
+ * Son las MISMAS reglas que prisma/backfill/vehicle-category.sql en el backend.
+ * Tienen que coincidir: si no, el mismo auto queda en una categoría en la base y
+ * en otra en la pantalla.
  */
 function inferCategory(vehicle = {}) {
   if (vehicle.fuelType === "ELECTRIC") return "ELECTRIC";
@@ -112,6 +134,11 @@ function inferCategory(vehicle = {}) {
   // 1560-1590 (T-Cross 1568, Kicks 1590), así que con 1650 quedaban como autos
   // chicos. Un hatchback está en 1465-1495, bien por debajo.
   if (Number(vehicle.heightMm) >= 1550) return "SUV";
+  // Dos puertas y bien bajo es un coupé. Se pide el alto CARGADO (no 0) a
+  // propósito: sin ese dato, dos puertas solas no distinguen un coupé de un
+  // hatchback de tres puertas.
+  const alto = Number(vehicle.heightMm);
+  if (Number(vehicle.doors) === 2 && alto > 0 && alto < 1450) return "COUPE";
   // Menos de 4,25 m es un hatchback: es el largo que separa un Yaris o un Gol de
   // un Corolla. Antes todo lo que no era SUV ni pickup caía en sedán, así que los
   // autos chicos —la mayoría del parque argentino— quedaban mal clasificados.
@@ -128,9 +155,15 @@ function inferCategory(vehicle = {}) {
 export function normalizeListing(listing) {
   const vehicle = listing.vehicle || {};
   const rawCategory = listing.category || vehicle.category;
-  const category = rawCategory
+  const guardada = rawCategory
     ? (LEGACY_CATEGORY_CODES[String(rawCategory).toLowerCase()] || String(rawCategory).toUpperCase())
-    : inferCategory(vehicle);
+    : null;
+  // PREMIUM ya no es una categoría: los autos que quedaron cargados así se
+  // muestran con la carrocería que se deduce de sus medidas. Si no, quedaban
+  // fuera de todos los filtros —ninguna tarjeta los busca— y sin forma de
+  // encontrarlos salvo entrando al auto.
+  const category =
+    !guardada || guardada === "PREMIUM" ? inferCategory(vehicle) : guardada;
 
   return {
     id: listing.id,

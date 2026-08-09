@@ -170,10 +170,12 @@ export default function Settings() {
         {/* Menú lateral */}
         <div style={{ ...t.card, padding: 12, marginBottom: isMobile ? 20 : 0 }}>
           {MENU.map(m => (
+            /* Sin flechita al final: la sección abierta ya se distingue porque
+               queda pintada de oscuro con la letra blanca. Una flecha que apunta
+               a la nada, al lado de algo que ya se ve elegido, es ruido. */
             <div key={m.key} style={t.menuItem(section === m.key)} onClick={() => setSection(m.key)}>
               <Svg d={m.icon} color={section === m.key ? "#fff" : "#374151"} />
               <span style={{ flex: 1 }}>{tr(m.label)}</span>
-              {section === m.key && <span style={{ opacity: .6 }}>›</span>}
             </div>
           ))}
           <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 8, paddingTop: 8 }}>

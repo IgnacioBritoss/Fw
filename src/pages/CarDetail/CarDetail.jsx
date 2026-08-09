@@ -33,7 +33,7 @@ import { addMonths, format } from "date-fns";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import Avatar from "../../components/Avatar";
-import { initialsOf } from "../../services/people";
+import { initialsOf, nameOf } from "../../services/people";
 import { localeFor, shortDate } from "../../i18n/dates";
 
 // Caja, combustible y tracción son texto que el usuario LEE, así que se guardan
@@ -706,10 +706,19 @@ export default function CarDetail() {
               : reviews.map(r => (
                 <div key={r.id} style={s.review}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                    <span style={s.reviewAuthor}>
-                      {r.author?.displayName
-                        || `${r.author?.firstName || ""} ${r.author?.lastName || ""}`.trim()
-                        || tr("profile.userFallback")}
+                    {/* Con la foto de quien la escribió: una reseña con cara
+                        atrás pesa distinto que un nombre solo. Si no tiene foto
+                        —o eligió que no se vea—, queda su inicial. */}
+                    <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+                      <Avatar
+                        src={r.author?.profilePhotoUrl}
+                        initials={initialsOf(r.author)}
+                        size={30}
+                        alt=""
+                      />
+                      <span style={s.reviewAuthor}>
+                        {nameOf(r.author, tr("profile.userFallback"))}
+                      </span>
                     </span>
                     <span style={s.stars}>{"★".repeat(r.rating)}</span>
                   </div>
