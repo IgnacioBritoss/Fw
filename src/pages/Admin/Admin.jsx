@@ -15,7 +15,8 @@ import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
   getAdminReports, resolveReport,
-  adminGetVerifications, adminReviewVerification, getAiHealth, probeAiModels,
+  adminGetVerifications, adminGetVerificationDocuments,
+  adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
 import Spinner from "../../components/Spinner";
@@ -91,6 +92,10 @@ export default function Admin() {
   const [loadingVerifications, setLoadingVerifications] = useState(false);
   const [pendingVerifications, setPendingVerifications] = useState(0);
   const [aiHealth, setAiHealth] = useState(null);
+  // Fotos de identidad firmadas, por solicitud. Los archivos son privados: la URL
+  // guardada devuelve 401, así que hay que pedirlas al backend una por una.
+  const [docsFirmados, setDocsFirmados] = useState({});
+  const [cargandoDocs, setCargandoDocs] = useState(null);
   const [probed, setProbed] = useState(null);
   const [probing, setProbing] = useState(false);
 
@@ -184,6 +189,25 @@ export default function Admin() {
       showAlert(label);
     } catch (err) {
       showAlert(err.message || tr("admin.errDecision"), "err");
+    }
+  };
+
+  /**
+   * Pide las fotos de una solicitud firmadas y con vencimiento.
+   *
+   * No se piden solas al abrir la pestaña a propósito: cada acceso a los
+   * documentos de alguien queda registrado en la auditoría, así que mirar la
+   * lista no tiene que significar mirar el DNI de todos.
+   */
+  const verDocumentos = async (id) => {
+    setCargandoDocs(id);
+    try {
+      const data = await adminGetVerificationDocuments(id);
+      setDocsFirmados(prev => ({ ...prev, [id]: data?.documents || {} }));
+    } catch (err) {
+      showAlert(err.message || tr("admin.errPhotos"), "err");
+    } finally {
+      setCargandoDocs(null);
     }
   };
 
@@ -564,7 +588,10 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <IdentityDocuments submission={v} compact />
+                <IdentityDocuments submission={v} compact
+                  urls={docsFirmados[v.id] || null}
+                  loadingPhotos={cargandoDocs === v.id}
+                  onLoadPhotos={() => verDocumentos(v.id)} />
 
                 {waiting && (
                   <div style={s.btnRow}>

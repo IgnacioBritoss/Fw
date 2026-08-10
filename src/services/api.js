@@ -178,48 +178,77 @@ export async function getMe() { return apiFetch("/users/me"); }
  *
  * `profilePhotoUrl` es la foto de perfil (null la quita) y
  * `profilePhotoVisibility` es quién puede verla ("EVERYONE" | "BOOKED").
+ * `dni`, `cuil` y `address` son los datos que la verificación de identidad
+ * coteja contra el DNI y la licencia.
  *
  * SOBRE EL BACKEND VIEJO: el front y el backend se publican por separado, así que
  * hay un rato en el que este front le habla a un backend que todavía no conoce
- * `profilePhotoVisibility`. Ese backend NO ignora el campo: valida con
- * `forbidNonWhitelisted` y contesta 400. Sin el reintento de abajo, en ese rato no
- * se podría ni cambiar la foto (ya pasó con otro campo: la revisión de fotos
- * quedó devolviendo 400 y ninguna foto se revisaba). Entonces, si el 400 es por
- * ese campo, se guarda lo demás y se recuerda para no volver a mandarlo en toda
- * la sesión; el ajuste se aplica cuando el backend nuevo esté publicado.
+ * un campo nuevo. Ese backend NO lo ignora: valida con `forbidNonWhitelisted` y
+ * contesta 400. Sin el reintento de abajo, en ese rato no se podría ni cambiar la
+ * foto (ya pasó con otro campo: la revisión de fotos quedó devolviendo 400 y
+ * ninguna foto se revisaba). Entonces, si el 400 es porque el campo no existe, se
+ * guarda lo demás y se recuerda para no volver a mandarlo en toda la sesión.
+ *
+ * Quien llama puede darse cuenta de que un campo quedó sin guardar mirando el
+ * perfil que se devuelve: es el que respondió el servidor, no el que se mandó.
  */
-let backendEntiendeVisibilidad = true;
+const CAMPOS_EDITABLES = [
+  "firstName", "lastName", "phone",
+  "profilePhotoUrl", "profilePhotoVisibility",
+  "dni", "cuil", "address",
+];
 
-/** ¿Este 400 es por `profilePhotoVisibility` y no por lo que se quiso guardar? */
-const rechazaLaVisibilidad = (err) =>
-  err?.status === 400 && /profilePhotoVisibility/i.test(String(err?.message ?? ""));
+// Los que un backend anterior puede no conocer todavía.
+const CAMPOS_NUEVOS = ["profilePhotoVisibility", "dni", "cuil", "address"];
+
+// Los que ya rebotaron en esta sesión por no existir en el backend.
+const desconocidos = new Set();
+
+/**
+ * ¿Este 400 es "el backend no conoce ese campo" y no "ese valor está mal"?
+ *
+ * La diferencia importa: `forbidNonWhitelisted` contesta "property dni should not
+ * exist", y ahí reintentar sin el campo es lo correcto. Pero un CUIL con el
+ * dígito verificador mal también menciona el campo, y ahí reintentar sin él
+ * guardaría el resto y diría que salió bien, ocultando el error de carga. Por eso
+ * se exige el "should not exist".
+ */
+const campoDesconocido = (err, campo) =>
+  err?.status === 400 &&
+  new RegExp(`${campo}\\b[^·]*should not exist`, "i").test(String(err?.message ?? ""));
 
 export async function updateMe(fields = {}) {
-  const allowed = ["firstName", "lastName", "phone", "profilePhotoUrl", "profilePhotoVisibility"];
   const body = {};
-  for (const key of allowed) {
+  for (const key of CAMPOS_EDITABLES) {
     if (fields[key] !== undefined) body[key] = fields[key];
   }
 
   const enviar = (payload) =>
     apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
 
-  if (body.profilePhotoVisibility === undefined) return enviar(body);
+  // Un intento por campo nuevo como máximo: cada rechazo saca uno del payload,
+  // así que la vuelta siguiente manda estrictamente menos.
+  for (let intento = 0; intento <= CAMPOS_NUEVOS.length; intento++) {
+    const payload = { ...body };
+    for (const campo of desconocidos) delete payload[campo];
 
-  if (backendEntiendeVisibilidad) {
+    // Si lo único que se estaba cambiando era un campo que este backend no
+    // tiene, no queda nada que mandar: se devuelve el perfil como está en vez de
+    // un PATCH vacío.
+    if (Object.keys(payload).length === 0) return getMe();
+
     try {
-      return await enviar(body);
+      return await enviar(payload);
     } catch (err) {
-      if (!rechazaLaVisibilidad(err)) throw err;
-      backendEntiendeVisibilidad = false;
+      const rechazado = CAMPOS_NUEVOS.find(
+        (campo) => payload[campo] !== undefined && campoDesconocido(err, campo),
+      );
+      if (!rechazado) throw err;
+      desconocidos.add(rechazado);
     }
   }
 
-  // Sin el campo nuevo. Si lo único que se estaba cambiando era eso, no queda
-  // nada que mandar: se devuelve el perfil como está en vez de un PATCH vacío.
-  const { profilePhotoVisibility: _visibilidad, ...resto } = body;
-  if (Object.keys(resto).length === 0) return getMe();
-  return enviar(resto);
+  return getMe();
 }
 
 // ── VEHÍCULOS ──────────────────────────────────────────────────
@@ -326,6 +355,36 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
     method: "POST",
     body: JSON.stringify({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }),
   });
+}
+
+/**
+ * Firma para subir UNA foto de identidad concreta.
+ *
+ * `document` es "dni" | "license" | "selfie" y `side` es "front" | "back" (la
+ * selfie no lleva lado). El servidor decide la carpeta, el nombre del archivo y
+ * que el asset quede PRIVADO: el navegador no elige nada de eso.
+ *
+ * POR QUÉ EXISTE: el backend ya no acepta una URL cualquiera de Cloudinary. Al
+ * enviar los documentos comprueba que cada archivo esté en `identity/<tu-id>/` y
+ * que el nombre empiece con el slot que le corresponde. Así es imposible mandar
+ * el dorso donde va el frente, o un archivo de otra cuenta. Con la firma
+ * genérica de antes (carpeta `freewheel`) el envío ahora falla con
+ * DOCUMENT_SLOT_MISMATCH.
+ */
+export async function getIdentityUploadSignature({ document, side }) {
+  return apiFetch("/verification/identity/upload-signature", {
+    method: "POST",
+    body: JSON.stringify(side ? { document, side } : { document }),
+  });
+}
+
+/**
+ * Vuelve a correr la revisión de la última solicitud pendiente, sin volver a
+ * subir las fotos. Sirve cuando la revisión no pudo decidir (un timeout del
+ * proveedor) o después de corregir el DNI, el CUIL o el domicilio.
+ */
+export async function retryIdentityReview() {
+  return apiFetch("/verification/identity/review-retry", { method: "POST" });
 }
 
 /**
@@ -646,6 +705,19 @@ export async function adminUpdateUserRole(id, role) {
 // esas fotos: acá (cuentas admin) y GET /verification/identity/me (el propio
 // dueño). No aparecen en el perfil público de nadie.
 export async function adminGetVerifications() { return apiFetch("/admin/verifications"); }
+
+/**
+ * Las fotos de UNA solicitud, con URLs firmadas al momento.
+ *
+ * POR QUÉ HACE FALTA: las fotos de identidad pasaron a ser archivos PRIVADOS en
+ * Cloudinary. La URL que viene guardada en la solicitud ya no se puede abrir
+ * —Cloudinary contesta 401— así que el visor mostraba las cuatro fotos rotas.
+ * Este endpoint devuelve URLs firmadas que caducan, y del lado del servidor deja
+ * registrado quién las miró, porque son datos personales sensibles.
+ */
+export async function adminGetVerificationDocuments(id) {
+  return apiFetch(`/admin/verifications/${id}/documents`);
+}
 export async function adminReviewVerification(id, status, notes) {
   return apiFetch(`/admin/verifications/${id}/review`, {
     method: "PATCH",

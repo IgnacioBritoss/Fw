@@ -12,9 +12,18 @@
 //  Antes solo escribía una marca en el navegador: se veía "Verificado" pero el
 //  servidor seguía rechazando publicar y reservar con un 403.
 //
+//  SOBRE LOS DATOS: la revisión del servidor no mira las fotos por separado, las
+//  COTEJA contra el DNI, el CUIL y el domicilio de la cuenta. Si esos datos no
+//  están cargados no hay con qué comparar y la solicitud nunca puede aprobarse
+//  sola. Por eso se piden acá, en el mismo paso que el DNI, y se validan antes de
+//  mandarlos (el CUIL lleva el DNI adentro y un dígito verificador).
+//
 //  SOBRE LAS FOTOS: al elegir cada una se la revisa en el momento (POST
 //  /ai/document) y se avisa si no corresponde, así el problema se ve antes de
-//  enviar y no se puede usar una imagen cualquiera como documento.
+//  enviar y no se puede usar una imagen cualquiera como documento. Cada foto se
+//  sube con una firma PROPIA de su casilla (DNI frente, DNI dorso, licencia
+//  frente, licencia dorso): el servidor rechaza el envío si un archivo no está en
+//  la casilla que le corresponde.
 //
 //  SOBRE EL TELÉFONO: mandar un SMS a un número real es un servicio pago, así
 //  que el código llega al EMAIL de la persona. Por eso el teléfono no bloquea la
@@ -26,15 +35,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { uploadImageToCloudinary } from "../services/cloudinary";
+import { uploadIdentityDocument } from "../services/cloudinary";
 import { checkDocument } from "../services/groq";
 import PhoneInput from "./PhoneInput";
 import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
 import { normalizeArgentinePhone } from "../services/phone";
 import {
-  confirmPhoneCode, getVerificationStatus,
-  requestPhoneCode, submitIdentity, updateMe,
+  claveDelError, cuilCoincideConDni, dniDelCuil, motivoDeRevision,
+  normalizarCuil, normalizarDni, problemaDeIdentidad,
+} from "../services/identity";
+import {
+  confirmPhoneCode, getVerificationStatus, requestPhoneCode,
+  retryIdentityReview, submitIdentity, updateMe,
 } from "../services/api";
 
 // Los pasos se guardan como CLAVES y se traducen al dibujar el Stepper.
@@ -160,6 +173,26 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const st = styles(isMobile);
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(0);       // 0=DNI, 1=licencia, 2=teléfono, 3=confirmación
+  // Los datos que la revisión coteja contra los documentos.
+  //
+  // Se guarda SOLO lo que la persona escribió, y lo que no escribió se lee de la
+  // cuenta. Es a propósito: el perfil llega del servidor un instante después de
+  // que se dibuja la pantalla, así que copiarlo al estado inicial dejaba los tres
+  // campos vacíos aunque estuvieran cargados (y hacía retipear el DNI). Al
+  // derivarlos, se completan solos en cuanto el perfil llega, y desde el primer
+  // tecleo manda lo que está en pantalla.
+  const [editado, setEditado] = useState({});
+  const datos = {
+    dni: editado.dni ?? user?.dni ?? "",
+    cuil: editado.cuil ?? user?.cuil ?? "",
+    address: editado.address ?? user?.address ?? "",
+  };
+  const setDatos = (actualizar) =>
+    setEditado((previo) => actualizar({
+      dni: previo.dni ?? user?.dni ?? "",
+      cuil: previo.cuil ?? user?.cuil ?? "",
+      address: previo.address ?? user?.address ?? "",
+    }));
   const [docs, setDocs] = useState({ dniFront: null, dniBack: null, licFront: null, licBack: null });
   const [reviews, setReviews] = useState({}); // resultado de la revisión por foto
   const [docsConfirmed, setDocsConfirmed] = useState(false);
@@ -180,12 +213,42 @@ export default function IdentityVerification({ onDone, onCancel }) {
     if (fresh) setStatus(fresh);
     return fresh;
   };
-  useEffect(() => { loadStatus(); }, []);
+  // También se relee el perfil: el DNI, el CUIL y el domicilio salen de ahí, y la
+  // sesión guardada en el navegador puede ser de antes de que esos campos
+  // existieran. Sin esto los campos aparecían vacíos aunque estuvieran cargados.
+  useEffect(() => { loadStatus(); refreshUser(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checklist = status?.checklist || {};
   // El backend informa si el teléfono es obligatorio. Hoy no lo es, porque el
   // envío por SMS es un servicio pago.
   const phoneRequired = status?.phoneRequired === true;
+
+  // Con la identidad ya verificada estos datos quedan inmutables del lado del
+  // servidor (cambiarlos rompería la garantía de que la cuenta es de la persona
+  // de los documentos). Se muestran, pero de solo lectura: mandarlos daría 403.
+  const datosBloqueados =
+    status?.fullyVerified === true || user?.verificationStatus === "VERIFIED";
+
+  // El CUIL lleva el DNI adentro, así que en cuanto los dos están escritos se
+  // puede avisar sin esperar al servidor. Se muestra el DNI que el CUIL contiene
+  // porque casi siempre el tipeado mal es uno de los dos, y verlo dice cuál.
+  const cuilLimpio = normalizarCuil(datos.cuil);
+  const dniLimpio = normalizarDni(datos.dni);
+  const sugerenciaCuil =
+    cuilLimpio && dniLimpio.length >= 7 && !cuilCoincideConDni(dniLimpio, cuilLimpio)
+      ? String(Number(dniDelCuil(cuilLimpio)))
+      : null;
+
+  // Motivos de la última revisión, ya traducidos. Sin esto, una solicitud queda
+  // "en revisión" sin decir qué le faltó, y la persona no sabe qué corregir.
+  const motivos = (status?.lastReview?.reasonCodes ?? []).map(motivoDeRevision);
+  // Un código que este front todavía no conoce se muestra tal cual: es feo, pero
+  // es información, y es mejor que esconder el motivo del rechazo.
+  const textoDeMotivo = ({ code, clave }) => (clave ? tr(clave) : code);
+  // Reintentar solo tiene sentido con una solicitud pendiente: con veredicto, el
+  // backend contesta 400 REVIEW_NOT_PENDING. Que el campo exista es además la
+  // señal de que este backend tiene el endpoint.
+  const puedeReintentar = status?.lastReview?.outcome === "pending";
 
   /** Guarda la foto elegida y dispara su revisión automática. */
   const handlePhoto = (key) => async (value, err, kind) => {
@@ -207,26 +270,74 @@ export default function IdentityVerification({ onDone, onCancel }) {
   };
 
   /**
+   * Guarda el DNI, el CUIL y el domicilio. Devuelve si se puede seguir.
+   *
+   * Se valida acá antes de mandar porque el servidor contesta con un código
+   * (CUIL_DNI_MISMATCH) recién al final del pedido, y un dígito mal tipeado tiene
+   * que avisarse en el campo, en el momento.
+   */
+  const guardarDatos = async () => {
+    if (datosBloqueados) return true;
+
+    const problema = problemaDeIdentidad(datos);
+    if (problema) { setError(tr(problema)); return false; }
+
+    setBusy(true); setError(""); setInfo("");
+    try {
+      const perfil = await updateMe({
+        dni: normalizarDni(datos.dni),
+        cuil: normalizarCuil(datos.cuil),
+        address: datos.address.trim(),
+      });
+      await refreshUser();
+
+      // Backend anterior, sin estos campos: se avisa y se sigue. Antes de que
+      // existiera el cotejo documental la verificación funcionaba sin ellos, así
+      // que trabar el trámite acá sería peor que decir lo que va a pasar.
+      if (perfil && perfil.dni == null) setInfo(tr("kyc.dataNotYet"));
+      return true;
+    } catch (err) {
+      const clave = claveDelError(err);
+      setError(clave ? tr(clave) : err.message || tr("kyc.errSaveData"));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
    * Sube las cuatro fotos y las manda al backend, que vuelve a revisarlas del
    * lado del servidor antes de aprobar (el chequeo del navegador es solo para
    * avisar antes).
+   *
+   * Cada foto va con la firma de SU casilla: el servidor comprueba que el archivo
+   * esté en la carpeta de esta cuenta y que su nombre empiece con el slot que le
+   * toca. Subirlas todas con la firma genérica hacía que el envío terminara en un
+   * 400 DOCUMENT_SLOT_MISMATCH y nadie pudiera verificarse.
    */
   const submitDocuments = async () => {
     setBusy(true); setError(""); setInfo("");
     try {
       const [dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl] = await Promise.all([
-        uploadImageToCloudinary(docs.dniFront),
-        uploadImageToCloudinary(docs.dniBack),
-        uploadImageToCloudinary(docs.licFront),
-        uploadImageToCloudinary(docs.licBack),
+        uploadIdentityDocument(docs.dniFront, { document: "dni", side: "front" }),
+        uploadIdentityDocument(docs.dniBack, { document: "dni", side: "back" }),
+        uploadIdentityDocument(docs.licFront, { document: "license", side: "front" }),
+        uploadIdentityDocument(docs.licBack, { document: "license", side: "back" }),
       ]);
       const submission = await submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl });
       const fresh = await loadStatus();
       await refreshUser();
 
-      // El backend puede rechazar la documentación al revisarla.
+      // El backend puede rechazar la documentación al revisarla. Los motivos
+      // vienen en códigos: se traducen, porque "REJECTED" a secas no dice qué
+      // corregir. (`notes` es el texto del backend anterior.)
       if (submission?.status === "REJECTED") {
-        setError(submission.notes || tr("kyc.rejectedNote"));
+        const porQue = (submission.reasonCodes ?? []).map(motivoDeRevision).map(textoDeMotivo);
+        setError(
+          porQue.length
+            ? `${tr("kyc.rejectedNote")} ${porQue.join(" ")}`
+            : submission.notes || tr("kyc.rejectedNote"),
+        );
         setBusy(false);
         return;
       }
@@ -241,7 +352,31 @@ export default function IdentityVerification({ onDone, onCancel }) {
       );
       setStep(2);
     } catch (err) {
-      setError(err.message || tr("kyc.errSend"));
+      const clave = claveDelError(err);
+      setError(clave ? tr(clave) : err.message || tr("kyc.errSend"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * Vuelve a correr la revisión de la solicitud pendiente.
+   *
+   * Hace falta porque la revisión corre dentro del pedido y puede quedar sin
+   * veredicto por algo pasajero (el proveedor tardó de más, se cayó la lectura).
+   * Sin este botón, la única salida era mandar las cuatro fotos otra vez. También
+   * sirve después de corregir el DNI o el CUIL: la revisión los vuelve a cotejar.
+   */
+  const reintentarRevision = async () => {
+    setBusy(true); setError(""); setInfo("");
+    try {
+      const fresh = await retryIdentityReview();
+      if (fresh) setStatus(fresh);
+      await refreshUser();
+      setInfo(fresh?.fullyVerified ? tr("kyc.approvedNote") : tr("kyc.retryPending"));
+    } catch (err) {
+      const clave = claveDelError(err);
+      setError(clave ? tr(clave) : err.message || tr("kyc.errRetry"));
     } finally {
       setBusy(false);
     }
@@ -317,6 +452,81 @@ export default function IdentityVerification({ onDone, onCancel }) {
           <>
             <h2 style={st.title}>{tr("kyc.identityTitle")}</h2>
             <p style={st.sub}>{tr("kyc.identitySub")}</p>
+
+            {/* Ya hay documentos esperando revisión.
+                Esto es lo que hace que corregir un dato sirva: la revisión coteja
+                los datos de la cuenta contra los documentos ya enviados, así que
+                si lo que falló fue el CUIL o el domicilio se arregla acá y se
+                vuelve a revisar. Sin este botón habría que sacar y subir otra vez
+                las cuatro fotos para cambiar un dígito. */}
+            {puedeReintentar && (
+              <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 12, padding: isMobile ? 13 : 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>
+                  {tr("kyc.alreadySent")}
+                </div>
+                {motivos.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    {motivos.map((motivo) => (
+                      <div key={motivo.code} style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                        · {textoDeMotivo(motivo)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button style={{ ...st.btnGhost, opacity: busy ? 0.6 : 1 }} disabled={busy}
+                  onClick={async () => {
+                    if (!(await guardarDatos())) return;
+                    await reintentarRevision();
+                    setStep(3);
+                  }}>
+                  {busy ? tr("verify.checking") : tr("kyc.saveAndRetry")}
+                </button>
+              </div>
+            )}
+
+            {/* Los datos que la revisión COTEJA contra los documentos.
+                Van antes de las fotos porque es el orden en que se piensan: primero
+                quién sos, después la prueba. Y sin ellos la revisión no puede
+                aprobar: el backend compara lo que se escribe acá con lo que lee del
+                DNI y de la licencia. Una vez verificada la cuenta quedan
+                bloqueados, así que se muestran de solo lectura. */}
+            <div style={{ background: "#f9fafb", border: "1px solid #f0f0f0", borderRadius: 12, padding: isMobile ? 14 : 18, marginBottom: 22 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 3 }}>
+                {tr("kyc.dataTitle")}
+              </div>
+              <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 14, lineHeight: 1.5 }}>
+                {datosBloqueados ? tr("kyc.dataLocked") : tr("kyc.dataSub")}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={st.label} htmlFor="iv-dni">{tr("kyc.dniNumber")}</label>
+                  <input id="iv-dni" style={st.input} inputMode="numeric" autoComplete="off"
+                    placeholder={tr("kyc.dniPlaceholder")} value={datos.dni} disabled={datosBloqueados}
+                    onChange={(e) => setDatos(d => ({ ...d, dni: e.target.value.replace(/\D/g, "").slice(0, 8) }))} />
+                </div>
+                <div>
+                  <label style={st.label} htmlFor="iv-cuil">{tr("kyc.cuil")}</label>
+                  <input id="iv-cuil" style={st.input} inputMode="numeric" autoComplete="off"
+                    placeholder={tr("kyc.cuilPlaceholder")} value={datos.cuil} disabled={datosBloqueados}
+                    onChange={(e) => setDatos(d => ({ ...d, cuil: e.target.value.replace(/[^\d-]/g, "").slice(0, 13) }))} />
+                  {/* El CUIL lleva el DNI adentro: en cuanto los dos están
+                      escritos se puede decir si no se corresponden, sin esperar
+                      al servidor. */}
+                  {sugerenciaCuil && (
+                    <div style={{ fontSize: 11.5, color: "#92400e", marginTop: 5, lineHeight: 1.5 }}>
+                      {tr("kyc.cuilHintDni", { dni: sugerenciaCuil })}
+                    </div>
+                  )}
+                </div>
+                <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
+                  <label style={st.label} htmlFor="iv-address">{tr("kyc.address")}</label>
+                  <input id="iv-address" style={st.input} autoComplete="street-address"
+                    placeholder={tr("kyc.addressPlaceholder")} value={datos.address} disabled={datosBloqueados}
+                    onChange={(e) => setDatos(d => ({ ...d, address: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
               <PhotoCard id="iv-dni-front" label={tr("kyc.dniFront")} hint={tr("kyc.dniFrontHint")}
                 kind="DNI_FRONT" value={docs.dniFront} review={reviews.dniFront} onChange={handlePhoto("dniFront")} />
@@ -347,11 +557,18 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 </span>
               </label>
             )}
+            {/* El botón NO se deshabilita por los datos, solo por las fotos: un
+                dígito verificador mal no se ve mirando la pantalla, así que al
+                apretar se explica qué está mal en vez de dejar un botón gris sin
+                motivo. Los datos se guardan acá, al pasar de paso, para que la
+                revisión del envío ya los tenga. */}
             <div style={st.actions}>
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>{tr("common.cancel")}</button>}
-              <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking && !faltaConfirmar ? "pointer" : "not-allowed" }}
-                disabled={!docsReady || hasInvalid || isChecking || faltaConfirmar}
-                onClick={() => { setError(""); setStep(1); }}>{tr("common.continue")}</button>
+              <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? "pointer" : "not-allowed" }}
+                disabled={!docsReady || hasInvalid || isChecking || busy || faltaConfirmar}
+                onClick={async () => { if (await guardarDatos()) setStep(1); }}>
+                {busy ? tr("common.saving") : tr("common.continue")}
+              </button>
             </div>
           </>
         )}
@@ -474,8 +691,33 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 </div>
               ))}
             </div>
+            {/* Qué le faltó a la última revisión. Sin esto la pantalla dice "en
+                revisión" y no hay forma de saber si hay que corregir un dato,
+                sacar mejor una foto o simplemente esperar. */}
+            {motivos.length > 0 && !status?.fullyVerified && (
+              <div style={{
+                textAlign: "left", maxWidth: 380, margin: "18px auto 0",
+                background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10,
+                padding: "12px 14px",
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>
+                  {tr("kyc.reviewNotes")}
+                </div>
+                {motivos.map((motivo) => (
+                  <div key={motivo.code} style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                    · {textoDeMotivo(motivo)}
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
               <button style={st.btnGhost} onClick={() => { setCode(""); setCodeSent(false); setStep(2); }}>{tr("kyc.verifyPhone")}</button>
+              {puedeReintentar && (
+                <button style={{ ...st.btnGhost, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={reintentarRevision}>
+                  {busy ? tr("verify.checking") : tr("kyc.retryReview")}
+                </button>
+              )}
               <button style={st.btnPrimary} onClick={finish}>{tr("common.continue")}</button>
             </div>
           </div>
