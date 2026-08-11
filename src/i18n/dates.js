@@ -5,11 +5,13 @@
 //  escritos a mano en castellano ("d 'de' MMMM yyyy"). Con la app en inglés las
 //  fechas seguían diciendo "12 de marzo de 2025".
 //
-//  Acá vive UNA sola tabla de locales y tres formatos, así ninguna pantalla
+//  Acá vive UNA sola tabla de locales y cinco formatos, así ninguna pantalla
 //  vuelve a escribir el suyo:
 //   · longDate  → 12 de marzo de 2025 / 12 March 2025 / 2025年3月12日
 //   · shortDate → 12 mar 2025
 //   · monthYear → marzo 2025
+//   · dayMonth  → 12 mar (sin el año: para algo de hace unos días)
+//   · timeOfDay → 14:35 / 2:35 PM (en inglés se escribe con AM/PM)
 // ============================================================================
 import { format } from "date-fns";
 import { es, enUS, ptBR, it, zhCN } from "date-fns/locale";
@@ -42,6 +44,24 @@ const SHORT_PATTERNS = {
   zh: "yyyy年M月d日",
 };
 
+// Día y mes, sin año: para algo que pasó hace poco, donde el año sobra.
+const DAY_MONTH_PATTERNS = {
+  es: "d MMM",
+  pt: "d MMM",
+  en: "d MMM",
+  it: "d MMM",
+  zh: "M月d日",
+};
+
+// La hora. En inglés se escribe con AM/PM; en el resto, de 0 a 23.
+const TIME_PATTERNS = {
+  es: "HH:mm",
+  pt: "HH:mm",
+  en: "h:mm a",
+  it: "HH:mm",
+  zh: "HH:mm",
+};
+
 /** El locale de date-fns que corresponde al idioma elegido. */
 export const localeFor = (lang) => LOCALES[lang] || es;
 
@@ -55,3 +75,5 @@ const safeFormat = (value, pattern, lang) => {
 export const longDate = (value, lang) => safeFormat(value, LONG_PATTERNS[lang] || LONG_PATTERNS.es, lang);
 export const shortDate = (value, lang) => safeFormat(value, SHORT_PATTERNS[lang] || SHORT_PATTERNS.es, lang);
 export const monthYear = (value, lang) => safeFormat(value, MONTH_YEAR_PATTERNS[lang] || MONTH_YEAR_PATTERNS.es, lang);
+export const dayMonth = (value, lang) => safeFormat(value, DAY_MONTH_PATTERNS[lang] || DAY_MONTH_PATTERNS.es, lang);
+export const timeOfDay = (value, lang) => safeFormat(value, TIME_PATTERNS[lang] || TIME_PATTERNS.es, lang);

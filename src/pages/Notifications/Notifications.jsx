@@ -12,6 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { buildNotifications, getReadIds, markRead, markAllRead } from "../../services/notifications";
 import { useI18n } from "../../i18n/core";
+import { dayMonth, timeOfDay } from "../../i18n/dates";
 import Spinner from "../../components/Spinner";
 
 // ── Íconos SVG por categoría (sin emojis) ──
@@ -54,30 +55,43 @@ const TABS = [
   { key: "sistema", label: "notif.catSystem" },
 ];
 
-// Devuelve la hora/fecha corta que se muestra al costado de cada notificación
-// (la hora si es de hoy, "Ayer", o la fecha si es más vieja).
-function timeLabel(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const sameDay = (a, b) => a.toDateString() === b.toDateString();
-  const yest = new Date(now); yest.setDate(now.getDate() - 1);
-  if (sameDay(d, now)) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-  if (sameDay(d, yest)) return "notif.yesterday";
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
+/** ¿Las dos fechas caen el mismo día? */
+const mismoDia = (a, b) => a.toDateString() === b.toDateString();
+
+/** La fecha de ayer. */
+function ayer() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
 }
-// Devuelve el título del grupo al que pertenece una notificación: Hoy / Ayer / Anteriores.
+
+/**
+ * La hora o fecha corta que va al costado de cada notificación: la hora si es de
+ * hoy, "Ayer", o el día y el mes si es más vieja.
+ *
+ * Recibe `tr` y `lang` en vez de resolverlos adentro porque no es un componente.
+ * Antes devolvía el texto "notif.yesterday" tal cual —la CLAVE, sin traducir— y
+ * eso es lo que se veía en pantalla; y las otras dos ramas formateaban con el
+ * locale "es-AR" escrito a mano, así que con la app en inglés o en chino la hora
+ * y el mes seguían saliendo en castellano.
+ */
+function timeLabel(ts, tr, lang) {
+  const d = new Date(ts);
+  if (mismoDia(d, new Date())) return timeOfDay(d, lang);
+  if (mismoDia(d, ayer())) return tr("notif.yesterday");
+  return dayMonth(d, lang);
+}
+
+/** La CLAVE del título del grupo: Hoy / Ayer / Anteriores. La traduce quien dibuja. */
 function groupLabel(ts) {
   const d = new Date(ts);
-  const now = new Date();
-  const sameDay = (a, b) => a.toDateString() === b.toDateString();
-  const yest = new Date(now); yest.setDate(now.getDate() - 1);
-  if (sameDay(d, now)) return "notif.today";
-  if (sameDay(d, yest)) return "notif.yesterday";
-  return "Anteriores";
+  if (mismoDia(d, new Date())) return "notif.today";
+  if (mismoDia(d, ayer())) return "notif.yesterday";
+  return "notif.older";
 }
 
 export default function Notifications() {
-  const { t: tr } = useI18n();
+  const { t: tr, lang } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -204,7 +218,7 @@ export default function Notifications() {
                   <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.bodyKey ? tr(n.bodyKey, n.vars) : n.body}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                  <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts)}</span>
+                  <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts, tr, lang)}</span>
                   {!read && (
                     <button onClick={e => markOne(e, n)} title={tr("notif.markOne")}
                       style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

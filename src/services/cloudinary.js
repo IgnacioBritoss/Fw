@@ -17,17 +17,21 @@
 //  Cloudinary para no hacerlo pasar por el backend, que tiene un límite chico de
 //  tamaño de pedido.
 //
-//  Si el backend todavía no tiene configuradas las credenciales de Cloudinary
-//  (responde 503), se usa el preset abierto como respaldo para no dejar la app
-//  sin subida de fotos. Es un modo degradado: conviene configurar
-//  CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET.
+//  POR QUÉ SE SACÓ EL RESPALDO CON EL PRESET ABIERTO
+//  Quedaba, para cuando el backend no tenía credenciales, un camino que subía con
+//  un "upload_preset" abierto y el nombre de la cuenta escritos acá mismo. Eso es
+//  justamente lo que se había venido a arreglar: los dos valores viajan dentro del
+//  JavaScript que se descarga cualquier visitante, así que cualquiera podía subir
+//  lo que quisiera a la cuenta de Cloudinary del proyecto —cualquier archivo,
+//  cualquier tamaño, sin sesión— y nosotros pagarlo y responder por él.
+//
+//  Si el backend no tiene Cloudinary configurado, ahora la subida FALLA con un
+//  mensaje que dice qué falta cargar. Es peor de usar y mejor así: el arreglo es
+//  poner CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET en el
+//  backend, no dejar una puerta abierta a nombre de la cuenta.
 // ============================================================================
 import { getCloudinarySignature, getIdentityUploadSignature } from "./api";
 import { tSync } from "../i18n/core";
-
-// Respaldo para cuando el backend no tiene Cloudinary configurado.
-const FALLBACK_CLOUD_NAME = "djvokvxt1";
-const FALLBACK_UPLOAD_PRESET = "freewheel";
 
 // La firma sirve para varias subidas seguidas (mismo folder y timestamp), así
 // que se reutiliza un rato en vez de pedir una por foto.
@@ -54,24 +58,24 @@ async function upload(file, { resourceType = "image", folder = "freewheel", file
   if (fileName) form.append("file", file, fileName);
   else form.append("file", file);
 
-  let cloudName = FALLBACK_CLOUD_NAME;
+  let signature;
   try {
-    // Camino normal: subida FIRMADA por el backend.
-    const signature = await fetchSignature(folder);
-    cloudName = signature.cloudName;
-    form.append("api_key", signature.apiKey);
-    form.append("timestamp", String(signature.timestamp));
-    form.append("signature", signature.signature);
-    form.append("folder", signature.folder);
-  } catch {
-    // El backend no tiene Cloudinary configurado (o no hay sesión): se sube con
-    // el preset abierto para no quedarse sin subida de archivos.
+    signature = await fetchSignature(folder);
+  } catch (err) {
+    // Sin firma no se sube. Un 503 es "el backend no tiene Cloudinary
+    // configurado", y eso se arregla cargando las variables en el servidor.
     cachedSignature = null;
-    form.append("upload_preset", FALLBACK_UPLOAD_PRESET);
+    if (err?.status === 503) throw new Error(tSync("net.uploadNotConfigured"));
+    throw err;
   }
 
+  form.append("api_key", signature.apiKey);
+  form.append("timestamp", String(signature.timestamp));
+  form.append("signature", signature.signature);
+  form.append("folder", signature.folder);
+
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+    `https://api.cloudinary.com/v1_1/${signature.cloudName}/${resourceType}/upload`,
     { method: "POST", body: form },
   );
   if (!res.ok) {

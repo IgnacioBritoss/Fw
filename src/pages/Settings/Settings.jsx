@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
 import { LANGUAGES, useI18n } from "../../i18n/core";
+import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
 import { applyDarkMode } from "../../services/theme";
 
@@ -213,8 +214,11 @@ export default function Settings() {
                       no se puede cambiar después (de ahí editable={false}). Antes
                       leía `birthdate`, un campo que la API nunca devuelve, y por
                       eso siempre aparecía vacía. */}
+                  {/* La fecha va en el idioma elegido: estaba con el formato
+                      "es-AR" escrito a mano, así que con la app en inglés o en
+                      chino el mes seguía saliendo en castellano. */}
                   <Field label={tr("auth.birthDate")} editable={false} fieldKey="dateOfBirth"
-                    value={user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("es-AR") : ""} />
+                    value={shortDate(user?.dateOfBirth, lang)} />
                 </div>
                 <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
                   {tr("settings.fromDni")}

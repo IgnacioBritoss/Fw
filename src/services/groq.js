@@ -9,17 +9,20 @@
 //
 //  DÓNDE CORRE ESTO
 //  Los pedidos van al BACKEND (/ai/*), que es el único que conoce la clave de la
-//  IA. Antes se llamaba a Groq directo desde el navegador con la clave en
-//  VITE_GROQ_API_KEY, y todo lo que empieza con VITE_ queda escrito dentro del
-//  JavaScript que se descarga cualquier visitante: la clave estaba a la vista.
+//  IA. Acá NUNCA hay una clave.
 //
-//  RESPALDO
-//  Si el backend contesta que la IA no está configurada (le falta GROQ_API_KEY en
-//  sus variables de entorno), y el front todavía tiene VITE_GROQ_API_KEY cargada,
-//  se llama a Groq directo desde el navegador. Es el mismo criterio que ya usa
-//  cloudinary.js: preferir que la función ande a que quede muerta esperando que
-//  alguien toque un panel. En cuanto la clave esté en el backend, este respaldo
-//  deja de usarse solo.
+//  POR QUÉ SE SACÓ EL RESPALDO QUE LLAMABA A GROQ DIRECTO
+//  Existía un camino que, si el backend contestaba que no tenía la clave, llamaba
+//  a Groq desde el navegador usando VITE_GROQ_API_KEY. El problema es que todo lo
+//  que empieza con VITE_ queda ESCRITO DENTRO del JavaScript que se descarga
+//  cualquier visitante: bastaba con abrir el archivo del navegador para copiarse
+//  la clave y gastar la cuota del proyecto, o dejarnos una factura. Y ni siquiera
+//  hacía falta que alguien la buscara a propósito.
+//
+//  Un respaldo que solo funciona regalando la clave no es un respaldo. Si al
+//  backend le falta GROQ_API_KEY, la revisión contesta "no se pudo revisar" —que
+//  es un estado que las pantallas ya manejan y explican— y la solución es cargar
+//  la clave en el backend, donde no la ve nadie.
 //
 //  ANTES DE MANDAR, SE ACHICA
 //  Las fotos de un celular pesan varios MB, y en base64 crecen un 33% más. El
@@ -28,10 +31,6 @@
 //  eso toda imagen pasa por shrinkImage() antes de salir.
 // ============================================================================
 import { aiChat as apiAiChat, aiDocument as apiAiDocument, aiTranscribe as apiAiTranscribe, aiVision as apiAiVision } from "./api";
-
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-const DIRECT_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 // Envía una conversación al modelo de texto y devuelve la respuesta como string.
 // - messages: lista de mensajes con roles (system/user/assistant).
@@ -77,84 +76,11 @@ function notConfigured(errorOrResult) {
   return errorOrResult?.status === 503 || errorOrResult?.code === "not_configured";
 }
 
-/**
- * Llamada directa a Groq desde el navegador. Solo se usa como respaldo (ver la
- * nota de arriba) y solo si VITE_GROQ_API_KEY sigue cargada en el front.
- * Devuelve el texto de la respuesta, o null si no se pudo.
- */
-async function askVisionDirect(imageDataUrl, prompt, maxTokens) {
-  if (!DIRECT_KEY) return null;
-  try {
-    const res = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${DIRECT_KEY}` },
-      body: JSON.stringify({
-        model: VISION_MODEL,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: imageDataUrl } },
-            { type: "text", text: prompt },
-          ],
-        }],
-        temperature: 0,
-        max_tokens: maxTokens,
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch {
-    return null;
-  }
-}
-
-// Texto de las preguntas. Están repetidos del backend a propósito: son los que
-// usa el respaldo del navegador, que tiene que preguntar exactamente lo mismo
-// para que el resultado sea comparable.
-// Tiene que ser exactamente el mismo que usa el backend (ai.service.ts): si las
-// dos preguntas fueran distintas, una foto podría pasar por un camino y no por el
-// otro sin que nada lo explique.
-//
-// La pregunta anterior era "¿esta imagen muestra un automóvil, camioneta, SUV,
-// moto u otro vehículo de motor? SI o NO", y con eso un auto de JUGUETE contesta
-// SI: es, literalmente, la imagen de un automóvil. También pasaban los dibujos,
-// las maquetas y las capturas de videojuegos. El control existía y no filtraba lo
-// único que hay que filtrar, que la foto sea del auto real que se publica.
-const VEHICLE_PROMPT =
-  "Mirá la imagen. Tiene que ser la foto de un vehículo REAL, de tamaño real, " +
-  "de los que una persona puede conducir y alquilar (auto, camioneta, SUV, " +
-  "pickup, van o moto).\n\n" +
-  "RECHAZALA si es cualquiera de estas cosas, aunque tenga forma de auto:\n" +
-  "- un juguete, un auto a escala, una maqueta o un auto a batería para chicos\n" +
-  "- un dibujo, una ilustración, un render 3D o una captura de un videojuego\n" +
-  "- la foto de un afiche, una pantalla, un catálogo o una publicidad\n" +
-  "- un vehículo que no se alquila así (tren, avión, barco, bicicleta, monopatín)\n" +
-  "- cualquier otra cosa (una persona, un animal, un paisaje, comida, una captura de pantalla)\n\n" +
-  "Pistas para darte cuenta de que NO es real: proporciones de juguete, " +
-  "plástico brillante, ruedas lisas sin dibujo, asiento de plástico, " +
-  "tamaño chico comparado con lo que está alrededor, fondo de estudio blanco " +
-  "tipo foto de producto, o que no tenga patente ni espejos ni picaportes reales.\n\n" +
-  "Respondé SOLO un JSON válido, sin texto alrededor, con esta forma exacta:\n" +
-  '{"es_vehiculo": true|false, "es_real": true|false, ' +
-  '"que_es": "en 2 o 3 palabras qué se ve", ' +
-  '"motivo": "una frase corta explicando la decisión"}';
-
-const DOCUMENT_EXPECTED = {
-  DNI_FRONT: "el FRENTE de un documento nacional de identidad (DNI), con la foto de la persona, su nombre y el número de documento",
-  DNI_BACK: "el DORSO de un documento nacional de identidad (DNI), con datos como domicilio, fecha de emisión o código de barras",
-  LICENSE_FRONT: "el FRENTE de una licencia de conducir, con la foto de la persona, su nombre y el número de licencia",
-  LICENSE_BACK: "el DORSO de una licencia de conducir, con las categorías habilitadas y/o la fecha de vencimiento",
-};
-
-const documentPrompt = (kind) =>
-  `Analizá la imagen. Se espera ${DOCUMENT_EXPECTED[kind]}.\n` +
-  "Respondé SOLO un JSON válido, sin texto alrededor, con esta forma exacta:\n" +
-  '{"corresponde": true|false, "legible": true|false, "tipo_detectado": "texto corto", ' +
-  '"numero": "solo dígitos o null", "nombre": "nombre completo o null", ' +
-  '"vencimiento": "YYYY-MM-DD o null", "motivo": "una frase explicando la decisión"}\n' +
-  "Si la imagen no es un documento de identidad (por ejemplo un paisaje, una mascota, " +
-  'una captura de pantalla o una persona sin documento), "corresponde" debe ser false.';
+// Las preguntas que se le hacen al modelo NO están acá: las escribe el backend
+// (src/ai/ai.service.ts), que es el único que habla con Groq. Antes estaban
+// duplicadas en este archivo para el respaldo que llamaba a Groq desde el
+// navegador; ese respaldo se sacó —exponía la clave— y con él se fueron las
+// copias, que además eran dos textos que podían separarse sin que nada lo avisara.
 
 /**
  * Verifica con IA si una foto muestra un vehículo REAL (no un juguete, ni un
@@ -186,30 +112,9 @@ export async function groqVision(imageDataUrl) {
     failure = err;
   }
 
-  // El backend no pudo. Si es porque no tiene la clave, se intenta desde acá.
-  if (notConfigured(failure)) {
-    const content = await askVisionDirect(small, VEHICLE_PROMPT, 220);
-    if (content) {
-      try {
-        const parsed = extractJSON(content);
-        const esVehiculo = parsed.es_vehiculo === true;
-        const esReal = parsed.es_real !== false;
-        return {
-          isVehicle: esVehiculo && esReal,
-          reason: parsed.motivo || null,
-          detected: parsed.que_es || null,
-        };
-      } catch {
-        // El modelo contestó SI/NO en vez del JSON pedido.
-        const texto = content.trim().toUpperCase();
-        if (texto.startsWith("SI")) return { isVehicle: true };
-        if (texto.startsWith("NO")) {
-          return { isVehicle: false, reasonKey: "ai.notAVehicle" };
-        }
-      }
-    }
-  }
-
+  // El backend no pudo. `isVehicle: null` es "no se pudo revisar", que la pantalla
+  // muestra como tal y no como una foto aprobada: una foto que nadie miró no
+  // puede pasar por buena.
   return {
     isVehicle: null,
     code: failure?.code || (notConfigured(failure) ? "not_configured" : "upstream_error"),
@@ -240,23 +145,8 @@ export async function checkDocument(imageDataUrl, kind) {
     failure = err;
   }
 
-  // El backend no pudo. Si es porque no tiene la clave, se intenta desde acá.
-  if (notConfigured(failure)) {
-    const content = await askVisionDirect(small, documentPrompt(kind), 400);
-    if (content) {
-      try {
-        const parsed = extractJSON(content);
-        const matches = parsed.corresponde === true && parsed.legible !== false;
-        return {
-          matches,
-          // Sin motivo del modelo se usa una clave, que la pantalla traduce.
-          reasonKey: parsed.motivo ? undefined : (matches ? "ai.docOk" : "ai.docBad"),
-          reason: parsed.motivo || "",
-        };
-      } catch { /* respuesta ilegible: cae al retorno de abajo */ }
-    }
-  }
-
+  // El backend no pudo: `matches: null` es "no se pudo revisar". La pantalla lo
+  // dice y pide que la persona lo confirme; no aprueba nada por su cuenta.
   return {
     matches: null,
     code: failure?.code || (failure?.status === 503 ? "not_configured" : "upstream_error"),
