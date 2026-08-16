@@ -106,8 +106,8 @@ export default {
 
   // ── Entrar y registrarse ─────────────────────────────────────────────────
   "auth.welcome": "Bienvenido",
-  "auth.welcomeBack": "Entrá y seguí donde lo dejaste.",
-  "auth.heroText": "Tus reservas, los mensajes con el dueño y los autos que publicaste: todo en el mismo lugar.",
+  "auth.welcomeBack": "Entrá y arrancá.",
+  "auth.heroText": "Tus reservas, tus mensajes y tus autos, en su lugar y listos para usar.",
   "auth.login": "Iniciá sesión",
   "auth.loginShort": "Entrar",
   "auth.noAccount": "¿No tenés cuenta?",
@@ -475,7 +475,7 @@ export default {
   "reg.phLastName": "García",
   "reg.phEmail": "martin@email.com",
   "reg.termsLink": "términos y condiciones",
-  "reg.heroText": "Verificás tu perfil desde casa: una foto del DNI, una de la licencia y listo. Sin ir a ninguna oficina y sin papeles.",
+  "reg.heroText": "Verificás desde casa, sin filas ni demora. Elegís el auto y manejás ahora.",
   "reg.termsBefore": "Acepto los",
   "reg.termsAfter": "y la política de privacidad de Freewheel",
   "reg.codeSentTo": "Te enviamos un código de 6 dígitos a",
@@ -489,7 +489,7 @@ export default {
   "phone.country": "País",
   "phone.incompleteIntl": "Falta completar el número. Escribilo sin el código de país, que ya está elegido al lado.",
   "phone.hintIntl": "Escribilo sin el código de país ni el 0 inicial.",
-  "reg.tagline": "Creá tu cuenta en minutos y manejá este finde.",
+  "reg.tagline": "Creá tu cuenta y salí a rodar.",
   "reg.verifyEyebrow": "VERIFICÁ TU EMAIL",
   "reg.changeEmail": "Cambiar email",
   "reg.confirmEmail": "Confirmá tu email",

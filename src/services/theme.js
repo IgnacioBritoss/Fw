@@ -45,13 +45,34 @@ function ensureStyle() {
       filter: invert(1) hue-rotate(180deg) contrast(.82) saturate(1.2);
     }
 
-    /* Todo lo que ya es una imagen se vuelve a invertir, exacto, para verse normal. */
+    /* Todo lo que ya es una imagen se deshace el filtro de arriba ENTERO, para
+       verse igual que en modo claro.
+
+       Antes acá decía solo "invert(1) hue-rotate(180deg)", y eso deshace la
+       inversión pero NO el contrast(.82) ni el saturate(1.2) de la regla de
+       arriba. O sea que cada foto de la aplicación quedaba con el contraste
+       bajado y los colores forzados: se veía lavada. En una foto clara casi no
+       se nota; en la propaganda, que es una foto oscura, se notaba muchísimo
+       —se aclaraba entera y dejaba de leerse—.
+
+       Para deshacer una cadena de filtros hay que aplicar la inversa de cada uno
+       EN EL ORDEN CONTRARIO, porque el filtro del elemento se aplica primero y
+       el del <html> después, envolviéndolo:
+
+         html   →  invert(1)  hue-rotate(180)  contrast(.82)  saturate(1.2)
+         imagen →  saturate(1/1.2)  contrast(1/.82)  hue-rotate(180)  invert(1)
+
+       Así cada operación queda pegada a su inversa y la cadena entera se anula.
+       1/1.2 = .8333 y 1/.82 = 1.2195. El hue-rotate es su propia inversa a 180
+       grados, y el invert también. */
     html.fw-dark img,
     html.fw-dark video,
     html.fw-dark canvas,
     html.fw-dark [data-no-invert],
     html.fw-dark .leaflet-container,
-    html.fw-dark .leaflet-tile { filter: invert(1) hue-rotate(180deg); }
+    html.fw-dark .leaflet-tile {
+      filter: saturate(.8333) contrast(1.2195) hue-rotate(180deg) invert(1);
+    }
 
     /* Las sombras invertidas se ven como un halo blanco alrededor de cada
        tarjeta. Se cambian por un contorno, que cumple la misma función de

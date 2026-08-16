@@ -30,14 +30,22 @@ const FONDO = "linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)";
 const RESPLANDOR = "radial-gradient(ellipse at 30% 70%,rgba(37,99,235,.18) 0%,transparent 60%)";
 
 /**
- * El velo. Va de casi nada arriba a bastante abajo, siguiendo el lugar del
- * texto. Se le suma una capa pareja tenue para que un punto claro en el medio
- * de la foto tampoco se coma una letra.
+ * El velo. Oscurece del lado donde está el texto y deja la foto casi limpia del
+ * otro, así se ve el auto y la letra se lee igual.
+ *
+ * Por eso hay dos y no uno: el velo tiene que seguir al texto. Con el texto
+ * arriba y el velo oscureciendo abajo, la letra queda sobre la parte clara de la
+ * foto y se pierde, que es exactamente el problema que resuelve.
  */
-const VELO =
-  "linear-gradient(to bottom, rgba(8,12,24,.28) 0%, rgba(8,12,24,.42) 45%, rgba(8,12,24,.86) 100%)";
+const VELO = {
+  abajo: "linear-gradient(to bottom, rgba(8,12,24,.28) 0%, rgba(8,12,24,.42) 45%, rgba(8,12,24,.86) 100%)",
+  arriba: "linear-gradient(to top, rgba(8,12,24,.28) 0%, rgba(8,12,24,.42) 45%, rgba(8,12,24,.86) 100%)",
+};
 
-export default function AuthAside({ foto, titulo, texto, ancho = "45%", lado = "izquierda", arriba, children }) {
+export default function AuthAside({
+  foto, titulo, texto, ancho = "45%", lado = "izquierda",
+  posicion = "abajo", arriba, children,
+}) {
   const [sinFoto, setSinFoto] = useState(false);
   const hayFoto = foto && !sinFoto;
 
@@ -67,7 +75,10 @@ export default function AuthAside({ foto, titulo, texto, ancho = "45%", lado = "
       // que se ve mientras la foto todavía está bajando, así que en vez de un
       // rectángulo blanco que parpadea se ve el panel de siempre.
       background: FONDO,
-      display: "flex", flexDirection: "column", justifyContent: "space-between",
+      display: "flex", flexDirection: "column",
+      // Con el texto abajo, el logo y el texto se reparten a los extremos. Con el
+      // texto arriba van los dos juntos arriba y el resto de la foto queda libre.
+      justifyContent: posicion === "arriba" ? "flex-start" : "space-between",
       padding: "48px 52px", overflow: "hidden",
     }}>
       {hayFoto ? (
@@ -88,17 +99,17 @@ export default function AuthAside({ foto, titulo, texto, ancho = "45%", lado = "
               objectPosition: "center",
             }}
           />
-          <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: VELO }} />
+          <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: VELO[posicion] }} />
         </>
       ) : (
         <div aria-hidden="true" style={{ position: "absolute", inset: 0, backgroundImage: RESPLANDOR }} />
       )}
 
-      {/* Arriba: el logo (y lo que se le quiera poner al lado). */}
-      <div style={{ position: "relative" }}>{arriba}</div>
+      {/* El logo (y lo que se le quiera poner al lado). */}
+      {arriba && <div style={{ position: "relative" }}>{arriba}</div>}
 
-      {/* Abajo: el título y la bajada. */}
-      <div style={{ position: "relative" }}>
+      {/* El título y la bajada, arriba o abajo según `posicion`. */}
+      <div style={{ position: "relative", marginTop: posicion === "arriba" && arriba ? 28 : 0 }}>
         {titulo && (
           <h1 style={{
             fontSize: 38, fontWeight: 800, color: "#fff",

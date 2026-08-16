@@ -319,6 +319,10 @@ export default function Register() {
             texto={t("reg.heroText")}
             ancho={PANEL}
             lado="derecha"
+            // El texto va ARRIBA. En esta foto el auto está en la mitad de
+            // abajo, así que el texto apoyado ahí le quedaba encima; arriba
+            // está la fachada del edificio, que es fondo y no estorba.
+            posicion="arriba"
           />
         )}
       </div>

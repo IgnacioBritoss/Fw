@@ -107,12 +107,39 @@ export default function LandingBanner() {
             // Sin redondeo: una propaganda con las puntas redondeadas se lee
             // como una tarjeta más de la pantalla.
             borderRadius: 0,
-            // Se aclara apenas al pasarle por encima. La imagen no dice "tocá
-            // acá" en ninguna parte, así que hace falta alguna señal de que es
-            // un enlace; el cursor solo no alcanza, y menos en una pantalla
-            // táctil donde no hay cursor.
-            filter: encima ? "brightness(1.06)" : "none",
-            transition: "filter .2s ease",
+          }}
+        />
+
+        {/*
+          EL ACLARADO AL PASAR POR ENCIMA.
+
+          Es una capa aparte y no un `filter: brightness()` sobre la imagen, y
+          eso NO es un capricho: el modo oscuro invierte la página entera con un
+          filtro en el <html> y les devuelve el color a las imágenes con otro
+          filtro encima de cada <img>. Un `filter` escrito en el atributo style
+          le gana a cualquier regla de la hoja de estilos, así que la propaganda
+          se quedaba sin esa devolución y en modo oscuro se veía INVERTIDA: la
+          foto oscura salía clara y no se entendía nada.
+
+          Con la aclaración acá afuera, la imagen queda sin `filter` propio, la
+          regla del modo oscuro le llega y la propaganda se ve igual en claro y
+          en oscuro.
+
+          `data-no-invert` es para esta misma capa: sin eso, en modo oscuro el
+          velo blanco se invertiría a negro y al pasar por encima la propaganda
+          se oscurecería en vez de aclararse.
+
+          Hace falta alguna señal de que es un enlace: la imagen no dice "tocá
+          acá" en ninguna parte, y el cursor solo no alcanza —menos todavía en
+          una pantalla táctil, donde no hay cursor—.
+        */}
+        <span
+          aria-hidden="true"
+          data-no-invert
+          style={{
+            position: "absolute", inset: 0, background: "#fff",
+            opacity: encima ? 0.07 : 0,
+            transition: "opacity .2s ease", pointerEvents: "none",
           }}
         />
 
@@ -129,8 +156,14 @@ export default function LandingBanner() {
           la frase tiene que leerse como parte del aviso, no como un texto de la
           app apoyado encima. Georgia está en Windows, en Mac, en Android y en
           iOS, así que se ve igual en todos lados sin descargar nada.
+
+          `data-no-invert` va porque el modo oscuro invierte la página entera y
+          después les devuelve el color a las imágenes. Esta frase y la flecha de
+          más abajo NO son imágenes: sin la marca, la letra crema se daba vuelta
+          y salía oscura sobre una foto que sigue clara. La propaganda es una
+          pieza de diseño cerrada y tiene que verse igual en los dos modos.
         */}
-        <span style={{
+        <span data-no-invert style={{
           position: "absolute", left: "5%", top: "50%",
           transform: "translateY(-50%)",
           width: "21%",
@@ -192,7 +225,7 @@ export default function LandingBanner() {
           toca y la flecha sobra.
         */}
         {!isMobile && (
-          <span aria-hidden="true" style={{
+          <span aria-hidden="true" data-no-invert style={{
             position: "absolute",
             // 7.2% es el centro de la L; los 19px son la mitad de la flecha.
             right: "calc(7.2% - 19px)", bottom: 6,
