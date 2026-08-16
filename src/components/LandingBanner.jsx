@@ -1,35 +1,39 @@
 // ============================================================================
 //  LandingBanner — La propaganda del final del inicio, que lleva a la landing
 // ----------------------------------------------------------------------------
-//  QUÉ REEMPLAZA, y por qué no alcanzaba
-//  Antes esto era un carrusel: una barra blanca, angosta, con tres frases que se
-//  iban turnando, un rótulo, un subtítulo y una barrita celeste al costado. El
-//  problema no era el detalle sino la categoría: se veía como una fila más de la
-//  pantalla —una notificación, un aviso del sistema— y ninguna fila invita a
-//  salir de la app. Encima había mucho texto para leer antes de entender qué era.
+//  ES UNA IMAGEN, no un bloque dibujado con CSS.
 //
-//  Una propaganda funciona al revés: una sola frase, un botón, y algo que se
-//  mueva para que el ojo vaya ahí.
+//  La versión anterior armaba la propaganda con código: un fondo azul con
+//  degradado, unas franjas moviéndose, una frase y un botón. Se veía prolija,
+//  pero se veía a "componente de aplicación": el mismo azul y la misma tipografía
+//  que el resto de la pantalla. Una propaganda de verdad tiene otra cosa —una
+//  foto, una tipografía propia, una composición— y eso no se dibuja con CSS: es
+//  una pieza de diseño y entra como archivo.
 //
-//  CÓMO SE PLANTÓ
-//   · A TODO EL ANCHO. Sale de los márgenes del contenido con márgenes negativos
-//     —el mismo recurso que el bloque azul de arriba— y va sin redondeo. Ocupar
-//     el ancho completo es lo que la saca de la grilla de tarjetas y la convierte
-//     en otra cosa.
-//   · FONDO OSCURO. Toda la pantalla es blanca con tarjetas claras; el único otro
-//     bloque azul es el de arriba de todo. Repetirlo abajo cierra la página.
-//   · EN MOVIMIENTO CONTINUO. Franjas diagonales que cruzan el fondo sin parar,
-//     un resplandor que va y viene, y el auto flotando apenas. Los keyframes
-//     están en theme.css (fw-ad-*), que es donde tienen que estar: no se pueden
-//     declarar en un estilo en línea.
-//   · SIN BANDERA. La versión anterior tenía una franja celeste-blanco-celeste
-//     al costado. Con el fondo oscuro y el movimiento no hace falta explicar
-//     nada más; un tercer elemento decorativo sería ruido.
+//  DÓNDE VA EL ARCHIVO
+//  En `public/propaganda.jpg`. Todo lo que está en `public/` se copia tal cual al
+//  sitio publicado, así que desde acá se lo pide como `/propaganda.jpg`.
 //
-//  Es un <a> de verdad y no un div con onClick: se puede abrir en otra pestaña
-//  con el botón del medio, se copia el link con el botón derecho, y un lector de
-//  pantalla lo anuncia como lo que es.
+//  QUÉ PASA SI EL ARCHIVO NO ESTÁ
+//  No se ve un recuadro roto con el ícono de imagen partida. Si la imagen no
+//  carga, `onError` prende el respaldo y se dibuja la versión de antes —el bloque
+//  azul con la frase y el botón—, que funciona sola. Importa porque el archivo
+//  vive fuera del código: alguien puede clonar el repositorio, o borrar el
+//  archivo sin querer, y la home no se puede romper por eso.
+//
+//  A TODO EL ANCHO
+//  Sale de los márgenes del contenido con márgenes negativos, el mismo recurso
+//  que el bloque azul de arriba, y la imagen ocupa el 100% de ese ancho. El alto
+//  lo pone la imagen con su propia proporción (`height: auto`): así no se recorta
+//  ni se deforma en ninguna pantalla, que en una pieza de diseño donde el texto
+//  es parte del dibujo es lo único aceptable.
+//
+//  Es un <a> de verdad y no un div con onClick: se abre en otra pestaña con el
+//  botón del medio, se copia el link con el derecho, y un lector de pantalla lo
+//  anuncia como enlace. Por eso también lleva `alt` con el texto de la imagen:
+//  quien no la ve tiene que recibir lo mismo que dice el dibujo.
 // ============================================================================
+import { useState } from "react";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useI18n } from "../i18n/core";
 import { LogoMark } from "./Logo";
@@ -45,10 +49,69 @@ import { LogoMark } from "./Logo";
 const LANDING_URL =
   import.meta.env.VITE_LANDING_URL || "https://landing-page-free-wheel.vercel.app/#top";
 
+const IMAGEN = "/propaganda.jpg";
+
 export default function LandingBanner() {
   const { t: tr } = useI18n();
   const { isMobile } = useIsMobile();
+  const [sinImagen, setSinImagen] = useState(false);
+  const [encima, setEncima] = useState(false);
 
+  // Los márgenes que la sacan del contenido y la llevan de borde a borde.
+  const aTodoElAncho = {
+    display: "block",
+    marginLeft: isMobile ? -16 : -32,
+    marginRight: isMobile ? -16 : -32,
+    marginTop: isMobile ? 28 : 36,
+    textDecoration: "none",
+  };
+
+  if (!sinImagen) {
+    return (
+      /*
+        El <a> es `position: relative` y la imagen va adentro a propósito: lo que
+        se le quiera poner ENCIMA a la propaganda —un texto, un botón— entra como
+        un hijo posicionado de este mismo enlace, y queda dentro del área que ya
+        es clickeable. Si se agregara al lado, habría que volver a resolver el
+        clic y la superposición.
+      */
+      <a
+        href={LANDING_URL}
+        target="_blank"
+        rel="noreferrer"
+        onMouseEnter={() => setEncima(true)}
+        onMouseLeave={() => setEncima(false)}
+        style={{ ...aTodoElAncho, position: "relative", lineHeight: 0 }}
+      >
+        <img
+          src={IMAGEN}
+          alt={tr("home.landingAria")}
+          onError={() => setSinImagen(true)}
+          style={{
+            display: "block", width: "100%", height: "auto",
+            // Sin redondeo: una propaganda con las puntas redondeadas se lee
+            // como una tarjeta más de la pantalla.
+            borderRadius: 0,
+            // Se aclara apenas al pasarle por encima. La imagen no dice "tocá
+            // acá" en ninguna parte, así que hace falta alguna señal de que es
+            // un enlace; el cursor solo no alcanza, y menos en una pantalla
+            // táctil donde no hay cursor.
+            filter: encima ? "brightness(1.06)" : "none",
+            transition: "filter .2s ease",
+          }}
+        />
+      </a>
+    );
+  }
+
+  /*
+    RESPALDO — la propaganda dibujada, para cuando la imagen no está.
+
+    Es la versión anterior, con el fondo en movimiento (los keyframes viven en
+    theme.css, fw-ad-*). No es un cartel de error: alguien que entre sin el
+    archivo tiene que ver una propaganda que funciona, no un aviso de que falta
+    algo.
+  */
   return (
     <a
       href={LANDING_URL}
@@ -56,41 +119,23 @@ export default function LandingBanner() {
       rel="noreferrer"
       aria-label={tr("home.landingAria")}
       style={{
-        display: "block", position: "relative", overflow: "hidden",
-        textDecoration: "none", color: "#fff",
+        ...aTodoElAncho,
+        position: "relative", overflow: "hidden", color: "#fff",
         background: "linear-gradient(105deg, #081527 0%, #0b55c0 58%, #0f6ce6 100%)",
-        // A todo el ancho: los mismos márgenes negativos que el bloque de arriba.
-        marginLeft: isMobile ? -16 : -32,
-        marginRight: isMobile ? -16 : -32,
-        marginTop: isMobile ? 28 : 36,
-        // Más aire a la derecha en escritorio: ahí se estaciona el botón del
-        // asistente, y sin reservarle el lugar la pelotita azul le queda pegada
-        // al auto de la marca.
         padding: isMobile ? "30px 20px" : "44px 84px 44px 44px",
-        minHeight: isMobile ? 0 : 128,
       }}
     >
-      {/* Las franjas del asfalto, cruzando sin parar. */}
-      <span
-        className="fw-ad-rayas"
-        aria-hidden="true"
-        style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          backgroundImage:
-            "repeating-linear-gradient(115deg, rgba(255,255,255,.075) 0 2px, rgba(255,255,255,0) 2px 70px)",
-          backgroundSize: "280px 100%",
-        }}
-      />
-      {/* El resplandor que va y viene. */}
-      <span
-        className="fw-ad-luz"
-        aria-hidden="true"
-        style={{
-          position: "absolute", top: "-70%", right: "-10%",
-          width: "70%", height: "240%", pointerEvents: "none",
-          background: "radial-gradient(circle, rgba(96,165,250,.55) 0%, rgba(96,165,250,0) 68%)",
-        }}
-      />
+      <span className="fw-ad-rayas" aria-hidden="true" style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage:
+          "repeating-linear-gradient(115deg, rgba(255,255,255,.075) 0 2px, rgba(255,255,255,0) 2px 70px)",
+        backgroundSize: "280px 100%",
+      }} />
+      <span className="fw-ad-luz" aria-hidden="true" style={{
+        position: "absolute", top: "-70%", right: "-10%",
+        width: "70%", height: "240%", pointerEvents: "none",
+        background: "radial-gradient(circle, rgba(96,165,250,.55) 0%, rgba(96,165,250,0) 68%)",
+      }} />
 
       <div style={{
         position: "relative", display: "flex", alignItems: "center",
@@ -98,27 +143,20 @@ export default function LandingBanner() {
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: isMobile ? 21 : 30, fontWeight: 800, letterSpacing: "-.6px",
-            lineHeight: 1.15,
+            fontSize: isMobile ? 21 : 30, fontWeight: 800,
+            letterSpacing: "-.6px", lineHeight: 1.15,
           }}>
             {tr("home.adTitle")}
           </div>
-          {/* El botón NO es un botón: es la pinta de uno dentro del enlace. Un
-              <button> adentro de un <a> es HTML inválido y además cualquiera de
-              los dos se comería el clic del otro. */}
           <span style={{
             display: "inline-block", marginTop: isMobile ? 14 : 18,
             background: "#fff", color: "#0b55c0",
             fontSize: isMobile ? 13.5 : 14.5, fontWeight: 800,
-            padding: isMobile ? "10px 20px" : "12px 26px",
-            borderRadius: 4,
+            padding: isMobile ? "10px 20px" : "12px 26px", borderRadius: 4,
           }}>
             {tr("home.adCta")}
           </span>
         </div>
-
-        {/* El auto de la marca, grande y flotando. En el teléfono no entra al
-            lado del texto sin achicar la frase, así que no se dibuja. */}
         {!isMobile && (
           <div className="fw-ad-auto" aria-hidden="true" style={{ flexShrink: 0, opacity: .9 }}>
             <LogoMark size={62} accent="rgba(255,255,255,.9)" />
