@@ -382,3 +382,53 @@ html.fw-dark .fw-hero-search [role="option"] {
 @keyframes fw-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ============================================================================
+   La propaganda de la landing (components/LandingBanner.jsx)
+   ----------------------------------------------------------------------------
+   Va en CSS por lo mismo que el spinner: los keyframes no se pueden declarar en
+   un estilo en línea.
+
+   Son dos movimientos superpuestos y los dos son CONTINUOS, sin arranque ni
+   final: una propaganda que se mueve tres segundos y se queda quieta se ve como
+   si se hubiera colgado.
+
+   · fw-ad-rayas: unas franjas diagonales claras que cruzan el fondo de derecha a
+     izquierda, como el asfalto pasando por la ventanilla. Se anima
+     `background-position` y no `left`: la posición del fondo la resuelve el
+     compositor sin volver a calcular el diseño de la página, así que no cuesta
+     nada aunque no pare nunca.
+   · fw-ad-luz: un resplandor grande que va y viene despacio. Le da profundidad
+     al fondo y hace que las franjas no se lean como un patrón repetido.
+
+   El auto flota apenas (fw-ad-auto), lo justo para que se note que está vivo.
+
+   MENOS MOVIMIENTO: con la preferencia de accesibilidad activada las tres se
+   apagan. No es un adorno opcional del que se pueda prescindir a medias: para
+   alguien con sensibilidad al movimiento, algo que se mueve sin parar en la
+   pantalla es lo que hace que esa pantalla sea inusable.
+   ========================================================================== */
+@keyframes fw-ad-rayas {
+  from { background-position: 0 0; }
+  to   { background-position: -280px 0; }
+}
+
+@keyframes fw-ad-luz {
+  0%, 100% { transform: translate3d(-8%, 0, 0) scale(1); opacity: .55; }
+  50%      { transform: translate3d(12%, 0, 0) scale(1.15); opacity: .8; }
+}
+
+@keyframes fw-ad-auto {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -5px, 0); }
+}
+
+.fw-ad-rayas { animation: fw-ad-rayas 7s linear infinite; }
+.fw-ad-luz   { animation: fw-ad-luz 11s ease-in-out infinite; }
+.fw-ad-auto  { animation: fw-ad-auto 4.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-ad-rayas,
+  .fw-ad-luz,
+  .fw-ad-auto { animation: none; }
+}

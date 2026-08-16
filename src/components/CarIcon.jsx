@@ -24,11 +24,19 @@
 //  no vale la pena romperlas por un dibujo que ya no tiene trazo.
 // ============================================================================
 
-// El techo. La segunda figura del mismo trazado es el parabrisas: con "evenodd",
-// lo que queda encerrado dos veces se vacía.
+/*
+  El techo. La segunda figura del mismo trazado es el parabrisas: con "evenodd",
+  lo que queda encerrado dos veces se vacía.
+
+  La base del techo se apoya casi de punta a punta de la carrocería (de 4.9 a
+  19.1 sobre un cuerpo de 3.1 a 20.9). La primera versión tenía un techo mucho
+  más angosto y el auto parecía tener una cucha encima en vez de una cabina: en
+  un auto visto de frente, el habitáculo ocupa casi todo el ancho y lo único que
+  sobresale son los guardabarros.
+*/
 const TECHO =
-  "M6.4 10.9 L8.9 4.9 Q9.4 3.4 10.9 3.4 H13.1 Q14.6 3.4 15.1 4.9 L17.6 10.9 Z " +
-  "M8.7 9.7 L10.4 5.6 Q10.6 5.2 11.1 5.2 H12.9 Q13.4 5.2 13.6 5.6 L15.3 9.7 Z";
+  "M4.9 10.9 L7.9 4.0 Q8.5 2.6 10.0 2.6 H14.0 Q15.5 2.6 16.1 4.0 L19.1 10.9 Z " +
+  "M7.4 9.6 L9.6 4.6 Q9.8 4.2 10.3 4.2 H13.7 Q14.2 4.2 14.4 4.6 L16.6 9.6 Z";
 
 // La carrocería, con los dos faros calados.
 const CARROCERIA =

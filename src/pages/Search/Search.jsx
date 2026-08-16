@@ -303,7 +303,21 @@ export default function Search() {
       : null,
     card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
     ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
-    tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
+    /*
+      LA FICHA TÉCNICA — la misma que la tarjeta del inicio.
+
+      Acá caja, combustible y asientos eran tres píldoras sueltas de 20px de
+      redondeo, cada una con su propio borde. La tarjeta del inicio ya resolvió
+      lo mismo de otra manera: una sola barra con las celdas separadas por una
+      línea, que se lee como una ficha y no como tres etiquetas decorativas. Es
+      el mismo dato en las dos pantallas, así que no hay motivo para que se vea
+      distinto en cada una.
+
+      La primera celda no lleva línea a la izquierda: quedaría doble contra el
+      borde de la barra.
+    */
+    fichaFila: { display: "flex", border: "1px solid #ececec", borderRadius: 4, marginTop: 10, overflow: "hidden" },
+    fichaCelda: { flex: 1, fontSize: 11.5, color: "#4b5563", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid #ececec" },
     // La categoría del auto. Antes esto se llamaba "verif" y era verde, así que
     // "Sedan" parecía un sello de verificación.
     categoria: { fontSize: 11, fontWeight: 700, color: "#374151", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 9px", letterSpacing: ".02em" },
@@ -329,12 +343,31 @@ export default function Search() {
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
           <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
-          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-            {car.category && <span style={st.categoria}>{categoryLabel(tr, car.category)}</span>}
-            {car.transmissionCode && <span style={st.tag}>{transmissionLabel(tr, car.transmissionCode)}</span>}
-            {car.fuelCode && <span style={st.tag}>{fuelLabel(tr, car.fuelCode)}</span>}
-            {car.seats && <span style={st.tag}>{tr("common.seats", { count: car.seats })}</span>}
-          </div>
+          {car.category && (
+            <div style={{ marginTop: 10 }}>
+              <span style={st.categoria}>{categoryLabel(tr, car.category)}</span>
+            </div>
+          )}
+          {/* Ficha técnica: una barra con celdas, igual que en el inicio. Se arma
+              con los datos que el auto tenga, y si no tiene ninguno no se dibuja
+              una barra vacía. */}
+          {(() => {
+            const celdas = [
+              car.transmissionCode && transmissionLabel(tr, car.transmissionCode),
+              car.fuelCode && fuelLabel(tr, car.fuelCode),
+              car.seats && tr("common.seats", { count: car.seats }),
+            ].filter(Boolean);
+            if (celdas.length === 0) return null;
+            return (
+              <div style={st.fichaFila}>
+                {celdas.map((texto, i) => (
+                  <span key={texto} style={{ ...st.fichaCelda, ...(i === 0 ? { borderLeft: "none" } : {}) }}>
+                    {texto}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
           <div style={{
             marginTop: "auto", paddingTop: 12, display: "flex", gap: 10,
             ...(isMobile
