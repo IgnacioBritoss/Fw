@@ -151,7 +151,7 @@ export default function LandingBanner() {
 
           Dice "esto se toca" sin una palabra, así que no hay que traducirlo ni
           hay que meterle otro texto encima al aviso. Los keyframes están en
-          theme.css (fw-ad-pulsa y fw-ad-onda) y se apagan enteros con la
+          theme.css (fw-ad-pulsa y fw-ad-chispas) y se apagan enteros con la
           preferencia de "menos movimiento".
         */}
         <span aria-hidden="true" style={{
@@ -159,13 +159,21 @@ export default function LandingBanner() {
           width: "5.2cqw", height: "5.2cqw",
           display: "block", pointerEvents: "none",
         }}>
-          {/* La onda sale desde la PUNTA de la flecha, no desde el centro del
-              recuadro: es donde caería el clic de verdad. */}
-          <span className="fw-ad-onda" style={{
-            position: "absolute", left: "-52%", top: "-52%",
-            width: "204%", height: "204%", borderRadius: "50%",
-            border: "0.35cqw solid rgba(255,255,255,.9)",
-          }} />
+          {/* Las tres rayitas salen desde la PUNTA de la flecha, no desde el
+              centro del recuadro: es donde caería el clic de verdad. De ahí el
+              `transform-origin` en 23% 13%, que es donde está la punta dentro
+              del cuadro de 24×24. */}
+          <svg className="fw-ad-chispas" viewBox="0 0 24 24" aria-hidden="true"
+            style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%",
+              overflow: "visible", transformOrigin: "23% 13%",
+            }}>
+            <g stroke="#fff" strokeWidth="2" strokeLinecap="round">
+              <path d="M3.9 1.7 L2.1 -0.1" />
+              <path d="M2.7 4.0 L0.3 3.6" />
+              <path d="M6.4 0.9 L6.9 -1.5" />
+            </g>
+          </svg>
           <svg className="fw-ad-pulsa" viewBox="0 0 24 24"
             style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}>
             <path

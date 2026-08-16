@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
+import ReportIssueCard from "../../components/ReportIssueCard";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
@@ -27,6 +28,7 @@ const I = {
   card: <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></>,
   globe: <><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z" /></>,
   access: <><circle cx="12" cy="4" r="2" /><path d="M4 8h16M12 8v6M8 22l4-8 4 8" /></>,
+  bug: <><rect x="8" y="6" width="8" height="14" rx="4" /><path d="M8 11H4M8 16H5M16 11h4M16 16h3M10 6 8.5 3.5M14 6l1.5-2.5" /></>,
   help: <><circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" /></>,
   gear: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.14.63.65 1.1 1.29 1.29H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></>,
 };
@@ -43,6 +45,7 @@ const MENU = [
   { key: "seguridad", label: "settings.security", icon: I.lock },
   { key: "pagos", label: "settings.payments", icon: I.card },
   { key: "idioma", label: "settings.language", icon: I.globe },
+  { key: "reportar", label: "settings.report", icon: I.bug },
 ];
 
 // Clave de localStorage y función para leer las preferencias guardadas.
@@ -147,6 +150,22 @@ export default function Settings() {
     fieldLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
     fieldVal: { fontSize: 15, fontWeight: 600, color: "#111827" },
     edit: { fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 },
+    /*
+      LA LÍNEA VERTICAL antes del botón de acción.
+
+      El botón está pegado al borde derecho del recuadro y el dato ocupa todo lo
+      demás: sin nada en el medio, "Editar" se lee como si fuera parte del valor
+      —"1132895416 Editar"— y no como otra cosa que se puede tocar. Una línea de
+      1px lo separa sin agregar un borde, un fondo ni un recuadro más.
+
+      El `alignSelf: stretch` con márgenes negativos la hace llegar de arriba
+      abajo del recuadro, no solo el alto del texto del botón: así se lee como la
+      división de una celda y no como un guioncito suelto.
+    */
+    divisor: {
+      width: 1, alignSelf: "stretch", background: "#ececec",
+      marginTop: -14, marginBottom: -14, flexShrink: 0,
+    },
     input: { fontSize: 15, fontWeight: 600, color: "#111827", border: "1.5px solid #0f6ce6", borderRadius: 8, padding: "6px 10px", outline: "none", width: "100%", boxSizing: "border-box" },
     rowSwitch: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 0", borderBottom: "1px solid #f3f4f6" },
   };
@@ -167,11 +186,17 @@ export default function Settings() {
             : <div style={t.fieldVal}>{value || "—"}</div>}
         </div>
         {editable && (editing
-          ? <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...t.edit, color: "#9ca3af" }} onClick={() => { setVal(value || ""); setEditing(false); }}>{tr("common.cancel")}</button>
-              <button style={t.edit} onClick={commit} disabled={saving}>{saving ? "..." : tr("common.save")}</button>
-            </div>
-          : <button style={t.edit} onClick={() => setEditing(true)}>{tr("common.edit")}</button>)}
+          ? <>
+              <div style={t.divisor} />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={{ ...t.edit, color: "#9ca3af" }} onClick={() => { setVal(value || ""); setEditing(false); }}>{tr("common.cancel")}</button>
+                <button style={t.edit} onClick={commit} disabled={saving}>{saving ? "..." : tr("common.save")}</button>
+              </div>
+            </>
+          : <>
+              <div style={t.divisor} />
+              <button style={t.edit} onClick={() => setEditing(true)}>{tr("common.edit")}</button>
+            </>)}
       </div>
     );
   };
@@ -310,9 +335,6 @@ export default function Settings() {
                 {avisosError && (
                   <div style={{ fontSize: 12.5, color: "#b91c1c", marginTop: 4 }}>{avisosError}</div>
                 )}
-                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
-                  {tr("settings.emailNotifNote")}
-                </div>
               </div>
             </>
           ) : section === "seguridad" ? (
@@ -415,6 +437,16 @@ export default function Settings() {
                   {tr("settings.languageNote")}
                 </div>
               </div>
+            </>
+          ) : section === "reportar" ? (
+            <>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>
+                {tr("settings.reportTitle")}
+              </div>
+              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>
+                {tr("settings.reportSub")}
+              </div>
+              <ReportIssueCard />
             </>
           ) : (
             <div style={{ ...t.card, padding: 40, textAlign: "center" }}>

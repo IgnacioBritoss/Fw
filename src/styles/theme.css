@@ -441,10 +441,15 @@ html.fw-dark .fw-hero-search [role="option"] {
    texto y sin depender del idioma.
 
    Son dos partes sincronizadas: la flecha se hunde un momento (fw-ad-pulsa) y
-   justo ahí sale una onda desde la punta (fw-ad-onda). Las dos duran lo mismo y
-   arrancan juntas, así el golpe y la onda caen en el mismo instante; con dos
-   duraciones distintas se desfasarían al rato y se vería la onda saliendo de la
-   nada.
+   justo ahí saltan tres rayitas desde la punta (fw-ad-chispas). Las dos duran lo
+   mismo y arrancan juntas, así el golpe y las rayitas caen en el mismo instante;
+   con dos duraciones distintas se desfasarían al rato y se verían las chispas
+   saltando de la nada.
+
+   Tres rayitas y no un anillo que se expande: el anillo se lee como una onda de
+   agua, algo que se toca y responde despacio. Las rayitas cortas son el gesto de
+   historieta para "acá pasó algo", y a 30px de ancho se leen mejor que un
+   círculo, que a ese tamaño queda como un borrón.
 
    Casi todo el ciclo es quietud: el clic ocupa apenas el 15% del tiempo. Un
    cursor golpeando sin parar se lee como un cartel que titila, que es lo que
@@ -455,19 +460,19 @@ html.fw-dark .fw-hero-search [role="option"] {
   68%, 74%           { transform: translate3d(1.5%, 2.5%, 0) scale(.9); }
 }
 
-@keyframes fw-ad-onda {
-  0%, 62%  { transform: scale(.2); opacity: 0; }
-  70%      { transform: scale(.6); opacity: .85; }
-  100%     { transform: scale(2.1); opacity: 0; }
+@keyframes fw-ad-chispas {
+  0%, 62%  { opacity: 0; transform: scale(.4); }
+  70%      { opacity: 1; transform: scale(.8); }
+  100%     { opacity: 0; transform: scale(1.35); }
 }
 
 .fw-ad-pulsa { animation: fw-ad-pulsa 2.6s ease-in-out infinite; }
-.fw-ad-onda  { animation: fw-ad-onda 2.6s ease-out infinite; }
+.fw-ad-chispas { animation: fw-ad-chispas 2.6s ease-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .fw-ad-pulsa,
-  .fw-ad-onda { animation: none; }
-  /* Sin animación la onda no tiene sentido: sería un círculo fijo alrededor del
-     cursor. Se esconde y queda solo la flecha, que ya se entiende. */
-  .fw-ad-onda { display: none; }
+  .fw-ad-chispas { animation: none; }
+  /* Sin animación las chispas no tienen sentido: serían tres rayitas fijas
+     colgando del cursor. Se esconden y queda la flecha, que ya se entiende. */
+  .fw-ad-chispas { display: none; }
 }

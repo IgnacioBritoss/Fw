@@ -21,20 +21,26 @@ import StatusChip from "./StatusChip";
 import { useI18n } from "../i18n/core";
 
 /**
- * El tilde verde de "esta dirección está verificada".
+ * El tilde de "esta dirección está verificada".
  *
  * Es un dibujo (SVG), no un emoji: los emojis los dibuja el sistema operativo,
  * así que el mismo carácter se ve distinto en Android, en iPhone y en Windows, y
  * ninguna de las tres versiones combina con el resto de la pantalla.
  *
- * `title` y el texto escondido dicen "Verificado" con palabras: un tilde solo no
+ * VA EN AZUL, no en verde. El verde es el color de "operación exitosa", y esto no
+ * es el resultado de nada que la persona acabe de hacer: es un estado de la
+ * cuenta. En azul se lee como parte de Freewheel —el mismo azul del logo, de los
+ * enlaces y de los tics de mensaje leído del chat— y no como un cartelito de
+ * confirmación pegado al costado.
+ *
+ * `title` y `aria-label` dicen "Verificado" con palabras: un tilde solo no
  * significa nada para quien usa un lector de pantalla.
  */
 function TildeVerificado({ titulo }) {
   return (
     <span title={titulo} style={{ display: "inline-flex", flexShrink: 0, alignItems: "center" }}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" role="img" aria-label={titulo}>
-        <path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="3"
+        <path d="M20 6L9 17l-5-5" stroke="#0f6ce6" strokeWidth="3"
           strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
@@ -141,16 +147,28 @@ export default function ChangeEmailCard({ verified }) {
           </div>
         </div>
         {phase === "idle" && (
-          <button onClick={() => setPhase("asking")}
-            style={{
-              fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer",
-              background: "none", border: "none", flexShrink: 0,
-              ...(isMobile
-                ? { width: "100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid #f3f4f6", textAlign: "center" }
-                : {}),
-            }}>
-            {tr("email.change")}
-          </button>
+          <>
+            {/* La misma división que los campos de al lado, pero en el sentido
+                que corresponde: una línea VERTICAL cuando el botón está al
+                costado, y la horizontal de abajo cuando está apilado. Una
+                vertical debajo de un bloque apilado no separaría nada. */}
+            {!isMobile && (
+              <div style={{
+                width: 1, alignSelf: "stretch", background: "#ececec",
+                marginTop: -14, marginBottom: -14, flexShrink: 0,
+              }} />
+            )}
+            <button onClick={() => setPhase("asking")}
+              style={{
+                fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer",
+                background: "none", border: "none", flexShrink: 0,
+                ...(isMobile
+                  ? { width: "100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid #ececec", textAlign: "center" }
+                  : {}),
+              }}>
+              {tr("email.change")}
+            </button>
+          </>
         )}
       </div>
 
