@@ -59,7 +59,7 @@ const styles = (isMobile) => ({
   card: { maxWidth: 720, margin: "0 auto", background: "#fff", borderRadius: 18, padding: isMobile ? 18 : 32, boxShadow: "0 4px 24px rgba(0,0,0,.06)", border: "1px solid #f0f0f0" },
   title: { fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 4 },
   sub: { fontSize: 14, color: "#6b7280", marginBottom: 24 },
-  btnPrimary: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#2563eb", color: "#fff", border: "none", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 700, cursor: "pointer" },
+  btnPrimary: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 700, cursor: "pointer" },
   btnGhost: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 600, cursor: "pointer" },
   skip: { display: "block", width: "100%", marginTop: 16, padding: 6, background: "none", border: "none", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "center", textDecoration: "underline" },
   error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
@@ -84,7 +84,7 @@ function PhotoCard({ id, label, hint, kind, value, review, onChange }) {
   const border =
     review?.state === "invalid" ? "1.5px solid #dc2626"
       : review?.state === "ok" ? "1.5px solid #16a34a"
-        : value ? "1.5px solid #2563eb" : "1px solid #e5e7eb";
+        : value ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb";
 
   return (
     <div style={{ flex: 1, minWidth: 220 }}>
@@ -152,14 +152,14 @@ function Stepper({ current, steps, isMobile }) {
             <div style={{
               width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14, fontWeight: 700,
-              background: i < current ? "#16a34a" : i === current ? "#2563eb" : "#fff",
+              background: i < current ? "#16a34a" : i === current ? "#0f6ce6" : "#fff",
               color: i <= current ? "#fff" : "#9ca3af",
               border: i > current ? "1.5px solid #e5e7eb" : "none",
             }}>{i < current ? "✓" : i + 1}</div>
             <span style={{ fontSize: 12, fontWeight: 600, color: i === current ? "#111827" : "#9ca3af" }}>{tr(label)}</span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: isMobile ? 22 : 90, height: 2, margin: isMobile ? "0 4px" : "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#2563eb" : "#e5e7eb" }} />
+            <div style={{ width: isMobile ? 22 : 90, height: 2, margin: isMobile ? "0 4px" : "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#0f6ce6" : "#e5e7eb" }} />
           )}
         </div>
       ))}
@@ -649,7 +649,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                   value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && verifyPhone()} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                  <button style={{ background: "none", border: "none", color: "#2563eb", fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}
+                  <button style={{ background: "none", border: "none", color: "#0f6ce6", fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}
                     onClick={sendPhoneCode} disabled={busy}>{tr("reg.resendCode")}</button>
                   <button style={{ ...st.btnPrimary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={verifyPhone}>
                     {busy ? tr("verify.checking") : tr("kyc.verifyPhone")}
@@ -667,7 +667,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
         {/* PASO 3: CONFIRMACIÓN — con el estado REAL del backend */}
         {step === 3 && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,#16a34a,#15803d)" : "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,#16a34a,#15803d)" : "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             <h2 style={st.title}>

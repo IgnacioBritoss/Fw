@@ -39,7 +39,7 @@ const s = {
     scrollbarWidth: "none",
   },
   tab: { padding: "10px 14px", fontSize: 13.5, whiteSpace: "nowrap", flexShrink: 0, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent" },
-  tabActive: { color: "#2563eb", borderBottom: "3px solid #2563eb" },
+  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
   card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
   carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
   btnDelete: { padding: "8px 18px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
@@ -105,7 +105,7 @@ export default function Admin() {
       <div style={s.accessDenied}>
         <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{tr("admin.denied")}</div>
         <div style={{ color: "#6b7280", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
-        <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
+        <button style={{ padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
           onClick={() => navigate("/")}>{tr("common.goHome")}</button>
       </div>
     );

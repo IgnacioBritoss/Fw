@@ -17,7 +17,7 @@ const s = {
   page: { minHeight:"100vh", background:"#f9fafb", padding:"40px 24px" },
   container: { maxWidth:760, margin:"0 auto", background:"#fff", borderRadius:16, padding:"40px 48px", boxShadow:"0 4px 24px rgba(0,0,0,.07)" },
   containerMobile: { background:"#fff", borderRadius:12, padding:"24px 20px" },
-  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#2563eb", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
+  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#0f6ce6", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
   h1: { fontSize:28, fontWeight:800, color:"#111827", marginBottom:6 },
   date: { fontSize:13, color:"#9ca3af", marginBottom:36 },
   h2: { fontSize:17, fontWeight:700, color:"#111827", marginTop:32, marginBottom:10 },

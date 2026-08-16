@@ -57,7 +57,7 @@ export default function GoogleCallback() {
         <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:12, padding:"20px 24px", color:"#b91c1c", fontSize:14, marginBottom:20 }}>
           {error}
         </div>
-        <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"#2563eb", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
+        <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"#0f6ce6", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
           {t("auth.backToLogin")}
         </Link>
       </div>

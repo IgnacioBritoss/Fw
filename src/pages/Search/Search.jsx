@@ -74,7 +74,7 @@ function Dropdown({ label, value, options, onChange, active }) {
     <div ref={ref} style={{ position: "relative" }}>
       <div onClick={() => setOpen(o => !o)}
         style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 22, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
-          border: (active || open) ? "1.5px solid #2563eb" : "1px solid #e5e7eb", background: active ? "#eff6ff" : "#fff", color: active ? "#2563eb" : "#374151" }}>
+          border: (active || open) ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb", background: active ? "#eff6ff" : "#fff", color: active ? "#0f6ce6" : "#374151" }}>
         {label}{chosenLabel ? `: ${chosenLabel}` : ""} <span style={{ fontSize: 10, opacity: .7, transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
       </div>
       {open && (
@@ -83,7 +83,7 @@ function Dropdown({ label, value, options, onChange, active }) {
             const chosen = o.value === value;
             return (
               <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
-                style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "#2563eb" : "#374151", background: chosen ? "#eff6ff" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "#0f6ce6" : "#374151", background: chosen ? "#eff6ff" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 onMouseEnter={e => { if (!chosen) e.currentTarget.style.background = "#f9fafb"; }}
                 onMouseLeave={e => { if (!chosen) e.currentTarget.style.background = "transparent"; }}>
                 {o.label}{chosen && <span>✓</span>}
@@ -249,7 +249,7 @@ export default function Search() {
   const Card = ({ car }) => {
     const on = selected === car.id;
     return (
-      <div style={{ ...st.card, borderColor: on ? "#2563eb" : "#ececec", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
+      <div style={{ ...st.card, borderColor: on ? "#0f6ce6" : "#ececec", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
         onClick={() => navigate(`/cars/${car.id}`)}
         onMouseEnter={e => { setHovered(car.id); e.currentTarget.style.transform = "translateY(-2px)"; if (!on) e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,.08)"; }}
         onMouseLeave={e => { setHovered(null); e.currentTarget.style.transform = "none"; if (!on) e.currentTarget.style.boxShadow = "none"; }}>
@@ -362,8 +362,8 @@ export default function Search() {
         <Dropdown label={tr("search.fuel")} value={fuel} active={Boolean(fuel)}
           options={FUEL_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setFuel} />
         <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-          style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #2563eb" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
-        {anyFilter && <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>{tr("search.clearFilters")}</div>}
+          style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
+        {anyFilter && <div style={{ fontSize: 13, color: "#0f6ce6", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>{tr("search.clearFilters")}</div>}
       </div>
 
       {/* Lista + Mapa */}

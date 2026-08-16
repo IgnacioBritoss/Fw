@@ -480,7 +480,7 @@ export default function AvatarEditor({
               inset: 0,
               borderRadius: "50%",
               boxShadow: `0 0 0 ${lado}px rgba(255,255,255,.72)`,
-              border: "2px solid #2563eb",
+              border: "2px solid #0f6ce6",
               pointerEvents: "none",
             }}
           />
@@ -503,7 +503,7 @@ export default function AvatarEditor({
             value={zoom}
             disabled={busy || !imagen}
             onChange={(e) => cambiarZoom(e.target.value)}
-            style={{ flex: 1, accentColor: "#2563eb" }}
+            style={{ flex: 1, accentColor: "#0f6ce6" }}
           />
         </div>
 
@@ -549,7 +549,7 @@ export default function AvatarEditor({
             type="button"
             onClick={confirmar}
             disabled={busy || !imagen}
-            style={{ ...s.boton, background: "#2563eb", color: "#fff", opacity: busy || !imagen ? 0.6 : 1 }}
+            style={{ ...s.boton, background: "#0f6ce6", color: "#fff", opacity: busy || !imagen ? 0.6 : 1 }}
           >
             {busy ? tr("common.saving") : tr("profile.frameSave")}
           </button>

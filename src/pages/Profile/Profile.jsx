@@ -353,7 +353,7 @@ export default function Profile() {
     <div style={{ padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
       {/* Portada + cabecera */}
       <div style={{ ...t.card, overflow: "hidden" }}>
-        <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,#1d4ed8 70%,#2563eb 100%)" }} />
+        <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,#0b55c0 70%,#0f6ce6 100%)" }} />
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, padding: isMobile ? "0 20px" : "0 32px", marginTop: isMobile ? -46 : -60, flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
             <Avatar

@@ -95,7 +95,7 @@ export default function ChangeEmailCard({ verified }) {
         </div>
         {phase === "idle" && (
           <button onClick={() => setPhase("asking")}
-            style={{ fontSize: 14, fontWeight: 600, color: "#2563eb", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
+            style={{ fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
             {tr("email.change")}
           </button>
         )}

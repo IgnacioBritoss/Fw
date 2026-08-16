@@ -46,7 +46,7 @@ export default function PhotoVisibilityChoice({ value, onChange, disabled = fals
               display: "flex", alignItems: "flex-start", gap: 11, width: "100%",
               textAlign: "left", padding: "11px 13px", marginBottom: 8,
               background: elegida ? "#eff6ff" : "#fff",
-              border: `1.5px solid ${elegida ? "#2563eb" : "#e5e7eb"}`,
+              border: `1.5px solid ${elegida ? "#0f6ce6" : "#e5e7eb"}`,
               borderRadius: 12, cursor: disabled ? "default" : "pointer",
               opacity: disabled ? 0.6 : 1, transition: "border-color .15s, background .15s",
             }}
@@ -54,8 +54,8 @@ export default function PhotoVisibilityChoice({ value, onChange, disabled = fals
             <span
               style={{
                 width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
-                background: elegida ? "#2563eb" : "#fff",
-                border: `1.5px solid ${elegida ? "#2563eb" : "#d1d5db"}`,
+                background: elegida ? "#0f6ce6" : "#fff",
+                border: `1.5px solid ${elegida ? "#0f6ce6" : "#d1d5db"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >

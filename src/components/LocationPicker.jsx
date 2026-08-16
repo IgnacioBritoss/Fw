@@ -20,7 +20,7 @@ const s = {
   searchRow: { display: "flex", gap: 8, marginBottom: 10 },
   input: { flex: 1, padding: "11px 14px", borderRadius: 8,
     border: "1px solid #d1d5db", fontSize: 14, outline: "none" },
-  searchBtn: { padding: "11px 16px", background: "#2563eb", color: "#fff",
+  searchBtn: { padding: "11px 16px", background: "#0f6ce6", color: "#fff",
   border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
   cursor: "pointer", whiteSpace: "nowrap" },
   suggestions: { background: "#fff", border: "1px solid #e5e7eb",

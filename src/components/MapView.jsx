@@ -67,7 +67,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       const icon = L.divIcon({
         className: "",
         html: `<div style="
-          background: #1d4ed8;
+          background: #0b55c0;
           color: #fff;
           padding: 6px 10px;
           border-radius: 20px;
@@ -104,7 +104,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
           <div style="font-size:12px;color:#6b7280;margin-bottom:6px">
             ${car.location}
           </div>
-          <div style="font-weight:700;font-size:16px;color:#1d4ed8">
+          <div style="font-weight:700;font-size:16px;color:#0b55c0">
             $${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">${perDayLabel}</span>
           </div>
           ${car.rating ? `<div style="font-size:12px;color:#f59e0b;margin-top:4px">★ ${car.rating}</div>` : ""}

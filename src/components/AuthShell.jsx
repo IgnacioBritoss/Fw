@@ -95,7 +95,7 @@ export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 40
         <div style={{ position: "relative" }}>
           {hero?.eyebrow && (
             <div style={{
-              fontSize: 13, fontWeight: 600, color: "#2563eb", textTransform: "uppercase",
+              fontSize: 13, fontWeight: 600, color: "#0f6ce6", textTransform: "uppercase",
               letterSpacing: ".06em", marginBottom: 16,
             }}>
               {hero.eyebrow}

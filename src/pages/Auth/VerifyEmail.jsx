@@ -21,9 +21,9 @@ const styles = (isMobile) => ({
   title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
   sub: { color:"#6b7280", fontSize:14, marginBottom:28, lineHeight:1.6 },
   input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 24 : 28, fontWeight:700, letterSpacing: isMobile ? 8 : 12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20 },
-  btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
+  btn: { width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
-  btnLink: { background:"none", border:"none", color:"#2563eb", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
+  btnLink: { background:"none", border:"none", color:"#0f6ce6", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 },
 });
@@ -68,7 +68,7 @@ export default function VerifyEmail() {
   return (
     <div style={s.page}>
       <div style={s.card}>
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#0f6ce6" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#0f6ce6" strokeWidth="1.8" strokeLinecap="round"/></svg>
         <div style={s.title}>{t("verify.title")}</div>
         <div style={s.sub}>
           {t("verify.sentTo")} <strong>{user?.email}</strong>.<br />

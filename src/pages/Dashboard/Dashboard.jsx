@@ -47,20 +47,20 @@ const s = {
   title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
   titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
   sub: { color: "#6b7280", fontSize: 14, marginTop: 2 },
-  btn: { padding: "10px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+  btn: { padding: "10px 20px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
   tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6", overflowX: "auto" },
   tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#2563eb", borderBottom: "3px solid #2563eb" },
+  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
   statsRow: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 28 },
   stat: { background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.06)", textAlign: "center", border: "1px solid #f3f4f6" },
-  statNum: { fontSize: 26, fontWeight: 800, color: "#2563eb" },
+  statNum: { fontSize: 26, fontWeight: 800, color: "#0f6ce6" },
   statLabel: { fontSize: 12.5, color: "#6b7280", marginTop: 4 },
   card: { background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
   badge: { display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
   active: { background: "#dbeafe", color: "#1e40af" },
   paused: { background: "#fef9c3", color: "#854d0e" },
   linkBtn: { background: "none", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "7px 14px" },
-  accept: { padding: "8px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  accept: { padding: "8px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   reject: { padding: "8px 18px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 13, cursor: "pointer" },
   empty: { textAlign: "center", padding: "40px 0", color: "#9ca3af" },
   warn: { background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "14px 16px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
@@ -243,7 +243,7 @@ export default function Dashboard() {
             <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
               {/* El panel de disponibilidad por fechas: lo que le faltaba al
                   filtro de fechas para tener datos que consultar. */}
-              <button style={{ ...s.linkBtn, ...(openAvailability === car.id ? { borderColor: "#2563eb", color: "#2563eb" } : {}) }}
+              <button style={{ ...s.linkBtn, ...(openAvailability === car.id ? { borderColor: "#0f6ce6", color: "#0f6ce6" } : {}) }}
                 onClick={() => setOpenAvailability(openAvailability === car.id ? null : car.id)}>
                 {openAvailability === car.id ? tr("common.close") : tr("dash.dateAvailability")}
               </button>
@@ -271,7 +271,7 @@ export default function Dashboard() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{personName(r.renter)}</div>
                 <div style={{ fontSize: 13, color: "#6b7280" }}>{vehicleLabel(r)} · {dateRange(r)}</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: "#2563eb" }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "#0f6ce6" }}>
                 ${Number(r.totalPriceSnapshot || 0).toLocaleString()}
               </div>
             </div>

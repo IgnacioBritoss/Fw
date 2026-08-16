@@ -252,7 +252,7 @@ export default function ChatBot() {
     width: isMobile ? 46 : 50,
     height: isMobile ? 46 : 50,
     borderRadius: "50%",
-    background: "#2563eb",
+    background: "#0f6ce6",
     color: "#fff",
     border: "none",
     cursor: "pointer",
@@ -268,7 +268,7 @@ export default function ChatBot() {
   const Header = (
     <div
       style={{
-        background: "#2563eb",
+        background: "#0f6ce6",
         padding: "16px 18px",
         display: "flex",
         alignItems: "center",
@@ -291,7 +291,7 @@ export default function ChatBot() {
           <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
             <circle cx="18" cy="18" r="15" stroke="#fff" strokeWidth="2" />
             <circle cx="18" cy="18" r="5" fill="#fff" />
-            <circle cx="18" cy="18" r="2" fill="#2563eb" />
+            <circle cx="18" cy="18" r="2" fill="#0f6ce6" />
             {[0, 60, 120, 180, 240, 300].map((a, i) => {
               const r = (a * Math.PI) / 180;
               return (
@@ -375,7 +375,7 @@ export default function ChatBot() {
               : {
                   alignSelf: "flex-end",
                   maxWidth: "85%",
-                  background: "#2563eb",
+                  background: "#0f6ce6",
                   color: "#fff",
                   borderRadius: "12px 12px 2px 12px",
                   padding: "10px 14px",
@@ -455,7 +455,7 @@ export default function ChatBot() {
             borderRadius: 20,
             border: "1.5px solid #dbeafe",
             background: "#eff6ff",
-            color: "#2563eb",
+            color: "#0f6ce6",
             fontSize: 11,
             cursor: "pointer",
             fontWeight: 600,
@@ -518,7 +518,7 @@ export default function ChatBot() {
           width: 38,
           height: 38,
           borderRadius: "50%",
-          background: "#2563eb",
+          background: "#0f6ce6",
           color: "#fff",
           border: "none",
           cursor: "pointer",

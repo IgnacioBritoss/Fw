@@ -95,8 +95,8 @@ export default function Settings() {
     fieldBox: { border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
     fieldLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
     fieldVal: { fontSize: 15, fontWeight: 600, color: "#111827" },
-    edit: { fontSize: 14, fontWeight: 600, color: "#2563eb", cursor: "pointer", background: "none", border: "none", flexShrink: 0 },
-    input: { fontSize: 15, fontWeight: 600, color: "#111827", border: "1.5px solid #2563eb", borderRadius: 8, padding: "6px 10px", outline: "none", width: "100%", boxSizing: "border-box" },
+    edit: { fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 },
+    input: { fontSize: 15, fontWeight: 600, color: "#111827", border: "1.5px solid #0f6ce6", borderRadius: 8, padding: "6px 10px", outline: "none", width: "100%", boxSizing: "border-box" },
     rowSwitch: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 0", borderBottom: "1px solid #f3f4f6" },
   };
 
@@ -128,7 +128,7 @@ export default function Settings() {
   // Interruptor visual (switch) on/off reutilizable.
   const Toggle = ({ on, onChange }) => (
     <button onClick={() => onChange(!on)}
-      style={{ width: 46, height: 27, minHeight: 27, maxHeight: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#2563eb" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0, boxSizing: "border-box" }}>
+      style={{ width: 46, height: 27, minHeight: 27, maxHeight: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#0f6ce6" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0, boxSizing: "border-box" }}>
       <span style={{ position: "absolute", top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left .2s cubic-bezier(.22,1,.36,1)" }} />
     </button>
   );
@@ -147,7 +147,7 @@ export default function Settings() {
       {verified ? (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#dcfce7", color: "#166534", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>{tr("status.verified")}</span>
       ) : (
-        <button onClick={onVerify} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
+        <button onClick={onVerify} style={{ background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
       )}
     </div>
   );
@@ -316,7 +316,7 @@ export default function Settings() {
                         width: 38, height: 28, borderRadius: 6, flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
-                        background: elegido ? "#2563eb" : "#f3f4f6",
+                        background: elegido ? "#0f6ce6" : "#f3f4f6",
                         color: elegido ? "#fff" : "#6b7280",
                       }}>
                         {idioma.flagless}
@@ -325,7 +325,7 @@ export default function Settings() {
                         {idioma.label}
                       </span>
                       {elegido && (
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
                           strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5" />
                         </svg>

@@ -119,7 +119,7 @@ export default function UserProfileModal({ userId, onClose }) {
             {/* Las dos reputaciones: como conductor y como dueño */}
             <div style={{
               background: "#f8fafc", border: "1px solid #e5e7eb",
-              borderLeft: "3px solid #2563eb", borderRadius: 10, padding: "12px 14px", marginBottom: 18,
+              borderLeft: "3px solid #0f6ce6", borderRadius: 10, padding: "12px 14px", marginBottom: 18,
             }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
                 {tr("profile.ratings")}

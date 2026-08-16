@@ -63,7 +63,7 @@ const s = {
   photoImg: { width: "100%", height: "100%", objectFit: "cover" },
   photoRemove: { position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, lineHeight: "22px", textAlign: "center" },
   btnRow: { display: "flex", gap: 10, marginTop: 20 },
-  btn: { flex: 1, padding: "13px", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,.3)" },
+  btn: { flex: 1, padding: "13px", background: "linear-gradient(135deg,#0f6ce6,#0b55c0)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,.3)" },
   btnDisabled: { opacity: 0.6, cursor: "not-allowed" },
   btnBack: { flex: 1, padding: "13px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" },
   error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "12px 16px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
@@ -79,7 +79,7 @@ const s = {
   aiBoxTitle: { fontSize: 13, fontWeight: 700, color: "#1e40af", marginBottom: 10 },
   aiBoxRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   aiBoxLabel: { fontSize: 13, color: "#374151" },
-  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#2563eb" },
+  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#0f6ce6" },
   aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
 };
 
@@ -535,7 +535,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -557,7 +557,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   // `val` es el CÓDIGO que se guarda; `label` el texto traducido que se lee.
   const chipBtn = (val, current, onClick, label = val) => (
     <button key={val} type="button" onClick={() => onClick(val)}
-      style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: current === val ? "#2563eb" : "#fff", color: current === val ? "#fff" : "#374151" }}>
+      style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #0f6ce6" : "1.5px solid #e5e7eb", background: current === val ? "#0f6ce6" : "#fff", color: current === val ? "#fff" : "#374151" }}>
       {label}
     </button>
   );
@@ -582,7 +582,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 width: isMobile ? 30 : 34, height: isMobile ? 30 : 34, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 13, fontWeight: 700, transition: "all .3s",
-                background: i < step ? "#1d4ed8" : i === step ? "#2563eb" : "#e5e7eb",
+                background: i < step ? "#0b55c0" : i === step ? "#0f6ce6" : "#e5e7eb",
                 color: i <= step ? "#fff" : "#9ca3af",
                 boxShadow: i === step ? "0 0 0 4px #dbeafe" : "none",
               }}>
@@ -592,12 +592,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   </svg>
                 ) : i + 1}
               </div>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "#2563eb" : i < step ? "#1d4ed8" : "#9ca3af" }}>
+              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "#0f6ce6" : i < step ? "#0b55c0" : "#9ca3af" }}>
                 {tr(st)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "#2563eb" : "#e5e7eb", borderRadius: 2 }} />
+              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "#0f6ce6" : "#e5e7eb", borderRadius: 2 }} />
             )}
           </div>
         ))}
@@ -703,15 +703,15 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 return (
                   <button key={name} type="button" title={name} onClick={() => setV("color", name)}
                     style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: hex, border: sel ? "3px solid #2563eb" : "2px solid #d1d5db", boxShadow: sel ? "0 0 0 2px #bfdbfe" : "inset 0 0 0 1px rgba(0,0,0,.08)", transition: "all .15s" }} />
-                    <span style={{ fontSize: 10, color: sel ? "#2563eb" : "#6b7280", fontWeight: sel ? 700 : 400 }}>{name}</span>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: hex, border: sel ? "3px solid #0f6ce6" : "2px solid #d1d5db", boxShadow: sel ? "0 0 0 2px #bfdbfe" : "inset 0 0 0 1px rgba(0,0,0,.08)", transition: "all .15s" }} />
+                    <span style={{ fontSize: 10, color: sel ? "#0f6ce6" : "#6b7280", fontWeight: sel ? 700 : 400 }}>{name}</span>
                   </button>
                 );
               })}
               <button type="button" title="Otro color" onClick={() => document.getElementById("fw-color-picker").click()}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: vehicleForm.color?.startsWith("#") ? vehicleForm.color : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", border: vehicleForm.color?.startsWith("#") ? "3px solid #2563eb" : "2px solid #d1d5db", boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none", transition: "all .15s" }} />
-                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "#2563eb" : "#6b7280", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>Otro</span>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: vehicleForm.color?.startsWith("#") ? vehicleForm.color : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", border: vehicleForm.color?.startsWith("#") ? "3px solid #0f6ce6" : "2px solid #d1d5db", boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none", transition: "all .15s" }} />
+                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "#0f6ce6" : "#6b7280", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>Otro</span>
               </button>
               <input id="fw-color-picker" type="color" style={{ display: "none" }}
                 value={vehicleForm.color?.startsWith("#") ? vehicleForm.color : "#ffffff"}
@@ -743,9 +743,9 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {[["bluetooth", "spec.bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #0f6ce6" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#0f6ce6" : "#374151" }}>
                   {vehicleForm[key]
-                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5" /></svg>}
                   {tr(label)}
                 </button>
@@ -807,7 +807,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
             {tr("publish.photosHint")}
           </p>
-          <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
+          <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#0f6ce6", background: "#eff6ff" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
             onMouseLeave={() => setUploadHover(false)}
             onClick={() => document.getElementById("car-photos").click()}>
@@ -862,7 +862,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                     </div>
                   )}
                   {i === 0 && estadoFoto(i) === "ok" && (
-                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#0f6ce6", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
@@ -1010,7 +1010,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               </div>
             </div>
           ))}
-          <div style={{ marginTop: 16, padding: "12px 16px", background: "#eff6ff", borderRadius: 10, fontSize: 13, color: "#2563eb", fontWeight: 500 }}>
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "#eff6ff", borderRadius: 10, fontSize: 13, color: "#0f6ce6", fontWeight: 500 }}>
             {tr("publish.willCreate")}
           </div>
           <div style={s.btnRow}>

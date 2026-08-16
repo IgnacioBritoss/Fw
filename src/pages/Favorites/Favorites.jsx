@@ -49,7 +49,7 @@ export default function Favorites() {
     sub: { color: "#6b7280", fontSize: 14, marginTop: 4, marginBottom: 28 },
     card: { background: "#fff", border: "1px solid #ececec", borderRadius: 16, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
-    btn: { padding: "11px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
+    btn: { padding: "11px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
     empty: { textAlign: "center", padding: "60px 20px", color: "#9ca3af" },
   };
 

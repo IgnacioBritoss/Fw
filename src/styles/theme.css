@@ -1,10 +1,10 @@
 :root {
-  --primary: #2563eb;
+  --primary: #0f6ce6;
   --primary-light: #3b82f6;
-  --primary-dark: #1d4ed8;
+  --primary-dark: #0b55c0;
   --primary-bg: #eff6ff;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
+  --accent: #0f6ce6;
+  --accent-hover: #0b55c0;
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --text-muted: #9ca3af;

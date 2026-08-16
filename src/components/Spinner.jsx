@@ -18,7 +18,7 @@
 //   · block → centrado con aire, para cuando ocupa una sección entera
 // ============================================================================
 
-export default function Spinner({ size = 20, color = "#2563eb", label, block = false }) {
+export default function Spinner({ size = 20, color = "#0f6ce6", label, block = false }) {
   const anillo = (
     <span
       style={{

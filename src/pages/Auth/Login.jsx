@@ -85,7 +85,7 @@ export default function Login() {
       subtitle={
         <>
           {t("auth.noAccount")}{" "}
-          <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>
+          <Link to="/register" style={{ color: "#0f6ce6", fontWeight: 600, textDecoration: "none" }}>
             {t("auth.registerFree")}
           </Link>
         </>
@@ -133,7 +133,7 @@ export default function Login() {
       </div>
 
       <div style={{ textAlign: "right", marginBottom: 24 }}>
-        <Link to="/forgot-password" style={{ fontSize: 12.5, color: "#2563eb", textDecoration: "none", fontWeight: 500 }}>
+        <Link to="/forgot-password" style={{ fontSize: 12.5, color: "#0f6ce6", textDecoration: "none", fontWeight: 500 }}>
           {t("auth.forgot")}
         </Link>
       </div>

@@ -360,7 +360,7 @@ export default function Chat() {
     if (kind === "file") {
       return (
         <a href={msg.content} target="_blank" rel="noreferrer"
-          style={{ color: isMe ? "#bfdbfe" : "#2563eb", fontSize: 13 }}>
+          style={{ color: isMe ? "#bfdbfe" : "#0f6ce6", fontSize: 13 }}>
           Abrir archivo
         </a>
       );
@@ -389,7 +389,7 @@ export default function Chat() {
           <div style={{
             alignSelf: isMe ? "flex-end" : "flex-start",
             maxWidth: "72%",
-            background: isMe ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#fff",
+            background: isMe ? "linear-gradient(135deg,#0f6ce6,#0b55c0)" : "#fff",
             color: isMe ? "#fff" : "#111827",
             borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
             border: isMe ? "none" : "1px solid #e5e7eb",
@@ -420,7 +420,7 @@ export default function Chat() {
         <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
           <audio controls src={pendingAudio.url} style={{ flex: 1, height: 36, minWidth: 0 }} />
           <button onClick={handleSendAudio} disabled={uploading}
-            style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+            style={{ padding: "9px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
             {uploading ? "..." : `${tr("chat.send")} ✓`}
           </button>
           <button onClick={handleCancelAudio}
@@ -474,7 +474,7 @@ export default function Chat() {
           </svg>
         </button>
         <button onClick={handleSend} disabled={sending || !text.trim()}
-          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
+          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "linear-gradient(135deg,#0f6ce6,#0b55c0)" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M22 2L11 13" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -549,12 +549,12 @@ export default function Chat() {
             <div style={{ position: "relative", flexShrink: 0 }}>
               <Avatar src={other?.profilePhotoUrl} initials={initialsOf(other)} size={42} alt={name} />
               {unread && (
-                <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
+                <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#0f6ce6", border: "2px solid #fff" }} />
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: unread ? 700 : 600, fontSize: 14, color: "#111827", marginBottom: 1 }}>{name}</div>
-              <div style={{ fontSize: 11, color: "#2563eb", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{label}</div>
+              <div style={{ fontSize: 11, color: "#0f6ce6", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{label}</div>
               <div style={{ fontSize: 12, color: unread ? "#374151" : "#9ca3af", fontWeight: unread ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</div>
             </div>
           </div>
@@ -569,7 +569,7 @@ export default function Chat() {
       <div style={{ padding: isMobile ? "12px 16px" : "14px 20px", borderBottom: "1px solid #f3f4f6", background: "#fff", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
         {isMobile && (
           <button onClick={() => setActiveConvId(null)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#2563eb", fontSize: 22, fontWeight: 700, padding: "0 8px 0 0" }}>
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#0f6ce6", fontSize: 22, fontWeight: 700, padding: "0 8px 0 0" }}>
             ‹
           </button>
         )}
@@ -585,7 +585,7 @@ export default function Chat() {
           <Avatar src={otherUser?.profilePhotoUrl} initials={initialsOf(otherUser)} size={40} alt={otherName} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
-            {listingLabel && <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 500 }}>{listingLabel}</div>}
+            {listingLabel && <div style={{ fontSize: 12, color: "#0f6ce6", fontWeight: 500 }}>{listingLabel}</div>}
           </div>
         </button>
       </div>
@@ -630,7 +630,7 @@ export default function Chat() {
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
-                    stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    stroke="#0f6ce6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div>

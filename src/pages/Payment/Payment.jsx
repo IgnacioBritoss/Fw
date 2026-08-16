@@ -34,7 +34,7 @@ const s = {
   card: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 14, padding: 24, marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
   row: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "#374151", marginBottom: 8 },
   totalRow: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "#111827", borderTop: "1px solid #e5e7eb", paddingTop: 12, marginTop: 4 },
-  payBtn: { width: "100%", padding: "15px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
+  payBtn: { width: "100%", padding: "15px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   payBtnDisabled: { width: "100%", padding: "15px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
   failBtn: { width: "100%", padding: "12px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 10, fontSize: 14, cursor: "pointer" },
   successBox: { textAlign: "center", padding: "48px 0" },
@@ -166,7 +166,7 @@ export default function Payment() {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
         <div style={s.successBox}>
-          <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+          <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
           <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" }}>{tr("payment.confirmed")}</div>
           <div style={{ color: "#6b7280", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
             {tr("payment.confirmedNote")}
@@ -180,7 +180,7 @@ export default function Payment() {
             <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total)}</span></div>
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button style={{ padding: "12px 28px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
+            <button style={{ padding: "12px 28px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
             <button style={{ padding: "12px 28px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</button>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function Payment() {
         )}
         {commission != null && <Row label={tr("car.fee")} value={money(commission)} />}
         {insurance != null && <Row label={tr("payment.insurance")} value={money(insurance)} />}
-        <div style={s.totalRow}><span>Total</span><span style={{ color: "#2563eb" }}>{money(total)}</span></div>
+        <div style={s.totalRow}><span>Total</span><span style={{ color: "#0f6ce6" }}>{money(total)}</span></div>
       </div>
 
       {/* Los tres tramos del pago, con lo que ya está cubierto */}

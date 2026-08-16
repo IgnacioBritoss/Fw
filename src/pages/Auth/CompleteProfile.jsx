@@ -57,7 +57,7 @@ export default function CompleteProfile() {
     card: { background:"#fff", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:440, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
     label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
     input: { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827", boxSizing:"border-box" },
-    btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
+    btn: { width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
     error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
     hint: { fontSize:12, color:"#9ca3af", marginTop:6 },
   };

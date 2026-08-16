@@ -36,7 +36,7 @@ export default function KYC() {
         {!isMobile && (
           <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{tr("reg.accountEyebrow")}</div>
         )}
-        <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</div>
+        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</div>
       </div>
 
       <div style={{ flex:1, padding: isMobile ? "22px 14px 40px" : "40px 24px" }}>

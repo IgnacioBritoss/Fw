@@ -26,7 +26,7 @@ import AuthShell from "../../components/AuthShell";
 import { useI18n } from "../../i18n/core";
 
 const MailIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="4" width="20" height="16" rx="2" />
     <path d="m2 7 10 6 10-6" />
@@ -63,7 +63,7 @@ export default function ForgotPassword() {
 
   const volver = (
     <div style={{ textAlign: "center" }}>
-      <Link to="/login" style={{ color: "#2563eb", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+      <Link to="/login" style={{ color: "#0f6ce6", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
         {t("auth.backToLogin")}
       </Link>
     </div>
@@ -84,7 +84,7 @@ export default function ForgotPassword() {
         <div style={{
           display: "flex", gap: 12, alignItems: "flex-start",
           background: "#eff6ff", border: "1px solid #bfdbfe",
-          borderLeft: "3px solid #2563eb", borderRadius: 10, padding: "14px 16px",
+          borderLeft: "3px solid #0f6ce6", borderRadius: 10, padding: "14px 16px",
           marginBottom: 18,
         }}>
           <div style={{ flexShrink: 0, marginTop: 1 }}><MailIcon /></div>

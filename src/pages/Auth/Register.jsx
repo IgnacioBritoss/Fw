@@ -178,7 +178,7 @@ export default function Register() {
               <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
               <p style={{ fontSize:14, color:"#6b7280" }}>
                 {t("auth.haveAccount")}{" "}
-                <Link to="/login" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")}</Link>
+                <Link to="/login" style={{ color:"#0f6ce6", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")}</Link>
               </p>
             </div>
 
@@ -255,16 +255,16 @@ export default function Register() {
 
             <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:24 }}>
               <input type="checkbox" id="terms" checked={form.acceptedTerms} onChange={e => set("acceptedTerms", e.target.checked)}
-                style={{ marginTop:3, width:16, height:16, accentColor:"#2563eb", cursor:"pointer", flexShrink:0 }} />
+                style={{ marginTop:3, width:16, height:16, accentColor:"#0f6ce6", cursor:"pointer", flexShrink:0 }} />
               <label htmlFor="terms" style={{ fontSize:13, color:"#374151", lineHeight:1.6, cursor:"pointer" }}>
                 Acepto los{" "}
-                <Link to="/terms" target="_blank" style={{ color:"#2563eb", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
+                <Link to="/terms" target="_blank" style={{ color:"#0f6ce6", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
                 {" "}y la política de privacidad de Freewheel *
               </label>
             </div>
 
             <button onClick={handleRequestCode} disabled={loading} style={{
-              width:"100%", padding: isMobile ? 15 : 13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10,
+              width:"100%", padding: isMobile ? 15 : 13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10,
               fontSize: isMobile ? 16 : 15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
               {loading ? t("auth.sendingCode") : t("common.continue")}
@@ -302,11 +302,11 @@ export default function Register() {
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
           <Logo />
           <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.verifyEyebrow")}</div>
-          <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>{t("reg.changeEmail")}</div>
+          <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>{t("reg.changeEmail")}</div>
         </div>
         <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
           <div style={{ width:"100%", maxWidth:420, background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid #f0f0f0" }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#0f6ce6" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#0f6ce6" strokeWidth="1.8" strokeLinecap="round"/></svg>
             <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>{t("reg.confirmEmail")}</h2>
             <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
               Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para crear tu cuenta.
@@ -324,14 +324,14 @@ export default function Register() {
             />
 
             <button onClick={handleCreateAccount} disabled={loading}
-              style={{ width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
+              style={{ width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
               {loading ? t("reg.creating") : t("reg.createMyAccount")}
             </button>
 
             <div style={{ fontSize:13, color:"#6b7280" }}>
               ¿No te llegó?{" "}
               <button onClick={handleResend} disabled={resending}
-                style={{ background:"none", border:"none", color:"#2563eb", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
+                style={{ background:"none", border:"none", color:"#0f6ce6", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
                 {resending ? t("common.sending") : t("reg.resendCode")}
               </button>
             </div>
@@ -347,7 +347,7 @@ export default function Register() {
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
         <Logo />
         <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.accountEyebrow")}</div>
-        <div style={{ fontSize:13, color:"#2563eb", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
+        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
       </div>
 
       <div style={{ flex:1, padding:"40px 24px" }}>

@@ -95,7 +95,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
           disabled={!rating || sending}
           style={{
             padding: "9px 18px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700,
-            background: "#2563eb", color: "#fff",
+            background: "#0f6ce6", color: "#fff",
             cursor: !rating || sending ? "not-allowed" : "pointer",
             opacity: !rating || sending ? 0.6 : 1,
           }}

@@ -31,7 +31,7 @@ export const authFields = (isMobile) => ({
     width: "100%",
     // 48px de alto es el mínimo para que un dedo le pegue sin apuntar.
     padding: isMobile ? 15 : 13,
-    background: "#2563eb", color: "#fff", border: "none", borderRadius: 10,
+    background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10,
     fontSize: isMobile ? 16 : 15, fontWeight: 700, cursor: "pointer",
   },
   btnGhost: {

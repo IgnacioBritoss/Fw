@@ -30,7 +30,7 @@ const TONES = {
   // ok: algo terminó bien y no requiere nada (pago completo, verificado)
   ok: { bar: "#16a34a", text: "#15803d", bg: "#f6fdf9" },
   // info: un hecho, sin urgencia (completada, aceptada)
-  info: { bar: "#2563eb", text: "#1d4ed8", bg: "#f5f8ff" },
+  info: { bar: "#0f6ce6", text: "#0b55c0", bg: "#f5f8ff" },
   // warn: falta que alguien haga algo (pendiente, lista para retiro)
   warn: { bar: "#f59e0b", text: "#b45309", bg: "#fffdf5" },
   // danger: algo salió mal (rechazada, en disputa, pago fallido)

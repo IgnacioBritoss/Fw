@@ -27,7 +27,7 @@ const s = {
   carBody: { padding: 16 },
   carTitle: { fontWeight: 700, fontSize: 15, marginBottom: 4, color: "#111827" },
   carMeta: { fontSize: 13, color: "#6b7280", marginBottom: 6 },
-  carPrice: { fontWeight: 800, fontSize: 18, color: "#2563eb" },
+  carPrice: { fontWeight: 800, fontSize: 18, color: "#0f6ce6" },
   infoBox: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 14, fontSize: 13, color: "#1e40af", lineHeight: 1.6 },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginTop: 12 },
 };

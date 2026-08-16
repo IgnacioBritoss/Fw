@@ -68,16 +68,16 @@ const s = {
   tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6", overflowX: "auto" },
   tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
   tabMobile: { padding: "8px 10px", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#2563eb", borderBottom: "3px solid #2563eb" },
+  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
   card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, display: "flex", gap: 16, border: "1px solid #f3f4f6" },
   cardMobile: { background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 10, border: "1px solid #f3f4f6" },
   carImg: { width: 100, height: 76, borderRadius: 8, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
   carImgMobile: { width: "100%", height: 140, borderRadius: 8, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
   btnRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
-  btnAccept: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  btnAccept: { padding: "7px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
   btnReject: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
   btnQR: { padding: "7px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  btnPay: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  btnPay: { padding: "7px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
   btnReady: { padding: "7px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
   empty: { textAlign: "center", padding: "60px 0", color: "#9ca3af" },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
@@ -263,7 +263,7 @@ export default function MyBookings() {
           style={{ marginBottom: 6 }}
         />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, gap: 8, flexWrap: "wrap" }}>
-          <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "#2563eb" }}>
+          <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "#0f6ce6" }}>
             ${Number(total).toLocaleString()} total
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -335,7 +335,7 @@ export default function MyBookings() {
         myRentals.length === 0 ? (
           <div style={s.empty}>
             <div style={{ fontSize: 13, marginBottom: 16 }}>{t("bookings.none")}</div>
-            <button style={{ padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
+            <button style={{ padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
           </div>
         ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)
       ) : (

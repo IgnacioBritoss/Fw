@@ -20,7 +20,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { useAuth } from "../../context/AuthContext";
 import { useListings } from "../../hooks/useListings";
 import { CATEGORIES, filterCars, priceOf, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
@@ -35,7 +34,6 @@ export default function Home() {
   const { t: tr } = useI18n();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const { user } = useAuth();
 
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("");            // "" = todas las categorías
@@ -129,11 +127,11 @@ export default function Home() {
       if (!car.lat || !car.lng) return;
       const icon = L.divIcon({
         className: "",
-        html: `<div style="width:14px;height:14px;background:#2563eb;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
+        html: `<div style="width:14px;height:14px;background:#0f6ce6;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
         iconAnchor: [7, 7],
       });
       const circle = L.circle([car.lat, car.lng], {
-        radius: 600, color: "#2563eb", fillColor: "#bfdbfe",
+        radius: 600, color: "#0f6ce6", fillColor: "#bfdbfe",
         fillOpacity: 0.18, weight: 1.5, interactive: false,
       }).addTo(map);
       const marker = L.marker([car.lat, car.lng], { icon });
@@ -146,11 +144,11 @@ export default function Home() {
           </div>
           <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">${car.brand} ${car.model} ${car.year}</div>
           <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
-          <div style="font-weight:700;font-size:15px;color:#2563eb">
+          <div style="font-weight:700;font-size:15px;color:#0f6ce6">
             $${priceOf(car).toLocaleString()}
             <span style="font-weight:400;font-size:12px;color:#6b7280">${tr("common.perDay")}</span>
           </div>
-          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">${tr("car.bookNow")}</div>
+          <div style="margin-top:8px;padding:7px;background:#0f6ce6;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">${tr("car.bookNow")}</div>
         </div>
       `));
       marker.addTo(map);
@@ -208,8 +206,6 @@ export default function Home() {
     return result;
   }, [cars]);
 
-  const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
-
   // Manda al buscador con los filtros ya puestos, para no perderlos al cambiar
   // de pantalla.
   const goToSearch = () => {
@@ -224,10 +220,23 @@ export default function Home() {
   // ─────────────────────────────────────────── Estilos
   const t = {
     content: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1320, margin: "0 auto" },
-    hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 14px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
+    /*
+      El bloque azul de arriba.
+
+      ANTES: un degradado de tres colores que arrancaba en azul noche y terminaba
+      en un azul eléctrico, con un resplandor blanco encima, esquinas de 20px y
+      adentro una píldora redonda que decía "● BUENOS DÍAS, IGNACIO". Cuatro
+      recursos apilados para decir dos cosas. El degradado además tiraba a violeta
+      en el medio, que no es el azul de la marca.
+
+      AHORA: un solo azul, plano, el mismo del resto de la app. Las esquinas casi
+      rectas (4px) para que el bloque corte y no flote como una tarjeta más. Y el
+      saludo afuera: lo que se viene a hacer acá es buscar un auto.
+    */
+    hero: { borderRadius: 4, padding: isMobile ? "22px 18px" : "40px 36px", background: "#0b55c0", color: "#fff", position: "relative", marginBottom: isMobile ? 24 : 32 },
     searchRow: isMobile
-      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 14, padding: 8, marginTop: 20 }
-      : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
+      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 4, padding: 8, marginTop: 20 }
+      : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 4, padding: "8px 8px 8px 4px", marginTop: 26, flexWrap: "wrap" },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
     // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
@@ -239,9 +248,23 @@ export default function Home() {
     searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
-    carCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 16, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
-    tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
-    reservar: { background: "#111827", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+    /*
+      La tarjeta del auto.
+
+      El redondeo baja de 16 a 6: con 16 la tarjeta, la foto, la etiqueta, las
+      dos píldoras y el botón eran todos el MISMO rectángulo de puntas redondas
+      repetido cinco veces, uno adentro del otro. Ahora el borde suave queda
+      para la tarjeta y nada más.
+    */
+    carCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 6, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
+    /*
+      Las dos fichas de datos (combustible, asientos) ya no son píldoras sueltas:
+      son dos celdas de una misma barra, separadas por una línea. Se leen como una
+      ficha técnica y no como dos etiquetas decorativas.
+    */
+    fichaFila: { display: "flex", border: "1px solid #ececec", borderRadius: 4, marginBottom: 14, overflow: "hidden" },
+    fichaCelda: { flex: 1, fontSize: 11.5, color: "#4b5563", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid #ececec" },
+    reservar: { background: "#111827", color: "#fff", border: "none", borderRadius: 4, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
     stepCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: 20 },
     banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 20 },
   };
@@ -254,8 +277,11 @@ export default function Home() {
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+        {/* La categoría va PEGADA a la esquina de la foto, no flotando a 12px de
+            los dos bordes con forma de píldora. Apoyada en la esquina se lee como
+            parte de la foto; flotando parecía un globito encima. */}
         {car.category && (
-          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{categoryLabel(tr, car.category)}</div>
+          <div style={{ position: "absolute", top: 0, left: 0, background: "rgba(17,24,39,.9)", color: "#fff", padding: "5px 11px", borderBottomRightRadius: 4, fontSize: 11, fontWeight: 600, letterSpacing: ".02em" }}>{categoryLabel(tr, car.category)}</div>
         )}
         {/* Corazón: es un botón que corta el clic, así no abre la publicación. */}
         <FavoriteButton listingId={car.id} disabled={car.isMock} />
@@ -266,10 +292,21 @@ export default function Home() {
           {car.location && `${car.location} · `}
           {car.rating > 0 && `${car.rating} ★ · `}{transmissionLabel(tr, car.transmissionCode)}
         </div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-          {car.fuelCode && <span style={t.tag}>{fuelLabel(tr, car.fuelCode)}</span>}
-          {car.seats && <span style={t.tag}>{tr("common.seats", { count: car.seats })}</span>}
-        </div>
+        {/* Ficha técnica: celdas de una misma barra, separadas por una línea. La
+            primera no lleva línea a la izquierda, que si no queda doble contra el
+            borde de la barra. */}
+        {(car.fuelCode || car.seats) && (
+          <div style={t.fichaFila}>
+            {car.fuelCode && (
+              <span style={{ ...t.fichaCelda, borderLeft: "none" }}>{fuelLabel(tr, car.fuelCode)}</span>
+            )}
+            {car.seats && (
+              <span style={{ ...t.fichaCelda, ...(car.fuelCode ? {} : { borderLeft: "none" }) }}>
+                {tr("common.seats", { count: car.seats })}
+              </span>
+            )}
+          </div>
+        )}
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
           <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("home.book")}</button>
@@ -296,7 +333,7 @@ export default function Home() {
               onClick={() => setCat(active ? "" : c.id)}
               style={{
                 background: "#fff",
-                border: active ? "1.5px solid #2563eb" : "1px solid #ececec",
+                border: active ? "1.5px solid #0f6ce6" : "1px solid #ececec",
                 borderRadius: 14, padding: "20px 18px", cursor: "pointer",
                 transition: "transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .35s ease",
                 boxShadow: active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)",
@@ -304,10 +341,10 @@ export default function Home() {
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.10)"; if (!active) e.currentTarget.style.borderColor = "#c7d2fe"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "#ececec"; }}
             >
-              <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#2563eb" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
+              <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#0f6ce6" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
               <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
-              <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#0f6ce6" : "#9ca3af", marginTop: 4 }}>
                 {min ? tr("home.from", { price: `$${min.toLocaleString()}` }) : count > 0 ? `${count}` : tr("home.noneYet")}
               </div>
             </div>
@@ -329,7 +366,7 @@ export default function Home() {
           ["04", "home.step4", "home.step4Sub"],
         ].map(([n, ti, d]) => (
           <div key={n} style={t.stepCard}>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>{n}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#0f6ce6", marginBottom: 8 }}>{n}</div>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{tr(ti)}</div>
             <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{tr(d)}</div>
           </div>
@@ -350,11 +387,9 @@ export default function Home() {
         (.fw-hero-search en theme.css), porque acá el filtro ya no la alcanza.
       */}
       <div style={t.hero} data-no-invert>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.12),transparent 60%)" }} />
-        <div style={{ position: "relative" }}>
-          <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● {tr("home.greeting", { name: firstName || tr("home.guest") }).toUpperCase()}</div>
-          <div style={{ fontSize: isMobile ? 25 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
-          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>{tr("home.subtitle")}</div>
+        <div>
+          <div style={{ fontSize: isMobile ? 27 : 42, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
+          <div style={{ fontSize: 14.5, opacity: .85, marginTop: 12 }}>{tr("home.subtitle")}</div>
 
           <div className="fw-hero-search" style={t.searchRow}>
             <div className="fw-plain-field" style={t.searchCell}>
@@ -377,7 +412,7 @@ export default function Home() {
                 que hace exactamente lo mismo y se ve mucho mejor. */}
             <button
               style={{
-                background: "#2563eb", color: "#fff", border: "none", borderRadius: 12,
+                background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4,
                 fontWeight: 700, fontSize: 14, cursor: "pointer",
                 ...(isMobile
                   ? { width: "100%", padding: "14px", marginTop: 8 }
@@ -422,8 +457,8 @@ export default function Home() {
           {[["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
             <button key={k} onClick={() => setView(k)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
-              border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
-              background: view === k ? "#2563eb" : "#fff", color: view === k ? "#fff" : "#374151",
+              border: view === k ? "2px solid #0f6ce6" : "1.5px solid #e5e7eb",
+              background: view === k ? "#0f6ce6" : "#fff", color: view === k ? "#fff" : "#374151",
             }}>{l}</button>
           ))}
         </div>

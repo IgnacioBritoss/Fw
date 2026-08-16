@@ -34,7 +34,7 @@ const styles = (isMobile) => ({
   sub: { color:"#6b7280", fontSize:14, marginBottom:24 },
   label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
   input: { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827" },
-  btn: { width:"100%", padding:13, background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
+  btn: { width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:16 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
   error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
   success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"12px 16px", color:"#1e40af", fontSize:14, marginBottom:16 },
@@ -66,7 +66,7 @@ export default function ResetPassword() {
       <div style={s.page}>
         <div style={s.card}>
           <div style={s.error}>{t("reset.badLink")}</div>
-          <Link to="/forgot-password" style={{ color:"#2563eb", fontWeight:600, fontSize:14 }}>
+          <Link to="/forgot-password" style={{ color:"#0f6ce6", fontWeight:600, fontSize:14 }}>
             {t("reset.askNewLink")}
           </Link>
         </div>
@@ -133,7 +133,7 @@ export default function ResetPassword() {
         )}
 
         <div style={s.back}>
-          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>{t("auth.backToLogin")}</Link>
+          <Link to="/login" style={{ color:"#0f6ce6", fontWeight:600 }}>{t("auth.backToLogin")}</Link>
         </div>
       </div>
     </div>

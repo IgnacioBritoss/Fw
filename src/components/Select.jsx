@@ -104,7 +104,7 @@ export default function Select({
     : {
       display: "flex", alignItems: "center", justifyContent: "space-between",
       gap: 8, width: "100%", padding: "10px 12px", background: "#fff",
-      border: `1.5px solid ${open ? "#2563eb" : "#e5e7eb"}`, borderRadius: 8,
+      border: `1.5px solid ${open ? "#0f6ce6" : "#e5e7eb"}`, borderRadius: 8,
       cursor: "pointer", textAlign: "left", fontSize: 14, color: "#111827",
       boxShadow: open ? "0 0 0 3px #eff6ff" : "none",
       transition: "border-color .15s ease, box-shadow .15s ease",
@@ -161,7 +161,7 @@ export default function Select({
                   padding: "9px 11px", borderRadius: 7, cursor: "pointer",
                   fontSize: 13.5, whiteSpace: "nowrap",
                   fontWeight: isSelected ? 700 : 500,
-                  color: isSelected ? "#1d4ed8" : "#374151",
+                  color: isSelected ? "#0b55c0" : "#374151",
                   background: isHighlighted
                     ? (isSelected ? "#dbeafe" : "#f3f4f6")
                     : (isSelected ? "#eff6ff" : "transparent"),
@@ -170,7 +170,7 @@ export default function Select({
               >
                 {option.label}
                 {isSelected && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8"
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b55c0"
                     strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <path d="M20 6L9 17l-5-5" />
                   </svg>

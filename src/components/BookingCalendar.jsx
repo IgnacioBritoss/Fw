@@ -123,7 +123,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
       <div style={s.legend}>
         <div style={s.legendItem}><div style={{ ...s.dot, background: "#111827" }} /> {tr("cal.free")}</div>
         <div style={s.legendItem}><div style={{ ...s.dot, background: "#d1d5db" }} /> {tr("cal.taken")}</div>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#2563eb" }} /> {tr("cal.chosen")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "#0f6ce6" }} /> {tr("cal.chosen")}</div>
       </div>
 
       {availError && <div style={s.warn}>{availError}</div>}
@@ -168,7 +168,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
           </div>
           <button
             disabled={!canConfirm}
-            style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "#2563eb" : "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
+            style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "#0f6ce6" : "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
             onClick={() => canConfirm && onConfirm({ start, end, days, total, commission, deposit, totalFinal: total + commission + deposit })}>
             {tr("cal.confirmBooking")}
           </button>

@@ -121,7 +121,7 @@ const s = {
     background: "#fff", border: "1px solid #e5e7eb",
     borderRadius: 14, padding: 20, marginTop: 24,
   },
-  price: { fontSize: 28, fontWeight: 800, color: "#2563eb", marginBottom: 4 },
+  price: { fontSize: 28, fontWeight: 800, color: "#0f6ce6", marginBottom: 4 },
   priceSub: { fontSize: 13, color: "#6b7280", marginBottom: 20 },
   ownerBox: {
     display: "flex", alignItems: "center", gap: 12,
@@ -130,13 +130,13 @@ const s = {
   ownerName: { fontWeight: 700, fontSize: 14, color: "#111827" },
   ownerMeta: { fontSize: 12, color: "#6b7280" },
   btn: {
-    width: "100%", padding: "14px", background: "#2563eb", color: "#fff",
+    width: "100%", padding: "14px", background: "#0f6ce6", color: "#fff",
     border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700,
     cursor: "pointer", marginBottom: 10,
   },
   chatBtn: {
     width: "100%", padding: "11px", background: "transparent",
-    border: "2px solid #2563eb", color: "#2563eb",
+    border: "2px solid #0f6ce6", color: "#0f6ce6",
     borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
   },
   chatBtnLoading: {
@@ -613,7 +613,7 @@ export default function CarDetail() {
               <img key={i} src={p} alt="" onClick={() => setCurrentPhoto(i)}
                 style={{
                   ...s.thumbnail,
-                  border: i === currentPhoto ? "2px solid #2563eb" : "2px solid transparent",
+                  border: i === currentPhoto ? "2px solid #0f6ce6" : "2px solid transparent",
                   opacity: i === currentPhoto ? 1 : 0.6,
                 }} />
             ))}

@@ -29,7 +29,7 @@ const s = {
   field: { display: "flex", flexDirection: "column", gap: 4 },
   label: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".05em", textTransform: "uppercase" },
   input: { padding: "9px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 13, outline: "none", color: "#111827" },
-  btn: { padding: "10px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  btn: { padding: "10px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" },
   item: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#fff", border: "1px solid #ececec", borderRadius: 10, padding: "10px 12px", marginBottom: 8, flexWrap: "wrap" },
   del: { background: "none", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer", padding: "5px 10px" },
   error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 12 },

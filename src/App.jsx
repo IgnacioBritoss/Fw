@@ -57,12 +57,12 @@ const NotFound = () => {
   const { t: tr } = useI18n();
   return (
   <div style={{ textAlign: "center", padding: "80px 24px" }}>
-    <div style={{ fontSize: 46, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>404</div>
+    <div style={{ fontSize: 46, fontWeight: 800, color: "#0f6ce6", marginBottom: 8 }}>404</div>
     <div style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 8 }}>{tr("nf.title")}</div>
     <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>
       {tr("nf.note")}
     </div>
-    <Link to="/" style={{ display: "inline-block", padding: "12px 26px", background: "#2563eb", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+    <Link to="/" style={{ display: "inline-block", padding: "12px 26px", background: "#0f6ce6", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
       {tr("common.goHome")}
     </Link>
   </div>

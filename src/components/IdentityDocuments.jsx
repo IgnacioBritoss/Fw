@@ -153,7 +153,7 @@ export default function IdentityDocuments({
 
       {scanned.length > 0 && (
         <div style={{
-          background: "#f8fafc", border: "1px solid #e5e7eb", borderLeft: "3px solid #2563eb",
+          background: "#f8fafc", border: "1px solid #e5e7eb", borderLeft: "3px solid #0f6ce6",
           borderRadius: 8, padding: "10px 12px",
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 6 }}>

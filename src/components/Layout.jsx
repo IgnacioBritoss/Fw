@@ -91,6 +91,26 @@ const GearIcon = ({ size = 18, color = "#374151" }) => (
   </svg>
 );
 
+/**
+ * Un botón de la barra de arriba.
+ *
+ * Vive acá afuera y no adentro de Layout a propósito: un componente declarado
+ * dentro de otro se vuelve a crear en cada dibujado, y React lo trata como un
+ * componente distinto cada vez (desmonta y vuelve a montar el botón entero).
+ *
+ * `dot` es el puntito de "hay algo sin leer".
+ */
+const TopButton = ({ style, dotStyle, onClick, title, dot = false, children }) => (
+  <button type="button" onClick={onClick} title={title} aria-label={title} style={style}
+    onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f2f4"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+    <span style={{ position: "relative", display: "flex" }}>
+      {children}
+      {dot && <span style={dotStyle} />}
+    </span>
+  </button>
+);
+
 export default function Layout({ children }) {
   const { t: tr } = useI18n();
   const { user, logout } = useAuth();
@@ -140,7 +160,31 @@ export default function Layout({ children }) {
     navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
     navItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 2, background: active ? "#111827" : "transparent", color: active ? "#fff" : "#374151", transition: "background .15s" }),
     navIcon: (active) => ({ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0, color: active ? "#fff" : "#6b7280" }),
-    iconBtn: { width: 40, height: 40, borderRadius: 10, background: "#f3f4f6", border: "1px solid #ececec", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", transition: "background .15s, border-color .15s" },
+    /*
+      Los botones de la derecha ocupan el ALTO ENTERO de la franja y se separan
+      con una línea, como las columnas de una barra de herramientas.
+
+      Antes eran tres cuadraditos de 40px con fondo gris y borde redondeado,
+      flotando en el medio de la barra: tres burbujas más, en una pantalla que ya
+      tiene burbujas por todos lados. Y al pasar el mouse se pintaban de celeste,
+      que es un color que en esta app significa "seleccionado".
+
+      Ahora no tienen fondo hasta que se los toca, y ahí se ponen un gris apenas
+      más oscuro que el blanco de la barra.
+    */
+    iconBtn: {
+      alignSelf: "stretch", width: isMobile ? 46 : 54,
+      background: "transparent", border: "none", borderLeft: "1px solid #f1f2f4",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: "pointer", padding: 0, color: "#374151",
+      transition: "background .15s",
+    },
+    /* El puntito de "hay algo sin leer", pegado al ícono y no a la esquina del
+       botón: el botón ahora es alto y la esquina queda lejos del dibujo. */
+    dot: {
+      position: "absolute", top: -3, right: -4, width: 8, height: 8,
+      borderRadius: "50%", background: "#0f6ce6", border: "2px solid #fff",
+    },
   };
 
   // Contenido del menú lateral: logo, links de navegación, tarjeta "Publicar",
@@ -158,7 +202,7 @@ export default function Layout({ children }) {
                 <span style={{ flex: 1 }}>{tr(it.label)}</span>
                 {/* Cantidad de favoritos guardados, al lado del ítem. */}
                 {it.path === "/favoritos" && favoritesCount > 0 && (
-                  <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "#eff6ff", color: isActive(it) ? "#fff" : "#2563eb" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "#eff6ff", color: isActive(it) ? "#fff" : "#0f6ce6" }}>
                     {favoritesCount}
                   </span>
                 )}
@@ -194,40 +238,27 @@ export default function Layout({ children }) {
   // Parte derecha de la barra superior: íconos de mensajes/notificaciones/
   // ajustes si hay sesión, o botones de login/registro si no la hay.
   const topbarRight = () => (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      {user ? (
+    <div style={{ display: "flex", alignItems: "stretch", alignSelf: "stretch", gap: 0 }}>
+      {user && (
         /* Mensajes (con puntito azul si hay no leídos) */
-        <div style={t.iconBtn} onClick={() => navigate("/chat")} title={tr("nav.messages")}
-          onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
-          <MessageIcon />
-          {hasUnread && (
-            <span style={{ position: "absolute", top: 7, right: 7, width: 9, height: 9, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
-          )}
-        </div>
-      ) : null}
+        <TopButton style={t.iconBtn} onClick={() => navigate("/chat")} title={tr("nav.messages")}
+          dot={hasUnread} dotStyle={t.dot}><MessageIcon /></TopButton>
+      )}
       {user && (
         /* Notificaciones */
-        <div style={t.iconBtn} onClick={() => navigate("/notificaciones")} title={tr("nav.notifications")}
-          onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
-          <BellIcon />
-          {hasUnreadNotif && (
-            <span style={{ position: "absolute", top: 7, right: 7, width: 9, height: 9, borderRadius: "50%", background: "#2563eb", border: "2px solid #fff" }} />
-          )}
-        </div>
+        <TopButton style={t.iconBtn} onClick={() => navigate("/notificaciones")} title={tr("nav.notifications")}
+          dot={hasUnreadNotif} dotStyle={t.dot}><BellIcon /></TopButton>
       )}
       {user && (
         /* Ajustes */
-        <div style={t.iconBtn} onClick={() => navigate("/ajustes")} title={tr("nav.settings")}
-          onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
+        <TopButton style={t.iconBtn} onClick={() => navigate("/ajustes")} title={tr("nav.settings")}>
           <GearIcon />
-        </div>
+        </TopButton>
       )}
       {!user && (
-        /* Sin cuenta: registrarse / iniciar sesión */
-        <>
+        /* Sin cuenta: registrarse / iniciar sesión. Van centrados y NO estirados:
+           los que ocupan el alto de la franja son los de ícono. */
+        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingRight: isMobile ? 12 : 32 }}>
           {/* En un teléfono de 390px, "Iniciar sesión" + "Registrarse" con 16px de
               padding cada uno no entran: uno se partía en dos renglones y el otro
               quedaba cortado contra el borde derecho. Textos cortos y sin envolver. */}
@@ -236,10 +267,10 @@ export default function Layout({ children }) {
             {isMobile ? tr("auth.loginShort") : tr("auth.loginBtn")}
           </button>
           <button onClick={() => navigate("/register")}
-            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
             {isMobile ? tr("auth.registerShort") : tr("auth.registerFree")}
           </button>
-        </>
+        </div>
       )}
     </div>
   );
@@ -290,10 +321,14 @@ export default function Layout({ children }) {
       )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* La franja tiene ALTO PROPIO en vez de sacarlo del relleno vertical: es
+            lo que les permite a los botones de la derecha ocupar el alto entero.
+            El relleno vertical se va a 0 y queda solo el horizontal. */}
         <div style={{
           display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "#fff",
           borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
-          padding: isMobile ? "12px 12px" : "14px 32px",
+          height: isMobile ? 56 : 66,
+          padding: isMobile ? "0 0 0 12px" : "0 0 0 32px",
         }}>
           {/* Las tres barritas se convierten en una X: la de arriba y la de abajo
               rotan hasta cruzarse y la del medio se desvanece. Antes cambiaban de

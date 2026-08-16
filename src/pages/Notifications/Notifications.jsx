@@ -154,7 +154,7 @@ export default function Notifications() {
     tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "#fff" : "#9ca3af" }),
     groupLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 4px 10px" },
     row: (read) => ({ display: "flex", alignItems: "center", gap: 14, background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: "16px 18px", marginBottom: 10, cursor: "pointer", transition: "border-color .15s, box-shadow .15s", boxShadow: read ? "none" : "0 1px 0 rgba(0,0,0,0)" }),
-    dot: { width: 8, height: 8, borderRadius: "50%", background: "#2563eb", flexShrink: 0 },
+    dot: { width: 8, height: 8, borderRadius: "50%", background: "#0f6ce6", flexShrink: 0 },
     dotGap: { width: 8, flexShrink: 0 },
   };
 

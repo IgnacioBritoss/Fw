@@ -32,7 +32,7 @@ const s = {
   tokenDisplay: { background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#111827", marginBottom: 12, wordBreak: "break-all" },
   tokenLabel: { fontSize: 12, color: "#9ca3af", marginBottom: 6 },
   input: { width: "100%", padding: "12px 16px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 },
-  btn: { width: "100%", padding: "14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
+  btn: { width: "100%", padding: "14px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   btnDisabled: { width: "100%", padding: "14px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
   successIcon: { width: 72, height: 72, borderRadius: "50%", background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 12, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
@@ -115,19 +115,19 @@ export default function QRFlow() {
     <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
       {error || tr("qr.notFound")}
       <br />
-      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>{tr("nav.bookings")}</button>
+      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>{tr("nav.bookings")}</button>
     </div>
   );
 
   if (confirmed) {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
-        <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+        <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         <div style={s.title}>{tr(mode === "pickup" ? "qr.pickupDone" : "qr.returnDone")}</div>
         <div style={s.sub}>
           {tr(mode === "pickup" ? "qr.pickupDoneNote" : "qr.returnDoneNote")}
         </div>
-        <button style={{ padding: "12px 28px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
+        <button style={{ padding: "12px 28px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function QRFlow() {
 
       <div style={s.tabRow}>
         {[["pickup", "qr.pickup"], ["return", "qr.return"]].map(([k, l]) => (
-          <button key={k} style={{ ...s.tab, background: mode === k ? "#fff" : "transparent", color: mode === k ? "#2563eb" : "#6b7280", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
+          <button key={k} style={{ ...s.tab, background: mode === k ? "#fff" : "transparent", color: mode === k ? "#0f6ce6" : "#6b7280", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
             onClick={() => { setMode(k); setError(null); setTokenInput(""); }}>{tr(l)}</button>
         ))}
       </div>
@@ -193,7 +193,7 @@ export default function QRFlow() {
 
       {!iConfirm && error && <div style={s.errorBox}>{error}</div>}
 
-      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#2563eb", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#0f6ce6", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
         {tr("qr.refresh")}
       </button>
       <br />

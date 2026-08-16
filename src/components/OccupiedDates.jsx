@@ -75,7 +75,7 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
       marginTop: 14,
       background: "#f8fafc",
       border: "1px solid #e5e7eb",
-      borderLeft: "3px solid #2563eb",
+      borderLeft: "3px solid #0f6ce6",
       borderRadius: 10,
       padding: isMobile ? "11px 13px" : "12px 14px",
     }}>
@@ -83,7 +83,7 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
         display: "flex", alignItems: "center", gap: 7,
         fontSize: 12.5, fontWeight: 700, color: "#111827", marginBottom: 8,
       }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb"
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="5" width="18" height="16" rx="2" />
           <path d="M8 3v4M16 3v4M3 11h18" />
