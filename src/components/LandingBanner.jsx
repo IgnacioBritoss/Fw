@@ -81,7 +81,22 @@ export default function LandingBanner() {
         rel="noreferrer"
         onMouseEnter={() => setEncima(true)}
         onMouseLeave={() => setEncima(false)}
-        style={{ ...aTodoElAncho, position: "relative", lineHeight: 0 }}
+        style={{
+          ...aTodoElAncho, position: "relative", lineHeight: 0,
+          /*
+            `containerType: inline-size` convierte a este enlace en la unidad de
+            medida de lo que tiene adentro: las unidades `cqw` de abajo son
+            porcentajes de SU ancho.
+
+            Es lo que hace que el texto y el cursor queden siempre en el mismo
+            lugar del dibujo, sea en un monitor de 27 pulgadas o en un teléfono.
+            Con tamaños en píxeles, el texto que en la computadora entra en tres
+            renglones sobre el fondo azul, en el teléfono le pasa por encima al
+            auto; y con `vw` se mediría la ventana entera, que no es lo mismo que
+            el ancho de la franja porque a la izquierda está el menú.
+          */
+          containerType: "inline-size",
+        }}
       >
         <img
           src={IMAGEN}
@@ -100,6 +115,65 @@ export default function LandingBanner() {
             transition: "filter .2s ease",
           }}
         />
+
+        {/*
+          LA FRASE, a la izquierda del auto.
+
+          Va como texto y no dentro de la imagen justamente para que cambie con
+          el idioma: metida en el JPG habría que dibujar cinco propagandas, una
+          por idioma, y volver a dibujarlas todas cada vez que se corrija una
+          coma.
+
+          La tipografía es una serif en itálica, que es la de la propaganda y NO
+          la del resto de la aplicación. Es a propósito y es la única excepción:
+          la frase tiene que leerse como parte del aviso, no como un texto de la
+          app apoyado encima. Georgia está en Windows, en Mac, en Android y en
+          iOS, así que se ve igual en todos lados sin descargar nada.
+        */}
+        <span style={{
+          position: "absolute", left: "5%", top: "50%",
+          transform: "translateY(-50%)",
+          width: "21%",
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontStyle: "italic", fontWeight: 700,
+          fontSize: "3.7cqw", lineHeight: 1.08,
+          color: "#f4efe2",
+          // Una sombra apenas: abajo del texto el fondo pintado tiene manchas
+          // claras y oscuras, y sobre las claras la letra crema se pierde.
+          textShadow: "0 1px 10px rgba(0,0,0,.45)",
+          letterSpacing: "-.01em",
+        }}>
+          {tr("home.adOverlay")}
+        </span>
+
+        {/*
+          EL CURSOR haciendo clic, al lado de FREEWHEEL.
+
+          Dice "esto se toca" sin una palabra, así que no hay que traducirlo ni
+          hay que meterle otro texto encima al aviso. Los keyframes están en
+          theme.css (fw-ad-pulsa y fw-ad-onda) y se apagan enteros con la
+          preferencia de "menos movimiento".
+        */}
+        <span aria-hidden="true" style={{
+          position: "absolute", right: "13%", bottom: "12%",
+          width: "5.2cqw", height: "5.2cqw",
+          display: "block", pointerEvents: "none",
+        }}>
+          {/* La onda sale desde la PUNTA de la flecha, no desde el centro del
+              recuadro: es donde caería el clic de verdad. */}
+          <span className="fw-ad-onda" style={{
+            position: "absolute", left: "-52%", top: "-52%",
+            width: "204%", height: "204%", borderRadius: "50%",
+            border: "0.35cqw solid rgba(255,255,255,.9)",
+          }} />
+          <svg className="fw-ad-pulsa" viewBox="0 0 24 24"
+            style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}>
+            <path
+              d="M5.5 3.2 L18.3 12.4 L12.2 13.1 L15 19.6 L12.1 20.9 L9.3 14.4 L5.5 18.7 Z"
+              fill="#fff" stroke="#0b1220" strokeWidth="1.1" strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </a>
     );
   }

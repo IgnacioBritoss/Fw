@@ -52,6 +52,7 @@ export default {
   "home.landingAria": "Go to the Freewheel presentation page",
   "home.adTitle": "Freewheel, told in one page",
   "home.adCta": "See the presentation",
+  "home.adOverlay": "The car you are looking for is here",
   "home.from": "From {price}",
   "home.noneYet": "No cars yet",
   "home.available": "Available cars",

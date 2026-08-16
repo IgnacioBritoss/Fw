@@ -432,3 +432,42 @@ html.fw-dark .fw-hero-search [role="option"] {
   .fw-ad-luz,
   .fw-ad-auto { animation: none; }
 }
+
+/* ============================================================================
+   El cursor que hace clic sobre la propaganda (components/LandingBanner.jsx)
+   ----------------------------------------------------------------------------
+   La imagen de la propaganda no dice en ninguna parte que se pueda tocar. Un
+   cursor dibujado, haciendo clic solo cada dos segundos y medio, lo dice sin
+   texto y sin depender del idioma.
+
+   Son dos partes sincronizadas: la flecha se hunde un momento (fw-ad-pulsa) y
+   justo ahí sale una onda desde la punta (fw-ad-onda). Las dos duran lo mismo y
+   arrancan juntas, así el golpe y la onda caen en el mismo instante; con dos
+   duraciones distintas se desfasarían al rato y se vería la onda saliendo de la
+   nada.
+
+   Casi todo el ciclo es quietud: el clic ocupa apenas el 15% del tiempo. Un
+   cursor golpeando sin parar se lee como un cartel que titila, que es lo que
+   uno aprende a ignorar.
+   ========================================================================== */
+@keyframes fw-ad-pulsa {
+  0%, 60%, 80%, 100% { transform: translate3d(0, 0, 0); }
+  68%, 74%           { transform: translate3d(1.5%, 2.5%, 0) scale(.9); }
+}
+
+@keyframes fw-ad-onda {
+  0%, 62%  { transform: scale(.2); opacity: 0; }
+  70%      { transform: scale(.6); opacity: .85; }
+  100%     { transform: scale(2.1); opacity: 0; }
+}
+
+.fw-ad-pulsa { animation: fw-ad-pulsa 2.6s ease-in-out infinite; }
+.fw-ad-onda  { animation: fw-ad-onda 2.6s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-ad-pulsa,
+  .fw-ad-onda { animation: none; }
+  /* Sin animación la onda no tiene sentido: sería un círculo fijo alrededor del
+     cursor. Se esconde y queda solo la flecha, que ya se entiende. */
+  .fw-ad-onda { display: none; }
+}

@@ -51,6 +51,7 @@ export default {
   "home.landingAria": "Ir para a página de apresentação da Freewheel",
   "home.adTitle": "A Freewheel, contada em uma página",
   "home.adCta": "Ver a apresentação",
+  "home.adOverlay": "O carro que você procura está aqui",
   "home.from": "A partir de {price}",
   "home.noneYet": "Sem carros por enquanto",
   "home.available": "Carros disponíveis",

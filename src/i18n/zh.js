@@ -55,6 +55,7 @@ export default {
   "home.landingAria": "前往 Freewheel 项目介绍页",
   "home.adTitle": "一个页面，讲完 Freewheel",
   "home.adCta": "查看介绍",
+  "home.adOverlay": "你要找的那辆车就在这里",
   "home.from": "{price} 起",
   "home.noneYet": "暂无车辆",
   "home.available": "可预订车辆",
