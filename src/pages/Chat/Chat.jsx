@@ -494,7 +494,16 @@ export default function Chat() {
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder={tr("chat.phMessage")}
           enterKeyHint="send"
-          style={{ flex: 1, padding: isMobile ? "10px 16px" : "10px 18px", borderRadius: 24, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "#111827", background: "#f9fafb" }}
+          /*
+            `minWidth: 0` es lo que evita que la barra se desborde.
+
+            Un elemento flexible NO se achica por debajo del ancho de su
+            contenido salvo que se le diga: con el texto de ejemplo adentro, este
+            campo se negaba a encogerse y empujaba a los botones hacia afuera. Por
+            eso la barra se veía corrida a la derecha y el avioncito de enviar
+            quedaba cortado contra el borde de la pantalla.
+          */
+          style={{ flex: 1, minWidth: 0, padding: isMobile ? "10px 14px" : "10px 18px", borderRadius: 20, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "#111827", background: "#f9fafb" }}
         />
         <button onClick={startRecording} title="Grabar audio"
           style={{ width: 38, height: 38, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -506,7 +515,7 @@ export default function Chat() {
           </svg>
         </button>
         <button onClick={handleSend} disabled={sending || !text.trim()}
-          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "linear-gradient(135deg,#0f6ce6,#0b55c0)" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
+          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "#0f6ce6" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M22 2L11 13" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

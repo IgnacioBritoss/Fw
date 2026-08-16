@@ -16,6 +16,15 @@
 //     completadas.
 //   · El aviso de cuenta sin verificar, que es el motivo por el que publicar
 //     puede fallar con un error del servidor.
+//
+//  DISEÑO — la pantalla era una pila de globos
+//  Tres tarjetas flotando con sombra para tres números, pestañas sueltas, las
+//  publicaciones en tarjetas de 12px de redondeo y los estados en píldoras de
+//  20px: seis formas redondeadas distintas para una pantalla que es una lista.
+//  Ahora los números son una franja de celdas separadas por líneas —igual que la
+//  ficha técnica de la tarjeta del auto—, las pestañas son celdas de otra franja
+//  —igual que en notificaciones y en el buscador—, y el historial es UNA caja con
+//  renglones. Nada de sombras: una línea de 1px alcanza para separar.
 // ============================================================================
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -40,31 +49,58 @@ const STATUS_KEYS = {
   RETURN_PENDING: "status.RETURN_PENDING", COMPLETED: "status.COMPLETED", DISPUTED: "status.DISPUTED",
 };
 
+// El gris de todas las líneas y bordes de la pantalla: el mismo que usan la home,
+// el buscador y las notificaciones. Un solo tono para no tener tres grises casi
+// iguales conviviendo.
+const LINEA = "#ececec";
+
 const s = {
   page: { maxWidth: 960, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, gap: 12, flexWrap: "wrap" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 12, flexWrap: "wrap" },
   title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
   titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
   sub: { color: "#6b7280", fontSize: 14, marginTop: 2 },
-  btn: { padding: "10px 20px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
-  tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6", overflowX: "auto" },
-  tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
-  statsRow: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 28 },
-  stat: { background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.06)", textAlign: "center", border: "1px solid #f3f4f6" },
-  statNum: { fontSize: 26, fontWeight: 800, color: "#0f6ce6" },
-  statLabel: { fontSize: 12.5, color: "#6b7280", marginTop: 4 },
-  card: { background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
-  badge: { display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 },
-  active: { background: "#dbeafe", color: "#1e40af" },
-  paused: { background: "#fef9c3", color: "#854d0e" },
-  linkBtn: { background: "none", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "7px 14px" },
-  accept: { padding: "8px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  reject: { padding: "8px 18px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 13, cursor: "pointer" },
-  empty: { textAlign: "center", padding: "40px 0", color: "#9ca3af" },
-  warn: { background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "14px 16px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
-  error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+  btn: { padding: "10px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+
+  /*
+    LOS TRES NÚMEROS, EN UNA FRANJA.
+
+    Eran tres tarjetas con sombra separadas por 14px de aire. Tres cosas que se
+    leen juntas —autos, solicitudes, ganancias— no necesitan tres cajas: son las
+    celdas de una misma barra, separadas por una línea. Es exactamente el mismo
+    recurso que la ficha técnica de la tarjeta del auto.
+  */
+  franja: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden", marginBottom: 18 },
+  franjaCelda: { flex: 1, minWidth: 0, padding: "14px 16px", borderLeft: `1px solid ${LINEA}`, textAlign: "center" },
+  statNum: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" },
+  statLabel: { fontSize: 11, color: "#9ca3af", marginTop: 3, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" },
+
+  // Las pestañas, otra franja de celdas. La activa se marca con una barra abajo.
+  tabs: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
+  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: `1px solid #f1f2f4`, background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabActive: { color: "#0f6ce6", borderBottom: "2px solid #0f6ce6" },
+
+  card: { background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 6, padding: 16, marginBottom: 12 },
+  // El estado de la publicación: un rectángulo con una línea, no una píldora de
+  // 20px de redondeo con fondo de color.
+  badge: { display: "inline-block", padding: "4px 9px", borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", border: "1px solid" },
+  active: { background: "#f0f6ff", color: "#0b55c0", borderColor: "#cfe0fb" },
+  paused: { background: "#fffbeb", color: "#92400e", borderColor: "#fde68a" },
+  linkBtn: { background: "#fff", border: `1px solid ${LINEA}`, color: "#374151", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "8px 14px" },
+  accept: { padding: "8px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  reject: { padding: "8px 18px", background: "#fff", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  empty: { textAlign: "center", padding: "36px 20px", color: "#9ca3af", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, fontSize: 13 },
+  warn: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 4, padding: "13px 16px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
+  error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+
+  // El historial es una lista, así que va como UNA caja con renglones separados
+  // por una línea, igual que la bandeja de notificaciones.
+  lista: { background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden" },
+  fila: (primera) => ({
+    display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+    padding: "14px 16px", borderTop: primera ? "none" : "1px solid #f1f2f4", flexWrap: "wrap",
+  }),
 };
 
 export default function Dashboard() {
@@ -172,31 +208,36 @@ export default function Dashboard() {
           </div>
           <div style={s.sub}>{tr("dash.subtitle")}</div>
         </div>
-        <button style={s.btn} onClick={() => navigate("/publish")}>+ Publicar</button>
+        {/* El texto del botón estaba escrito en castellano acá adentro: con la
+            app en inglés o en chino seguía diciendo "Publicar". */}
+        <button style={s.btn} onClick={() => navigate("/publish")}>+ {tr("dash.publishBtn")}</button>
       </div>
 
       {/* Sin cuenta verificada el backend rechaza publicar: se avisa antes. */}
       {!isVerified && (
         <div style={s.warn}>
-          <div style={{ fontSize: 13, color: "#9a3412" }}>
-            Tu cuenta todavía no está verificada. Para publicar un auto o aceptar
-            reservas necesitás verificar tu identidad.
+          <div style={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+            {tr("dash.notVerified")}
           </div>
-          <button style={{ ...s.btn, background: "#ea580c" }} onClick={() => navigate("/kyc")}>Verificar ahora</button>
+          <button style={{ ...s.btn, background: "#111827" }} onClick={() => navigate("/kyc")}>
+            {tr("profile.verifyNow")}
+          </button>
         </div>
       )}
 
       {error && <div style={s.error}>{error}</div>}
 
-      <div style={s.statsRow}>
+      {/* Los tres números, en celdas de una misma franja. La primera no lleva
+          línea a la izquierda: quedaría doble contra el borde de la caja. */}
+      <div style={s.franja}>
         {[
           [loadingCars ? "..." : myCars.length, tr("dash.publishedCars")],
           [loadingBookings ? "..." : requests.length, tr("dash.requests")],
           [loadingBookings ? "..." : `$${earnings.toLocaleString()}`, tr("dash.earnings")],
-        ].map(([num, label]) => (
-          <div key={label} style={s.stat}>
-            <div style={{ ...s.statNum, fontSize: isMobile ? 19 : 26 }}>{num}</div>
-            <div style={s.statLabel}>{label}</div>
+        ].map(([num, label], i) => (
+          <div key={label} style={{ ...s.franjaCelda, ...(i === 0 ? { borderLeft: "none" } : {}) }}>
+            <div style={{ ...s.statNum, fontSize: isMobile ? 18 : 24 }}>{num}</div>
+            <div style={{ ...s.statLabel, fontSize: isMobile ? 10 : 11 }}>{label}</div>
           </div>
         ))}
       </div>
@@ -206,8 +247,10 @@ export default function Dashboard() {
           ["autos", `${tr("dash.myCars")} (${myCars.length})`],
           ["solicitudes", `${tr("dash.requests")} (${requests.length})`],
           ["historial", tr("dash.history")],
-        ].map(([k, l]) => (
-          <button key={k} style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
+        ].map(([k, l], i) => (
+          <button key={k}
+            style={{ ...s.tab, ...(tab === k ? s.tabActive : {}), ...(i === 0 ? { borderLeft: "none" } : {}) }}
+            onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
 
@@ -217,13 +260,13 @@ export default function Dashboard() {
           <Spinner block label={tr("common.loading")} />
         ) : myCars.length === 0 ? (
           <div style={s.empty}>
-            <div style={{ fontSize: 13, marginBottom: 16 }}>{tr("dash.noCars")}.</div>
+            <div style={{ marginBottom: 16 }}>{tr("dash.noCars")}</div>
             <button style={s.btn} onClick={() => navigate("/publish")}>{tr("dash.publishFirst")}</button>
           </div>
         ) : myCars.map(car => (
           <div key={car.id} style={s.card}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ width: 74, height: 56, borderRadius: 8, overflow: "hidden", background: "#f3f4f6", flexShrink: 0 }}>
+              <div style={{ width: 74, height: 56, borderRadius: 4, overflow: "hidden", background: "#f3f4f6", flexShrink: 0 }}>
                 {car.photos?.length > 0
                   ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 10 }}>{tr("common.noPhoto")}</div>}
@@ -295,22 +338,28 @@ export default function Dashboard() {
           <Spinner block label={tr("common.loading")} />
         ) : ownerBookings.length === 0 ? (
           <div style={s.empty}>{tr("dash.noHistory")}</div>
-        ) : ownerBookings.map(b => (
-          <div key={b.id} style={{ ...s.card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 14.5, color: "#111827" }}>{vehicleLabel(b)}</div>
-              <div style={{ fontSize: 12.5, color: "#6b7280" }}>
-                {personName(b.renter)} · {dateRange(b)}
+        ) : (
+          // Una sola caja con renglones: el historial es una lista, no una pila
+          // de tarjetas separadas por aire.
+          <div style={s.lista}>
+            {ownerBookings.map((b, i) => (
+              <div key={b.id} style={s.fila(i === 0)}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14.5, color: "#111827" }}>{vehicleLabel(b)}</div>
+                  <div style={{ fontSize: 12.5, color: "#6b7280" }}>
+                    {personName(b.renter)} · {dateRange(b)}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
+                    ${Number(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0).toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
-                ${Number(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0).toLocaleString()}
-              </div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
-            </div>
+            ))}
           </div>
-        ))
+        )
       )}
     </div>
   );

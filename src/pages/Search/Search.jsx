@@ -124,6 +124,11 @@ export default function Search() {
   const [trans, setTrans] = useState("");
   const [fuel, setFuel] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  // Lo que se VE en el campo de precio (con separadores de miles). El filtro que
+  // viaja al backend es `maxPrice`, que son solo los dígitos y se actualiza un
+  // rato después de dejar de escribir.
+  const [precioTexto, setPrecioTexto] = useState("");
+  const precioTimer = useRef(null);
 
   const [showMap, setShowMap] = useState(true);
   const [hovered, setHovered] = useState(null);
@@ -262,15 +267,40 @@ export default function Search() {
       background: "#fff", border: "1px solid #ececec", borderRadius: 4,
       marginBottom: 18,
     },
+    /*
+      Cada celda pide el ancho que necesita en vez de repartirlo en partes
+      iguales: los desplegables ocupan lo que mide su texto (`flexShrink: 0`) y
+      los dos campos donde se escribe se llevan lo que sobra. Antes el último
+      campo se cortaba —"Precio máx. por dí..."— porque todos se apretaban igual.
+    */
     filtroCelda: {
-      display: "flex", alignItems: "center", padding: "12px 16px",
-      borderLeft: "1px solid #f1f2f4", boxSizing: "border-box",
+      display: "flex", alignItems: "center", padding: "12px 14px",
+      borderLeft: "1px solid #f1f2f4", boxSizing: "border-box", flexShrink: 0,
     },
     barCell: isMobile
-      ? { width: "100%", paddingBottom: 6, marginBottom: 6, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
+      ? { width: "100%", marginBottom: 10, boxSizing: "border-box" }
       : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
-    barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 3 },
-    barInput: { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: isMobile ? "100%" : 140, boxSizing: "border-box" },
+    barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: isMobile ? 5 : 3 },
+    /*
+      EN EL TELÉFONO los campos se ven como campos.
+
+      En escritorio alcanza con una línea abajo: los cuatro están uno al lado del
+      otro, separados por líneas verticales, y se entiende que es una barra de
+      búsqueda. Apilados en un teléfono esa misma línea fina no dice nada —parecen
+      textos sueltos— y la flecha del desplegable quedaba colgada contra el borde
+      derecho de la pantalla, lejos del valor que despliega.
+
+      Con una caja gris clara alrededor, cada uno se lee como algo que se toca, y
+      la flecha pasa a ser el borde derecho DE SU CAJA en vez de un signo suelto.
+    */
+    barInput: isMobile
+      ? { fontSize: 15, fontWeight: 600, color: "#111827", border: "1px solid #e5e7eb", borderRadius: 4, outline: "none", background: "#f9fafb", padding: "10px 12px", width: "100%", boxSizing: "border-box" }
+      : { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: 140, boxSizing: "border-box" },
+    // La misma caja para el desplegable de categoría, así los cuatro controles de
+    // la barra se ven iguales entre sí.
+    barSelect: isMobile
+      ? { border: "1px solid #e5e7eb", borderRadius: 4, background: "#f9fafb", padding: "10px 12px" }
+      : null,
     card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
     ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
@@ -343,7 +373,23 @@ export default function Search() {
   */
   const clearAll = () => {
     setTrans(""); setFuel(""); setSearch(""); setWhere("");
-    setCategory(""); setMaxPrice(""); setPickup(""); setDropoff("");
+    setCategory(""); setPickup(""); setDropoff("");
+    setMaxPrice(""); setPrecioTexto("");
+    clearTimeout(precioTimer.current);
+  };
+
+  /**
+   * Al escribir en el precio: se muestra formateado en el momento y el filtro
+   * de verdad se actualiza recién cuando se deja de escribir.
+   *
+   * La espera no es un adorno: sin ella cada tecla dispara una búsqueda al
+   * servidor —cinco para escribir "39000"— y todas compiten entre sí.
+   */
+  const alEscribirPrecio = (texto) => {
+    const digitos = texto.replace(/\D/g, "").slice(0, 9);
+    setPrecioTexto(digitos ? Number(digitos).toLocaleString() : "");
+    clearTimeout(precioTimer.current);
+    precioTimer.current = setTimeout(() => setMaxPrice(digitos), 350);
   };
 
   return (
@@ -370,12 +416,14 @@ export default function Search() {
           {/* Desplegable propio: el <select> nativo abre la lista que dibuja el
               sistema operativo, y en Windows eso se veía como un menú cuadrado
               con el celeste del sistema, sin nada del diseño de la página. */}
-          <Select
-            plain
-            value={category}
-            onChange={setCategory}
-            options={[{ value: "", label: tr("cat.all") }, ...CATEGORIES.map(c => ({ value: c.id, label: tr(c.key) }))]}
-          />
+          <div style={st.barSelect || undefined}>
+            <Select
+              plain
+              value={category}
+              onChange={setCategory}
+              options={[{ value: "", label: tr("cat.all") }, ...CATEGORIES.map(c => ({ value: c.id, label: tr(c.key) }))]}
+            />
+          </div>
         </div>
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
@@ -424,7 +472,7 @@ export default function Search() {
         hacia abajo.
       */}
       <div style={st.filtros}>
-        <div style={{ ...st.filtroCelda, flex: 1, minWidth: 190, borderLeft: "none" }}>
+        <div style={{ ...st.filtroCelda, flex: "2 1 190px", minWidth: 150, borderLeft: "none" }}>
           <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
             style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: "#111827" }} />
         </div>
@@ -435,9 +483,24 @@ export default function Search() {
           options={TRANSMISSION_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setTrans} />
         <Dropdown label={tr("search.fuel")} value={fuel} active={Boolean(fuel)} celda={st.filtroCelda}
           options={FUEL_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setFuel} />
-        <div style={{ ...st.filtroCelda, width: 150 }}>
-          <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: maxPrice ? "#0f6ce6" : "#111827", fontWeight: maxPrice ? 700 : 400 }} />
+        <div style={{ ...st.filtroCelda, flex: "1 1 150px", minWidth: 130 }}>
+          {/*
+            El precio máximo NO es type="number".
+
+            Con type="number" el navegador dibuja las dos flechitas de subir y
+            bajar, que en un campo de precio no sirven para nada (¿de a cuánto
+            sube, de a uno?), se comen ancho y en el teléfono son imposibles de
+            acertar. Y además impide mostrar el número con separadores de miles:
+            "39000" se lee mal, "39,000" se lee de un vistazo.
+
+            Entonces: campo de texto, teclado numérico en el celular
+            (inputMode) y formateo con la MISMA función que muestra los precios
+            en las tarjetas, así el campo y los resultados nunca se escriben
+            distinto.
+          */}
+          <input type="text" inputMode="numeric" placeholder={tr("search.maxPrice")}
+            value={precioTexto} onChange={e => alEscribirPrecio(e.target.value)}
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: precioTexto ? "#0f6ce6" : "#111827", fontWeight: precioTexto ? 700 : 400 }} />
         </div>
         {anyFilter && (
           <button type="button" onClick={clearAll}

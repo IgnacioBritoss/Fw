@@ -59,29 +59,42 @@ const PAYMENT_LABELS = {
   PARTIALLY_REFUNDED: "payment.PARTIALLY_REFUNDED", FAILED: "payment.FAILED",
 };
 
+/*
+  DISEÑO — el mismo criterio que el panel del dueño y la home.
+
+  Cada reserva era una tarjeta con sombra y 12px de redondeo, adentro una foto
+  redondeada de 8, adentro botones redondeados de 8 y un cartel redondeado de 8:
+  cuatro rectángulos de puntas redondas metidos uno adentro del otro. Ahora la
+  tarjeta se apoya en una línea de 1px, la foto y los botones bajan a 4, y las
+  pestañas pasan a ser celdas de una franja como en notificaciones.
+*/
+const LINEA = "#ececec";
+
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
   title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
   titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  sub: { color: "#6b7280", fontSize: 14, marginBottom: 28 },
-  tabs: { display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6", overflowX: "auto" },
-  tab: { padding: "10px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
-  tabMobile: { padding: "8px 10px", fontSize: 12, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
-  card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, display: "flex", gap: 16, border: "1px solid #f3f4f6" },
-  cardMobile: { background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 10, border: "1px solid #f3f4f6" },
-  carImg: { width: 100, height: 76, borderRadius: 8, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
-  carImgMobile: { width: "100%", height: 140, borderRadius: 8, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
+  sub: { color: "#6b7280", fontSize: 14, marginBottom: 20 },
+  tabs: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
+  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabMobile: { flex: 1, padding: "11px 8px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabActive: { color: "#0f6ce6", borderBottom: "2px solid #0f6ce6" },
+  card: { background: "#fff", borderRadius: 6, padding: 16, marginBottom: 12, display: "flex", gap: 16, border: `1px solid ${LINEA}` },
+  cardMobile: { background: "#fff", borderRadius: 6, padding: 14, marginBottom: 10, border: `1px solid ${LINEA}` },
+  carImg: { width: 100, height: 76, borderRadius: 4, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  carImgMobile: { width: "100%", height: 140, borderRadius: 4, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
   btnRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
-  btnAccept: { padding: "7px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  btnReject: { padding: "7px 16px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer" },
-  btnQR: { padding: "7px 16px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  btnPay: { padding: "7px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  btnReady: { padding: "7px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  empty: { textAlign: "center", padding: "60px 0", color: "#9ca3af" },
-  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
-  nextStep: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 12px", fontSize: 12.5, color: "#1e40af", marginTop: 10 },
+  btnAccept: { padding: "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnReject: { padding: "8px 16px", background: "#fff", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnQR: { padding: "8px 16px", background: "#0a7d5a", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnPay: { padding: "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnReady: { padding: "8px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  empty: { textAlign: "center", padding: "36px 20px", color: "#9ca3af", fontSize: 13, background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4 },
+  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+  // El paso siguiente no es un aviso de color: es una nota al pie de la reserva,
+  // separada por una línea igual que el precio en la tarjeta del auto.
+  nextStep: { borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10, fontSize: 12.5, color: "#0b55c0", display: "flex", alignItems: "flex-start", gap: 7 },
 };
 
 // Datos del auto de una reserva (tolerando las distintas formas del dato).
@@ -262,9 +275,12 @@ export default function MyBookings() {
           compact
           style={{ marginBottom: 6 }}
         />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, gap: 8, flexWrap: "wrap" }}>
-          <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "#0f6ce6" }}>
-            ${Number(total).toLocaleString()} total
+        {/* El precio y los estados, separados del resto por una línea: es el mismo
+            renglón de cierre que tiene la tarjeta del auto en la home. La palabra
+            "total" estaba escrita a mano acá adentro y no se traducía. */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10 }}>
+          <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "#111827" }}>
+            ${Number(total).toLocaleString()} <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>{t("common.total")}</span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (
@@ -276,7 +292,12 @@ export default function MyBookings() {
           </div>
         </div>
         {/* Guía del paso siguiente para cada rol. */}
-        {nextStepFor(b, isOwner) && <div style={s.nextStep}>{t(nextStepFor(b, isOwner))}</div>}
+        {nextStepFor(b, isOwner) && (
+          <div style={s.nextStep}>
+            <span style={{ color: "#9ca3af", flexShrink: 0 }}>→</span>
+            <span>{t(nextStepFor(b, isOwner))}</span>
+          </div>
+        )}
         {reviewingId === b.id ? (
           <ReviewForm
             isOwner={isOwner}
@@ -325,8 +346,10 @@ export default function MyBookings() {
         {[
           ["mis-reservas", `${t(isMobile ? "bookings.tabRentalsShort" : "bookings.tabRentals")} (${myRentals.length})`],
           ["solicitudes", `${t(isMobile ? "bookings.tabRequestsShort" : "bookings.tabRequests")} (${myOwnerBookings.length})`],
-        ].map(([k, l]) => (
-          <button key={k} style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}) }} onClick={() => setTab(k)}>{l}</button>
+        ].map(([k, l], i) => (
+          <button key={k}
+            style={{ ...(isMobile ? s.tabMobile : s.tab), ...(tab === k ? s.tabActive : {}), ...(i === 0 ? { borderLeft: "none" } : {}) }}
+            onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
       {loading ? (
@@ -334,8 +357,8 @@ export default function MyBookings() {
       ) : tab === "mis-reservas" ? (
         myRentals.length === 0 ? (
           <div style={s.empty}>
-            <div style={{ fontSize: 13, marginBottom: 16 }}>{t("bookings.none")}</div>
-            <button style={{ padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
+            <div style={{ marginBottom: 16 }}>{t("bookings.none")}</div>
+            <button style={{ padding: "10px 22px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 14 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
           </div>
         ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)
       ) : (

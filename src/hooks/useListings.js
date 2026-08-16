@@ -20,7 +20,7 @@
 //  externas). Ahora un error es un error: se avisa y no se inventan autos. Los de
 //  ejemplo quedan solo para la app recién estrenada, con la base realmente vacía.
 // ============================================================================
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
 import { getListings } from "../services/api";
 import { itemsOf, normalizeListing } from "../services/listings";
@@ -40,12 +40,32 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
   // cambian de contenido, y no en cada render por ser un objeto nuevo.
   const filtersKey = JSON.stringify(filters);
 
+  /*
+    NÚMERO DE PEDIDO: solo manda el último.
+
+    Escribir "39000" en el precio máximo dispara cinco búsquedas —3, 39, 390,
+    3900, 39000— y borrarlo dispara otras cinco. Las respuestas no vuelven
+    necesariamente en orden: alcanza con que la de "3" tarde un poco más para que
+    llegue DESPUÉS de la de "39000" y pise la pantalla con su resultado. Ahí se
+    veía "0 autos" con 39000 escrito, y al borrar el campo tampoco volvían: otra
+    respuesta vieja ganaba la carrera.
+
+    Cada llamada se lleva su número. Cuando termina, si ya salió otra después, su
+    resultado se descarta: no se toca ni la lista ni el "cargando".
+  */
+  const ultimoPedido = useRef(0);
+
   const load = useCallback(async () => {
+    const miPedido = ultimoPedido.current + 1;
+    ultimoPedido.current = miPedido;
+    const vigente = () => ultimoPedido.current === miPedido;
+
     setLoading(true);
     setError(null);
     const activeFilters = JSON.parse(filtersKey);
     try {
       const response = await getListings(activeFilters);
+      if (!vigente()) return;
       const items = itemsOf(response);
 
       if (items.length > 0) {
@@ -62,6 +82,7 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
       // Se consulta siempre, sin importar si había filtros puestos: es la única
       // forma de estar seguros, y es un pedido chico (un solo registro).
       const probe = await getListings({ limit: 1 });
+      if (!vigente()) return;
       const databaseIsEmpty = itemsOf(probe).length === 0;
 
       if (databaseIsEmpty && includeMocks) {
@@ -77,12 +98,14 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
       // El backend no respondió. Se avisa y NO se muestran autos de ejemplo:
       // inventar autos cuando el servidor falla hace pensar que la app perdió
       // las publicaciones propias.
+      if (!vigente()) return;
       setError(err.message || tr("home.errCars"));
       setCars([]);
       setTotal(0);
       setShowingMocks(false);
     } finally {
-      setLoading(false);
+      // Si ya salió otro pedido, el "cargando" lo apaga ese y no este.
+      if (vigente()) setLoading(false);
     }
   }, [filtersKey, includeMocks, tr]);
 

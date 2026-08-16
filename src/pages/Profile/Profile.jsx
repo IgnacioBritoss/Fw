@@ -157,6 +157,24 @@ export default function Profile() {
   // centro, así que una foto vertical de celular quedaba cortada por la cabeza.
   const [porEncuadrar, setPorEncuadrar] = useState(null);
 
+  /*
+    VOLVER A ENCUADRAR UNA FOTO QUE YA ESTÁ PUESTA.
+
+    Al perfil se entra mil veces y a la foto se le acomoda el zoom una sola,
+    cuando se sube. Con el lápiz sobre el círculo se vuelve a abrir el mismo
+    editor, sin tener que buscar el archivo de nuevo.
+
+    Cuál foto se abre: lo que está guardado en el perfil es el RECORTE, no la
+    foto entera. Si se reencuadrara eso, cada vuelta recortaría sobre el recorte
+    anterior y la foto se iría achicando. Por eso, si la persona eligió la foto
+    en esta misma visita, se guarda el archivo original y es ese el que se
+    reabre. Si entró de nuevo más tarde, se baja la foto publicada: no se puede
+    alejar más allá de lo que ya se recortó, pero sí acercar y mover, que es
+    para lo que se usa.
+  */
+  const original = useRef(null);
+  const [abriendoEditor, setAbriendoEditor] = useState(false);
+
   const pickPhoto = (event) => {
     const file = event.target.files?.[0];
     // El input se limpia siempre: si no, elegir la misma foto dos veces no dispara el change.
@@ -166,7 +184,31 @@ export default function Profile() {
     // 6 MB: una foto de celular entra de sobra y evita esperas de un minuto.
     if (file.size > 6 * 1024 * 1024) { setPhotoError(tr("profile.photoTooBig")); return; }
     setPhotoError("");
+    original.current = file;
     setPorEncuadrar(file);
+  };
+
+  const reencuadrar = async () => {
+    if (photoBusy || abriendoEditor) return;
+    setPhotoError("");
+    // La foto de esta misma visita: se reabre el original, sin recortar de nuevo.
+    if (original.current) { setPorEncuadrar(original.current); return; }
+    // Sin foto puesta el lápiz hace lo único que se puede hacer: elegir una.
+    if (!user?.profilePhotoUrl) { fileRef.current?.click(); return; }
+    setAbriendoEditor(true);
+    try {
+      const respuesta = await fetch(user.profilePhotoUrl, { mode: "cors" });
+      if (!respuesta.ok) throw new Error("no se pudo bajar la foto");
+      const blob = await respuesta.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("no es una imagen");
+      setPorEncuadrar(new File([blob], "foto.jpg", { type: blob.type }));
+    } catch {
+      // Si el navegador no deja leer la foto de otro dominio, no se rompe nada:
+      // se avisa y queda a mano el botón de elegirla de nuevo.
+      setPhotoError(tr("profile.reframeFailed"));
+    } finally {
+      setAbriendoEditor(false);
+    }
   };
 
   /**
@@ -230,6 +272,9 @@ export default function Profile() {
     setPhotoBusy(true);
     try {
       await updateMe({ profilePhotoUrl: null });
+      // Sin foto no hay original que reencuadrar: si quedara, el lápiz abriría
+      // el editor con una foto que ya no está publicada.
+      original.current = null;
       await refreshUser();
     } catch (err) {
       setPhotoError(err?.message || tr("profile.photoFailed"));
@@ -372,6 +417,34 @@ export default function Profile() {
                 <Spinner size={26} />
               </div>
             )}
+            {/* El lápiz, apoyado en el borde del círculo. `minHeight` va en línea
+                a propósito: theme.css le pone 40px de alto mínimo a todos los
+                botones en celular y sin esto quedaría un óvalo, el mismo problema
+                que tenía el corazón de favoritos. */}
+            <button
+              type="button"
+              onClick={reencuadrar}
+              disabled={photoBusy || abriendoEditor}
+              aria-label={tr(user?.profilePhotoUrl ? "profile.reframe" : "profile.photo")}
+              title={tr(user?.profilePhotoUrl ? "profile.reframe" : "profile.photo")}
+              style={{
+                position: "absolute", right: 2, bottom: 2,
+                width: 34, height: 34, minHeight: 34, padding: 0,
+                borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 1px 4px rgba(0,0,0,.16)",
+                cursor: photoBusy || abriendoEditor ? "default" : "pointer",
+                opacity: photoBusy ? 0 : 1,
+              }}
+            >
+              {abriendoEditor ? <Spinner size={15} /> : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              )}
+            </button>
           </div>
 
           {/* Subir / cambiar / quitar la foto pública */}

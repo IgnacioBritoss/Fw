@@ -61,6 +61,15 @@ export default {
   "home.dropoff": "Devolución",
   "home.searchCars": "Buscar autos",
   "home.categories": "Explorá por categoría",
+  "home.landingKicker": "El proyecto",
+  "home.landingGo": "Conocer más",
+  "home.landingAria": "Ir a la página de presentación de Freewheel",
+  "home.landing1": "Hecho en Argentina",
+  "home.landing1Sub": "Alquiler de autos entre personas, sin agencias de por medio.",
+  "home.landing2": "Cómo funciona",
+  "home.landing2Sub": "Publicás, reservás y coordinás la entrega con un código QR.",
+  "home.landing3": "Quiénes somos",
+  "home.landing3Sub": "La presentación completa del proyecto, en una página.",
   "home.from": "Desde {price}",
   "home.noneYet": "Sin autos por ahora",
   "home.available": "Autos disponibles",
@@ -304,6 +313,7 @@ export default {
   "dash.noCars": "Todavía no publicaste ningún auto.",
   "dash.noRequests": "No tenés solicitudes.",
   "dash.noHistory": "Todavía no hay historial.",
+  "dash.notVerified": "Tu cuenta todavía no está verificada. Para publicar un auto o aceptar reservas necesitás verificar tu identidad.",
 
   // ── Buscar autos (lo que faltaba) ────────────────────────────────────────
   "search.viewDetail": "Ver detalle",
@@ -332,6 +342,8 @@ export default {
   "profile.photoNote": "Se ve en tu perfil público y al lado de tus mensajes",
   "profile.changePhoto": "Cambiar la foto",
   "profile.removePhoto": "Quitar la foto",
+  "profile.reframe": "Reencuadrar la foto",
+  "profile.reframeFailed": "No pudimos abrir la foto para reencuadrarla. Elegila de nuevo con Cambiar la foto.",
 
   "chat.q.warranty": "¿Cómo funciona la garantía?",
   "chat.q.accident": "¿Qué pasa si hay un accidente?",

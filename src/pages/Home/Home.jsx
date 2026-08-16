@@ -26,6 +26,7 @@ import FavoriteButton from "../../components/FavoriteButton";
 import { firstBookableInput } from "../../services/dates";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
+import LandingCarousel from "../../components/LandingCarousel";
 
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
@@ -509,6 +510,12 @@ export default function Home() {
 
       <div style={{ height: 28 }} />
       <StepsSection />
+
+      {/* Abajo de todo, la franja que lleva a la presentación del proyecto. Va
+          última a propósito: quien entra a la app viene a buscar un auto, y la
+          landing es para leer sobre Freewheel cuando ya se miró lo demás. */}
+      <LandingCarousel />
+      <div style={{ height: 20 }} />
     </div>
   );
 }

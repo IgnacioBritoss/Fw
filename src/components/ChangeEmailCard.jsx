@@ -78,50 +78,44 @@ export default function ChangeEmailCard({ verified }) {
       border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px",
     }}>
       {/*
-        EN EL TELÉFONO el botón de cambiar sube al renglón del rótulo.
+        MISMA FORMA QUE LOS CAMPOS DE AL LADO.
 
-        Antes iba al lado del email, y con una dirección larga como
-        britosignacio106@gmail.com no entraban los tres en 390px: el email ocupaba
-        un renglón, el cartel de "Verificado" caía al siguiente y el botón a un
-        tercero. Tres renglones apilados para una línea de información.
+        Este bloque vive entre "Teléfono" y "Fecha de nacimiento", que son una
+        sola fila: rótulo y valor a la izquierda, el botón a la derecha. Antes acá
+        el email, el cartel de verificado y el botón caían en tres renglones y el
+        bloque quedaba más alto que sus vecinos, como salido del marco.
 
-        Ahora el rótulo y el botón comparten el renglón de arriba —que está
-        prácticamente vacío— y abajo queda el email con su cartel al lado. El
-        email se corta con puntos suspensivos en vez de partirse en dos.
+        Ahora es una fila igual a las otras. Lo que lo hacía crecer era el email
+        largo: se corta con puntos suspensivos. Y el cartel de "Verificado", que
+        en el teléfono no entra al lado, baja apenas un renglón DENTRO de la misma
+        columna, sin empujar el botón.
       */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 12, marginBottom: 4,
-      }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700, color: "#9ca3af",
-          letterSpacing: ".06em", textTransform: "uppercase",
-        }}>
-          {tr("auth.email")}
-        </div>
-        {isMobile && phase === "idle" && (
-          <button onClick={() => setPhase("asking")}
-            style={{ fontSize: 13.5, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", padding: 0, flexShrink: 0 }}>
-            {tr("email.change")}
-          </button>
-        )}
-      </div>
-
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <span style={{
-            fontSize: 15, fontWeight: 600, color: "#111827",
-            minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: "#9ca3af",
+            letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4,
           }}>
-            {user?.email || "—"}
-          </span>
-          {verified && (
-            <StatusChip tone="ok" style={{ flexShrink: 0 }}>
-              {tr("status.verified")}
-            </StatusChip>
-          )}
+            {tr("auth.email")}
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            flexWrap: isMobile ? "wrap" : "nowrap", minWidth: 0,
+          }}>
+            <span style={{
+              fontSize: 15, fontWeight: 600, color: "#111827",
+              minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {user?.email || "—"}
+            </span>
+            {verified && (
+              <StatusChip tone="ok" style={{ flexShrink: 0 }}>
+                {tr("status.verified")}
+              </StatusChip>
+            )}
+          </div>
         </div>
-        {!isMobile && phase === "idle" && (
+        {phase === "idle" && (
           <button onClick={() => setPhase("asking")}
             style={{ fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
             {tr("email.change")}
