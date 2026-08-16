@@ -88,9 +88,9 @@ export default function LandingBanner() {
             medida de lo que tiene adentro: las unidades `cqw` de abajo son
             porcentajes de SU ancho.
 
-            Es lo que hace que el texto y el cursor queden siempre en el mismo
-            lugar del dibujo, sea en un monitor de 27 pulgadas o en un teléfono.
-            Con tamaños en píxeles, el texto que en la computadora entra en tres
+            Es lo que hace que la frase quede siempre en el mismo lugar del
+            dibujo, sea en un monitor de 27 pulgadas o en un teléfono. Con
+            tamaños en píxeles, el texto que en la computadora entra en tres
             renglones sobre el fondo azul, en el teléfono le pasa por encima al
             auto; y con `vw` se mediría la ventana entera, que no es lo mismo que
             el ancho de la franja porque a la izquierda está el menú.
@@ -147,41 +147,67 @@ export default function LandingBanner() {
         </span>
 
         {/*
-          EL CURSOR haciendo clic, al lado de FREEWHEEL.
+          EL CURSOR, debajo de la última L de FREEWHEEL.
 
-          Dice "esto se toca" sin una palabra, así que no hay que traducirlo ni
-          hay que meterle otro texto encima al aviso. Los keyframes están en
-          theme.css (fw-ad-pulsa y fw-ad-chispas) y se apagan enteros con la
-          preferencia de "menos movimiento".
+          Está quieto. Antes hacía clic solo cada dos segundos y medio, con tres
+          rayitas saltando de la punta; sacado eso, lo que queda dice lo mismo con
+          menos ruido: una flecha de mouse apoyada sobre una imagen ya se lee como
+          "esto se toca".
+
+          DÓNDE ESTÁ LA ÚLTIMA L. Se midió leyendo los píxeles del archivo, no a
+          ojo: buscando las columnas claras sobre el panel oscuro, la última
+          letra va del 91.4% al 94.2% del ancho, así que su centro cae en el
+          92.8% —o sea a 7.2% del borde derecho—. De ahí sale el `right`: se
+          corre media flecha más para que lo que quede centrado bajo la letra sea
+          el dibujo y no el borde de su cuadro.
+
+          Hay que buscar el hueco entre letras y no repartir la palabra en nueve
+          partes iguales: FREEWHEEL tiene una W, que es casi el doble de ancha
+          que una L, y el reparto parejo daba 92.1% —ocho píxeles corrido a la
+          izquierda, que a ese tamaño se ve—.
+
+          POR QUÉ VA PEGADO AL BORDE DE ABAJO Y NO JUSTO DEBAJO DE LAS LETRAS.
+          El botón del asistente flota sobre toda la aplicación y se estaciona
+          en esa misma esquina: ocupa una franja de 50px que termina 80px arriba
+          del borde de la ventana. La propaganda es lo último de la página, así
+          que con la pantalla abajo del todo su base queda a 28px de ese borde:
+          entre el botón y el final de la imagen quedan 52px libres, y ese es el
+          único lugar de la esquina derecha donde el cursor no se le encima.
+          Midiendo con la ventana en 1600, 1440, 1366, 1280 y 1100, poner la
+          flecha más arriba —pegada a las letras, que es donde iría— la deja
+          tocando el botón desde los 1300px para abajo, y ahí deja de leerse como
+          "tocá la propaganda" y pasa a leerse como "tocá el chat", que es
+          justamente lo contrario.
+
+          Por eso también el tamaño va en píxeles y no en `cqw`: tiene que entrar
+          en esos 52px sea cual sea el ancho de la pantalla. Y no se pierde nada,
+          porque un puntero de mouse es un objeto de tamaño real —en la pantalla
+          mide siempre lo mismo, no crece con la ventana—.
+
+          EN EL TELÉFONO NO VA. Ahí la franja mide 95px de alto, el botón del
+          asistente se le apoya justo encima de esa esquina y lo tapa entero: no
+          quedan 52px libres ni nada parecido. Y aunque quedaran, un puntero de
+          mouse en una pantalla táctil está diciendo algo que no existe —no hay
+          mouse—, así que en el teléfono el dedo ya sabe que la propaganda se
+          toca y la flecha sobra.
         */}
-        <span aria-hidden="true" style={{
-          position: "absolute", right: "13%", bottom: "12%",
-          width: "5.2cqw", height: "5.2cqw",
-          display: "block", pointerEvents: "none",
-        }}>
-          {/* Las tres rayitas salen desde la PUNTA de la flecha, no desde el
-              centro del recuadro: es donde caería el clic de verdad. De ahí el
-              `transform-origin` en 23% 13%, que es donde está la punta dentro
-              del cuadro de 24×24. */}
-          <svg className="fw-ad-chispas" viewBox="0 0 24 24" aria-hidden="true"
-            style={{
-              position: "absolute", inset: 0, width: "100%", height: "100%",
-              overflow: "visible", transformOrigin: "23% 13%",
-            }}>
-            <g stroke="#fff" strokeWidth="2" strokeLinecap="round">
-              <path d="M3.9 1.7 L2.1 -0.1" />
-              <path d="M2.7 4.0 L0.3 3.6" />
-              <path d="M6.4 0.9 L6.9 -1.5" />
-            </g>
-          </svg>
-          <svg className="fw-ad-pulsa" viewBox="0 0 24 24"
-            style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }}>
-            <path
-              d="M5.5 3.2 L18.3 12.4 L12.2 13.1 L15 19.6 L12.1 20.9 L9.3 14.4 L5.5 18.7 Z"
-              fill="#fff" stroke="#0b1220" strokeWidth="1.1" strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+        {!isMobile && (
+          <span aria-hidden="true" style={{
+            position: "absolute",
+            // 7.2% es el centro de la L; los 19px son la mitad de la flecha.
+            right: "calc(7.2% - 19px)", bottom: 6,
+            width: 38, height: 38,
+            display: "block", pointerEvents: "none",
+          }}>
+            <svg viewBox="0 0 24 24"
+              style={{ width: "100%", height: "100%", display: "block" }}>
+              <path
+                d="M5.5 3.2 L18.3 12.4 L12.2 13.1 L15 19.6 L12.1 20.9 L9.3 14.4 L5.5 18.7 Z"
+                fill="#fff" stroke="#0b1220" strokeWidth="1.1" strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        )}
       </a>
     );
   }
