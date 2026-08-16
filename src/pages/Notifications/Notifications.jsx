@@ -14,23 +14,18 @@ import { buildNotifications, getReadIds, markRead, markAllRead } from "../../ser
 import { useI18n } from "../../i18n/core";
 import { dayMonth, timeOfDay } from "../../i18n/dates";
 import Spinner from "../../components/Spinner";
+import CarIcon from "../../components/CarIcon";
 
 // ── Íconos SVG por categoría (sin emojis) ──
 const Icon = ({ name, color = "#374151" }) => {
+  // El auto no se dibuja acá: es el MISMO componente que usa el menú y el hueco
+  // de una publicación sin foto (components/CarIcon). Antes esta pantalla tenía
+  // su propia copia del dibujo, y cada vez que el auto cambiaba había que
+  // acordarse de tocar los dos lugares.
+  if (name === "reserva") return <CarIcon size={18} color={color} />;
+
   const p = { fill: "none", stroke: color, strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
-    // El auto: mismo dibujo que el resto de la app (components/CarIcon), no una
-    // copia distinta. Antes acá había su propia versión del trapecio.
-    reserva: (
-      <>
-        <path d="M2.7 15.1v-1.7c0-.5.35-.92.84-1.01l2.7-.5 2.2-2.94c.36-.48.92-.76 1.52-.76h4.3c.5 0 .98.2 1.34.55l3.1 3.06 2.05.42c.55.11.95.6.95 1.16v1.72" {...p} />
-        <path d="M2.7 15.1h1.6M9.1 15.1h5.8M19.7 15.1h1.6" {...p} />
-        <path d="M4.3 15.1a2.4 2.4 0 0 1 4.8 0M14.9 15.1a2.4 2.4 0 0 1 4.8 0" {...p} />
-        <circle cx="6.7" cy="15.6" r="1.9" {...p} />
-        <circle cx="17.3" cy="15.6" r="1.9" {...p} />
-        <path d="M12.4 8.2v3.9M6.24 11.88h13.06" {...p} />
-      </>
-    ),
     mensaje: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" {...p} />,
     sistema: <><rect x="2" y="6" width="20" height="13" rx="2" {...p} /><path d="M2 10h20" {...p} /></>,
     promo: <><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z" {...p} /><circle cx="7.5" cy="7.5" r="1.2" {...p} /></>,

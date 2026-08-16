@@ -1,69 +1,65 @@
 // ============================================================================
-//  CarIcon — El auto de perfil, dibujado como un auto
+//  CarIcon — El auto DE FRENTE, en una sola mancha negra
 // ----------------------------------------------------------------------------
-//  QUÉ REEMPLAZA: el icono anterior era `M4 17v-4l2-5h12l2 5v4` más dos
-//  círculos sueltos abajo. O sea: un trapecio isósceles con dos ruedas apoyadas
-//  al lado. No se leía como un auto, se leía como una figura geométrica, y era el
-//  icono que más se repite en la app (menú "Mis autos", notificaciones de
-//  reserva, el hueco de una publicación sin foto).
+//  POR QUÉ DE FRENTE Y NO DE PERFIL
+//  La marca de Freewheel ya es un auto de perfil (components/Logo). Cuando el
+//  menú, las notificaciones y el hueco de una publicación sin foto usaban también
+//  un auto de perfil, la misma pantalla mostraba el mismo dibujo cuatro veces con
+//  dos significados distintos: uno quería decir "Freewheel" y los otros tres
+//  "auto". De frente se distingue de un vistazo y deja de competir con el logo.
 //
-//  QUÉ TIENE AHORA, y por qué cada cosa:
-//   · el capó y el baúl a distinta altura, con el parabrisas inclinado y la luneta
-//     más parada: es lo que hace que un auto se lea como un auto y no como una
-//     caja, y de paso da la orientación (mira a la derecha);
-//   · los PASARRUEDAS recortados en la carrocería, con las ruedas metidas
-//     adentro. Antes las ruedas eran dos círculos abajo del trapecio, sin
-//     relación con el cuerpo;
-//   · el parante que separa las dos ventanillas, que a este tamaño es lo que
-//     distingue un auto de una camioneta;
-//  SIN punto de llanta a propósito: lo probé y a 18-20 px —el tamaño al que este
-//  icono se usa de verdad— el punto y el trazo de la rueda se tocan y la rueda
-//  queda como una manchita. A 40 px quedaba mejor con el punto, pero a 40 px este
-//  icono no se usa en ninguna parte.
+//  CÓMO ESTÁ HECHO, y por qué es una silueta llena y no un contorno
+//   · a 18-20 px —el tamaño al que este icono se usa de verdad— una línea fina se
+//     convierte en una manchita gris. Una forma llena se sigue leyendo;
+//   · el parabrisas y los dos faros son AGUJEROS de verdad (fill-rule "evenodd"),
+//     no círculos blancos pintados encima. Por eso el mismo icono funciona sobre
+//     el fondo blanco de una tarjeta y sobre el renglón oscuro del menú, donde un
+//     círculo blanco quedaría como una mancha suelta;
+//   · los espejos se apoyan en el hombro de la carrocería y la muerden un poco:
+//     si quedaran separados se leerían como dos puntos sueltos al costado. Son lo
+//     que termina de decir "esto se mira de frente";
+//   · las patas arrancan metidas dentro del cuerpo, así no se ve la juntura.
 //
-//  La línea de cintura sí se queda: sin ella la carrocería queda vacía y el
-//  parante de la ventanilla parece flotar.
+//  `strokeWidth` se sigue aceptando y se ignora: había llamadas que lo pasaban y
+//  no vale la pena romperlas por un dibujo que ya no tiene trazo.
 // ============================================================================
 
+// El techo. La segunda figura del mismo trazado es el parabrisas: con "evenodd",
+// lo que queda encerrado dos veces se vacía.
+const TECHO =
+  "M6.4 10.9 L8.9 4.9 Q9.4 3.4 10.9 3.4 H13.1 Q14.6 3.4 15.1 4.9 L17.6 10.9 Z " +
+  "M8.7 9.7 L10.4 5.6 Q10.6 5.2 11.1 5.2 H12.9 Q13.4 5.2 13.6 5.6 L15.3 9.7 Z";
+
+// La carrocería, con los dos faros calados.
+const CARROCERIA =
+  "M4.6 10.2 H19.4 Q20.9 10.2 20.9 11.7 V15.0 Q20.9 17.0 18.9 17.0 H5.1 " +
+  "Q3.1 17.0 3.1 15.0 V11.7 Q3.1 10.2 4.6 10.2 Z " +
+  "M6.6 11.8 A1.75 1.75 0 1 0 6.6 15.3 A1.75 1.75 0 1 0 6.6 11.8 Z " +
+  "M17.4 11.8 A1.75 1.75 0 1 0 17.4 15.3 A1.75 1.75 0 1 0 17.4 11.8 Z";
+
 export default function CarIcon({
-  size = 20,
+  size = 18,
   color = "currentColor",
-  strokeWidth = 1.7,
+  // eslint-disable-next-line no-unused-vars
+  strokeWidth,
 }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill={color}
       aria-hidden="true"
+      style={{ flexShrink: 0, display: "block" }}
     >
-      {/*
-        La carrocería, de una sola línea y en sentido horario desde el paragolpes
-        delantero: capó → parabrisas → techo → luneta → baúl → cola, y la panza
-        vuelve con los dos pasarruedas recortados.
-      */}
-      <path d="M2.7 15.1v-1.7c0-.5.35-.92.84-1.01l2.7-.5 2.2-2.94c.36-.48.92-.76 1.52-.76h4.3c.5 0 .98.2 1.34.55l3.1 3.06 2.05.42c.55.11.95.6.95 1.16v1.72" />
-      {/* La panza: se corta en cada pasarruedas para que las ruedas queden metidas
-          en la carrocería y no colgando debajo. */}
-      <path d="M2.7 15.1h1.6" />
-      <path d="M9.1 15.1h5.8" />
-      <path d="M19.7 15.1h1.6" />
-      {/* Los pasarruedas */}
-      <path d="M4.3 15.1a2.4 2.4 0 0 1 4.8 0" />
-      <path d="M14.9 15.1a2.4 2.4 0 0 1 4.8 0" />
-      {/* Las ruedas, centradas en su pasarruedas */}
-      <circle cx="6.7" cy="15.6" r="1.9" />
-      <circle cx="17.3" cy="15.6" r="1.9" />
-      {/* El parante entre las dos ventanillas: a 20 px es lo que separa un auto de
-          una camioneta. */}
-      <path d="M12.4 8.2v3.9" />
-      {/* La línea de las ventanillas */}
-      <path d="M6.24 11.88h13.06" />
+      <path fillRule="evenodd" clipRule="evenodd" d={TECHO} />
+      {/* Los espejos */}
+      <circle cx="2.55" cy="11.1" r="1.2" />
+      <circle cx="21.45" cy="11.1" r="1.2" />
+      {/* Las patas */}
+      <rect x="4.5" y="15.3" width="3" height="5.2" rx="0.9" />
+      <rect x="16.5" y="15.3" width="3" height="5.2" rx="0.9" />
+      <path fillRule="evenodd" clipRule="evenodd" d={CARROCERIA} />
     </svg>
   );
 }

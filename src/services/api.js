@@ -196,10 +196,14 @@ const CAMPOS_EDITABLES = [
   "firstName", "lastName", "phone",
   "profilePhotoUrl", "profilePhotoVisibility",
   "dni", "cuil", "address",
+  // Si querés recibir avisos por mail (reservas, pagos, mensajes sin leer).
+  "emailNotifications",
 ];
 
 // Los que un backend anterior puede no conocer todavía.
-const CAMPOS_NUEVOS = ["profilePhotoVisibility", "dni", "cuil", "address"];
+const CAMPOS_NUEVOS = [
+  "profilePhotoVisibility", "dni", "cuil", "address", "emailNotifications",
+];
 
 // Los que ya rebotaron en esta sesión por no existir en el backend.
 const desconocidos = new Set();

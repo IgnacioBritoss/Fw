@@ -36,7 +36,15 @@ const s = {
   totalRow: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "#111827", borderTop: "1px solid #e5e7eb", paddingTop: 12, marginTop: 4 },
   payBtn: { width: "100%", padding: "15px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   payBtnDisabled: { width: "100%", padding: "15px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
-  failBtn: { width: "100%", padding: "12px", background: "transparent", border: "1.5px solid #fecaca", color: "#dc2626", borderRadius: 10, fontSize: 14, cursor: "pointer" },
+  /*
+    El botón de forzar el rechazo: rojo lleno, letra blanca, SIEMPRE.
+
+    Era transparente con el borde rosa. Dos problemas: al lado del botón azul
+    lleno de arriba parecía deshabilitado, y "transparent" toma el fondo de
+    atrás, así que en modo oscuro quedaba letra roja sobre gris oscuro, que se
+    lee mal. Con el fondo escrito acá el botón se ve igual en los dos modos.
+  */
+  failBtn: { width: "100%", padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
   successBox: { textAlign: "center", padding: "48px 0" },
   successIcon: { width: 72, height: 72, borderRadius: "50%", background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
   failIcon: { width: 72, height: 72, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },

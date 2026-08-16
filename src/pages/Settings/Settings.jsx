@@ -8,7 +8,7 @@
 //  El resto de secciones son "próximamente". Editar un dato lo guarda en el
 //  backend y en la sesión, así se ve al instante en el perfil.
 // ============================================================================
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -71,6 +71,57 @@ export default function Settings() {
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
     if (k === "dark") applyDarkMode(v);
+  };
+
+  /*
+    AVISOS POR MAIL — vive en la cuenta, no en el navegador.
+
+    Se marca en pantalla antes de que conteste el servidor: es un interruptor, y
+    esperar medio segundo a que se mueva se siente roto. Si el guardado falla,
+    vuelve solo a donde estaba y lo dice, así nadie se queda creyendo que apagó
+    algo que sigue prendido.
+
+    EL BACKEND VIEJO. El front y el backend se publican por separado, así que hay
+    un rato en el que este front le habla a un servidor que no conoce el campo
+    todavía. Ese servidor no lo ignora: contesta 400 ("property
+    emailNotifications should not exist"). updateMe() sabe manejar eso —saca el
+    campo y guarda el resto—, así que NO llega ningún error acá: llega un perfil
+    en el que el interruptor sigue como estaba.
+
+    Por eso no alcanza con mirar si hubo excepción: hay que mirar lo que
+    CONTESTÓ el servidor. Si no quedó guardado, el interruptor vuelve y se
+    explica por qué, en vez de dejarlo mostrando algo que no se guardó.
+  */
+  const [avisos, setAvisos] = useState(user?.emailNotifications !== false);
+  const [avisosError, setAvisosError] = useState("");
+
+  // Sigue al usuario cuando se recarga del servidor (al entrar, o al guardar).
+  const avisosGuardados = user?.emailNotifications !== false;
+  const avisosPrevios = useRef(avisosGuardados);
+  useEffect(() => {
+    if (avisosPrevios.current !== avisosGuardados) {
+      avisosPrevios.current = avisosGuardados;
+      setAvisos(avisosGuardados);
+    }
+  }, [avisosGuardados]);
+
+  const cambiarAvisos = async (valor) => {
+    const anterior = avisos;
+    setAvisos(valor);
+    setAvisosError("");
+    try {
+      const perfil = await updateMe({ emailNotifications: valor });
+      if (perfil?.emailNotifications !== valor) {
+        // El servidor contestó, pero sin el campo: no lo conoce todavía.
+        setAvisos(anterior);
+        setAvisosError(tr("settings.emailNotifOldServer"));
+        return;
+      }
+      await refreshUser();
+    } catch (err) {
+      setAvisos(anterior);
+      setAvisosError(err?.message || tr("settings.emailNotifFailed"));
+    }
   };
 
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -226,15 +277,42 @@ export default function Settings() {
               </div>
 
               {/* Preferencias */}
-              <div style={{ ...t.card, padding: 26 }}>
+              <div style={{ ...t.card, padding: 26, marginBottom: 20 }}>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.appearance")}</div>
                 {/* Acá había cinco interruptores: notificaciones por email, push,
                     ofertas personalizadas y 2FA, ninguno de los cuales hacía nada
                     del otro lado —solo se guardaban en el navegador—. Un
                     interruptor que se prende y no cambia nada es peor que no
-                    tenerlo. Queda el único que sí funciona. */}
+                    tenerlo. Quedan los que sí funcionan. */}
                 <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>{tr("settings.appearanceSub")}</div>
                 <SwitchRow title={tr("settings.darkMode")} desc={tr("settings.darkModeSub")} on={prefs.dark} onChange={v => setPref("dark", v)} last />
+              </div>
+
+              {/*
+                AVISOS POR MAIL.
+
+                Este interruptor NO se guarda en el navegador: se guarda en la
+                cuenta (PATCH /users/me), porque quien manda los mails es el
+                servidor y una marca en el navegador no la ve. Es la diferencia
+                con los cinco interruptores que había antes acá, que se prendían
+                y no cambiaban nada.
+              */}
+              <div style={{ ...t.card, padding: 26 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.notifications")}</div>
+                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>{tr("settings.notificationsSub")}</div>
+                <SwitchRow
+                  title={tr("settings.emailNotif")}
+                  desc={tr("settings.emailNotifSub")}
+                  on={avisos}
+                  onChange={cambiarAvisos}
+                  last
+                />
+                {avisosError && (
+                  <div style={{ fontSize: 12.5, color: "#b91c1c", marginTop: 4 }}>{avisosError}</div>
+                )}
+                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+                  {tr("settings.emailNotifNote")}
+                </div>
               </div>
             </>
           ) : section === "seguridad" ? (

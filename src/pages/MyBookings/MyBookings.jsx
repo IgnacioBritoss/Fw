@@ -94,7 +94,7 @@ const s = {
   errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
   // El paso siguiente no es un aviso de color: es una nota al pie de la reserva,
   // separada por una línea igual que el precio en la tarjeta del auto.
-  nextStep: { borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10, fontSize: 12.5, color: "#0b55c0", display: "flex", alignItems: "flex-start", gap: 7 },
+  nextStep: { borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10, fontSize: 12.5, color: "#0b55c0" },
 };
 
 // Datos del auto de una reserva (tolerando las distintas formas del dato).
@@ -291,12 +291,11 @@ export default function MyBookings() {
             <StatusChip tone={statusCfg.tone || "neutral"}>{t(statusCfg.label)}</StatusChip>
           </div>
         </div>
-        {/* Guía del paso siguiente para cada rol. */}
+        {/* Guía del paso siguiente para cada rol. Sin flecha delante: el renglón
+            ya está separado por una línea y escrito en azul, así que la flechita
+            no agregaba nada y quedaba pegada al texto. */}
         {nextStepFor(b, isOwner) && (
-          <div style={s.nextStep}>
-            <span style={{ color: "#9ca3af", flexShrink: 0 }}>→</span>
-            <span>{t(nextStepFor(b, isOwner))}</span>
-          </div>
+          <div style={s.nextStep}>{t(nextStepFor(b, isOwner))}</div>
         )}
         {reviewingId === b.id ? (
           <ReviewForm

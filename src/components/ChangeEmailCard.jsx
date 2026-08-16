@@ -20,6 +20,27 @@ import { authFields } from "../styles/authFields";
 import StatusChip from "./StatusChip";
 import { useI18n } from "../i18n/core";
 
+/**
+ * El tilde verde de "esta dirección está verificada".
+ *
+ * Es un dibujo (SVG), no un emoji: los emojis los dibuja el sistema operativo,
+ * así que el mismo carácter se ve distinto en Android, en iPhone y en Windows, y
+ * ninguna de las tres versiones combina con el resto de la pantalla.
+ *
+ * `title` y el texto escondido dicen "Verificado" con palabras: un tilde solo no
+ * significa nada para quien usa un lector de pantalla.
+ */
+function TildeVerificado({ titulo }) {
+  return (
+    <span title={titulo} style={{ display: "inline-flex", flexShrink: 0, alignItems: "center" }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" role="img" aria-label={titulo}>
+        <path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="3"
+          strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
 export default function ChangeEmailCard({ verified }) {
   const { t: tr } = useI18n();
   const { user, refreshUser } = useAuth();
@@ -78,19 +99,26 @@ export default function ChangeEmailCard({ verified }) {
       border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px",
     }}>
       {/*
-        MISMA FORMA QUE LOS CAMPOS DE AL LADO.
+        EN EL TELÉFONO, EL BOTÓN VA ABAJO.
 
-        Este bloque vive entre "Teléfono" y "Fecha de nacimiento", que son una
-        sola fila: rótulo y valor a la izquierda, el botón a la derecha. Antes acá
-        el email, el cartel de verificado y el botón caían en tres renglones y el
-        bloque quedaba más alto que sus vecinos, como salido del marco.
+        El bloque vive entre "Teléfono" y "Fecha de nacimiento", que son una sola
+        fila: rótulo y valor a la izquierda, el botón a la derecha. Con una
+        pantalla ancha el email entra al lado del botón y sigue esa forma.
 
-        Ahora es una fila igual a las otras. Lo que lo hacía crecer era el email
-        largo: se corta con puntos suspensivos. Y el cartel de "Verificado", que
-        en el teléfono no entra al lado, baja apenas un renglón DENTRO de la misma
-        columna, sin empujar el botón.
+        En el teléfono no: entre el email largo y el botón no quedan más de dos o
+        tres centímetros, así que la dirección se cortaba a la mitad. Entonces la
+        dirección se queda con TODO el ancho, y "Cambiar" baja debajo, centrado y
+        separado por una línea, como el pie de una tarjeta.
+
+        Y el estado verificado deja de ser un cartel que dice "VERIFICADO": es un
+        tilde verde al lado de la dirección. Ocupa 16 píxeles en vez de media
+        fila, y el título accesible lo sigue diciendo con palabras para quien usa
+        un lector de pantalla.
       */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 12, ...(isMobile ? { flexDirection: "column", alignItems: "stretch", gap: 0 } : {}),
+      }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{
             fontSize: 11, fontWeight: 700, color: "#9ca3af",
@@ -98,10 +126,7 @@ export default function ChangeEmailCard({ verified }) {
           }}>
             {tr("auth.email")}
           </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            flexWrap: isMobile ? "wrap" : "nowrap", minWidth: 0,
-          }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
             <span style={{
               fontSize: 15, fontWeight: 600, color: "#111827",
               minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -109,15 +134,21 @@ export default function ChangeEmailCard({ verified }) {
               {user?.email || "—"}
             </span>
             {verified && (
-              <StatusChip tone="ok" style={{ flexShrink: 0 }}>
-                {tr("status.verified")}
-              </StatusChip>
+              isMobile
+                ? <TildeVerificado titulo={tr("status.verified")} />
+                : <StatusChip tone="ok" style={{ flexShrink: 0 }}>{tr("status.verified")}</StatusChip>
             )}
           </div>
         </div>
         {phase === "idle" && (
           <button onClick={() => setPhase("asking")}
-            style={{ fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
+            style={{
+              fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer",
+              background: "none", border: "none", flexShrink: 0,
+              ...(isMobile
+                ? { width: "100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid #f3f4f6", textAlign: "center" }
+                : {}),
+            }}>
             {tr("email.change")}
           </button>
         )}
