@@ -77,23 +77,51 @@ export default function ChangeEmailCard({ verified }) {
     <div style={{
       border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px",
     }}>
+      {/*
+        EN EL TELÉFONO el botón de cambiar sube al renglón del rótulo.
+
+        Antes iba al lado del email, y con una dirección larga como
+        britosignacio106@gmail.com no entraban los tres en 390px: el email ocupaba
+        un renglón, el cartel de "Verificado" caía al siguiente y el botón a un
+        tercero. Tres renglones apilados para una línea de información.
+
+        Ahora el rótulo y el botón comparten el renglón de arriba —que está
+        prácticamente vacío— y abajo queda el email con su cartel al lado. El
+        email se corta con puntos suspensivos en vez de partirse en dos.
+      */}
       <div style={{
-        fontSize: 11, fontWeight: 700, color: "#9ca3af",
-        letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: 12, marginBottom: 4,
       }}>
-        {tr("auth.email")}
+        <div style={{
+          fontSize: 11, fontWeight: 700, color: "#9ca3af",
+          letterSpacing: ".06em", textTransform: "uppercase",
+        }}>
+          {tr("auth.email")}
+        </div>
+        {isMobile && phase === "idle" && (
+          <button onClick={() => setPhase("asking")}
+            style={{ fontSize: 13.5, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", padding: 0, flexShrink: 0 }}>
+            {tr("email.change")}
+          </button>
+        )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: "#111827", minWidth: 0, wordBreak: "break-word" }}>
-          {user?.email || "—"}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{
+            fontSize: 15, fontWeight: 600, color: "#111827",
+            minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>
+            {user?.email || "—"}
+          </span>
           {verified && (
-            <StatusChip tone="ok" style={{ marginLeft: 8, verticalAlign: "middle" }}>
+            <StatusChip tone="ok" style={{ flexShrink: 0 }}>
               {tr("status.verified")}
             </StatusChip>
           )}
         </div>
-        {phase === "idle" && (
+        {!isMobile && phase === "idle" && (
           <button onClick={() => setPhase("asking")}
             style={{ fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 }}>
             {tr("email.change")}

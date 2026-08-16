@@ -148,12 +148,41 @@ export default function Notifications() {
     wrap: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1000, margin: "0 auto" },
     title: { fontSize: isMobile ? 26 : 32, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
     sub: { fontSize: 14, color: "#9ca3af", marginTop: 4 },
-    btnGhost: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-    btnDark: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#111827", color: "#fff", border: "none", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer" },
-    tab: (active) => ({ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: 600, cursor: "pointer", border: "none", background: active ? "#111827" : "transparent", color: active ? "#fff" : "#6b7280" }),
-    tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "#fff" : "#9ca3af" }),
-    groupLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 4px 10px" },
-    row: (read) => ({ display: "flex", alignItems: "center", gap: 14, background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: "16px 18px", marginBottom: 10, cursor: "pointer", transition: "border-color .15s, box-shadow .15s", boxShadow: read ? "none" : "0 1px 0 rgba(0,0,0,0)" }),
+    /*
+      LA PANTALLA ERA UNA PILA DE BURBUJAS.
+
+      Cada notificación era su propia tarjeta con borde y 14px de redondeo,
+      separada de la de al lado, y arriba había pestañas con forma de píldora y
+      dos botones también redondeados. Ocho formas iguales repetidas para una
+      lista, que es la cosa más simple que hay: renglones uno abajo del otro.
+
+      Ahora las notificaciones son UNA lista con líneas divisorias, y las
+      pestañas son celdas de una franja, el mismo recurso del buscador y de los
+      filtros. Lo único redondeado que queda es el puntito de "sin leer".
+    */
+    btnGhost: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#fff", color: "#374151", border: "1px solid #ececec", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
+    btnDark: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
+    // La franja de pestañas: celdas separadas por una línea. La activa se marca
+    // con una barra abajo, no con un fondo negro que la convierte en un botón.
+    tabs: { display: "flex", flexWrap: "wrap", alignItems: "stretch", background: "#fff", border: "1px solid #ececec", borderRadius: 4, marginBottom: 18, overflow: "hidden" },
+    tab: (active) => ({
+      display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 18px",
+      fontSize: 13.5, fontWeight: 600, cursor: "pointer", background: "transparent",
+      border: "none", borderLeft: "1px solid #f1f2f4",
+      borderBottom: active ? "2px solid #0f6ce6" : "2px solid transparent",
+      color: active ? "#0f6ce6" : "#6b7280",
+    }),
+    tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "#0f6ce6" : "#9ca3af" }),
+    groupLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 2px 8px" },
+    // La lista entera es una sola caja; las notificaciones se separan con una
+    // línea, como los renglones de una bandeja de entrada.
+    lista: { background: "#fff", border: "1px solid #ececec", borderRadius: 4, overflow: "hidden" },
+    row: (read, primera) => ({
+      display: "flex", alignItems: "center", gap: 14,
+      background: read ? "#fff" : "#f7faff",
+      borderTop: primera ? "none" : "1px solid #f1f2f4",
+      padding: "15px 16px", cursor: "pointer", transition: "background .15s",
+    }),
     dot: { width: 8, height: 8, borderRadius: "50%", background: "#0f6ce6", flexShrink: 0 },
     dotGap: { width: 8, flexShrink: 0 },
   };
@@ -178,10 +207,12 @@ export default function Notifications() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 20, borderBottom: "1px solid #ececec", paddingBottom: 12 }}>
-        {TABS.map(t => (
-          <button key={t.key} style={s.tab(tab === t.key)} onClick={() => setTab(t.key)}>
+      {/* Las categorías, como celdas de una franja. La primera no lleva línea a
+          la izquierda: quedaría doble contra el borde de la caja. */}
+      <div style={{ ...s.tabs, marginTop: 20 }}>
+        {TABS.map((t, i) => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            style={{ ...s.tab(tab === t.key), ...(i === 0 ? { borderLeft: "none" } : {}) }}>
             {tr(t.label)}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
           </button>
         ))}
@@ -202,15 +233,16 @@ export default function Notifications() {
       {groups.map(([label, items]) => (
         <div key={label}>
           <div style={s.groupLabel}>{tr(label)}</div>
-          {items.map(n => {
+          <div style={s.lista}>
+          {items.map((n, i) => {
             const meta = CAT_META[n.cat] || CAT_META.sistema;
             const read = isRead(n);
             return (
-              <div key={n.id} style={s.row(read)} onClick={() => openNotif(n)}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "#d1d5db"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,.05)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#ececec"; e.currentTarget.style.boxShadow = "none"; }}>
+              <div key={n.id} style={s.row(read, i === 0)} onClick={() => openNotif(n)}
+                onMouseEnter={e => { e.currentTarget.style.background = "#f3f4f6"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = read ? "#fff" : "#f7faff"; }}>
                 {read ? <span style={s.dotGap} /> : <span style={s.dot} />}
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 4, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Icon name={meta.icon} color={meta.fg} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -221,7 +253,7 @@ export default function Notifications() {
                   <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts, tr, lang)}</span>
                   {!read && (
                     <button onClick={e => markOne(e, n)} title={tr("notif.markOne")}
-                      style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      style={{ width: 28, height: 28, borderRadius: 4, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#6b7280" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   )}
@@ -229,6 +261,7 @@ export default function Notifications() {
               </div>
             );
           })}
+          </div>
         </div>
       ))}
     </div>

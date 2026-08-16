@@ -59,7 +59,7 @@ const FUEL_OPTIONS = [
 // ── Menú desplegable reutilizable ──
 // Componente genérico de filtro: un botón que abre una lista de opciones y avisa
 // la elegida con onChange(). Se cierra solo al hacer clic afuera.
-function Dropdown({ label, value, options, onChange, active }) {
+function Dropdown({ label, value, options, onChange, active, celda }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -71,18 +71,29 @@ function Dropdown({ label, value, options, onChange, active }) {
   // La opción vacía es "todas": ahí el botón no lleva sufijo.
   const chosenLabel = options.find(o => o.value === value && o.value !== "")?.label || "";
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <div onClick={() => setOpen(o => !o)}
-        style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 22, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
-          border: (active || open) ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb", background: active ? "#eff6ff" : "#fff", color: active ? "#0f6ce6" : "#374151" }}>
+    <div ref={ref} style={{ position: "relative", display: "flex", ...celda }}>
+      {/*
+        Es un <button> de verdad y no un <div>: así se llega con el tabulador y
+        se abre con Enter, y los lectores de pantalla lo anuncian como un control.
+        Como <div> no era ninguna de las tres cosas.
+      */}
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
+        style={{ display: "flex", alignItems: "center", gap: 6, padding: "12px 16px", border: "none", background: "transparent",
+          fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", userSelect: "none", width: "100%",
+          color: active ? "#0f6ce6" : "#374151" }}>
         {label}{chosenLabel ? `: ${chosenLabel}` : ""} <span style={{ fontSize: 10, opacity: .7, transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
-      </div>
+      </button>
       {open && (
-        <div style={{ position: "absolute", top: 44, left: 0, background: "#fff", borderRadius: 14, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid #f0f0f0", zIndex: 400, overflow: "hidden", padding: "6px" }}>
+        <div role="listbox" aria-label={label}
+          style={{ position: "absolute", top: "100%", left: 0, marginTop: 6, background: "#fff", borderRadius: 14, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid #f0f0f0", zIndex: 400, overflow: "hidden", padding: "6px" }}>
           {options.map(o => {
             const chosen = o.value === value;
             return (
-              <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+              /* role="option" no es decorativo: sin él la lista es un montón de
+                 divs sueltos para un lector de pantalla, y "Nafta" acá no se
+                 distingue del "Nafta" que dice la ficha de un auto. */
+              <div key={o.value} role="option" aria-selected={chosen}
+                onClick={() => { onChange(o.value); setOpen(false); }}
                 style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "#0f6ce6" : "#374151", background: chosen ? "#eff6ff" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 onMouseEnter={e => { if (!chosen) e.currentTarget.style.background = "#f9fafb"; }}
                 onMouseLeave={e => { if (!chosen) e.currentTarget.style.background = "transparent"; }}>
@@ -174,23 +185,35 @@ export default function Search() {
     const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; sc.onload = () => setMapLoaded(true); document.head.appendChild(sc);
   }, []);
 
-  // Redibuja los pines del mapa (uno por auto) con su precio. El pin resaltado
-  // (hover o seleccionado) se agranda y se pone oscuro.
+  /*
+    Redibuja los pines del mapa, uno por auto.
+
+    ANTES eran globos blancos con el precio adentro. Con más de dos o tres autos
+    en la misma zona el mapa se tapaba de carteles y no se veía el mapa, que es
+    justamente para lo que se lo abre. Y era otro diseño distinto del que usa el
+    mapa de la portada: dos mapas de la misma app con pines que no se parecen.
+
+    AHORA es el mismo puntito de la portada: un círculo del azul de la marca con
+    borde blanco. El auto que está resaltado (con el mouse encima o elegido en la
+    lista) se agranda y se pone oscuro, que es lo único que hace falta para saber
+    cuál es cuál; el precio ya está en la tarjeta de al lado.
+  */
   const addMarkers = useCallback((map, L) => {
     Object.values(markersRef.current).forEach(m => { try { map.removeLayer(m); } catch { /* ya no estaba */ } });
     markersRef.current = {};
     filtered.forEach(car => {
       if (!car.lat || !car.lng) return;
       const on = hovered === car.id || selected === car.id;
-      const pill = `background:${on ? "#111827" : "#fff"};color:${on ? "#fff" : "#111827"};font-weight:800;font-size:13px;line-height:1;padding:8px 13px;border-radius:24px;`
-        + `box-shadow:${on ? "0 8px 22px rgba(17,24,39,.35)" : "0 2px 10px rgba(0,0,0,.16)"};`
-        + `border:1.5px solid ${on ? "#111827" : "rgba(0,0,0,.06)"};white-space:nowrap;display:inline-block;`
-        + `transform:scale(${on ? 1.06 : 1});transition:all .18s cubic-bezier(.22,1,.36,1);cursor:pointer`;
+      const lado = on ? 20 : 14;
+      const punto = `width:${lado}px;height:${lado}px;background:${on ? "#111827" : "#0f6ce6"};`
+        + `border:2px solid #fff;border-radius:50%;cursor:pointer;`
+        + `box-shadow:${on ? "0 4px 14px rgba(17,24,39,.45)" : "0 2px 6px rgba(0,0,0,.35)"};`
+        + `transition:width .18s ease,height .18s ease,background .18s ease`;
       const icon = L.divIcon({
         className: "",
-        html: `<div style="transform:translate(-50%,-100%)"><div style="${pill}">$${priceOf(car).toLocaleString()}</div></div>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
+        html: `<div style="${punto}"></div>`,
+        iconSize: [lado, lado],
+        iconAnchor: [lado / 2, lado / 2],
       });
       const marker = L.marker([car.lat, car.lng], { icon, zIndexOffset: on ? 1000 : 0, riseOnHover: true });
       marker.on("click", () => setSelected(car.id));
@@ -229,6 +252,20 @@ export default function Search() {
   }, [showMap, isMobile]);
 
   const st = {
+    /*
+      La franja de filtros: una sola barra con celdas separadas por una línea, en
+      vez de seis píldoras sueltas. En pantalla chica las celdas se acomodan en
+      varias filas (flexWrap) porque los seis controles no entran en 390px.
+    */
+    filtros: {
+      display: "flex", alignItems: "stretch", flexWrap: "wrap",
+      background: "#fff", border: "1px solid #ececec", borderRadius: 4,
+      marginBottom: 18,
+    },
+    filtroCelda: {
+      display: "flex", alignItems: "center", padding: "12px 16px",
+      borderLeft: "1px solid #f1f2f4", boxSizing: "border-box",
+    },
     barCell: isMobile
       ? { width: "100%", paddingBottom: 6, marginBottom: 6, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
       : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
@@ -283,9 +320,29 @@ export default function Search() {
     );
   };
 
-  const anyFilter = trans !== "Todas" || fuel !== "Todos" || search || where || category || maxPrice || pickup || dropoff;
+  /*
+    ¿Hay algún filtro puesto? Se mira si el valor está cargado, y nada más.
+
+    Antes comparaba contra los textos "Todas" y "Todos", que son de cuando los
+    filtros guardaban la etiqueta en castellano. Hoy guardan el código del backend
+    (GASOLINE, HYBRID...), así que esas dos comparaciones daban SIEMPRE verdadero
+    y el cartel de "Limpiar filtros" no se iba nunca.
+  */
+  const anyFilter = Boolean(
+    trans || fuel || search || where || category || maxPrice || pickup || dropoff,
+  );
+  /*
+    Limpiar los filtros los deja VACÍOS.
+
+    Antes ponía setTrans("Todas") y setFuel("Todos"): dos textos que no son
+    ninguna de las opciones. Eso rompía dos cosas a la vez. El desplegable de
+    combustible quedaba trabado, porque su valor no coincidía con ninguna opción y
+    seguía pintado como si hubiera un filtro puesto. Y peor: "Todos" se mandaba al
+    backend como fuelType, que espera GASOLINE / DIESEL / HYBRID / ELECTRIC /
+    OTHER, así que la búsqueda entera fallaba después de limpiar.
+  */
   const clearAll = () => {
-    setTrans("Todas"); setFuel("Todos"); setSearch(""); setWhere("");
+    setTrans(""); setFuel(""); setSearch(""); setWhere("");
     setCategory(""); setMaxPrice(""); setPickup(""); setDropoff("");
   };
 
@@ -350,20 +407,44 @@ export default function Search() {
         <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
       )}
 
-      {/* Filtros con menús desplegables */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
-        <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
-          style={{ padding: "9px 16px", borderRadius: 22, border: "1px solid #e5e7eb", fontSize: 13, outline: "none", minWidth: 210 }} />
-        <Dropdown label={tr("search.sortBy")} active value={sort}
+      {/*
+        LOS FILTROS, EN UNA FRANJA.
+
+        Antes eran seis controles con forma de píldora sueltos en una fila: dos
+        campos de texto redondeados y tres desplegables redondeados, cada uno con
+        su propio borde, flotando sobre el fondo. Seis burbujas para una sola
+        cosa, que es acotar la búsqueda.
+
+        Ahora es una sola barra, con los controles como celdas separadas por una
+        línea —el mismo recurso que el buscador de la portada y que la ficha
+        técnica de las tarjetas—. Los desplegables conservan su panel tal cual
+        estaba al abrirse; lo que cambia es cómo se ven cerrados.
+
+        La franja NO lleva overflow oculto: recortaría los paneles que se abren
+        hacia abajo.
+      */}
+      <div style={st.filtros}>
+        <div style={{ ...st.filtroCelda, flex: 1, minWidth: 190, borderLeft: "none" }}>
+          <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: "#111827" }} />
+        </div>
+        <Dropdown label={tr("search.sortBy")} active value={sort} celda={st.filtroCelda}
           options={SORT_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))}
           onChange={value => setSort(value || "newest")} />
-        <Dropdown label={tr("search.transmission")} value={trans} active={Boolean(trans)}
+        <Dropdown label={tr("search.transmission")} value={trans} active={Boolean(trans)} celda={st.filtroCelda}
           options={TRANSMISSION_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setTrans} />
-        <Dropdown label={tr("search.fuel")} value={fuel} active={Boolean(fuel)}
+        <Dropdown label={tr("search.fuel")} value={fuel} active={Boolean(fuel)} celda={st.filtroCelda}
           options={FUEL_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setFuel} />
-        <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
-          style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
-        {anyFilter && <div style={{ fontSize: 13, color: "#0f6ce6", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>{tr("search.clearFilters")}</div>}
+        <div style={{ ...st.filtroCelda, width: 150 }}>
+          <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: maxPrice ? "#0f6ce6" : "#111827", fontWeight: maxPrice ? 700 : 400 }} />
+        </div>
+        {anyFilter && (
+          <button type="button" onClick={clearAll}
+            style={{ ...st.filtroCelda, padding: "12px 18px", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", fontSize: 13, color: "#0f6ce6", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+            {tr("search.clearFilters")}
+          </button>
+        )}
       </div>
 
       {/* Lista + Mapa */}

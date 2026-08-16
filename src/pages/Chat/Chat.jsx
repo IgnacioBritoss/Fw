@@ -25,6 +25,32 @@ import { initialsOf } from "../../services/people";
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
 // Además, debajo tiene un botón "Transcribir mensaje" que convierte el audio a
 // texto usando Whisper (IA de Groq) y muestra el resultado.
+/**
+ * Los tics de "entregado" y "leído", como en cualquier mensajería.
+ *
+ * ANTES eran el texto "✓" / "✓✓" a 10px con `letter-spacing: -1`, y el estado
+ * leído se pintaba de un celeste (#93c5fd) SOBRE LA BURBUJA AZUL. Dos azules
+ * pegados no se distinguen: el mensaje se marcaba como leído y en la pantalla no
+ * cambiaba nada, así que parecía que la marca de leído no andaba.
+ *
+ * Ahora es un dibujo, y el estado se nota por dos cosas a la vez: el segundo tic
+ * aparece, y el color salta a un celeste claro que sí contrasta contra el azul.
+ * Con una sola de las dos señales alcanza para entenderlo.
+ */
+function Ticks({ read }) {
+  return (
+    <svg width="16" height="11" viewBox="0 0 16 11" fill="none" aria-hidden="true"
+      style={{ flexShrink: 0, display: "block" }}>
+      <path d="M1 6.2 3.6 8.9 9 2.6" stroke={read ? "#7dd3fc" : "rgba(255,255,255,.6)"}
+        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      {read && (
+        <path d="M6.4 8.9 11.8 2.6" stroke="#7dd3fc"
+          strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
+}
+
 function AudioMsg({ src }) {
   const { t: tr } = useI18n();
   const [playing, setPlaying] = useState(false);
@@ -66,15 +92,25 @@ function AudioMsg({ src }) {
           onTimeUpdate={() => setCurrent(audioRef.current?.currentTime || 0)}
           onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
           onEnded={() => { setPlaying(false); setCurrent(0); }} />
-        <button onClick={toggle} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <button onClick={toggle} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(127,127,127,0.22)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "inherit" }}>
           {playing
             ? <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
             : <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
           }
         </button>
+        {/*
+          Las ondas toman el color de la burbuja (currentColor) en vez de ser
+          blancas fijas. Blancas se veían solo en los audios PROPIOS, que van
+          sobre la burbuja azul; en los que manda la otra persona, que van sobre
+          una burbuja blanca, las ondas eran blancas sobre blanco y no se veía
+          nada: parecía un reproductor roto.
+        */}
         <div style={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
           {bars.map((h, i) => (
-            <div key={i} style={{ width: 3, height: h, borderRadius: 2, background: progress > 0 && i / bars.length < progress ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }} />
+            <div key={i} style={{
+              width: 3, height: h, borderRadius: 2, background: "currentColor",
+              opacity: progress > 0 && i / bars.length < progress ? 0.95 : 0.3,
+            }} />
           ))}
         </div>
         <span style={{ fontSize: 11, opacity: 0.8, minWidth: 30, textAlign: "right" }}>
@@ -389,22 +425,18 @@ export default function Chat() {
           <div style={{
             alignSelf: isMe ? "flex-end" : "flex-start",
             maxWidth: "72%",
-            background: isMe ? "linear-gradient(135deg,#0f6ce6,#0b55c0)" : "#fff",
+            background: isMe ? "#0f6ce6" : "#fff",
             color: isMe ? "#fff" : "#111827",
             borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
             border: isMe ? "none" : "1px solid #e5e7eb",
             padding: "10px 14px",
             fontSize: 13.5, lineHeight: 1.5,
-            boxShadow: isMe ? "0 2px 8px rgba(37,99,235,.2)" : "0 1px 3px rgba(0,0,0,.06)",
+            boxShadow: isMe ? "0 1px 3px rgba(11,85,192,.25)" : "0 1px 3px rgba(0,0,0,.06)",
           }}>
             {renderMsgContent(msg)}
             <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 4, gap: 3 }}>
               <span style={{ fontSize: 10, opacity: 0.6 }}>{formatTime(msg.createdAt)}</span>
-              {isMe && (
-                <span style={{ fontSize: 10, letterSpacing: -1, color: msg.readAt ? "#93c5fd" : "rgba(255,255,255,0.5)" }}>
-                  {msg.readAt ? "✓✓" : "✓"}
-                </span>
-              )}
+              {isMe && <Ticks read={Boolean(msg.readAt)} />}
             </div>
           </div>
         </div>

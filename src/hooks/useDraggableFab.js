@@ -50,7 +50,22 @@ function snapToSide(pos, size) {
   return { x: centro < window.innerWidth / 2 ? MARGIN : derecha, y: pos.y };
 }
 
-export function useDraggableFab({ size = 50, onTap }) {
+/**
+ * Dónde se estaciona el botón cuando la pantalla pide que se corra: abajo a la
+ * izquierda, por encima de la barra de escribir.
+ */
+export function aparcadoIzquierda(size) {
+  return { x: MARGIN, y: window.innerHeight - size - 96 };
+}
+
+/**
+ * `fijo` es una posición impuesta por la pantalla. Cuando llega, el botón se
+ * dibuja ahí y deja de arrastrarse: es lo que hace falta en el chat entre
+ * usuarios, donde la esquina de siempre le queda encima a la conversación.
+ * Al salir de esa pantalla vuelve solo a donde estaba, porque la posición
+ * arrastrable nunca se pisó.
+ */
+export function useDraggableFab({ size = 50, onTap, fijo = null }) {
   // Posición inicial: la guardada, o abajo a la derecha como estaba antes.
   const [pos, setPos] = useState(() => {
     const porDefecto = {
@@ -86,6 +101,7 @@ export function useDraggableFab({ size = 50, onTap }) {
   const onPointerDown = useCallback((event) => {
     // Solo el botón principal del mouse; el derecho abre el menú del sistema.
     if (event.button !== undefined && event.button !== 0) return;
+    if (fijo) return;   // estacionado por la pantalla: no se arrastra
     event.currentTarget.setPointerCapture?.(event.pointerId);
     drag.current = {
       startX: event.clientX,
@@ -93,7 +109,7 @@ export function useDraggableFab({ size = 50, onTap }) {
       origen: { ...pos },
       movido: false,
     };
-  }, [pos]);
+  }, [pos, fijo]);
 
   const onPointerMove = useCallback((event) => {
     const d = drag.current;
@@ -142,13 +158,13 @@ export function useDraggableFab({ size = 50, onTap }) {
     },
     style: {
       position: "fixed",
-      left: pos.x,
-      top: pos.y,
+      left: (fijo ?? pos).x,
+      top: (fijo ?? pos).y,
       right: "auto",
       bottom: "auto",
       // Sin esto, arrastrar con el dedo scrollea la página en vez de mover el botón.
       touchAction: "none",
-      cursor: dragging ? "grabbing" : "grab",
+      cursor: fijo ? "pointer" : dragging ? "grabbing" : "grab",
     },
   };
 }

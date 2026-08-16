@@ -229,14 +229,32 @@ export default function Home() {
       recursos apilados para decir dos cosas. El degradado además tiraba a violeta
       en el medio, que no es el azul de la marca.
 
-      AHORA: un solo azul, plano, el mismo del resto de la app. Las esquinas casi
-      rectas (4px) para que el bloque corte y no flote como una tarjeta más. Y el
-      saludo afuera: lo que se viene a hacer acá es buscar un auto.
+      AHORA: un solo azul, plano, el mismo del resto de la app. Y el saludo
+      afuera: lo que se viene a hacer acá es buscar un auto.
+
+      DE BORDE A BORDE. Los márgenes negativos le devuelven al bloque el relleno
+      que le pone el contenedor de la página, arriba y a los dos costados, así
+      llega hasta el borde y hasta la barra. Sin eso quedaba una tarjeta azul
+      flotando con dos franjas blancas al costado. Y sin redondeo: una franja que
+      corta la página no tiene esquinas.
     */
-    hero: { borderRadius: 4, padding: isMobile ? "22px 18px" : "40px 36px", background: "#0b55c0", color: "#fff", position: "relative", marginBottom: isMobile ? 24 : 32 },
+    hero: {
+      borderRadius: 0, background: "#0b55c0", color: "#fff", position: "relative",
+      padding: isMobile ? "26px 18px" : "44px 36px",
+      marginTop: isMobile ? -20 : -28,
+      marginLeft: isMobile ? -16 : -32,
+      marginRight: isMobile ? -16 : -32,
+      marginBottom: isMobile ? 24 : 32,
+    },
+    /*
+      La tarjeta blanca del buscador. En escritorio no lleva relleno propio: el
+      relleno vive en cada celda, y así el botón de la punta puede ocupar el alto
+      completo en vez de quedar como un rectángulo flotando adentro de otro.
+      `overflow: hidden` recorta el botón contra el redondeo de la tarjeta.
+    */
     searchRow: isMobile
       ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 4, padding: 8, marginTop: 20 }
-      : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 4, padding: "8px 8px 8px 4px", marginTop: 26, flexWrap: "wrap" },
+      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 4, overflow: "hidden", marginTop: 26 },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
     // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
@@ -244,7 +262,7 @@ export default function Home() {
     // pantalla del teléfono y había que scrolear para ver los autos.
     searchCell: isMobile
       ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
-      : { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
+      : { flex: 1, minWidth: 140, padding: "16px 20px", borderRight: "1px solid #eee" },
     searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
@@ -402,7 +420,7 @@ export default function Home() {
               <input type="date" style={t.searchInput} min={firstBookableInput()} value={pickup}
                 onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
-            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }) }}>
+            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}) }}>
               <div style={t.searchLabel}>{tr("home.dropoff")}</div>
               <input type="date" style={t.searchInput} min={pickup || firstBookableInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
@@ -410,13 +428,17 @@ export default function Home() {
             {/* Acá había un select "Tipo" con el diseño por defecto del
                 navegador. Se quitó: justo abajo está "Explorá por categoría",
                 que hace exactamente lo mismo y se ve mucho mejor. */}
+            {/* En escritorio el botón NO es un rectángulo adentro del rectángulo
+                blanco: ocupa la punta derecha entera, de arriba abajo, y lo que
+                lo separa del último campo es la línea de esa celda. En el
+                teléfono se queda como estaba, que ahí sí funciona apilado. */}
             <button
               style={{
-                background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4,
+                background: "#0f6ce6", color: "#fff", border: "none",
                 fontWeight: 700, fontSize: 14, cursor: "pointer",
                 ...(isMobile
-                  ? { width: "100%", padding: "14px", marginTop: 8 }
-                  : { padding: "14px 24px", margin: 4 }),
+                  ? { width: "100%", padding: "14px", marginTop: 8, borderRadius: 4 }
+                  : { padding: "0 30px", borderRadius: 0, flexShrink: 0 }),
               }}
               onClick={goToSearch}>{tr("home.searchCars")}</button>
           </div>

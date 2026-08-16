@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { useDraggableFab } from "../hooks/useDraggableFab";
+import { useDraggableFab, aparcadoIzquierda } from "../hooks/useDraggableFab";
 import { useI18n } from "../i18n/core";
 
 // "System prompt": instrucciones ocultas que definen la personalidad y los
@@ -246,7 +246,17 @@ export default function ChatBot() {
   const fabSize = isMobile ? 46 : 50;
   // El botón se puede arrastrar: dónde molesta depende de la pantalla, así que la
   // decisión es de quien lo usa. El hook pone position/left/top.
-  const fab = useDraggableFab({ size: fabSize, onTap: () => setOpen((o) => !o) });
+  /*
+    En el chat entre usuarios el botón se estaciona abajo a la IZQUIERDA. En la
+    esquina de siempre —abajo a la derecha— le queda justo encima al último
+    mensaje y al botón de mandar. Al salir del chat vuelve solo a donde estaba,
+    porque su posición arrastrable no se toca.
+  */
+  const fab = useDraggableFab({
+    size: fabSize,
+    onTap: () => setOpen((o) => !o),
+    fijo: isChat ? aparcadoIzquierda(fabSize) : null,
+  });
 
   const fabStyle = {
     width: isMobile ? 46 : 50,
