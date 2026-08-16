@@ -168,7 +168,15 @@ Si tenés que elegir 5 archivos para estudiar a fondo para la defensa, elegí es
 ### `src/services/groq.js` — la IA
 - `groqChat`: manda una conversación al modelo de texto (chatbot y autocompletar specs).
 - `groqVision`: le pasa una imagen al modelo y pregunta si es un vehículo.
-- La **API key** viaja en una variable de entorno (`VITE_GROQ_API_KEY`) para no dejarla escrita en el código.
+- `checkDocument` y `groqTranscribe`: leer el DNI y la licencia, y pasar a texto las notas de voz.
+- **La clave de la IA no está acá.** Los pedidos van al backend (`/ai/*`), que es
+  el único que la conoce.
+
+  Vale la pena tener lista la explicación, porque es una pregunta probable: antes
+  la clave se ponía en una variable `VITE_GROQ_API_KEY`, y eso **no** la protege.
+  En Vite, todo lo que empieza con `VITE_` queda escrito adentro del JavaScript
+  que se descarga cualquier visitante: se abre el archivo desde el navegador y se
+  lee. Una clave solo está guardada si vive en un servidor al que nadie más entra.
 
 ### `src/components/Layout.jsx` — el esqueleto visual
 - El menú lateral + barra superior que rodea a todas las pantallas.
