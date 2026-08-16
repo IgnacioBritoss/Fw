@@ -10,13 +10,21 @@
 //  ronda de mobile pasó por el resto de la app y se salteó entera la parte de
 //  registrarse e iniciar sesión, que es justo lo primero que ve alguien nuevo.
 //
-//  Ahora las seis pantallas usan esta carcasa:
-//   · en computadora, el panel oscuro a la izquierda y el formulario a la derecha;
+//  Ahora las pantallas usan esta carcasa:
+//   · en computadora, el panel con la foto a la izquierda y el formulario a la
+//     derecha;
 //   · en celular, el panel se convierte en una franja compacta arriba (logo y una
-//     línea) y el formulario ocupa todo el ancho.
+//     línea) y el formulario ocupa todo el ancho. EN EL CELULAR NO VA LA FOTO:
+//     la franja mide unos 120px de alto contra todo el ancho, y una foto vertical
+//     de un auto ahí adentro se recorta hasta que no se entiende qué es.
+//
+//  EL BOTÓN DE IDIOMA va en las dos, y es lo primero de la pantalla en el orden
+//  de tabulación: quien no lee castellano tiene que poder cambiarlo antes de
+//  empezar a leer el formulario, no después.
 //
 //  Props:
-//   · hero      → { eyebrow, title, text } lo que dice el panel oscuro
+//   · hero      → { title, text } lo que dice el panel
+//   · foto      → ruta de la imagen del panel (opcional; sin ella, el degradado)
 //   · title     → título del formulario
 //   · subtitle  → renglón debajo del título (puede llevar un link)
 //   · footer    → algo opcional al final de la tarjeta
@@ -26,6 +34,8 @@ import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useThemeColor } from "../hooks/useThemeColor";
 import BrandLogo from "./Logo";
+import AuthAside from "./AuthAside";
+import LangPicker from "./LangPicker";
 
 const Logo = ({ light = true, size = 20 }) => (
   <Link to="/" style={{ textDecoration: "none", position: "relative" }}>
@@ -33,11 +43,14 @@ const Logo = ({ light = true, size = 20 }) => (
   </Link>
 );
 
-
 const HERO_BG = "linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)";
 const HERO_GLOW = "radial-gradient(ellipse at 30% 70%,rgba(37,99,235,.18) 0%,transparent 60%)";
 
-export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 400, children }) {
+/** Cuánto ocupa el panel de la foto. Va en dos lados: el panel y el margen que
+ *  le reserva la columna del formulario, así que se escribe una sola vez. */
+const PANEL = "45%";
+
+export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidth = 400, children }) {
   const { isMobile } = useIsMobile();
   // La barra del navegador acompaña la franja oscura: sin esto, en iPhone quedaba
   // una banda blanca de Safari encima y la franja no llegaba al borde de arriba.
@@ -56,7 +69,13 @@ export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 40
           position: "relative", overflow: "hidden",
         }}>
           <div style={{ position: "absolute", inset: 0, backgroundImage: HERO_GLOW }} />
-          <Logo size={18} />
+          <div style={{
+            position: "relative", display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 12,
+          }}>
+            <Logo size={18} />
+            <LangPicker tono="oscuro" />
+          </div>
           {hero?.title && (
             <div style={{
               position: "relative", marginTop: 14, fontSize: 20, fontWeight: 800,
@@ -81,51 +100,41 @@ export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 40
     );
   }
 
-  // ── COMPUTADORA: panel oscuro + formulario ──
+  // ── COMPUTADORA: panel con la foto + formulario ──
+  // El panel va fijo (ver AuthAside), así que la columna del formulario le
+  // reserva el lugar con un margen del mismo ancho en vez de ponerse al lado.
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: "#fff" }}>
+      <AuthAside
+        foto={foto}
+        titulo={hero?.title}
+        texto={hero?.text}
+        ancho={PANEL}
+        lado="izquierda"
+        arriba={<Logo size={20} />}
+      />
+
       <div style={{
-        flex: "0 0 45%", background: HERO_BG,
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        padding: "48px 52px", position: "relative", overflow: "hidden",
+        marginLeft: PANEL, minHeight: "100vh",
+        display: "flex", flexDirection: "column", background: "#fff",
       }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: HERO_GLOW }} />
-        <Logo size={20} />
-
-        <div style={{ position: "relative" }}>
-          {hero?.eyebrow && (
-            <div style={{
-              fontSize: 13, fontWeight: 600, color: "#0f6ce6", textTransform: "uppercase",
-              letterSpacing: ".06em", marginBottom: 16,
-            }}>
-              {hero.eyebrow}
-            </div>
-          )}
-          {hero?.title && (
-            <h1 style={{ fontSize: 40, fontWeight: 800, color: "#fff", lineHeight: 1.15, letterSpacing: "-1px", marginBottom: 16 }}>
-              {hero.title}
-            </h1>
-          )}
-          {hero?.text && (
-            <p style={{ fontSize: 15, color: "rgba(255,255,255,.6)", lineHeight: 1.6, maxWidth: 320 }}>
-              {hero.text}
-            </p>
-          )}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "22px 28px 0" }}>
+          <LangPicker />
         </div>
-
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,.25)", position: "relative" }}>© 2025 Freewheel</div>
-      </div>
-
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 56px", background: "#fff" }}>
-        <div style={{ width: "100%", maxWidth }}>
-          <div style={{ marginBottom: 30 }}>
-            <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px", marginBottom: 6 }}>
-              {title}
-            </h2>
-            {subtitle && <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>{subtitle}</p>}
+        <div style={{
+          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "24px 56px 48px",
+        }}>
+          <div style={{ width: "100%", maxWidth }}>
+            <div style={{ marginBottom: 30 }}>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px", marginBottom: 6 }}>
+                {title}
+              </h2>
+              {subtitle && <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>{subtitle}</p>}
+            </div>
+            {children}
+            {footer && <div style={{ marginTop: 22 }}>{footer}</div>}
           </div>
-          {children}
-          {footer && <div style={{ marginTop: 22 }}>{footer}</div>}
         </div>
       </div>
     </div>

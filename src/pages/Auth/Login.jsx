@@ -76,8 +76,11 @@ export default function Login() {
 
   return (
     <AuthShell
+      // La foto vive en `public/`. Si el archivo no está, el panel vuelve solo
+      // al degradado de antes: la pantalla de entrada no se puede romper porque
+      // falte una imagen.
+      foto="/auth-login.jpg"
       hero={{
-        eyebrow: t("auth.welcome").toUpperCase(),
         title: t("auth.welcomeBack"),
         text: t("auth.heroText"),
       }}

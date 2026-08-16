@@ -19,10 +19,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import PhoneInput from "../../components/PhoneInput";
-import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
+import { buscarPais, isValidPhone, normalizePhone } from "../../services/phone";
 import { GOOGLE_AUTH_URL } from "../../services/api";
 import IdentityVerification from "../../components/IdentityVerification";
 import BrandLogo from "../../components/Logo";
+import AuthAside from "../../components/AuthAside";
+import LangPicker from "../../components/LangPicker";
 import { useI18n } from "../../i18n/core";
 
 const GoogleIcon = () => (
@@ -48,6 +50,11 @@ const EyeClosed = () => (
 );
 
 const Logo = () => <BrandLogo size={17} />;
+
+/** Cuánto ocupa el panel de la foto. Va en dos lados —el panel, que está fijo, y
+ *  el margen que le reserva la columna del formulario—, así que se escribe una
+ *  sola vez. */
+const PANEL = "42%";
 
 // Edad exacta en años a partir de la fecha de nacimiento (YYYY-MM-DD).
 function ageFrom(dateString) {
@@ -75,7 +82,7 @@ export default function Register() {
   const [step, setStep] = useState(0); // 0 = datos, 1 = código del email, 2 = verificación de identidad
 
   const [form, setForm] = useState({
-    firstName:"", lastName:"", email:"", phone:"", dateOfBirth:"",
+    firstName:"", lastName:"", email:"", phone:"", phoneCountry:"AR", dateOfBirth:"",
     password:"", confirmPassword:"", acceptedTerms:false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -98,8 +105,8 @@ export default function Register() {
     if (!form.lastName.trim()) return t("reg.errLastName");
     if (!form.email.trim()) return t("reg.errEmail");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return t("reg.errEmailBad");
-    if (!isArgentinePhone(`54${form.phone}`)) {
-      return "El teléfono tiene que ser un celular argentino completo: 9 + código de área + número (ejemplo 9 11 3289 5416). El servicio funciona solo en Argentina.";
+    if (!isValidPhone(buscarPais(form.phoneCountry).dial, form.phone)) {
+      return form.phoneCountry === "AR" ? t("reg.errPhoneAr") : t("reg.errPhone");
     }
     if (!form.dateOfBirth) return t("reg.errBirth");
     const age = ageFrom(form.dateOfBirth);
@@ -135,7 +142,7 @@ export default function Register() {
       password: form.password,
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
-      phone: normalizeArgentinePhone(`54${form.phone}`) || undefined,
+      phone: normalizePhone(buscarPais(form.phoneCountry).dial, form.phone) || undefined,
       dateOfBirth: form.dateOfBirth,
       acceptedTerms: form.acceptedTerms,
     });
@@ -167,12 +174,36 @@ export default function Register() {
   // ─────────────── PASO 0: DATOS DE LA CUENTA ───────────────
   if (step === 0) {
     return (
-      <div style={{ display:"flex", minHeight:"100vh" }}>
-        <div style={{ flex:1, display:"flex", alignItems:isMobile?"flex-start":"center", justifyContent:"center", padding: isMobile ? "26px 20px 40px" : "48px 64px", background:"#fff", overflowY:"auto" }}>
+      <div style={{ minHeight:"100vh", background:"#fff" }}>
+        {/*
+          EL PANEL DE LA DERECHA TIENE QUE LLEGAR HASTA ABAJO.
+
+          Antes esta columna llevaba `overflowY:"auto"`, y eso era lo que cortaba
+          el panel: el formulario del registro mide unos 890px y la ventana 800,
+          así que el contenido sobraba. Con `overflow:auto` ese sobrante se
+          resuelve DENTRO de la columna en vez de hacer crecer la fila, así que
+          el contenedor se quedaba clavado en los 800px del `minHeight:100vh` y
+          el panel oscuro —que se estira hasta el alto de la fila y no más— se
+          terminaba ahí, con noventa píxeles de blanco abajo.
+
+          Sacándolo, la fila crece con el formulario y el panel la acompaña. La
+          página scrolea sola, que es lo que corresponde: el scroll de una
+          columna interna en una pantalla de registro no lo espera nadie.
+        */}
+        <div style={{ marginRight: isMobile ? 0 : PANEL, minHeight:"100vh", display:"flex", flexDirection:"column", background:"#fff" }}>
+          {!isMobile && (
+            <div style={{ display:"flex", justifyContent:"flex-end", padding:"22px 28px 0" }}>
+              <LangPicker />
+            </div>
+          )}
+          <div style={{ flex:1, display:"flex", alignItems:isMobile?"flex-start":"center", justifyContent:"center", padding: isMobile ? "26px 20px 40px" : "24px 64px 48px" }}>
           <div style={{ width:"100%", maxWidth:480 }}>
-            <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none", marginBottom:32 }}>
-              <Logo />
-            </Link>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginBottom:32 }}>
+              <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
+                <Logo />
+              </Link>
+              {isMobile && <LangPicker />}
+            </div>
 
             <div style={{ marginBottom:28 }}>
               <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
@@ -214,9 +245,12 @@ export default function Register() {
 
             <div style={twoCols}>
               <div>
-                {/* Teléfono argentino completo: el +54 es fijo y no se puede
-                    continuar con un número a medias (antes "123" pasaba). */}
+                {/* El código de país se elige: alguien que llega de afuera
+                    tiene que poder dejar su propio teléfono. Argentina viene
+                    puesta, y no se puede continuar con un número a medias
+                    (antes "123" pasaba). */}
                 <PhoneInput label={`${t("auth.phone")} *`} value={form.phone} showError={phoneTouched}
+                  pais={form.phoneCountry} onPaisChange={v => set("phoneCountry", v)}
                   onChange={v => set("phone", v)} />
               </div>
               <div>
@@ -257,9 +291,9 @@ export default function Register() {
               <input type="checkbox" id="terms" checked={form.acceptedTerms} onChange={e => set("acceptedTerms", e.target.checked)}
                 style={{ marginTop:3, width:16, height:16, accentColor:"#0f6ce6", cursor:"pointer", flexShrink:0 }} />
               <label htmlFor="terms" style={{ fontSize:13, color:"#374151", lineHeight:1.6, cursor:"pointer" }}>
-                Acepto los{" "}
+                {t("reg.termsBefore")}{" "}
                 <Link to="/terms" target="_blank" style={{ color:"#0f6ce6", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
-                {" "}y la política de privacidad de Freewheel *
+                {" "}{t("reg.termsAfter")} *
               </label>
             </div>
 
@@ -273,23 +307,19 @@ export default function Register() {
               {t("auth.codeWillArrive")}
             </div>
           </div>
+          </div>
         </div>
 
         {!isMobile && (
-        <div style={{
-          flex:"0 0 42%", background:"linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)",
-          display:"flex", flexDirection:"column", justifyContent:"center", padding:"48px 52px", position:"relative", overflow:"hidden",
-        }}>
-          <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(ellipse at 70% 40%,rgba(37,99,235,.18) 0%,transparent 60%)" }} />
-          <div style={{ position:"relative" }}>
-            <h2 style={{ fontSize:36, fontWeight:800, color:"#fff", lineHeight:1.15, letterSpacing:"-1px", marginBottom:16 }}>
-              {t("reg.tagline")}
-            </h2>
-            <p style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.7 }}>
-              Conectamos conductores con dueños de autos. Todo verificado, todo seguro.
-            </p>
-          </div>
-        </div>
+          // La foto vive en `public/`. Si falta, el panel vuelve solo al
+          // degradado de antes.
+          <AuthAside
+            foto="/auth-registro.jpg"
+            titulo={t("reg.tagline")}
+            texto={t("reg.heroText")}
+            ancho={PANEL}
+            lado="derecha"
+          />
         )}
       </div>
     );
@@ -309,7 +339,7 @@ export default function Register() {
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#0f6ce6" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#0f6ce6" strokeWidth="1.8" strokeLinecap="round"/></svg>
             <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>{t("reg.confirmEmail")}</h2>
             <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
-              Te enviamos un código de 6 dígitos a <strong>{form.email}</strong>.<br/>Ingresalo para crear tu cuenta.
+              {t("reg.codeSentTo")} <strong>{form.email}</strong>.<br/>{t("reg.codeEnterIt")}
             </p>
 
             {error && <div style={{ ...errorBox, marginBottom:16 }}>{error}</div>}
@@ -329,7 +359,7 @@ export default function Register() {
             </button>
 
             <div style={{ fontSize:13, color:"#6b7280" }}>
-              ¿No te llegó?{" "}
+              {t("reg.notArrived")}{" "}
               <button onClick={handleResend} disabled={resending}
                 style={{ background:"none", border:"none", color:"#0f6ce6", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
                 {resending ? t("common.sending") : t("reg.resendCode")}
@@ -347,12 +377,12 @@ export default function Register() {
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
         <Logo />
         <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.accountEyebrow")}</div>
-        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>Ir al inicio</div>
+        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{t("reg.goHome")}</div>
       </div>
 
       <div style={{ flex:1, padding:"40px 24px" }}>
         <div style={{ maxWidth:720, margin:"0 auto 24px", background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:12, padding:"14px 18px", fontSize:13.5, color:"#166534" }}>
-          <strong>¡Cuenta creada{form.firstName ? `, ${form.firstName}` : ""}!</strong> Verificá tu identidad para poder publicar autos y reservar.
+          <strong>{t("reg.accountCreated", { name: form.firstName ? `, ${form.firstName}` : "" })}</strong> {t("reg.verifyToStart")}
         </div>
         <IdentityVerification
           onDone={() => navigate(user?.verification?.fullyVerified ? "/publish" : "/")}

@@ -76,7 +76,30 @@ function getViewportData() {
   };
 }
 
+/**
+ * DÓNDE NO VA EL ASISTENTE.
+ *
+ * En las pantallas de entrada no tiene nada que hacer: el asistente contesta
+ * sobre alquileres, reservas y autos, y ahí todavía no hay cuenta ni reserva de
+ * la que hablar. Lo único que hacía era apoyarse encima del formulario —es un
+ * botón flotante de 50px anclado abajo a la izquierda— y ofrecer ayuda que no
+ * puede dar.
+ *
+ * Se corta acá arriba y no adentro: si el componente no se dibuja, tampoco
+ * corren sus hooks ni se carga el modelo.
+ */
+const SIN_ASISTENTE = new Set([
+  "/login", "/register", "/forgot-password", "/reset-password",
+  "/verify-email", "/complete-profile",
+]);
+
 export default function ChatBot() {
+  const { pathname } = useLocation();
+  if (SIN_ASISTENTE.has(pathname)) return null;
+  return <Asistente />;
+}
+
+function Asistente() {
   const { isMobile } = useIsMobile();
   const location = useLocation();
   const isChat = location.pathname === "/chat";     // ¿estamos en la pantalla de chat?

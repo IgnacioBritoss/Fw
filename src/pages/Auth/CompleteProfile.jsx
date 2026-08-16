@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import PhoneInput from "../../components/PhoneInput";
-import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
+import { buscarPais, isValidPhone, normalizePhone } from "../../services/phone";
 import { updateMe } from "../../services/api";
 import { useI18n } from "../../i18n/core";
 
@@ -44,8 +44,9 @@ export default function CompleteProfile() {
   const { user, completeProfile, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [dateOfBirth, setDateOfBirth] = useState("");
-  // Solo los dígitos posteriores al 54 (el "+54" lo pone PhoneInput).
+  // Solo los dígitos posteriores al código de país, que viaja aparte.
   const [phone, setPhone] = useState(() => String(user?.phone || "").replace(/\D/g, "").replace(/^54/, ""));
+  const [phoneCountry, setPhoneCountry] = useState("AR");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,7 +71,7 @@ export default function CompleteProfile() {
     if (age < 18) { setError(t("reg.err18")); return; }
     // El teléfono es opcional acá, pero si lo cargan tiene que estar completo:
     // guardar un número a medias no le sirve a nadie.
-    if (phone && !isArgentinePhone(`54${phone}`)) {
+    if (phone && !isValidPhone(buscarPais(phoneCountry).dial, phone)) {
       setPhoneTouched(true);
       setError(t("complete.errPhone"));
       return;
@@ -83,7 +84,7 @@ export default function CompleteProfile() {
 
     // Con la sesión ya completa se puede guardar el teléfono (es opcional: si
     // falla, no bloquea el ingreso).
-    const fullPhone = normalizeArgentinePhone(`54${phone}`);
+    const fullPhone = normalizePhone(buscarPais(phoneCountry).dial, phone);
     if (fullPhone) {
       try { await updateMe({ phone: fullPhone }); } catch { /* opcional */ }
     }
@@ -112,6 +113,7 @@ export default function CompleteProfile() {
 
         <div style={{ marginBottom:24 }}>
           <PhoneInput label={`${t("auth.phone")} (${t("common.optional")})`} value={phone} showError={phoneTouched}
+            pais={phoneCountry} onPaisChange={setPhoneCountry}
             onChange={setPhone} />
         </div>
 
