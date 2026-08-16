@@ -35,7 +35,9 @@ const Icon = ({ name, color = "#374151" }) => {
 };
 
 const CAT_META = {
-  reserva: { key: "notif.catBookings", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
+  // El azul de Freewheel, no un índigo. Era #4f46e5, que a 18px sobre un fondo
+  // lila se lee directamente como violeta, y en esta app el violeta no existe.
+  reserva: { key: "notif.catBookings", icon: "reserva", bg: "#f0f6ff", fg: "#0f6ce6" },
   mensaje: { key: "notif.catMessages", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
   sistema: { key: "notif.catSystem", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
   promo: { key: "notif.catPromos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },

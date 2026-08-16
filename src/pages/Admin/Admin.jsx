@@ -344,7 +344,7 @@ export default function Admin() {
                 <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
                   {u.firstName} {u.lastName}
                   {u.role === "ADMIN" && (
-                    <span style={{ marginLeft: 8, ...s.badge, background: "#ede9fe", color: "#6d28d9" }}>ADMIN</span>
+                    <span style={{ marginLeft: 8, ...s.badge, background: "#111827", color: "#fff" }}>ADMIN</span>
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: "#6b7280" }}>{u.email}</div>
