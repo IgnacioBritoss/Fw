@@ -22,12 +22,17 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useListings } from "../../hooks/useListings";
 import {
+<<<<<<< HEAD
   CATEGORIES, FUEL_CODES, TRANSMISSION_CODES,
   filterCars, priceOf, sortCars,
+=======
+  CATEGORIES, filterCars, priceOf, sortCars, categoryLabel, transmissionLabel, fuelLabel,
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import Select from "../../components/Select";
 import { firstBookableInput } from "../../services/dates";
+<<<<<<< HEAD
 
 const SORT_OPTIONS = [
   { id: "newest", label: "Más nuevos" },
@@ -36,6 +41,33 @@ const SORT_OPTIONS = [
 ];
 const TRANSMISSION_OPTIONS = ["Todas", "Manual", "Automático"];
 const FUEL_OPTIONS = ["Todos", "Nafta", "Diesel", "Híbrido", "Eléctrico", "GNC"];
+=======
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
+
+// Los filtros guardan el CÓDIGO del backend, no el texto que se ve. Antes el
+// estado era la palabra en castellano ("Automático") y se buscaba el código en
+// una tabla: con la app en inglés la lista mostraba castellano, y si se hubiese
+// traducido el texto el filtro habría dejado de encontrar el código.
+const SORT_OPTIONS = [
+  { value: "newest", key: "search.sortNewest" },
+  { value: "priceAsc", key: "search.sortPriceAsc" },
+  { value: "priceDesc", key: "search.sortPriceDesc" },
+];
+const TRANSMISSION_OPTIONS = [
+  { value: "", key: "cat.all" },
+  { value: "MANUAL", key: "trans.MANUAL" },
+  { value: "AUTOMATIC", key: "trans.AUTOMATIC" },
+];
+const FUEL_OPTIONS = [
+  { value: "", key: "fuel.all" },
+  { value: "GASOLINE", key: "fuel.GASOLINE" },
+  { value: "DIESEL", key: "fuel.DIESEL" },
+  { value: "HYBRID", key: "fuel.HYBRID" },
+  { value: "ELECTRIC", key: "fuel.ELECTRIC" },
+  { value: "OTHER", key: "fuel.OTHER" },
+];
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
@@ -51,11 +83,18 @@ function Dropdown({ label, value, options, onChange, active }) {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+<<<<<<< HEAD
+=======
+  // El botón muestra el TEXTO de la opción elegida (traducido), no su código.
+  // La opción vacía es "todas": ahí el botón no lleva sufijo.
+  const chosenLabel = options.find(o => o.value === value && o.value !== "")?.label || "";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <div onClick={() => setOpen(o => !o)}
         style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 22, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
           border: (active || open) ? "1.5px solid #2563eb" : "1px solid #e5e7eb", background: active ? "#eff6ff" : "#fff", color: active ? "#2563eb" : "#374151" }}>
+<<<<<<< HEAD
         {label}{value ? `: ${value}` : ""} <span style={{ fontSize: 10, opacity: .7, transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
       </div>
       {open && (
@@ -68,6 +107,23 @@ function Dropdown({ label, value, options, onChange, active }) {
               {o}{o === value && <span>✓</span>}
             </div>
           ))}
+=======
+        {label}{chosenLabel ? `: ${chosenLabel}` : ""} <span style={{ fontSize: 10, opacity: .7, transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
+      </div>
+      {open && (
+        <div style={{ position: "absolute", top: 44, left: 0, background: "#fff", borderRadius: 14, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid #f0f0f0", zIndex: 400, overflow: "hidden", padding: "6px" }}>
+          {options.map(o => {
+            const chosen = o.value === value;
+            return (
+              <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); }}
+                style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "#2563eb" : "#374151", background: chosen ? "#eff6ff" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                onMouseEnter={e => { if (!chosen) e.currentTarget.style.background = "#f9fafb"; }}
+                onMouseLeave={e => { if (!chosen) e.currentTarget.style.background = "transparent"; }}>
+                {o.label}{chosen && <span>✓</span>}
+              </div>
+            );
+          })}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       )}
     </div>
@@ -75,6 +131,10 @@ function Dropdown({ label, value, options, onChange, active }) {
 }
 
 export default function Search() {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [urlParams, setUrlParams] = useSearchParams();
@@ -87,8 +147,13 @@ export default function Search() {
   const [pickup, setPickup] = useState(urlParams.get("from") || "");
   const [dropoff, setDropoff] = useState(urlParams.get("to") || "");
   const [sort, setSort] = useState("newest");
+<<<<<<< HEAD
   const [trans, setTrans] = useState("Todas");
   const [fuel, setFuel] = useState("Todos");
+=======
+  const [trans, setTrans] = useState("");
+  const [fuel, setFuel] = useState("");
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const [maxPrice, setMaxPrice] = useState("");
 
   const [showMap, setShowMap] = useState(true);
@@ -111,8 +176,13 @@ export default function Search() {
     const filters = { limit: 50, sort };
     if (where.trim()) filters.locationText = where.trim();
     if (category) filters.category = category;
+<<<<<<< HEAD
     if (trans !== "Todas") filters.transmission = TRANSMISSION_CODES[trans];
     if (fuel !== "Todos") filters.fuelType = FUEL_CODES[fuel];
+=======
+    if (trans) filters.transmission = trans;
+    if (fuel) filters.fuelType = fuel;
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     if (maxPrice) filters.maxPrice = Number(maxPrice);
     if (datesValid) {
       filters.startDate = new Date(`${pickup}T10:00:00`).toISOString();
@@ -207,14 +277,25 @@ export default function Search() {
 
   const st = {
     barCell: isMobile
+<<<<<<< HEAD
       ? { width: "100%", paddingBottom: 10, marginBottom: 10, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
+=======
+      ? { width: "100%", paddingBottom: 6, marginBottom: 6, borderBottom: "1px solid #f0f0f0", boxSizing: "border-box" }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
     barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 3 },
     barInput: { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: isMobile ? "100%" : 140, boxSizing: "border-box" },
     card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
     ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
     tag: { fontSize: 11, color: "#6b7280", border: "1px solid #ececec", borderRadius: 20, padding: "3px 10px" },
+<<<<<<< HEAD
     verif: { fontSize: 11, fontWeight: 600, color: "#166534", background: "#dcfce7", borderRadius: 20, padding: "3px 10px" },
+=======
+    // La categoría del auto. Antes esto se llamaba "verif" y era verde, así que
+    // "Sedan" parecía un sello de verificación.
+    categoria: { fontSize: 11, fontWeight: 700, color: "#374151", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 9px", letterSpacing: ".02em" },
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     detail: { background: "#111827", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
     banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 16 },
   };
@@ -230,17 +311,28 @@ export default function Search() {
         <div style={st.ph}>
           {car.photos?.length > 0
             ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+<<<<<<< HEAD
             : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 12 }}>Sin foto</div>}
+=======
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 12 }}>{tr("common.noPhoto")}</div>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           <FavoriteButton listingId={car.id} size={28} disabled={car.isMock} />
         </div>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
           <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
           <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+<<<<<<< HEAD
             {car.categoryLabel && <span style={st.verif}>{car.categoryLabel}</span>}
             {car.transmission && <span style={st.tag}>{car.transmission}</span>}
             {car.fuel && <span style={st.tag}>{car.fuel}</span>}
             {car.seats && <span style={st.tag}>{car.seats} asientos</span>}
+=======
+            {car.category && <span style={st.categoria}>{categoryLabel(tr, car.category)}</span>}
+            {car.transmissionCode && <span style={st.tag}>{transmissionLabel(tr, car.transmissionCode)}</span>}
+            {car.fuelCode && <span style={st.tag}>{fuelLabel(tr, car.fuelCode)}</span>}
+            {car.seats && <span style={st.tag}>{tr("common.seats", { count: car.seats })}</span>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
           <div style={{
             marginTop: "auto", paddingTop: 12, display: "flex", gap: 10,
@@ -248,9 +340,15 @@ export default function Search() {
               ? { flexDirection: "column", alignItems: "stretch" }
               : { justifyContent: "space-between", alignItems: "flex-end" }),
           }}>
+<<<<<<< HEAD
             <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>/día</span></div>
             <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
               onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Ver detalle →</button>
+=======
+            <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+            <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
+              onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       </div>
@@ -266,6 +364,7 @@ export default function Search() {
   return (
     <div style={{ padding: isMobile ? "16px" : "24px 28px", maxWidth: 1360, margin: "0 auto" }}>
       {/* Barra de búsqueda: ubicación + fechas reales */}
+<<<<<<< HEAD
       <div style={{ display: "flex", alignItems: "center", gap: 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 16, flexWrap: "wrap" }}>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Dónde</div>
@@ -273,16 +372,34 @@ export default function Search() {
         </div>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>Retiro</div>
+=======
+      <div className="fw-compact-fields"
+        style={{ display: "flex", alignItems: "center", gap: isMobile ? 0 : 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? "12px 14px" : "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 14, flexWrap: "wrap" }}>
+        <div className="fw-plain-field" style={st.barCell}>
+          <div style={st.barLbl}>{tr("home.where")}</div>
+          <input style={st.barInput} placeholder={tr("search.allCountry")} value={where} onChange={e => setWhere(e.target.value)} />
+        </div>
+        <div className="fw-plain-field" style={st.barCell}>
+          <div style={st.barLbl}>{tr("home.pickup")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           <input type="date" style={st.barInput} min={firstBookableInput()} value={pickup}
             onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
         </div>
         <div className="fw-plain-field" style={st.barCell}>
+<<<<<<< HEAD
           <div style={st.barLbl}>Devolución</div>
+=======
+          <div style={st.barLbl}>{tr("home.dropoff")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           <input type="date" style={st.barInput} min={pickup || firstBookableInput()} value={dropoff}
             onChange={e => setDropoff(e.target.value)} />
         </div>
         <div className="fw-plain-field" style={{ ...st.barCell, ...(isMobile ? { borderBottom: "none", marginBottom: 0 } : { borderRight: "none" }) }}>
+<<<<<<< HEAD
           <div style={st.barLbl}>Categoría</div>
+=======
+          <div style={st.barLbl}>{tr("search.category")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           {/* Desplegable propio: el <select> nativo abre la lista que dibuja el
               sistema operativo, y en Windows eso se veía como un menú cuadrado
               con el celeste del sistema, sin nada del diseño de la página. */}
@@ -290,31 +407,57 @@ export default function Search() {
             plain
             value={category}
             onChange={setCategory}
+<<<<<<< HEAD
             options={[{ value: "", label: "Todas" }, ...CATEGORIES.map(c => ({ value: c.id, label: c.label }))]}
+=======
+            options={[{ value: "", label: tr("cat.all") }, ...CATEGORIES.map(c => ({ value: c.id, label: tr(c.key) }))]}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           />
         </div>
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
+<<<<<<< HEAD
             {loading ? "Buscando..." : `${filtered.length} resultado${filtered.length !== 1 ? "s" : ""}`}
           </div>
           <div style={{ fontSize: 12, color: "#9ca3af" }}>
             en {where || "Argentina"}{total > filtered.length ? ` · ${total} en total` : ""}
+=======
+            {loading ? tr("search.searching") : tr(filtered.length === 1 ? "search.resultOne" : "search.resultMany", { count: filtered.length })}
+          </div>
+          <div style={{ fontSize: 12, color: "#9ca3af" }}>
+            {tr("search.inPlace", { place: where || "Argentina" })}{total > filtered.length ? ` · ${tr("search.totalCount", { count: total })}` : ""}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       </div>
 
       {pickup && dropoff && !datesValid && (
         <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>
+<<<<<<< HEAD
           La fecha de devolución no puede ser anterior a la de retiro.
+=======
+          {tr("search.badDates")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       )}
       {datesValid && (
         <div style={{ ...st.banner, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af" }}>
+<<<<<<< HEAD
           Mostrando solo los autos libres del {new Date(`${pickup}T10:00:00`).toLocaleDateString("es-AR")} al {new Date(`${dropoff}T10:00:00`).toLocaleDateString("es-AR")}.
         </div>
       )}
       {showingMocks && (
         <div style={st.banner}>Todavía no hay autos publicados: estás viendo <strong>autos de ejemplo</strong>.</div>
+=======
+          {tr("search.onlyFree", {
+            from: new Date(`${pickup}T10:00:00`).toLocaleDateString(),
+            to: new Date(`${dropoff}T10:00:00`).toLocaleDateString(),
+          })}
+        </div>
+      )}
+      {showingMocks && (
+        <div style={st.banner}>{tr("search.sampleCars")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       )}
       {error && !showingMocks && (
         <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
@@ -322,6 +465,7 @@ export default function Search() {
 
       {/* Filtros con menús desplegables */}
       <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
+<<<<<<< HEAD
         <input placeholder="Buscar marca o modelo..." value={search} onChange={e => setSearch(e.target.value)}
           style={{ padding: "9px 16px", borderRadius: 22, border: "1px solid #e5e7eb", fontSize: 13, outline: "none", minWidth: 210 }} />
         <Dropdown label="Ordenar" active value={SORT_OPTIONS.find(o => o.id === sort)?.label}
@@ -332,17 +476,39 @@ export default function Search() {
         <input type="number" min="0" placeholder="Precio máx. por día" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
           style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #2563eb" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
         {anyFilter && <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>Limpiar filtros</div>}
+=======
+        <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
+          style={{ padding: "9px 16px", borderRadius: 22, border: "1px solid #e5e7eb", fontSize: 13, outline: "none", minWidth: 210 }} />
+        <Dropdown label={tr("search.sortBy")} active value={sort}
+          options={SORT_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))}
+          onChange={value => setSort(value || "newest")} />
+        <Dropdown label={tr("search.transmission")} value={trans} active={Boolean(trans)}
+          options={TRANSMISSION_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setTrans} />
+        <Dropdown label={tr("search.fuel")} value={fuel} active={Boolean(fuel)}
+          options={FUEL_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))} onChange={setFuel} />
+        <input type="number" min="0" placeholder={tr("search.maxPrice")} value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+          style={{ padding: "9px 16px", borderRadius: 22, border: maxPrice ? "1.5px solid #2563eb" : "1px solid #e5e7eb", fontSize: 13, outline: "none", width: 175 }} />
+        {anyFilter && <div style={{ fontSize: 13, color: "#2563eb", fontWeight: 600, cursor: "pointer" }} onClick={clearAll}>{tr("search.clearFilters")}</div>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </div>
 
       {/* Lista + Mapa */}
       <div style={{ display: (showMap && !isMobile) ? "grid" : "block", gridTemplateColumns: "1fr 42%", gap: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, ...(showMap && !isMobile ? { maxHeight: "calc(100vh - 240px)", overflowY: "auto", paddingRight: 4 } : {}) }}>
           {loading
+<<<<<<< HEAD
             ? <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Buscando autos...</div>
             : filtered.length === 0
               ? <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
                   No se encontraron autos con esos filtros.
                   {anyFilter && <div style={{ marginTop: 12 }}><button onClick={clearAll} style={{ padding: "9px 18px", borderRadius: 20, border: "1.5px solid #e5e7eb", background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Limpiar filtros</button></div>}
+=======
+            ? <Spinner block label={tr("common.loading")} />
+            : filtered.length === 0
+              ? <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
+                  {tr("search.noneWithFilters")}
+                  {anyFilter && <div style={{ marginTop: 12 }}><button onClick={clearAll} style={{ padding: "9px 18px", borderRadius: 20, border: "1.5px solid #e5e7eb", background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{tr("search.clearFilters")}</button></div>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 </div>
               : filtered.map(car => <Card key={car.id} car={car} />)}
         </div>
@@ -366,8 +532,13 @@ export default function Search() {
                     </div>
                     <div style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 8px" }}>{selectedCar.location}{selectedCar.rating > 0 ? ` · ${selectedCar.rating} ★` : ""}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+<<<<<<< HEAD
                       <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(selectedCar).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
                       <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>Ver detalle →</button>
+=======
+                      <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(selectedCar).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+                      <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>{tr("search.viewDetail")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                     </div>
                   </div>
                 </div>
@@ -382,7 +553,11 @@ export default function Search() {
 
             <button onClick={() => setShowMap(false)}
               style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 500, background: "#111827", color: "#fff", border: "none", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}>
+<<<<<<< HEAD
               Ver como lista
+=======
+              {tr("search.asList")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </button>
           </div>
         )}
@@ -392,7 +567,11 @@ export default function Search() {
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <button onClick={() => setShowMap(true)}
             style={{ background: "#fff", color: "#111827", border: "1px solid #e5e7eb", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+<<<<<<< HEAD
             Ver en el mapa
+=======
+            {tr("search.onMap")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         </div>
       )}

@@ -11,6 +11,11 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import BookingCalendar from "../../components/BookingCalendar";
 import { getListingById, createBooking } from "../../services/api";
+<<<<<<< HEAD
+=======
+import Spinner from "../../components/Spinner";
+import { useI18n } from "../../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
@@ -32,23 +37,36 @@ const s = {
 
 // Tarjeta chica con la foto y datos del auto que se está por reservar.
 function CarSummaryCard({ car, mobile }) {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   return (
     <div style={s.carCard}>
       <div style={mobile ? s.carImgMobile : s.carImg}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+<<<<<<< HEAD
           : <div style={{ color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
+=======
+          : <div style={{ color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </div>
       <div style={s.carBody}>
         <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
         <div style={s.carMeta}>{car.location}</div>
+<<<<<<< HEAD
         <div style={s.carPrice}>${Number(car.price_per_day).toLocaleString()}/día</div>
+=======
+        <div style={s.carPrice}>${Number(car.price_per_day).toLocaleString()}{tr("common.perDay")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </div>
     </div>
   );
 }
 
 export default function Booking() {
+  const { t: tr } = useI18n();
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -75,9 +93,15 @@ export default function Booking() {
           ownerId: data.ownerId,
         });
       })
+<<<<<<< HEAD
       .catch(() => setError("No se pudo cargar el listing."))
       .finally(() => setLoading(false));
   }, [id]);
+=======
+      .catch(() => setError(tr("booking.loadFailed")))
+      .finally(() => setLoading(false));
+  }, [id, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   /**
    * Se llama desde el calendario al confirmar. Crea la SOLICITUD de reserva; el
@@ -102,15 +126,22 @@ export default function Booking() {
       // La cuenta sin verificar es el motivo más común: se explica qué hacer.
       if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
         setNeedsVerification(true);
+<<<<<<< HEAD
         setError("Para reservar necesitás verificar tu cuenta (teléfono, DNI y licencia).");
       } else {
         setError(err.message || "Error al crear la reserva.");
+=======
+        setError(tr("booking.needVerified"));
+      } else {
+        setError(err.message || tr("booking.createFailed"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       }
     } finally {
       setSubmitting(false);
     }
   };
 
+<<<<<<< HEAD
   if (loading) return <div style={{ padding: 60, textAlign: "center", color: "#9ca3af" }}>Cargando...</div>;
   if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>Listing no encontrado.</div>;
 
@@ -118,6 +149,15 @@ export default function Booking() {
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={isMobile ? s.titleMobile : s.title}>Reservar auto</div>
       <div style={s.sub}>Elegí las fechas y confirmá tu reserva</div>
+=======
+  if (loading) return <Spinner block label={tr("common.loading")} />;
+  if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>{tr("booking.notFound")}</div>;
+
+  return (
+    <div style={isMobile ? s.pageMobile : s.page}>
+      <div style={isMobile ? s.titleMobile : s.title}>{tr("booking.title")}</div>
+      <div style={s.sub}>{tr("booking.sub")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       {isMobile && <CarSummaryCard car={listing} mobile />}
       {isMobile ? (
         <div>
@@ -127,8 +167,13 @@ export default function Booking() {
             <button style={{ width: "100%", marginTop: 10, padding: 12, background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
               onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
           )}
+<<<<<<< HEAD
           {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
           <div style={{ ...s.infoBox, marginTop: 16 }}><strong>Recordá:</strong> primero el dueño acepta la solicitud y después pagás.</div>
+=======
+          {submitting && <Spinner block label={tr("booking.creating")} />}
+          <div style={{ ...s.infoBox, marginTop: 16 }}><strong>{tr("booking.remember")}</strong> {tr("booking.rememberNote")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       ) : (
         <div style={s.grid}>
@@ -139,11 +184,19 @@ export default function Booking() {
               <button style={{ marginTop: 10, padding: "12px 22px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
                 onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
             )}
+<<<<<<< HEAD
             {submitting && <div style={{ textAlign: "center", padding: "16px 0", color: "#2563eb", fontSize: 14 }}>Creando reserva...</div>}
           </div>
           <div>
             <CarSummaryCard car={listing} />
             <div style={s.infoBox}><strong>Recordá:</strong> primero el dueño acepta la solicitud y después pagás.</div>
+=======
+            {submitting && <Spinner block label={tr("booking.creating")} />}
+          </div>
+          <div>
+            <CarSummaryCard car={listing} />
+            <div style={s.infoBox}><strong>{tr("booking.remember")}</strong> {tr("booking.rememberNote")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       )}

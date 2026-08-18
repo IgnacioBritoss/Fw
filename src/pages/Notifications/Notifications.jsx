@@ -11,12 +11,32 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { buildNotifications, getReadIds, markRead, markAllRead } from "../../services/notifications";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // ── Íconos SVG por categoría (sin emojis) ──
 const Icon = ({ name, color = "#374151" }) => {
   const p = { fill: "none", stroke: color, strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
+<<<<<<< HEAD
     reserva: <><path d="M5 17H3v-5l2-5h11l3 5v5h-2" {...p} /><circle cx="7.5" cy="17" r="1.6" {...p} /><circle cx="16.5" cy="17" r="1.6" {...p} /></>,
+=======
+    // El auto: mismo dibujo que el resto de la app (components/CarIcon), no una
+    // copia distinta. Antes acá había su propia versión del trapecio.
+    reserva: (
+      <>
+        <path d="M2.7 15.1v-1.7c0-.5.35-.92.84-1.01l2.7-.5 2.2-2.94c.36-.48.92-.76 1.52-.76h4.3c.5 0 .98.2 1.34.55l3.1 3.06 2.05.42c.55.11.95.6.95 1.16v1.72" {...p} />
+        <path d="M2.7 15.1h1.6M9.1 15.1h5.8M19.7 15.1h1.6" {...p} />
+        <path d="M4.3 15.1a2.4 2.4 0 0 1 4.8 0M14.9 15.1a2.4 2.4 0 0 1 4.8 0" {...p} />
+        <circle cx="6.7" cy="15.6" r="1.9" {...p} />
+        <circle cx="17.3" cy="15.6" r="1.9" {...p} />
+        <path d="M12.4 8.2v3.9M6.24 11.88h13.06" {...p} />
+      </>
+    ),
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     mensaje: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" {...p} />,
     sistema: <><rect x="2" y="6" width="20" height="13" rx="2" {...p} /><path d="M2 10h20" {...p} /></>,
     promo: <><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12.2V5a2 2 0 0 1 2-2h7.2a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8z" {...p} /><circle cx="7.5" cy="7.5" r="1.2" {...p} /></>,
@@ -26,6 +46,7 @@ const Icon = ({ name, color = "#374151" }) => {
 };
 
 const CAT_META = {
+<<<<<<< HEAD
   reserva: { label: "Reservas", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
   mensaje: { label: "Mensajes", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
   sistema: { label: "Sistema", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
@@ -39,6 +60,21 @@ const TABS = [
   { key: "mensaje", label: "Mensajes" },
   { key: "promo", label: "Promos" },
   { key: "sistema", label: "Sistema" },
+=======
+  reserva: { key: "notif.catBookings", icon: "reserva", bg: "#eef2ff", fg: "#4f46e5" },
+  mensaje: { key: "notif.catMessages", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
+  sistema: { key: "notif.catSystem", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
+  promo: { key: "notif.catPromos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },
+  review: { key: "notif.catReviews", icon: "review", bg: "#fff7ed", fg: "#ea580c" },
+};
+
+const TABS = [
+  { key: "todas", label: "notif.tabAll" },
+  { key: "reserva", label: "notif.catBookings" },
+  { key: "mensaje", label: "notif.catMessages" },
+  { key: "promo", label: "notif.catPromos" },
+  { key: "sistema", label: "notif.catSystem" },
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 ];
 
 // Devuelve la hora/fecha corta que se muestra al costado de cada notificación
@@ -49,7 +85,11 @@ function timeLabel(ts) {
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   const yest = new Date(now); yest.setDate(now.getDate() - 1);
   if (sameDay(d, now)) return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+<<<<<<< HEAD
   if (sameDay(d, yest)) return "Ayer";
+=======
+  if (sameDay(d, yest)) return "notif.yesterday";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
 }
 // Devuelve el título del grupo al que pertenece una notificación: Hoy / Ayer / Anteriores.
@@ -58,12 +98,21 @@ function groupLabel(ts) {
   const now = new Date();
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   const yest = new Date(now); yest.setDate(now.getDate() - 1);
+<<<<<<< HEAD
   if (sameDay(d, now)) return "Hoy";
   if (sameDay(d, yest)) return "Ayer";
+=======
+  if (sameDay(d, now)) return "notif.today";
+  if (sameDay(d, yest)) return "notif.yesterday";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   return "Anteriores";
 }
 
 export default function Notifications() {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -135,17 +184,30 @@ export default function Notifications() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
+<<<<<<< HEAD
           <div style={s.title}>Notificaciones</div>
           <div style={s.sub}>{loading ? "Cargando…" : `${unreadCount} sin leer · ${notifs.length} en total`}</div>
+=======
+          <div style={s.title}>{tr("nav.notifications")}</div>
+          <div style={s.sub}>{loading ? tr("common.loading") : tr("notif.counts", { unread: unreadCount, total: notifs.length })}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button style={s.btnGhost} onClick={markAll} disabled={unreadCount === 0}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#374151" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+<<<<<<< HEAD
             Marcar leídas
           </button>
           <button style={s.btnDark} onClick={() => navigate("/ajustes")}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#fff" strokeWidth="2" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Preferencias
+=======
+            {tr("notif.markAll")}
+          </button>
+          <button style={s.btnDark} onClick={() => navigate("/ajustes")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#fff" strokeWidth="2" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {tr("notif.prefs")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         </div>
       </div>
@@ -154,23 +216,42 @@ export default function Notifications() {
       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 20, borderBottom: "1px solid #ececec", paddingBottom: 12 }}>
         {TABS.map(t => (
           <button key={t.key} style={s.tab(tab === t.key)} onClick={() => setTab(t.key)}>
+<<<<<<< HEAD
             {t.label}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
+=======
+            {tr(t.label)}<span style={s.tabCount(tab === t.key)}>{countFor(t.key)}</span>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         ))}
       </div>
 
       {/* Lista */}
+<<<<<<< HEAD
       {!loading && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "70px 20px", color: "#9ca3af" }}>
           <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 12 }}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" /></svg>
           <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>No tenés notificaciones acá</div>
           <div style={{ fontSize: 13, marginTop: 4 }}>Cuando pase algo con tus reservas o mensajes, aparecerá en esta sección.</div>
+=======
+      {/* Mientras carga, el círculo: antes la lista aparecía vacía sin ningún aviso. */}
+      {loading && <Spinner block label={tr("common.loading")} />}
+
+      {!loading && filtered.length === 0 && (
+        <div style={{ textAlign: "center", padding: "70px 20px", color: "#9ca3af" }}>
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 12 }}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" /></svg>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>{tr("notif.empty")}</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>{tr("notif.emptyHint")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       )}
 
       {groups.map(([label, items]) => (
         <div key={label}>
+<<<<<<< HEAD
           <div style={s.groupLabel}>{label}</div>
+=======
+          <div style={s.groupLabel}>{tr(label)}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           {items.map(n => {
             const meta = CAT_META[n.cat] || CAT_META.sistema;
             const read = isRead(n);
@@ -183,13 +264,22 @@ export default function Notifications() {
                   <Icon name={meta.icon} color={meta.fg} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
+<<<<<<< HEAD
                   <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.title}</div>
                   <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.body}</div>
+=======
+                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.titleKey ? tr(n.titleKey, n.vars) : n.title}</div>
+                  <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.bodyKey ? tr(n.bodyKey, n.vars) : n.body}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                   <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts)}</span>
                   {!read && (
+<<<<<<< HEAD
                     <button onClick={e => markOne(e, n)} title="Marcar como leída"
+=======
+                    <button onClick={e => markOne(e, n)} title={tr("notif.markOne")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                       style={{ width: 28, height: 28, borderRadius: 8, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#6b7280" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>

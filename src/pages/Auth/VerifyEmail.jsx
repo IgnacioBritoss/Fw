@@ -9,6 +9,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Los estilos dependen del ancho de la pantalla, así que se arman adentro del
 // componente. En celular: menos aire alrededor y campos de 16px, porque con
@@ -29,6 +33,10 @@ const styles = (isMobile) => ({
 
 export default function VerifyEmail() {
   const { isMobile } = useIsMobile();
+<<<<<<< HEAD
+=======
+  const { t } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const s = styles(isMobile);
   const { verifyEmail, resendVerification, user } = useAuth();
   const navigate = useNavigate();
@@ -40,7 +48,11 @@ export default function VerifyEmail() {
 
   // Verifica el código de 6 dígitos. Si es válido, avanza a completar el perfil.
   const handleVerify = async () => {
+<<<<<<< HEAD
     if (code.length !== 6) { setError("El código tiene 6 dígitos."); return; }
+=======
+    if (code.length !== 6) { setError(t("reg.errCode")); return; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     setLoading(true);
     setError("");
     const result = await verifyEmail(code);
@@ -57,7 +69,11 @@ export default function VerifyEmail() {
     const result = await resendVerification();
     setResending(false);
     if (result.success) {
+<<<<<<< HEAD
       setInfo("Te enviamos un nuevo código. Revisá tu bandeja.");
+=======
+      setInfo(t("verify.resent"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     } else {
       setError(result.error);
     }
@@ -67,10 +83,17 @@ export default function VerifyEmail() {
     <div style={s.page}>
       <div style={s.card}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#2563eb" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/></svg>
+<<<<<<< HEAD
         <div style={s.title}>Verificá tu email</div>
         <div style={s.sub}>
           Te enviamos un código de 6 dígitos a <strong>{user?.email}</strong>.<br />
           Ingresalo para activar tu cuenta.
+=======
+        <div style={s.title}>{t("verify.title")}</div>
+        <div style={s.sub}>
+          {t("verify.sentTo")} <strong>{user?.email}</strong>.<br />
+          {t("verify.enterIt")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
 
         {error && <div style={s.error}>{error}</div>}
@@ -89,6 +112,7 @@ export default function VerifyEmail() {
 
         <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
           onClick={handleVerify} disabled={loading}>
+<<<<<<< HEAD
           {loading ? "Verificando..." : "Verificar código"}
         </button>
 
@@ -97,6 +121,16 @@ export default function VerifyEmail() {
           <button style={{ ...s.btnLink, opacity: resending ? 0.5 : 1 }}
             onClick={handleResend} disabled={resending}>
             {resending ? "Enviando..." : "Reenviar código"}
+=======
+          {loading ? t("verify.checking") : t("verify.submit")}
+        </button>
+
+        <div style={{ fontSize:13, color:"#6b7280" }}>
+          {t("verify.notArrived")}{" "}
+          <button style={{ ...s.btnLink, opacity: resending ? 0.5 : 1 }}
+            onClick={handleResend} disabled={resending}>
+            {resending ? t("common.sending") : t("reg.resendCode")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         </div>
       </div>

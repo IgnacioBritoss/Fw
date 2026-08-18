@@ -20,6 +20,10 @@
 // ============================================================================
 import { useId } from "react";
 import { isArgentinePhone, LOCAL_DIGITS } from "../services/phone";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 
 /** Muestra `9 11 3289 5416` a partir de los dígitos que van después del 54. */
@@ -43,10 +47,18 @@ function groupLocal(rest) {
 export default function PhoneInput({
   value = "",
   onChange,
+<<<<<<< HEAD
   label = "Teléfono",
   showError = false,
   style,
 }) {
+=======
+  label,
+  showError = false,
+  style,
+}) {
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const id = useId();
   const rest = String(value).replace(/\D/g, "").slice(0, LOCAL_DIGITS + 1);
   const complete = isArgentinePhone(`54${rest}`);
@@ -98,11 +110,19 @@ export default function PhoneInput({
 
       {invalid ? (
         <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 6, fontWeight: 600 }}>
+<<<<<<< HEAD
           Falta completar el número. Tiene que ser un celular argentino: 9 + código de área + número (10 dígitos en total).
         </div>
       ) : (
         <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
           Solo Argentina. Ejemplo: 9 11 3289 5416
+=======
+          {tr("phone.incomplete")}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+          {tr("phone.hint")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       )}
     </div>

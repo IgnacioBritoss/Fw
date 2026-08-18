@@ -19,6 +19,10 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import PhoneInput from "../../components/PhoneInput";
 import { isArgentinePhone, normalizeArgentinePhone } from "../../services/phone";
 import { updateMe } from "../../services/api";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Edad exacta a partir de la fecha (YYYY-MM-DD).
 function ageFrom(dateString) {
@@ -39,6 +43,10 @@ function maxBirthDate() {
 
 export default function CompleteProfile() {
   const { isMobile } = useIsMobile();
+<<<<<<< HEAD
+=======
+  const { t } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const { user, completeProfile, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -62,15 +70,26 @@ export default function CompleteProfile() {
 
   // Guarda la fecha de nacimiento (obligatoria) y, si se cargó, el teléfono.
   const finish = async () => {
+<<<<<<< HEAD
     if (!dateOfBirth) { setError("Ingresá tu fecha de nacimiento."); return; }
     const age = ageFrom(dateOfBirth);
     if (age === null) { setError("La fecha no es válida."); return; }
     if (age < 18) { setError("Tenés que ser mayor de 18 años para usar Freewheel."); return; }
+=======
+    if (!dateOfBirth) { setError(t("reg.errBirth")); return; }
+    const age = ageFrom(dateOfBirth);
+    if (age === null) { setError(t("reg.errBirthBad")); return; }
+    if (age < 18) { setError(t("reg.err18")); return; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     // El teléfono es opcional acá, pero si lo cargan tiene que estar completo:
     // guardar un número a medias no le sirve a nadie.
     if (phone && !isArgentinePhone(`54${phone}`)) {
       setPhoneTouched(true);
+<<<<<<< HEAD
       setError("El teléfono tiene que ser un celular argentino completo (ejemplo 9 11 3289 5416), o dejalo vacío.");
+=======
+      setError(t("complete.errPhone"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       return;
     }
 
@@ -94,14 +113,22 @@ export default function CompleteProfile() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>
+<<<<<<< HEAD
           {firstName ? `¡Hola, ${firstName}!` : "Ya casi estás"}
         </div>
         <div style={{ color:"#6b7280", fontSize:14, marginBottom:24, lineHeight:1.6 }}>
           Nos falta un dato para terminar tu cuenta. Freewheel es solo para mayores de 18 años.
+=======
+          {firstName ? t("complete.helloName", { name: firstName }) : t("complete.almost")}
+        </div>
+        <div style={{ color:"#6b7280", fontSize:14, marginBottom:24, lineHeight:1.6 }}>
+          {t("complete.sub")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
         {error && <div style={s.error}>{error}</div>}
 
         <div style={{ marginBottom:20 }}>
+<<<<<<< HEAD
           <label style={s.label}>Fecha de nacimiento *</label>
           <input style={s.input} type="date" max={maxBirthDate()} value={dateOfBirth}
             onChange={e => setDateOfBirth(e.target.value)} />
@@ -110,11 +137,25 @@ export default function CompleteProfile() {
 
         <div style={{ marginBottom:24 }}>
           <PhoneInput label="Teléfono (opcional)" value={phone} showError={phoneTouched}
+=======
+          <label style={s.label}>{t("profile.birthDate")} *</label>
+          <input style={s.input} type="date" max={maxBirthDate()} value={dateOfBirth}
+            onChange={e => setDateOfBirth(e.target.value)} />
+          <div style={s.hint}>{t("complete.birthHint")}</div>
+        </div>
+
+        <div style={{ marginBottom:24 }}>
+          <PhoneInput label={`${t("auth.phone")} (${t("common.optional")})`} value={phone} showError={phoneTouched}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             onChange={setPhone} />
         </div>
 
         <button style={{ ...s.btn, opacity: loading ? 0.6 : 1 }} onClick={finish} disabled={loading}>
+<<<<<<< HEAD
           {loading ? "Guardando..." : "Entrar a Freewheel"}
+=======
+          {loading ? t("common.saving") : t("complete.enter")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </button>
       </div>
     </div>

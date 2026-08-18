@@ -24,6 +24,7 @@
 // ============================================================================
 import { Link } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
+<<<<<<< HEAD
 
 const Logo = ({ light = true, size = 20 }) => (
   <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", position: "relative" }}>
@@ -46,17 +47,46 @@ const Logo = ({ light = true, size = 20 }) => (
   </Link>
 );
 
+=======
+import { useThemeColor } from "../hooks/useThemeColor";
+import BrandLogo from "./Logo";
+
+const Logo = ({ light = true, size = 20 }) => (
+  <Link to="/" style={{ textDecoration: "none", position: "relative" }}>
+    <BrandLogo size={size} light={light} />
+  </Link>
+);
+
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 const HERO_BG = "linear-gradient(160deg,#0a0f1e 0%,#0d1525 60%,#0f1e3d 100%)";
 const HERO_GLOW = "radial-gradient(ellipse at 30% 70%,rgba(37,99,235,.18) 0%,transparent 60%)";
 
 export default function AuthShell({ hero, title, subtitle, footer, maxWidth = 400, children }) {
   const { isMobile } = useIsMobile();
+<<<<<<< HEAD
+=======
+  // La barra del navegador acompaña la franja oscura: sin esto, en iPhone quedaba
+  // una banda blanca de Safari encima y la franja no llegaba al borde de arriba.
+  useThemeColor("#0a0f1e");
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── CELULAR: una sola columna, el panel oscuro reducido a una franja ──
   if (isMobile) {
     return (
       <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
+<<<<<<< HEAD
         <div style={{ background: HERO_BG, padding: "22px 20px 24px", position: "relative", overflow: "hidden" }}>
+=======
+        <div style={{
+          background: HERO_BG,
+          // El área segura es el espacio que ocupan la barra de estado y el notch:
+          // se le suma al padding para que la franja pinte hasta arriba de todo sin
+          // que el logo quede tapado.
+          padding: "calc(22px + env(safe-area-inset-top)) 20px 24px",
+          position: "relative", overflow: "hidden",
+        }}>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           <div style={{ position: "absolute", inset: 0, backgroundImage: HERO_GLOW }} />
           <Logo size={18} />
           {hero?.title && (

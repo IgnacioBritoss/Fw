@@ -22,14 +22,23 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useAuth } from "../../context/AuthContext";
 import { useListings } from "../../hooks/useListings";
+<<<<<<< HEAD
 import { CATEGORIES, filterCars, priceOf } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import { firstBookableInput } from "../../services/dates";
+=======
+import { CATEGORIES, filterCars, priceOf, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
+import FavoriteButton from "../../components/FavoriteButton";
+import { firstBookableInput } from "../../services/dates";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
 
 export default function Home() {
+  const { t: tr } = useI18n();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const { user } = useAuth();
@@ -80,6 +89,7 @@ export default function Home() {
   // Avisa si el rango de fechas está al revés o incompleto.
   useEffect(() => {
     if (pickup && dropoff && new Date(dropoff) < new Date(pickup)) {
+<<<<<<< HEAD
       setDateError("La devolución no puede ser antes del retiro.");
     } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
       setDateError("Completá las dos fechas para filtrar por disponibilidad.");
@@ -87,6 +97,15 @@ export default function Home() {
       setDateError("");
     }
   }, [pickup, dropoff]);
+=======
+      setDateError(tr("home.dateBackwards"));
+    } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
+      setDateError(tr("home.dateIncomplete"));
+    } else {
+      setDateError("");
+    }
+  }, [pickup, dropoff, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // Carga la librería del mapa (Leaflet) una sola vez.
   useEffect(() => {
@@ -145,16 +164,22 @@ export default function Home() {
           <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
           <div style="font-weight:700;font-size:15px;color:#2563eb">
             $${priceOf(car).toLocaleString()}
+<<<<<<< HEAD
             <span style="font-weight:400;font-size:12px;color:#6b7280">/día</span>
           </div>
           <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">Ver auto</div>
+=======
+            <span style="font-weight:400;font-size:12px;color:#6b7280">${tr("common.perDay")}</span>
+          </div>
+          <div style="margin-top:8px;padding:7px;background:#2563eb;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">${tr("car.bookNow")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       `));
       marker.addTo(map);
       markersRef.current[car.id] = { marker, circle };
     });
     window.__fwOpen = (id) => navigate(`/cars/${id}`);
-  }, [filtered, navigate]);
+  }, [filtered, navigate, tr]);
 
   // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
   useEffect(() => {
@@ -175,6 +200,28 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, mapLoaded, isMobile]);
 
+<<<<<<< HEAD
+  // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
+  useEffect(() => {
+    if (view !== "mapa") return;
+    const init = () => {
+      if (!mapRef.current || mapInstanceRef.current) return;
+      const L = window.L;
+      if (!L) return;
+      // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
+      const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: isMobile ? 11 : 12, scrollWheelZoom: false });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
+      mapInstanceRef.current = map;
+      addMarkers(map, L);
+    };
+    if (window.L) { const t = setTimeout(init, 150); return () => clearTimeout(t); }
+    const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 150); } }, 100);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, mapLoaded, isMobile]);
+
+=======
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   useEffect(() => {
     if (view !== "mapa" || !mapInstanceRef.current || !window.L) return;
     addMarkers(mapInstanceRef.current, window.L);
@@ -221,16 +268,30 @@ export default function Home() {
   // ─────────────────────────────────────────── Estilos
   const t = {
     content: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1320, margin: "0 auto" },
+<<<<<<< HEAD
     hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "20px 16px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
+=======
+    hero: { borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 14px" : 32, background: "linear-gradient(120deg,#0a1f44 0%,#1d4ed8 60%,#2563eb 100%)", color: "#fff", position: "relative", overflow: "hidden", marginBottom: isMobile ? 24 : 32 },
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     searchRow: isMobile
       ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 14, padding: 8, marginTop: 20 }
       : { display: "flex", alignItems: "center", background: "#fff", borderRadius: 16, padding: "8px 8px 8px 4px", marginTop: 28, flexWrap: "wrap" },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
+<<<<<<< HEAD
     searchCell: isMobile
       ? { width: "100%", padding: "9px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
       : { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
     searchLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
+=======
+    // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
+    // padding generoso), así que las tres filas del buscador se comían media
+    // pantalla del teléfono y había que scrolear para ver los autos.
+    searchCell: isMobile
+      ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
+      : { flex: 1, minWidth: 140, padding: "8px 20px", borderRight: "1px solid #eee" },
+    searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
     carCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 16, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
@@ -247,9 +308,15 @@ export default function Home() {
       <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "#e5e7eb" }}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+<<<<<<< HEAD
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>Sin foto</div>}
         {car.categoryLabel && (
           <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{car.categoryLabel}</div>
+=======
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+        {car.category && (
+          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(17,24,39,.85)", color: "#fff", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{categoryLabel(tr, car.category)}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         )}
         {/* Corazón: es un botón que corta el clic, así no abre la publicación. */}
         <FavoriteButton listingId={car.id} disabled={car.isMock} />
@@ -258,6 +325,7 @@ export default function Home() {
         <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
         <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
           {car.location && `${car.location} · `}
+<<<<<<< HEAD
           {car.rating > 0 && `${car.rating} ★ · `}{car.transmission}
         </div>
         <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
@@ -267,6 +335,17 @@ export default function Home() {
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>/día</span></div>
           <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>Reservar</button>
+=======
+          {car.rating > 0 && `${car.rating} ★ · `}{transmissionLabel(tr, car.transmissionCode)}
+        </div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+          {car.fuelCode && <span style={t.tag}>{fuelLabel(tr, car.fuelCode)}</span>}
+          {car.seats && <span style={t.tag}>{tr("common.seats", { count: car.seats })}</span>}
+        </div>
+        <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+          <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("home.book")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       </div>
     </div>
@@ -275,8 +354,17 @@ export default function Home() {
   // Grilla de categorías: cada tarjeta filtra por ese tipo de auto al clickearla.
   const CategoriesSection = () => (
     <>
+<<<<<<< HEAD
       <div style={{ ...t.sectionTitle, marginBottom: 16 }}>Explorá por categoría</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(6,1fr)", gap: 14, marginBottom: 32 }}>
+=======
+      <div style={{ ...t.sectionTitle, marginBottom: 16 }}>{tr("home.categories")}</div>
+      {/* Cuatro columnas y no seis: son ocho categorías, así quedan dos filas
+          parejas de cuatro. Con seis columnas quedaban seis arriba y las que
+          sobraban solas abajo, que se ve como si faltara algo. En el celular,
+          dos por fila. */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         {CATEGORIES.map((c) => {
           const min = priceByCategory[c.id];
           const count = countByCategory[c.id] || 0;
@@ -295,10 +383,17 @@ export default function Home() {
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "#ececec"; }}
             >
               <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#2563eb" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
+<<<<<<< HEAD
               <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{c.label}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
               <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
                 {min ? `Desde $${min.toLocaleString()}` : count > 0 ? `${count} auto${count !== 1 ? "s" : ""}` : "Sin autos por ahora"}
+=======
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
+              {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
+              <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#2563eb" : "#9ca3af", marginTop: 4 }}>
+                {min ? tr("home.from", { price: `$${min.toLocaleString()}` }) : count > 0 ? `${count}` : tr("home.noneYet")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               </div>
             </div>
           );
@@ -309,6 +404,7 @@ export default function Home() {
 
   const StepsSection = () => (
     <>
+<<<<<<< HEAD
       <div style={{ ...t.sectionTitle, marginBottom: 4 }}>¿Primera vez?</div>
       <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>Alquilar con Freewheel es así de simple</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
@@ -322,6 +418,21 @@ export default function Home() {
             <div style={{ fontSize: 26, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>{n}</div>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{ti}</div>
             <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{d}</div>
+=======
+      <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>
+      <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
+        {[
+          ["01", "home.step1", "home.step1Sub"],
+          ["02", "home.step2", "home.step2Sub"],
+          ["03", "home.step3", "home.step3Sub"],
+          ["04", "home.step4", "home.step4Sub"],
+        ].map(([n, ti, d]) => (
+          <div key={n} style={t.stepCard}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>{n}</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{tr(ti)}</div>
+            <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{tr(d)}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         ))}
       </div>
@@ -331,6 +442,7 @@ export default function Home() {
   return (
     <div style={t.content}>
       {/* Hero */}
+<<<<<<< HEAD
       <div style={t.hero}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.12),transparent 60%)" }} />
         <div style={{ position: "relative" }}>
@@ -346,11 +458,40 @@ export default function Home() {
             {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
             <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>Retiro</div>
+=======
+      {/*
+        data-no-invert: en modo oscuro la página entera se invierte, y este bloque
+        YA es oscuro (azul noche con letras blancas), así que la inversión lo dejaba
+        celeste con letras negras — justo al revés de lo que tiene que ser. Con esta
+        marca se lo vuelve a invertir y conserva sus colores reales.
+        La tarjeta blanca del buscador que va adentro se oscurece por CSS
+        (.fw-hero-search en theme.css), porque acá el filtro ya no la alcanza.
+      */}
+      <div style={t.hero} data-no-invert>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.12),transparent 60%)" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "inline-block", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,.14)", padding: "5px 12px", borderRadius: 20, marginBottom: 16 }}>● {tr("home.greeting", { name: firstName || tr("home.guest") }).toUpperCase()}</div>
+          <div style={{ fontSize: isMobile ? 25 : 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
+          <div style={{ fontSize: 14, opacity: .8, marginTop: 14 }}>{tr("home.subtitle")}</div>
+
+          <div className="fw-hero-search" style={t.searchRow}>
+            <div className="fw-plain-field" style={t.searchCell}>
+              <div style={t.searchLabel}>{tr("home.where")}</div>
+              <input style={t.searchInput} placeholder={tr("home.wherePlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
+            <div className="fw-plain-field" style={t.searchCell}>
+              <div style={t.searchLabel}>{tr("home.pickup")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               <input type="date" style={t.searchInput} min={firstBookableInput()} value={pickup}
                 onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
             </div>
             <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }) }}>
+<<<<<<< HEAD
               <div style={t.searchLabel}>Devolución</div>
+=======
+              <div style={t.searchLabel}>{tr("home.dropoff")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               <input type="date" style={t.searchInput} min={pickup || firstBookableInput()} value={dropoff}
                 onChange={e => setDropoff(e.target.value)} />
             </div>
@@ -365,7 +506,11 @@ export default function Home() {
                   ? { width: "100%", padding: "14px", marginTop: 8 }
                   : { padding: "14px 24px", margin: 4 }),
               }}
+<<<<<<< HEAD
               onClick={goToSearch}>Buscar autos →</button>
+=======
+              onClick={goToSearch}>{tr("home.searchCars")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
           {dateError && (
             <div style={{ marginTop: 12, fontSize: 13, background: "rgba(255,255,255,.16)", borderRadius: 8, padding: "8px 12px", display: "inline-block" }}>{dateError}</div>
@@ -375,10 +520,14 @@ export default function Home() {
 
       {/* Avisos de estado: datos de ejemplo o backend caído */}
       {showingMocks && (
+<<<<<<< HEAD
         <div style={t.banner}>
           Todavía no hay autos publicados, así que estás viendo <strong>autos de ejemplo</strong>.
           {" "}En cuanto alguien publique un auto, aparecen los reales.
         </div>
+=======
+        <div style={t.banner}>{tr("home.sampleCars")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       )}
       {error && !showingMocks && (
         <div style={{ ...t.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
@@ -390,10 +539,17 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={t.sectionTitle}>
+<<<<<<< HEAD
             {cat ? `Autos ${CATEGORIES.find(c => c.id === cat)?.label}` : "Autos disponibles"}
           </div>
           <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
             {loading ? "Buscando autos..." : `${filtered.length} auto${filtered.length !== 1 ? "s" : ""} disponible${filtered.length !== 1 ? "s" : ""}`}
+=======
+            {cat ? `${tr("home.available")} · ${categoryLabel(tr, cat)}` : tr("home.available")}
+          </div>
+          <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
+            {loading ? tr("common.loading") : tr("home.availableCount", { count: filtered.length })}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             {pickup && dropoff && !dateError && " en las fechas elegidas"}
           </div>
         </div>
@@ -401,10 +557,17 @@ export default function Home() {
           {(cat || search || pickup || dropoff) && (
             <button onClick={() => { setCat(""); setSearch(""); setPickup(""); setDropoff(""); }}
               style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+<<<<<<< HEAD
               Limpiar filtros
             </button>
           )}
           {[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, l]) => (
+=======
+              {tr("search.clearFilters")}
+            </button>
+          )}
+          {[["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             <button key={k} onClick={() => setView(k)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
               border: view === k ? "2px solid #2563eb" : "1.5px solid #e5e7eb",
@@ -416,6 +579,7 @@ export default function Home() {
 
       {/* Resultados */}
       {loading ? (
+<<<<<<< HEAD
         <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>Cargando autos...</div>
       ) : view === "lista" ? (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
@@ -424,6 +588,20 @@ export default function Home() {
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
               No se encontraron autos con estos filtros.
               {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>Probá con otras fechas o con otra categoría.</div>}
+=======
+        <Spinner block label={tr("common.loading")} />
+      ) : view === "lista" ? (
+        // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba en 170px:
+        // el nombre del auto se partía en dos renglones y el precio con el botón
+        // "Reservar" no entraban en la misma fila, así que el botón aparecía
+        // cortado contra el borde de la tarjeta.
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(250px,1fr))", gap: isMobile ? 12 : 16 }}>
+          {filtered.map(car => <CarCard key={car.id} car={car} />)}
+          {filtered.length === 0 && (
+            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
+              {tr("home.noResults")}
+              {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>{tr("home.tryOther")}</div>}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </div>
           )}
         </div>

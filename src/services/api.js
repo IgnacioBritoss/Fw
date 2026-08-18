@@ -15,6 +15,11 @@
 // Dirección base del backend. Por defecto apunta al que está desplegado en
 // Vercel; con VITE_API_URL se puede apuntar a un backend local para desarrollo
 // (por ejemplo VITE_API_URL=http://localhost:3000 en un archivo .env.local).
+<<<<<<< HEAD
+=======
+import { tSync, idiomaInicial } from "../i18n/core";
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 const BASE_URL = import.meta.env.VITE_API_URL || "https://free-wheel-back.vercel.app";
 
 // URL a la que se redirige al usuario para iniciar sesión con Google (OAuth).
@@ -60,7 +65,11 @@ async function apiFetch(path, options = {}) {
   } catch {
     // Falló la red (sin internet, backend caído): mensaje claro en vez de
     // "Failed to fetch", que no le dice nada al usuario.
+<<<<<<< HEAD
     const err = new Error("No pudimos conectarnos con el servidor. Revisá tu conexión e intentá de nuevo.");
+=======
+    const err = new Error(tSync("net.offline"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     err.status = 0;
     throw err;
   }
@@ -169,8 +178,89 @@ export async function confirmEmailChange(code) {
 // ── USUARIOS ───────────────────────────────────────────────────
 // getMe(): trae los datos del usuario logueado. updateMe(): edita el perfil.
 export async function getMe() { return apiFetch("/users/me"); }
+<<<<<<< HEAD
 export async function updateMe({ firstName, lastName, phone }) {
   return apiFetch("/users/me", { method: "PATCH", body: JSON.stringify({ firstName, lastName, phone }) });
+=======
+/**
+ * Edita el perfil. Solo se manda lo que se pasó: el backend valida con
+ * `forbidNonWhitelisted`, y mandar `phone: undefined` en un cambio de foto
+ * hacía que se pisara con vacío lo que no se estaba tocando.
+ *
+ * `profilePhotoUrl` es la foto de perfil (null la quita) y
+ * `profilePhotoVisibility` es quién puede verla ("EVERYONE" | "BOOKED").
+ * `dni`, `cuil` y `address` son los datos que la verificación de identidad
+ * coteja contra el DNI y la licencia.
+ *
+ * SOBRE EL BACKEND VIEJO: el front y el backend se publican por separado, así que
+ * hay un rato en el que este front le habla a un backend que todavía no conoce
+ * un campo nuevo. Ese backend NO lo ignora: valida con `forbidNonWhitelisted` y
+ * contesta 400. Sin el reintento de abajo, en ese rato no se podría ni cambiar la
+ * foto (ya pasó con otro campo: la revisión de fotos quedó devolviendo 400 y
+ * ninguna foto se revisaba). Entonces, si el 400 es porque el campo no existe, se
+ * guarda lo demás y se recuerda para no volver a mandarlo en toda la sesión.
+ *
+ * Quien llama puede darse cuenta de que un campo quedó sin guardar mirando el
+ * perfil que se devuelve: es el que respondió el servidor, no el que se mandó.
+ */
+const CAMPOS_EDITABLES = [
+  "firstName", "lastName", "phone",
+  "profilePhotoUrl", "profilePhotoVisibility",
+  "dni", "cuil", "address",
+];
+
+// Los que un backend anterior puede no conocer todavía.
+const CAMPOS_NUEVOS = ["profilePhotoVisibility", "dni", "cuil", "address"];
+
+// Los que ya rebotaron en esta sesión por no existir en el backend.
+const desconocidos = new Set();
+
+/**
+ * ¿Este 400 es "el backend no conoce ese campo" y no "ese valor está mal"?
+ *
+ * La diferencia importa: `forbidNonWhitelisted` contesta "property dni should not
+ * exist", y ahí reintentar sin el campo es lo correcto. Pero un CUIL con el
+ * dígito verificador mal también menciona el campo, y ahí reintentar sin él
+ * guardaría el resto y diría que salió bien, ocultando el error de carga. Por eso
+ * se exige el "should not exist".
+ */
+const campoDesconocido = (err, campo) =>
+  err?.status === 400 &&
+  new RegExp(`${campo}\\b[^·]*should not exist`, "i").test(String(err?.message ?? ""));
+
+export async function updateMe(fields = {}) {
+  const body = {};
+  for (const key of CAMPOS_EDITABLES) {
+    if (fields[key] !== undefined) body[key] = fields[key];
+  }
+
+  const enviar = (payload) =>
+    apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
+
+  // Un intento por campo nuevo como máximo: cada rechazo saca uno del payload,
+  // así que la vuelta siguiente manda estrictamente menos.
+  for (let intento = 0; intento <= CAMPOS_NUEVOS.length; intento++) {
+    const payload = { ...body };
+    for (const campo of desconocidos) delete payload[campo];
+
+    // Si lo único que se estaba cambiando era un campo que este backend no
+    // tiene, no queda nada que mandar: se devuelve el perfil como está en vez de
+    // un PATCH vacío.
+    if (Object.keys(payload).length === 0) return getMe();
+
+    try {
+      return await enviar(payload);
+    } catch (err) {
+      const rechazado = CAMPOS_NUEVOS.find(
+        (campo) => payload[campo] !== undefined && campoDesconocido(err, campo),
+      );
+      if (!rechazado) throw err;
+      desconocidos.add(rechazado);
+    }
+  }
+
+  return getMe();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 }
 
 // ── VEHÍCULOS ──────────────────────────────────────────────────
@@ -280,6 +370,39 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Firma para subir UNA foto de identidad concreta.
+ *
+ * `document` es "dni" | "license" | "selfie" y `side` es "front" | "back" (la
+ * selfie no lleva lado). El servidor decide la carpeta, el nombre del archivo y
+ * que el asset quede PRIVADO: el navegador no elige nada de eso.
+ *
+ * POR QUÉ EXISTE: el backend ya no acepta una URL cualquiera de Cloudinary. Al
+ * enviar los documentos comprueba que cada archivo esté en `identity/<tu-id>/` y
+ * que el nombre empiece con el slot que le corresponde. Así es imposible mandar
+ * el dorso donde va el frente, o un archivo de otra cuenta. Con la firma
+ * genérica de antes (carpeta `freewheel`) el envío ahora falla con
+ * DOCUMENT_SLOT_MISMATCH.
+ */
+export async function getIdentityUploadSignature({ document, side }) {
+  return apiFetch("/verification/identity/upload-signature", {
+    method: "POST",
+    body: JSON.stringify(side ? { document, side } : { document }),
+  });
+}
+
+/**
+ * Vuelve a correr la revisión de la última solicitud pendiente, sin volver a
+ * subir las fotos. Sirve cuando la revisión no pudo decidir (un timeout del
+ * proveedor) o después de corregir el DNI, el CUIL o el domicilio.
+ */
+export async function retryIdentityReview() {
+  return apiFetch("/verification/identity/review-retry", { method: "POST" });
+}
+
+/**
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
  * Revisa una foto de documento ANTES de subirla, para avisar en el momento si no
  * corresponde. `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
  * Devuelve { matches, reason }: matches en null significa que no se pudo revisar.
@@ -289,7 +412,11 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
  * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
  */
 export async function aiDocument(image, kind) {
+<<<<<<< HEAD
   return apiFetch("/ai/document", { method: "POST", body: JSON.stringify({ image, kind }) });
+=======
+  return postConIdioma("/ai/document", { image, kind });
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 }
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
@@ -314,6 +441,47 @@ export async function getCloudinarySignature(folder = "freewheel") {
 }
 
 // ── INTELIGENCIA ARTIFICIAL (proxy del backend) ────────────────
+<<<<<<< HEAD
+=======
+/**
+ * ¿Este backend entiende el campo `lang`?
+ *
+ * El motivo por el que una foto no sirve lo escribe la IA y la persona lo LEE,
+ * así que se le manda el idioma elegido. Pero el backend valida los pedidos con
+ * `forbidNonWhitelisted`: un backend que todavía no conoce `lang` NO lo ignora,
+ * responde 400 y la revisión de la foto no se hace.
+ *
+ * Y el front y el backend se despliegan por separado, así que hay un rato en el
+ * que el front nuevo le habla a un backend viejo. Sin esto, en ese rato ninguna
+ * foto se revisa (pasó: "0 verificadas, 4 sin revisar" y cinco 400 en la consola).
+ *
+ * Entonces: se prueba una vez CON idioma; si el backend lo rechaza por ese
+ * campo, se recuerda y se reintenta sin él —y no se vuelve a mandar en toda la
+ * sesión—. La revisión funciona igual; lo único que se pierde es que el motivo
+ * venga traducido, y para eso el front tiene sus propios textos de respaldo.
+ */
+let backendEntiendeIdioma = true;
+
+/** ¿Este 400 es por el campo `lang` y no por la foto? */
+const rechazaElIdioma = (err) =>
+  err?.status === 400 && /\blang\b/i.test(String(err?.message ?? ""));
+
+async function postConIdioma(path, payload) {
+  if (backendEntiendeIdioma) {
+    try {
+      return await apiFetch(path, {
+        method: "POST",
+        body: JSON.stringify({ ...payload, lang: idiomaInicial() }),
+      });
+    } catch (err) {
+      if (!rechazaElIdioma(err)) throw err;
+      backendEntiendeIdioma = false;
+    }
+  }
+  return apiFetch(path, { method: "POST", body: JSON.stringify(payload) });
+}
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 // La clave de la IA vive únicamente en el servidor: el navegador le pide al
 // backend y el backend habla con el proveedor. Antes el front llamaba a la API
 // de IA directo con la clave incluida en el bundle, a la vista de cualquiera.
@@ -324,7 +492,11 @@ export async function aiChat(messages, temperature) {
   });
 }
 export async function aiVision(imageDataUrl) {
+<<<<<<< HEAD
   return apiFetch("/ai/vision", { method: "POST", body: JSON.stringify({ imageDataUrl }) });
+=======
+  return postConIdioma("/ai/vision", { imageDataUrl });
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 }
 export async function aiTranscribe(audioUrl) {
   return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });
@@ -559,6 +731,22 @@ export async function adminUpdateUserRole(id, role) {
 // esas fotos: acá (cuentas admin) y GET /verification/identity/me (el propio
 // dueño). No aparecen en el perfil público de nadie.
 export async function adminGetVerifications() { return apiFetch("/admin/verifications"); }
+<<<<<<< HEAD
+=======
+
+/**
+ * Las fotos de UNA solicitud, con URLs firmadas al momento.
+ *
+ * POR QUÉ HACE FALTA: las fotos de identidad pasaron a ser archivos PRIVADOS en
+ * Cloudinary. La URL que viene guardada en la solicitud ya no se puede abrir
+ * —Cloudinary contesta 401— así que el visor mostraba las cuatro fotos rotas.
+ * Este endpoint devuelve URLs firmadas que caducan, y del lado del servidor deja
+ * registrado quién las miró, porque son datos personales sensibles.
+ */
+export async function adminGetVerificationDocuments(id) {
+  return apiFetch(`/admin/verifications/${id}/documents`);
+}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 export async function adminReviewVerification(id, status, notes) {
   return apiFetch(`/admin/verifications/${id}/review`, {
     method: "PATCH",
@@ -569,4 +757,15 @@ export async function adminReviewVerification(id, status, notes) {
 // Estado de la revisión por IA: si falta la clave, qué contestó el proveedor la
 // última vez y qué modelos hay disponibles. Sirve para saber por qué dejó de
 // funcionar la verificación de documentos sin entrar a los logs del deploy.
+<<<<<<< HEAD
 export async function getAiHealth() { return apiFetch("/ai/health"); }
+=======
+export async function getAiHealth() { return apiFetch("/ai/health"); }
+/**
+ * Igual que getAiHealth() pero además PRUEBA cada modelo de visión con una imagen
+ * mínima y dice cuál contesta. Sirve para saber qué poner en GROQ_VISION_MODEL:
+ * un modelo puede estar en la lista de Groq y contestar 401 o 429 igual.
+ * Consume cuota de la clave, así que se pide a mano desde el panel, no solo.
+ */
+export async function probeAiModels() { return apiFetch("/ai/health?probe=1"); }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a

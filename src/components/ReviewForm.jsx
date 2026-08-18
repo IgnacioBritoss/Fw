@@ -12,8 +12,15 @@
 //  puntúa a quien alquiló. El promedio lo recalcula y lo guarda el servidor.
 // ============================================================================
 import { useState } from "react";
+<<<<<<< HEAD
 
 export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
+=======
+import { useI18n } from "../i18n/core";
+
+export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
@@ -29,7 +36,11 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
     try {
       await onSubmit({ rating, comment: comment.trim() });
     } catch (err) {
+<<<<<<< HEAD
       setError(err.message || "No pudimos guardar tu reseña.");
+=======
+      setError(err.message || tr("review.saveFailed"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       setSending(false);
     }
   };
@@ -37,7 +48,11 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   return (
     <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, marginTop: 10 }}>
       <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 8 }}>
+<<<<<<< HEAD
         {isOwner ? "¿Cómo fue con el conductor?" : "¿Cómo fue tu experiencia?"}
+=======
+        {tr(isOwner ? "review.askOwner" : "review.askRenter")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </div>
 
       {/* Estrellas. Son botones de verdad para que se puedan usar con el teclado. */}
@@ -48,7 +63,11 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
             type="button"
             onClick={() => setRating(value)}
             onMouseEnter={() => setHover(value)}
+<<<<<<< HEAD
             aria-label={`${value} de 5`}
+=======
+            aria-label={tr("review.outOf5", { value })}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             aria-pressed={rating === value}
             style={{
               background: "none", border: "none", padding: 0, cursor: "pointer",
@@ -62,7 +81,11 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
         ))}
         {rating > 0 && (
           <span style={{ alignSelf: "center", marginLeft: 8, fontSize: 12.5, color: "#6b7280" }}>
+<<<<<<< HEAD
             {rating} de 5
+=======
+            {tr("review.outOf5", { value: rating })}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </span>
         )}
       </div>
@@ -71,9 +94,13 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
         value={comment}
         onChange={e => setComment(e.target.value)}
         maxLength={1000}
+<<<<<<< HEAD
         placeholder={isOwner
           ? "Contá cómo cuidó el auto y cómo fue la entrega (opcional)."
           : "Contá cómo estaba el auto y cómo fue el trato (opcional)."}
+=======
+        placeholder={tr(isOwner ? "review.phOwner" : "review.phRenter")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         style={{
           width: "100%", height: 70, padding: "9px 12px", borderRadius: 8,
           border: "1.5px solid #e5e7eb", fontSize: 13.5, outline: "none",
@@ -100,14 +127,22 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
             opacity: !rating || sending ? 0.6 : 1,
           }}
         >
+<<<<<<< HEAD
           {sending ? "Enviando..." : "Publicar reseña"}
+=======
+          {sending ? tr("common.sending") : tr("review.submit")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </button>
         <button
           type="button"
           onClick={onCancel}
           style={{ padding: "9px 18px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
         >
+<<<<<<< HEAD
           Cancelar
+=======
+          {tr("common.cancel")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </button>
       </div>
     </div>

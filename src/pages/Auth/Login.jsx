@@ -12,6 +12,10 @@ import { GOOGLE_AUTH_URL } from "../../services/api";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { authFields } from "../../styles/authFields";
 import AuthShell from "../../components/AuthShell";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Ícono de Google (SVG) para el botón "Continuar con Google".
 const GoogleIcon = () => (
@@ -38,6 +42,7 @@ const EyeClosed = () => (
 );
 
 export default function Login() {
+  const { t } = useI18n();
   const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -62,7 +67,11 @@ export default function Login() {
    * respuesta que no había llegado.
    */
   const handleSubmit = async () => {
+<<<<<<< HEAD
     if (!form.email || !form.password) { setError("Completá todos los campos."); return; }
+=======
+    if (!form.email || !form.password) { setError(t("auth.errAllFields")); return; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     setLoading(true); setError("");
     const result = await loginWithCredentials(form.email.trim(), form.password);
     setLoading(false);
@@ -75,6 +84,7 @@ export default function Login() {
   return (
     <AuthShell
       hero={{
+<<<<<<< HEAD
         eyebrow: "BIENVENIDO",
         title: <>Bienvenida<br />de nuevo.</>,
         text: "La forma más simple de alquilar auto en Argentina. Sin complicaciones, seguro y rápido.",
@@ -85,37 +95,71 @@ export default function Login() {
           ¿No tenés cuenta?{" "}
           <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>
             Registrate gratis →
+=======
+        eyebrow: t("auth.welcome").toUpperCase(),
+        title: t("auth.welcomeBack"),
+        text: t("auth.heroText"),
+      }}
+      title={t("auth.login")}
+      subtitle={
+        <>
+          {t("auth.noAccount")}{" "}
+          <Link to="/register" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}>
+            {t("auth.registerFree")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </Link>
         </>
       }
     >
       {expired && !error && (
+<<<<<<< HEAD
         <div style={f.notice}>Tu sesión venció. Volvé a iniciar sesión para continuar.</div>
+=======
+        <div style={f.notice}>{t("auth.sessionExpired")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       )}
       {error && <div style={f.error}>{error}</div>}
 
       <button onClick={() => { window.location.href = GOOGLE_AUTH_URL; }}
         style={{ ...f.btnGhost, marginBottom: 20 }}>
+<<<<<<< HEAD
         <GoogleIcon /> Continuar con Google
+=======
+        <GoogleIcon /> {t("auth.withGoogle")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+<<<<<<< HEAD
         <span style={{ fontSize: 12, color: "#9ca3af" }}>o con email</span>
+=======
+        <span style={{ fontSize: 12, color: "#9ca3af" }}>{t("auth.orEmail")}</span>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
       </div>
 
       <div style={{ marginBottom: 16 }}>
+<<<<<<< HEAD
         <label style={f.label}>Email</label>
         <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none"
           placeholder="martin@email.com" value={form.email}
+=======
+        <label style={f.label}>{t("auth.email")}</label>
+        <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none"
+          placeholder={t("reg.phEmail")} value={form.email}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           onChange={e => setForm(fm => ({ ...fm, email: e.target.value }))}
           onKeyDown={e => e.key === "Enter" && handleSubmit()}
           style={f.input} />
       </div>
 
       <div style={{ marginBottom: 8 }}>
+<<<<<<< HEAD
         <label style={f.label}>Contraseña</label>
+=======
+        <label style={f.label}>{t("auth.password")}</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         <div style={{ position: "relative" }}>
           <input type={showPassword ? "text" : "password"} autoComplete="current-password"
             placeholder="••••••••" value={form.password}
@@ -123,7 +167,11 @@ export default function Login() {
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
             style={{ ...f.input, paddingRight: 44 }} />
           <button type="button" onClick={() => setShowPassword(v => !v)}
+<<<<<<< HEAD
             aria-label={showPassword ? "Ocultar la contraseña" : "Mostrar la contraseña"}
+=======
+            aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 0 }}>
             {showPassword ? <EyeClosed /> : <EyeOpen />}
           </button>
@@ -132,13 +180,21 @@ export default function Login() {
 
       <div style={{ textAlign: "right", marginBottom: 24 }}>
         <Link to="/forgot-password" style={{ fontSize: 12.5, color: "#2563eb", textDecoration: "none", fontWeight: 500 }}>
+<<<<<<< HEAD
           ¿Olvidaste tu contraseña?
+=======
+          {t("auth.forgot")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </Link>
       </div>
 
       <button onClick={handleSubmit} disabled={loading}
         style={{ ...f.btn, ...(loading ? f.btnDisabled : {}) }}>
+<<<<<<< HEAD
         {loading ? "Ingresando..." : "Iniciar sesión →"}
+=======
+        {loading ? t("auth.loggingIn") : t("auth.loginBtn")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </button>
     </AuthShell>
   );

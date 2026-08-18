@@ -1,5 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Spinner from "./Spinner";
+import { useI18n } from "../i18n/core";
 
 // ============================================================================
 //  PrivateRoute — "Guardia" de las rutas privadas
@@ -10,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
 // ============================================================================
 export function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{padding:40,textAlign:"center"}}>Cargando...</div>;
+  const { t: tr } = useI18n();
+  // El círculo mientras se resuelve la sesión: era un texto quieto.
+  if (loading) return <Spinner block label={tr("common.loading")} />;
   return user ? children : <Navigate to="/login" replace />;
 }

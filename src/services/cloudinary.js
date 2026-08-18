@@ -22,7 +22,12 @@
 //  sin subida de fotos. Es un modo degradado: conviene configurar
 //  CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET.
 // ============================================================================
+<<<<<<< HEAD
 import { getCloudinarySignature } from "./api";
+=======
+import { getCloudinarySignature, getIdentityUploadSignature } from "./api";
+import { tSync } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Respaldo para cuando el backend no tiene Cloudinary configurado.
 const FALLBACK_CLOUD_NAME = "djvokvxt1";
@@ -76,7 +81,11 @@ async function upload(file, { resourceType = "image", folder = "freewheel", file
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch { /* respuesta no JSON */ }
+<<<<<<< HEAD
     throw new Error(detail || "No se pudo subir el archivo. Probá de nuevo.");
+=======
+    throw new Error(detail || tSync("net.uploadFailed"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   }
   return res.json();
 }
@@ -87,6 +96,80 @@ export async function uploadImageToCloudinary(imageOrDataUrl) {
   return data.secure_url;
 }
 
+<<<<<<< HEAD
+=======
+/**
+ * Sube UNA foto de identidad (DNI o licencia, frente o dorso).
+ *
+ * ── POR QUÉ NO ALCANZA uploadImageToCloudinary ──────────────────────────────
+ * El backend dejó de aceptar cualquier URL de Cloudinary al enviar los
+ * documentos: ahora comprueba que el archivo esté en `identity/<tu-id>/` y que su
+ * nombre empiece con el slot correspondiente (`dni_front_`, `license_back_`...).
+ * Con eso es imposible mandar el dorso donde va el frente, ni colar un archivo de
+ * otra cuenta por otro campo. Subiendo con la firma genérica —carpeta
+ * `freewheel`— el envío falla con DOCUMENT_SLOT_MISMATCH y nadie puede verificar
+ * su identidad.
+ *
+ * Así que acá se pide una firma PARA ESE SLOT y se sube con exactamente los
+ * parámetros que el servidor firmó. No se puede cambiar ni uno: la firma se
+ * calcula sobre ellos y Cloudinary la rechaza si no coinciden.
+ *
+ * El asset queda `type=authenticated`, o sea PRIVADO: la URL guardada no se abre
+ * sin firmar, ni siquiera sabiéndola. Quien la necesita —un administrador
+ * revisando— la pide firmada y con vencimiento.
+ *
+ * Si el backend todavía no tiene el endpoint (404 durante un despliegue a medias)
+ * se cae al camino viejo, que al menos deja la foto subida.
+ */
+export async function uploadIdentityDocument(file, { document, side }) {
+  let firma;
+  try {
+    firma = await getIdentityUploadSignature({ document, side });
+  } catch (err) {
+    // 404: backend viejo, sin el endpoint. Cualquier otro error sí es real
+    // (sin sesión, sin Cloudinary configurado) y conviene que se vea.
+    if (err?.status !== 404) throw err;
+    return uploadImageToCloudinary(file);
+  }
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("api_key", firma.apiKey);
+  form.append("timestamp", String(firma.timestamp));
+  form.append("signature", firma.signature);
+  form.append("public_id", firma.publicId);
+  form.append("type", firma.type);
+  // La carpeta va SOLO si el servidor la mandó, porque la firma se calcula sobre
+  // los parámetros exactos: mandar uno que no firmó, o dejar de mandar uno que sí
+  // firmó, hace que Cloudinary rechace la subida. Hoy la firma incluye la
+  // carpeta; si el backend deja de incluirla —el public_id ya lleva la ruta
+  // entera— esto sigue funcionando sin tocar nada acá.
+  if (firma.folder) form.append("folder", firma.folder);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${firma.cloudName}/image/upload`,
+    { method: "POST", body: form },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json())?.error?.message || ""; } catch { /* respuesta no JSON */ }
+    throw new Error(detail || tSync("net.uploadFailed"));
+  }
+  const data = await res.json();
+
+  // El archivo tiene que haber quedado EXACTAMENTE donde el servidor dijo. Si
+  // Cloudinary lo guardó en otra ruta, el envío iba a fallar más adelante con un
+  // 400 que no explica nada; acá se corta con el detalle a la vista, que es lo
+  // que hace falta para arreglarlo.
+  if (data.public_id && firma.publicId && data.public_id !== firma.publicId) {
+    throw new Error(
+      `${tSync("kyc.errUploadPath")} (${data.public_id} != ${firma.publicId})`,
+    );
+  }
+  return data.secure_url;
+}
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 // Sube un audio (Blob grabado con el micrófono) y devuelve su URL pública.
 export async function uploadAudioToCloudinary(audioBlob) {
   const data = await upload(audioBlob, { resourceType: "auto", fileName: "audio.webm" });

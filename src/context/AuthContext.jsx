@@ -21,6 +21,10 @@
 //  aunque se recargue la página.
 // ============================================================================
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 import {
   loginUser, registerStart, registerComplete, getMe,
   verifyEmail as apiVerifyEmail,
@@ -56,6 +60,12 @@ function loadStoredUser() {
 
 // Provider: envuelve a toda la app (ver App.jsx) y "provee" la sesión.
 export function AuthProvider({ children }) {
+<<<<<<< HEAD
+=======
+  // AuthProvider vive dentro de I18nProvider (ver main.jsx), así que los avisos
+  // de error también salen en el idioma elegido.
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   // La sesión se lee del navegador en el primer render (no en un efecto), así la
   // app nunca aparece "deslogueada" por un instante al recargar la página.
   const [user, setUser] = useState(loadStoredUser);
@@ -83,7 +93,11 @@ export function AuthProvider({ children }) {
    * paso más (verificar email / cargar fecha de nacimiento).
    */
   const applyAuthResponse = useCallback((data) => {
+<<<<<<< HEAD
     if (!data) return { success: false, error: "El servidor no devolvió una respuesta válida." };
+=======
+    if (!data) return { success: false, error: tr("auth.errBadResponse") };
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
     // Alta incompleta: se guarda el token de onboarding aparte, nunca como
     // accessToken, y se le dice a la pantalla a dónde tiene que ir.
@@ -103,7 +117,11 @@ export function AuthProvider({ children }) {
     }
 
     if (!data.accessToken) {
+<<<<<<< HEAD
       return { success: false, error: "No pudimos abrir la sesión. Intentá de nuevo." };
+=======
+      return { success: false, error: tr("auth.errNoSession") };
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     }
 
     saveUser({
@@ -113,16 +131,26 @@ export function AuthProvider({ children }) {
       onboardingToken: null,
     });
     return { success: true, pending: null };
+<<<<<<< HEAD
   }, [saveUser]);
+=======
+  }, [saveUser, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Inicio de sesión ────────────────────────────────────────────────────
   const loginWithCredentials = useCallback(async (email, password) => {
     try {
       return applyAuthResponse(await loginUser({ email, password }));
     } catch (err) {
+<<<<<<< HEAD
       return { success: false, error: err.message || "Email o contraseña incorrectos." };
     }
   }, [applyAuthResponse]);
+=======
+      return { success: false, error: err.message || tr("auth.errBadLogin") };
+    }
+  }, [applyAuthResponse, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Registro: paso 1 (pedir el código al email) ─────────────────────────
   const startRegistration = useCallback(async (email) => {
@@ -130,9 +158,15 @@ export function AuthProvider({ children }) {
       await registerStart({ email });
       return { success: true };
     } catch (err) {
+<<<<<<< HEAD
       return { success: false, error: err.message || "No pudimos enviar el código." };
     }
   }, []);
+=======
+      return { success: false, error: err.message || tr("email.errSend") };
+    }
+  }, [tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Registro: paso 2 (crear la cuenta con el código) ────────────────────
   // La cuenta nace con el email ya verificado, así que acá queda la sesión abierta.
@@ -140,9 +174,15 @@ export function AuthProvider({ children }) {
     try {
       return applyAuthResponse(await registerComplete(form));
     } catch (err) {
+<<<<<<< HEAD
       return { success: false, error: err.message || "No pudimos crear la cuenta." };
     }
   }, [applyAuthResponse]);
+=======
+      return { success: false, error: err.message || tr("auth.errRegister") };
+    }
+  }, [applyAuthResponse, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Login con Google ────────────────────────────────────────────────────
   // Google no da la fecha de nacimiento, así que muchas veces el backend
@@ -160,18 +200,30 @@ export function AuthProvider({ children }) {
       return { success: true, pending: null };
     } catch (err) {
       logout();
+<<<<<<< HEAD
       return { success: false, error: err.message || "Error al iniciar sesión con Google." };
     }
   }, [saveUser, logout]);
+=======
+      return { success: false, error: err.message || tr("auth.errGoogle") };
+    }
+  }, [saveUser, logout, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Verificación del email (cuentas viejas y de Google) ─────────────────
   const verifyEmail = useCallback(async (code) => {
     try {
       return applyAuthResponse(await apiVerifyEmail({ code }));
     } catch (err) {
+<<<<<<< HEAD
       return { success: false, error: err.message || "Código incorrecto." };
     }
   }, [applyAuthResponse]);
+=======
+      return { success: false, error: err.message || tr("auth.errBadCode") };
+    }
+  }, [applyAuthResponse, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   const resendVerification = useCallback(async () => {
     try {
@@ -187,9 +239,15 @@ export function AuthProvider({ children }) {
     try {
       return applyAuthResponse(await apiCompleteProfile({ dateOfBirth }));
     } catch (err) {
+<<<<<<< HEAD
       return { success: false, error: err.message || "No pudimos guardar tus datos." };
     }
   }, [applyAuthResponse]);
+=======
+      return { success: false, error: err.message || tr("auth.errSaveData") };
+    }
+  }, [applyAuthResponse, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   // ── Contraseña olvidada ─────────────────────────────────────────────────
   const forgotPassword = useCallback(async (email) => {

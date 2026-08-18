@@ -11,6 +11,7 @@
 //  Props: value (ubicación inicial), onChange (avisa la ubicación elegida).
 // ============================================================================
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "../i18n/core";
 
 const s = {
   wrap: { marginBottom: 16 },
@@ -37,6 +38,7 @@ const s = {
 };
 
 export default function LocationPicker({ value, onChange }) {
+  const { t: tr } = useI18n();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
@@ -161,17 +163,17 @@ export default function LocationPicker({ value, onChange }) {
 
   return (
     <div style={s.wrap}>
-      <label style={s.label}>Ubicación del auto</label>
+      <label style={s.label}>{tr("loc.title")}</label>
       <div style={s.searchRow}>
         <input
           style={s.input}
-          placeholder="Escribí la dirección, barrio o zona..."
+          placeholder={tr("loc.phSearch")}
           value={query}
           onChange={e => handleInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && searchAddress()}
         />
         <button style={s.searchBtn} onClick={searchAddress}>
-          Buscar
+          {tr("loc.search")}
         </button>
       </div>
 
@@ -192,11 +194,15 @@ export default function LocationPicker({ value, onChange }) {
 
       {selected ? (
         <div style={s.selectedBox}>
+<<<<<<< HEAD
           <strong>Ubicación seleccionada:</strong> {selected.address}
+=======
+          <strong>{tr("loc.selected")}</strong> {selected.address}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       ) : (
         <div style={s.hint}>
-          Buscá la dirección arriba o tocá directamente en el mapa para marcar la ubicación exacta.
+          {tr("loc.hint")}
         </div>
       )}
     </div>

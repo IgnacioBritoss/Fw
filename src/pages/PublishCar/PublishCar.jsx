@@ -19,9 +19,17 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing, createMediaAsset } from "../../services/api";
+<<<<<<< HEAD
 import { CATEGORIES } from "../../services/listings";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
+=======
+import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
+import { uploadImageToCloudinary } from "../../services/cloudinary";
+import { groqChat, extractJSON, groqVision } from "../../services/groq";
+import { useI18n } from "../../i18n/core";
+import Spinner from "../../components/Spinner";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Colores predefinidos que se ofrecen como "chips" al elegir el color del auto.
 const PRESET_COLORS = [
@@ -96,6 +104,7 @@ function validateArgentinePlate(plate) {
 // completa la IA. No bloquea: solo advierte.
 function getSpecWarnings(form) {
   const checks = [
+<<<<<<< HEAD
     ["doors", 2, 7, "Puertas"],
     ["seats", 2, 9, "Asientos"],
     ["horsePower", 40, 1500, "Potencia (HP)"],
@@ -107,6 +116,20 @@ function getSpecWarnings(form) {
   return checks
     .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
     .map(([key, min, max, label]) => `${label}: ${form[key]} parece fuera del rango normal (${min}–${max})`);
+=======
+    ["doors", 2, 7, "spec.doors"],
+    ["seats", 2, 9, "spec.seats"],
+    ["horsePower", 40, 1500, "spec.powerHp"],
+    ["engineDisplacementCC", 400, 8000, "spec.displacementCc"],
+    ["trunkCapacityLiters", 50, 3000, "spec.trunkL"],
+    ["fuelConsumptionLitersPer100Km", 2, 35, "spec.consumption100"],
+    ["weightKg", 500, 6000, "spec.weightKg"],
+  ];
+  // Devuelve la clave y los valores; el texto se arma con la traducción al dibujar.
+  return checks
+    .filter(([key, min, max]) => { const v = Number(form[key]); return form[key] && v && (v < min || v > max); })
+    .map(([key, min, max, label]) => ({ label, value: form[key], min, max }));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 }
 
 // Normaliza un texto de ubicación (minúsculas, sin espacios de más) para poder
@@ -114,10 +137,36 @@ function getSpecWarnings(form) {
 const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 
 // Nombres de los pasos y traducciones de las opciones a los códigos del backend.
+<<<<<<< HEAD
 const STEPS = ["Vehículo", "Fotos", "Listing", "Confirmar"];
 const TRANSMISSION_MAP = { Manual: "MANUAL", Automático: "AUTOMATIC" };
 const FUEL_MAP = { Nafta: "GASOLINE", Diesel: "DIESEL", Eléctrico: "ELECTRIC", GNC: "OTHER" };
 const DRIVETRAIN_MAP = { Delantera: "FRONT", Trasera: "REAR", "4x4": "FOUR_BY_FOUR", AWD: "AWD" };
+=======
+// Claves: los pasos se traducen al dibujarse.
+const STEPS = ["publish.step.vehicle", "publish.step.photos", "publish.step.listing", "publish.step.confirm"];
+// Caja, combustible y tracción: el formulario guarda el CÓDIGO del backend y la
+// lista muestra el texto traducido. Antes guardaba la palabra en castellano y la
+// convertía al enviar, así que la lista quedaba en castellano en los cinco
+// idiomas y traducirla habría roto la conversión.
+const TRANSMISSION_OPTS = [
+  { code: "MANUAL", key: "trans.MANUAL" },
+  { code: "AUTOMATIC", key: "trans.AUTOMATIC" },
+];
+const FUEL_OPTS = [
+  { code: "GASOLINE", key: "fuel.GASOLINE" },
+  { code: "DIESEL", key: "fuel.DIESEL" },
+  { code: "HYBRID", key: "fuel.HYBRID" },
+  { code: "ELECTRIC", key: "fuel.ELECTRIC" },
+  { code: "OTHER", key: "fuel.OTHER" },
+];
+const DRIVETRAIN_OPTS = [
+  { code: "FRONT", key: "drive.FRONT" },
+  { code: "REAR", key: "drive.REAR" },
+  { code: "FOUR_BY_FOUR", key: "drive.4X4" },
+  { code: "AWD", key: "drive.AWD" },
+];
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 /**
  * Borrador de la publicación, guardado en el navegador.
@@ -139,7 +188,12 @@ const EMPTY_VEHICLE = {
   // el buscador. Antes no se cargaba en ninguna parte, así que los autos
   // publicados quedaban afuera de ese filtro.
   category: "",
+<<<<<<< HEAD
   transmission: "Manual", fuel: "Nafta", drivetrain: "Delantera",
+=======
+  // Códigos del backend, no la palabra en castellano.
+  transmission: "MANUAL", fuel: "GASOLINE", drivetrain: "FRONT",
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   seats: "5", doors: "4", color: "", plate: "",
   bluetooth: false, rearCamera: false, parkingSensors: false,
   trunkCapacityLiters: "", fuelConsumptionLitersPer100Km: "",
@@ -168,6 +222,10 @@ function clearDraft() {
 }
 
 export default function PublishCar() {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const { isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -182,6 +240,9 @@ export default function PublishCar() {
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingSuggestion, setPricingSuggestion] = useState(null);
   const [photos, setPhotos] = useState([]);
+  // Se marca cuando la IA no pudo revisar alguna foto y la persona confirma a
+  // mano que son del auto. Sin esto no se puede avanzar.
+  const [photosConfirmed, setPhotosConfirmed] = useState(false);
   const [photoValidations, setPhotoValidations] = useState({});
   const [uploadHover, setUploadHover] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -225,7 +286,11 @@ export default function PublishCar() {
   // localStorage para no volver a pedir lo mismo.
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
+<<<<<<< HEAD
       setError("Completá marca, modelo y año antes de autocompletar.");
+=======
+      setError(tr("publish.errBeforeAi"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       return;
     }
     setError("");
@@ -255,7 +320,11 @@ Si no sabés un dato, usá null.`;
         data = extractJSON(response);
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
+<<<<<<< HEAD
         setError("No se pudieron obtener las especificaciones. Completalas manualmente.");
+=======
+        setError(tr("publish.errSpecs"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         setAiLoading(false);
         return;
       }
@@ -302,10 +371,17 @@ Devolvé SOLO un JSON válido sin texto adicional:
 Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
         const response = await groqChat([{ role: "user", content: prompt }], 0);
         data = extractJSON(response);
+<<<<<<< HEAD
         if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error("Precio inválido");
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
         setError("No se pudo obtener la sugerencia de precio. Ingresalo manualmente.");
+=======
+        if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error(tr("publish.errBadPrice"));
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch {
+        setError(tr("publish.errPriceAi"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         setPricingLoading(false);
         return;
       }
@@ -317,25 +393,56 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
   // IA #3 — Al subir fotos: las lee, las agrega a la grilla y por cada una llama
   // a groqVision para verificar que muestre un vehículo (marca "ok"/"invalid").
+  /**
+   * Revisa una foto y guarda el resultado con su motivo.
+   *
+   * El estado de cada foto es "loading" | {state:"ok"|"invalid"|"unknown", ...}.
+   * Antes se guardaba solo "ok"/"invalid"/null, y null —que quiere decir "no se
+   * pudo revisar"— no se mostraba en pantalla ni frenaba nada: la foto quedaba sin
+   * ningún cartel y el formulario la dejaba pasar. Así se publicó una foto de un
+   * perro como foto de un auto.
+   */
+  const revisarFoto = (dataUrl, photoIdx) => {
+    setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
+    groqVision(dataUrl)
+      .then(res => setPhotoValidations(v => ({
+        ...v,
+        [photoIdx]: res?.isVehicle === true
+          ? { state: "ok", detected: res.detected, reason: res.reason }
+          : res?.isVehicle === false
+            ? { state: "invalid", detected: res.detected, reason: res.reason }
+            : { state: "unknown", code: res?.code, reason: res?.reason },
+      })))
+      .catch(err => setPhotoValidations(v => ({
+        ...v,
+        [photoIdx]: { state: "unknown", reason: err?.message },
+      })));
+  };
+
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
+<<<<<<< HEAD
     if (photos.length + files.length > 6) { setError("Podés subir hasta 6 fotos."); return; }
+=======
+    if (photos.length + files.length > 6) { setError(tr("publish.errMaxPhotos")); return; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     const startIdx = photos.length;
     files.forEach((file, fileIdx) => {
       const photoIdx = startIdx + fileIdx;
       const reader = new FileReader();
       reader.onload = (ev) => {
         setPhotos(prev => [...prev, { url: ev.target.result, name: file.name }]);
-        setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
-        groqVision(ev.target.result)
-          .then(isVehicle => setPhotoValidations(v => ({
-            ...v,
-            [photoIdx]: isVehicle === true ? "ok" : isVehicle === false ? "invalid" : null,
-          })))
-          .catch(() => setPhotoValidations(v => ({ ...v, [photoIdx]: null })));
+        revisarFoto(ev.target.result, photoIdx);
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  /** Estado de una foto, en una sola palabra. */
+  const estadoFoto = (i) => {
+    const v = photoValidations[i];
+    if (v === "loading") return "loading";
+    return v?.state ?? "unknown";
   };
 
   // Elimina una foto y reordena los resultados de validación para que sigan
@@ -357,6 +464,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   // (datos obligatorios, mínimo 4 fotos válidas, precio y ubicación, etc.).
   const validateStep = () => {
     if (step === 0) {
+<<<<<<< HEAD
       if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError("Completá marca, modelo y año."); return false; }
       if (!vehicleForm.category) { setError("Elegí la categoría del vehículo (es lo que usa el buscador para filtrarlo)."); return false; }
       if (!vehicleForm.color) { setError("Seleccioná el color del vehículo."); return false; }
@@ -366,16 +474,53 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
     }
     if (step === 1) {
       if (photos.length < 4) { setError("Subí al menos 4 fotos del vehículo."); return false; }
-      const hasLoading = photos.some((_, i) => photoValidations[i] === "loading");
-      if (hasLoading) { setError("Esperá a que terminen de validarse las fotos."); return false; }
-      const hasInvalid = photos.some((_, i) => photoValidations[i] === "invalid");
-      if (hasInvalid) { setError("Hay fotos que no parecen mostrar un vehículo. Reemplazalas o eliminalas."); return false; }
+      if (photos.some((_, i) => estadoFoto(i) === "loading")) {
+        setError("Esperá a que terminen de revisarse las fotos."); return false;
+      }
+      if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
+        setError("Hay fotos que no son de un vehículo real. Reemplazalas o eliminalas."); return false;
+=======
+      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError(tr("publish.errBrandModel")); return false; }
+      if (!vehicleForm.category) { setError(tr("publish.errCategory")); return false; }
+      if (!vehicleForm.color) { setError(tr("publish.errColor")); return false; }
+      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { setError(tr("publish.errSeats")); return false; }
+      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { setError(tr("publish.errPlate")); return false; }
+      if (specWarnings.length > 0) { setError(tr("publish.errSpecRange")); return false; }
+    }
+    if (step === 1) {
+      if (photos.length < 4) { setError(tr("publish.errMinPhotos")); return false; }
+      if (photos.some((_, i) => estadoFoto(i) === "loading")) {
+        setError(tr("publish.errWaitReview")); return false;
+      }
+      if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
+        setError(tr("publish.errBadPhotos")); return false;
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+      }
+      // Las que no se pudieron revisar tampoco pasan solas: hace falta que la
+      // persona se haga cargo marcando la casilla. Antes pasaban sin que nada lo
+      // dijera, que es como una foto de un perro llegó a una publicación.
+      const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
+      if (sinRevisar > 0 && !photosConfirmed) {
+<<<<<<< HEAD
+        setError(`Hay ${sinRevisar} foto${sinRevisar !== 1 ? "s" : ""} que no pudimos revisar. Volvé a intentar la revisión, o confirmá abajo que son del auto que estás publicando.`);
+=======
+        setError(tr(sinRevisar === 1 ? "publish.errUnreviewedOne" : "publish.errUnreviewedMany", { count: sinRevisar }));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+        return false;
+      }
     }
     if (step === 2) {
+<<<<<<< HEAD
       if (!listingForm.title) { setError("Ingresá un título para el listing."); return false; }
       if (!listingForm.description) { setError("Ingresá una descripción."); return false; }
       if (!listingForm.pricePerDay) { setError("Ingresá el precio por día."); return false; }
       if (!listingForm.locationText) { setError("Seleccioná una ubicación."); return false; }
+=======
+      if (!listingForm.title) { setError(tr("publish.errTitle")); return false; }
+      if (!listingForm.description) { setError(tr("publish.errDescription")); return false; }
+      if (!listingForm.pricePerDay) { setError(tr("publish.errPrice")); return false; }
+      if (!listingForm.locationText) { setError(tr("publish.errLocation")); return false; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     }
     setError(""); return true;
   };
@@ -408,9 +553,15 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         ...(vehicleForm.color && { color: vehicleForm.color }),
         seats: Number(vehicleForm.seats) || undefined,
         doors: Number(vehicleForm.doors) || undefined,
+<<<<<<< HEAD
         transmission: TRANSMISSION_MAP[vehicleForm.transmission] || "MANUAL",
         fuelType: FUEL_MAP[vehicleForm.fuel] || "GASOLINE",
         drivetrain: DRIVETRAIN_MAP[vehicleForm.drivetrain] || "FRONT",
+=======
+        transmission: vehicleForm.transmission || "MANUAL",
+        fuelType: vehicleForm.fuel || "GASOLINE",
+        drivetrain: vehicleForm.drivetrain || "FRONT",
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         bluetooth: vehicleForm.bluetooth, rearCamera: vehicleForm.rearCamera, parkingSensors: vehicleForm.parkingSensors,
         ...(vehicleForm.horsePower && { horsePower: Number(vehicleForm.horsePower) }),
         ...(vehicleForm.engineDisplacementCC && { engineDisplacementCC: Number(vehicleForm.engineDisplacementCC) }),
@@ -430,7 +581,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         })));
       } catch (photoError) {
         throw new Error(
+<<<<<<< HEAD
           `${photoError.message || "No pudimos subir las fotos"}. Tu vehículo quedó guardado: reintentá la publicación desde "Mis autos".`,
+=======
+          tr("publish.errUpload", { detail: photoError.message || tr("publish.errUploadShort") }),
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         );
       }
 
@@ -454,9 +609,15 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       // verificada: se explica qué hacer en vez de mostrar el error crudo.
       if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
         setNeedsVerification(true);
+<<<<<<< HEAD
         setError("Para publicar un auto necesitás verificar tu cuenta (teléfono, DNI y licencia).");
       } else {
         setError(err.message || "Error al publicar.");
+=======
+        setError(tr("publish.errNeedVerified"));
+      } else {
+        setError(err.message || tr("publish.errPublish"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       }
     } finally {
       setLoading(false);
@@ -476,6 +637,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
+<<<<<<< HEAD
         <div style={s.successTitle}>Auto publicado</div>
         <div style={s.successSub}>
           Tu auto ya está publicado y visible para otros usuarios.<br />
@@ -484,12 +646,23 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>Ir a mis autos</button>
           <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>Ver el inicio</button>
+=======
+        <div style={s.successTitle}>{tr("publish.published")}</div>
+        <div style={s.successSub}>
+          Tu auto ya está publicado y visible para otros usuarios.<br />
+          {tr("publish.blockDatesNote")}
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>{tr("publish.goToMyCars")}</button>
+          <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>{tr("publish.seeHome")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       </div>
     </div>
   );
 
   // Botón tipo "chip" reutilizable: se pinta de azul si es la opción seleccionada.
+<<<<<<< HEAD
   const chipBtn = (val, current, onClick) => (
     <button key={val} type="button" onClick={() => onClick(val)}
       style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: current === val ? "#2563eb" : "#fff", color: current === val ? "#fff" : "#374151" }}>
@@ -508,6 +681,27 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>Publicar mi auto</div>
       <div style={s.sub}>Completá los datos del vehículo</div>
 
+=======
+  // `val` es el CÓDIGO que se guarda; `label` el texto traducido que se lee.
+  const chipBtn = (val, current, onClick, label = val) => (
+    <button key={val} type="button" onClick={() => onClick(val)}
+      style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: current === val ? "#2563eb" : "#fff", color: current === val ? "#fff" : "#374151" }}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={isMobile ? s.pageMobile : s.page}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+      `}</style>
+
+      <div style={{ ...s.title, fontSize: isMobile ? 20 : 24 }}>{tr("publish.title")}</div>
+      <div style={s.sub}>{tr("publish.subtitle")}</div>
+
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       {/* Stepper */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
         {STEPS.map((st, i) => (
@@ -528,7 +722,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 ) : i + 1}
               </div>
               <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "#2563eb" : i < step ? "#1d4ed8" : "#9ca3af" }}>
+<<<<<<< HEAD
                 {st}
+=======
+                {tr(st)}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -543,7 +741,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {draftRestored && !done && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 }}>
           <span style={{ flex: 1, minWidth: 200 }}>
+<<<<<<< HEAD
             Retomamos la carga donde la habías dejado. Las fotos hay que elegirlas de nuevo.
+=======
+            {tr("publish.draftResumed")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </span>
           <button type="button"
             onClick={() => {
@@ -554,7 +756,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               setListingForm(EMPTY_LISTING);
             }}
             style={{ background: "#fff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+<<<<<<< HEAD
             Empezar de cero
+=======
+            {tr("publish.startOver")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         </div>
       )}
@@ -566,19 +772,27 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {(needsVerification || !isVerified) && (
         <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div style={{ fontSize: 13, color: "#9a3412" }}>
+<<<<<<< HEAD
             Para publicar un auto tu cuenta tiene que estar verificada (teléfono, DNI y licencia).
           </div>
           <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
             onClick={() => navigate("/kyc")}>Verificar ahora</button>
+=======
+            {tr("publish.verifyFirst")}
+          </div>
+          <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            onClick={() => navigate("/kyc")}>{tr("profile.verifyNow")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       )}
 
       {/* PASO 0 */}
       {step === 0 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Datos del vehículo</div>
+          <div style={s.sectionTitle}>{tr("publish.vehicleData")}</div>
           <div style={isMobile ? s.grid3Mobile : s.grid3}>
             <div style={s.field}>
+<<<<<<< HEAD
               <label style={s.label}>Marca *</label>
               <input style={s.input} placeholder="Toyota" value={vehicleForm.brand} onChange={(e) => setV("brand", e.target.value)} />
             </div>
@@ -588,23 +802,44 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
             <div style={s.field}>
               <label style={s.label}>Año *</label>
+=======
+              <label style={s.label}>{tr("publish.brand")} *</label>
+              <input style={s.input} placeholder="Toyota" value={vehicleForm.brand} onChange={(e) => setV("brand", e.target.value)} />
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>{tr("publish.model")} *</label>
+              <input style={s.input} placeholder="Corolla" value={vehicleForm.model} onChange={(e) => setV("model", e.target.value)} />
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>{tr("publish.year")} *</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               <input style={s.input} type="number" min="2000" max="2025" value={vehicleForm.year} onChange={(e) => setV("year", e.target.value)} />
             </div>
           </div>
 
           {/* Categoría: alimenta el filtro por categoría del inicio y del buscador. */}
           <div style={s.field}>
+<<<<<<< HEAD
             <label style={s.label}>Categoría *</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {CATEGORIES.map(c => chipBtn(c.label, CATEGORIES.find(x => x.id === vehicleForm.category)?.label, () => setV("category", c.id)))}
             </div>
             <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
               Es lo que permite encontrar tu auto cuando alguien filtra por tipo de vehículo.
+=======
+            <label style={s.label}>{tr("publish.category")} *</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {CATEGORIES.map(c => chipBtn(c.id, vehicleForm.category, () => setV("category", c.id), tr(c.key)))}
+            </div>
+            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+              {tr("publish.categoryHint")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </div>
           </div>
 
           <div style={isMobile ? s.grid2Mobile : s.grid2}>
             <div style={s.field}>
+<<<<<<< HEAD
               <label style={s.label}>Transmisión</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
                 {["Manual", "Automático"].map(opt => chipBtn(opt, vehicleForm.transmission, v => setV("transmission", v)))}
@@ -624,6 +859,27 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
             <div style={s.field}>
               <label style={s.label}>Asientos *</label>
+=======
+              <label style={s.label}>{tr("publish.transmission")}</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {TRANSMISSION_OPTS.map(o => chipBtn(o.code, vehicleForm.transmission, v => setV("transmission", v), tr(o.key)))}
+              </div>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>{tr("publish.fuel")}</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {FUEL_OPTS.map(o => chipBtn(o.code, vehicleForm.fuel, v => setV("fuel", v), tr(o.key)))}
+              </div>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>{tr("publish.drivetrain")}</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                {DRIVETRAIN_OPTS.map(o => chipBtn(o.code, vehicleForm.drivetrain, v => setV("drivetrain", v), tr(o.key)))}
+              </div>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>{tr("publish.seats")} *</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               <input style={{ ...s.input, appearance: "none", MozAppearance: "textfield" }} type="number" min="1" max="12"
                 value={vehicleForm.seats} onChange={(e) => setV("seats", e.target.value)}
                 onBlur={(e) => { const v = parseInt(e.target.value); if (isNaN(v) || v < 1) setV("seats", ""); }} />
@@ -631,7 +887,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.field}>
+<<<<<<< HEAD
             <label style={s.label}>Color *</label>
+=======
+            <label style={s.label}>{tr("publish.color")} *</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {PRESET_COLORS.map(({ name, hex }) => {
                 const sel = vehicleForm.color === name;
@@ -661,7 +921,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={s.field}>
+<<<<<<< HEAD
             <label style={s.label}>Patente</label>
+=======
+            <label style={s.label}>{tr("publish.plate")}</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             <input style={s.input} placeholder="AB123CD" value={vehicleForm.plate}
               onChange={(e) => setV("plate", e.target.value.toUpperCase())}
               onBlur={(e) => { const clean = e.target.value.replace(/[\s\-\.]/g, "").toUpperCase(); setV("plate", clean); }} />
@@ -674,36 +938,62 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={{ marginBottom: 16 }}>
+<<<<<<< HEAD
             <label style={s.label}>Características</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {[["bluetooth", "Bluetooth"], ["rearCamera", "Cámara de reversa"], ["parkingSensors", "Sensores de estac."]].map(([key, label]) => (
+=======
+            <label style={s.label}>{tr("publish.features")}</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+              {[["bluetooth", "spec.bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #2563eb" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#2563eb" : "#374151" }}>
                   {vehicleForm[key]
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5" /></svg>}
+<<<<<<< HEAD
                   {label}
+=======
+                  {tr(label)}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 </button>
               ))}
             </div>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+<<<<<<< HEAD
             <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Especificaciones técnicas</div>
             <button style={{ padding: "8px 16px", background: aiLoading ? "#e5e7eb" : "#111827", color: aiLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
               onClick={fetchSpecs} disabled={aiLoading}>
               {aiLoading ? <><span style={s.spinner} /> Completando...</> : "Autocompletar con IA"}
+=======
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{tr("publish.specs")}</div>
+            <button style={{ padding: "8px 16px", background: aiLoading ? "#e5e7eb" : "#111827", color: aiLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
+              onClick={fetchSpecs} disabled={aiLoading}>
+              {aiLoading ? <Spinner size={14} label={tr("publish.filling")} /> : tr("publish.autofillAi")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </button>
           </div>
 
           <div style={s.specGrid}>
             {[
+<<<<<<< HEAD
               ["doors", "Puertas"], ["horsePower", "Potencia (HP)"], ["engineDisplacementCC", "Cilindrada (cc)"],
               ["trunkCapacityLiters", "Baúl (litros)"], ["fuelConsumptionLitersPer100Km", "Consumo (l/100km)"],
               ["weightKg", "Peso (kg)"],
             ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
                 <div style={s.specLabel}>{label}</div>
+=======
+              ["doors", "spec.doors"], ["horsePower", "spec.powerHp"], ["engineDisplacementCC", "spec.displacementCc"],
+              ["trunkCapacityLiters", "spec.trunkL"], ["fuelConsumptionLitersPer100Km", "spec.consumption100"],
+              ["weightKg", "spec.weightKg"],
+            ].map(([key, label]) => (
+              <div key={key} style={s.specItem}>
+                <div style={s.specLabel}>{tr(label)}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent" }}
                   placeholder="—" value={vehicleForm[key] || ""} onChange={(e) => setV(key, e.target.value)} />
               </div>
@@ -712,21 +1002,40 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
 
           {specWarnings.length > 0 && (
             <div style={{ ...s.warning, marginTop: 12 }}>
+<<<<<<< HEAD
               <div style={{ fontWeight: 600, marginBottom: 4 }}>Revisá estas especificaciones:</div>
               {specWarnings.map((w, i) => <div key={i} style={{ fontSize: 12 }}>· {w}</div>)}
+=======
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>{tr("publish.checkSpecs")}</div>
+              {specWarnings.map((w) => (
+                <div key={w.label} style={{ fontSize: 12 }}>
+                  · {tr("publish.outOfRange", { label: tr(w.label), value: w.value, min: w.min, max: w.max })}
+                </div>
+              ))}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </div>
           )}
 
           <div style={{ ...s.field, marginTop: 16 }}>
+<<<<<<< HEAD
             <label style={s.label}>Observaciones</label>
             <textarea style={{ ...s.input, height: 72, resize: "none" }}
               placeholder="Service al día, cubiertas nuevas..."
+=======
+            <label style={s.label}>{tr("publish.notes")}</label>
+            <textarea style={{ ...s.input, height: 72, resize: "none" }}
+              placeholder={tr("publish.phObservations")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               value={vehicleForm.observations}
               onChange={(e) => setV("observations", e.target.value)} />
           </div>
 
           <div style={s.btnRow}>
+<<<<<<< HEAD
             <button style={s.btn} onClick={next}>Siguiente →</button>
+=======
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       )}
@@ -734,9 +1043,15 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 1 */}
       {step === 1 && (
         <div style={cardStyle}>
+<<<<<<< HEAD
           <div style={s.sectionTitle}>Fotos del vehículo</div>
           <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
-            Subí entre 4 y 6 fotos del auto. La IA verifica que sean fotos de un vehículo. Se requieren mínimo 4.
+            Subí entre 4 y 6 fotos del auto. Cada foto se revisa automáticamente: tiene que ser un vehículo real, no un juguete, un dibujo ni una foto de catálogo. Se requieren mínimo 4.
+=======
+          <div style={s.sectionTitle}>{tr("publish.photos")}</div>
+          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
+            {tr("publish.photosHint")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </p>
           <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#2563eb", background: "#eff6ff" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
@@ -744,7 +1059,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
+<<<<<<< HEAD
             <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Hacé clic para subir fotos</div>
+=======
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
           {photos.length > 0 && (
@@ -752,22 +1071,77 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               {photos.map((p, i) => (
                 <div key={i} style={s.photoItem}>
                   <img src={p.url} alt="" style={s.photoImg} />
-                  {photoValidations[i] === "loading" && (
-                    <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.5)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+                  {/* El resultado de la revisión, con su motivo. Verde = sirve,
+                      rojo = no sirve, ámbar = no se pudo revisar (y NO pasa sola). */}
+                  {estadoFoto(i) === "loading" && (
+                    <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,.55)", borderRadius: 20, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+<<<<<<< HEAD
                       <span style={{ ...s.spinner, width: 10, height: 10 }} />
-                      <span style={{ fontSize: 10, color: "#fff" }}>Validando</span>
+                      <span style={{ fontSize: 10, color: "#fff" }}>Revisando</span>
+=======
+                      <Spinner size={10} color="#fff" />
+                      <span style={{ fontSize: 10, color: "#fff" }}>{tr("publish.reviewing")}</span>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                     </div>
                   )}
-                  {photoValidations[i] === "ok" && (
-                    <div style={{ position: "absolute", top: 6, left: 6, background: "#16a34a", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 600 }}>✓ Auto</div>
-                  )}
-                  {photoValidations[i] === "invalid" && (
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.15)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", alignItems: "flex-end" }}>
-                      <div style={{ width: "100%", background: "rgba(220,38,38,.9)", color: "#fff", fontSize: 10, padding: "4px 6px", textAlign: "center", fontWeight: 600 }}>No parece un auto — reemplazá</div>
+                  {estadoFoto(i) === "ok" && (
+                    <div style={{ position: "absolute", inset: 0, border: "2px solid #16a34a", borderRadius: 10, display: "flex", alignItems: "flex-start", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "#16a34a", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                        {photoValidations[i]?.detected
+<<<<<<< HEAD
+                          ? `Verificada: ${photoValidations[i].detected}`
+                          : "Verificada: es un auto real"}
+=======
+                          ? `${tr("publish.verified")}: ${photoValidations[i].detected}`
+                          : tr("publish.photoOk")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+                      </div>
                     </div>
                   )}
-                  {i === 0 && photoValidations[i] !== "invalid" && (
+                  {estadoFoto(i) === "invalid" && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "#dc2626", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
+<<<<<<< HEAD
+                        No válida
+                      </div>
+                      <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
+                        {photoValidations[i]?.reason || "No es la foto de un vehículo real."}
+=======
+                        {tr("publish.notValid")}
+                      </div>
+                      <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
+                        {photoValidations[i]?.reasonKey ? tr(photoValidations[i].reasonKey) : (photoValidations[i]?.reason || tr("publish.photoBad"))}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+                      </div>
+                    </div>
+                  )}
+                  {estadoFoto(i) === "unknown" && photos[i] && (
+                    <div style={{ position: "absolute", inset: 0, border: "2px solid #f59e0b", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div style={{ margin: 6, background: "#f59e0b", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
+<<<<<<< HEAD
+                        Sin revisar
+=======
+                        {tr("publish.unreviewed")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+                      </div>
+                      <button
+                        onClick={(ev) => { ev.stopPropagation(); revisarFoto(photos[i].url, i); }}
+                        style={{ width: "100%", background: "rgba(180,83,9,.94)", color: "#fff", fontSize: 10, padding: "5px 6px", fontWeight: 700, border: "none", cursor: "pointer" }}>
+<<<<<<< HEAD
+                        Reintentar la revisión
+=======
+                        {tr("publish.retryReview")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
+                      </button>
+                    </div>
+                  )}
+                  {i === 0 && estadoFoto(i) === "ok" && (
+<<<<<<< HEAD
                     <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>Principal</div>
+=======
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#2563eb", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
@@ -779,9 +1153,44 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               Necesitás {4 - photos.length} foto{4 - photos.length !== 1 ? "s" : ""} más para continuar.
             </div>
           )}
+
+          {/* Cuenta de cómo viene la revisión, para no tener que mirar foto por foto. */}
+          {photos.length > 0 && (() => {
+            const verificadas = photos.filter((_, i) => estadoFoto(i) === "ok").length;
+            const noValidas = photos.filter((_, i) => estadoFoto(i) === "invalid").length;
+            const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
+            return (
+              <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "#374151" }}>
+                <span style={{ color: "#166534", fontWeight: 600 }}>{verificadas} verificada{verificadas !== 1 ? "s" : ""}</span>
+                {noValidas > 0 && <span style={{ color: "#b91c1c", fontWeight: 600 }}>{noValidas} no válida{noValidas !== 1 ? "s" : ""}</span>}
+                {sinRevisar > 0 && <span style={{ color: "#92400e", fontWeight: 600 }}>{sinRevisar} sin revisar</span>}
+              </div>
+            );
+          })()}
+
+          {/* Si algo no se pudo revisar, no se avanza sin que la persona lo confirme.
+              Es la alternativa a dejarlo pasar en silencio (lo de antes) y a trabar
+              la publicación del todo cuando el servicio de IA está caído. */}
+          {photos.some((_, i) => estadoFoto(i) === "unknown") && (
+            <label style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", cursor: "pointer" }}>
+              <input type="checkbox" checked={photosConfirmed}
+                onChange={(e) => setPhotosConfirmed(e.target.checked)}
+                style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
+              <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                No pudimos revisar todas las fotos automáticamente. Confirmo que son
+                del auto que estoy publicando. Si no lo son, la publicación se puede
+                pausar y la cuenta suspender.
+              </span>
+            </label>
+          )}
           <div style={s.btnRow}>
+<<<<<<< HEAD
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
             <button style={s.btn} onClick={next}>Siguiente →</button>
+=======
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       )}
@@ -789,18 +1198,30 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 2 */}
       {step === 2 && (
         <div style={cardStyle}>
+<<<<<<< HEAD
           <div style={s.sectionTitle}>Datos del listing</div>
           <div style={s.field}>
             <label style={s.label}>Título del anuncio *</label>
+=======
+          <div style={s.sectionTitle}>{tr("publish.listingData")}</div>
+          <div style={s.field}>
+            <label style={s.label}>{tr("publish.adTitle")} *</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             <input style={s.input}
               placeholder={`${vehicleForm.brand} ${vehicleForm.model} en excelente estado`}
               value={listingForm.title}
               onChange={(e) => setL("title", e.target.value)} />
           </div>
           <div style={s.field}>
+<<<<<<< HEAD
             <label style={s.label}>Descripción *</label>
             <textarea style={{ ...s.input, height: 90, resize: "none" }}
               placeholder="Contá el estado del auto, extras, condiciones..."
+=======
+            <label style={s.label}>{tr("car.description")} *</label>
+            <textarea style={{ ...s.input, height: 90, resize: "none" }}
+              placeholder={tr("publish.phDescription")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               value={listingForm.description}
               onChange={(e) => setL("description", e.target.value)} />
           </div>
@@ -816,6 +1237,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           />
           <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+<<<<<<< HEAD
             La ubicación se muestra como zona aproximada para proteger tu privacidad
           </div>
           <div style={{ ...s.field, marginTop: 8 }}>
@@ -824,10 +1246,21 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               <button style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
                 onClick={fetchPricing} disabled={pricingLoading}>
                 {pricingLoading ? <><span style={{ ...s.spinner, width: 11, height: 11 }} /> Analizando...</> : "Sugerir con IA"}
+=======
+            {tr("publish.locPrivacy")}
+          </div>
+          <div style={{ ...s.field, marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <label style={{ ...s.label, marginBottom: 0 }}>{tr("publish.priceArs")} *</label>
+              <button style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
+                onClick={fetchPricing} disabled={pricingLoading}>
+                {pricingLoading ? <Spinner size={11} label={tr("publish.analyzing")} /> : tr("publish.suggestAi")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               </button>
             </div>
             {pricingSuggestion && (
               <div style={s.aiBox}>
+<<<<<<< HEAD
                 <div style={s.aiBoxTitle}>Sugerencia de precio</div>
                 <div style={s.aiBoxRow}>
                   <span style={s.aiBoxLabel}>Rango sugerido</span>
@@ -839,6 +1272,19 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 </div>
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
                 <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>El precio fue cargado automáticamente. Podés modificarlo abajo.</div>
+=======
+                <div style={s.aiBoxTitle}>{tr("publish.priceSuggestion")}</div>
+                <div style={s.aiBoxRow}>
+                  <span style={s.aiBoxLabel}>{tr("publish.priceRange")}</span>
+                  <span style={s.aiBoxValue}>${pricingSuggestion.precio_min?.toLocaleString()} – ${pricingSuggestion.precio_max?.toLocaleString()} ARS{tr("common.perDay")}</span>
+                </div>
+                <div style={s.aiBoxRow}>
+                  <span style={s.aiBoxLabel}>{tr("publish.priceAdvised")}</span>
+                  <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
+                </div>
+                {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
+                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
               </div>
             )}
             <input style={s.input} type="number" placeholder="45000"
@@ -846,8 +1292,13 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               onChange={(e) => setL("pricePerDay", e.target.value)} />
           </div>
           <div style={s.btnRow}>
+<<<<<<< HEAD
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
             <button style={s.btn} onClick={next}>Siguiente →</button>
+=======
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
+            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
         </div>
       )}
@@ -855,12 +1306,13 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* PASO 3 */}
       {step === 3 && (
         <div style={cardStyle}>
-          <div style={s.sectionTitle}>Revisá tu publicación</div>
+          <div style={s.sectionTitle}>{tr("publish.review")}</div>
           {photos.length > 0 && (
             <img src={photos[0].url} alt="principal"
               style={{ width: "100%", height: isMobile ? 160 : 210, objectFit: "cover", borderRadius: 12, marginBottom: 20 }} />
           )}
           {[
+<<<<<<< HEAD
             ["Vehículo", `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
             ["Categoría", CATEGORIES.find(c => c.id === vehicleForm.category)?.label || "—"],
             ["Color", vehicleForm.color],
@@ -874,11 +1326,30 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ["Ubicación", listingForm.locationText || "No especificada"],
             ["Precio/día", `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
             ["Fotos", `${photos.length} foto${photos.length !== 1 ? "s" : ""}`],
+=======
+            [tr("payment.vehicle"), `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`],
+            [tr("publish.category"), categoryLabel(tr, vehicleForm.category) || "—"],
+            [tr("spec.color"), vehicleForm.color],
+            [tr("spec.transmission"), transmissionLabel(tr, vehicleForm.transmission)],
+            [tr("spec.fuel"), fuelLabel(tr, vehicleForm.fuel)],
+            [tr("spec.seats"), vehicleForm.seats],
+            ...(vehicleForm.plate ? [[tr("publish.plate"), vehicleForm.plate]] : []),
+            ...(vehicleForm.horsePower ? [[tr("spec.power"), `${vehicleForm.horsePower} HP`]] : []),
+            ...(vehicleForm.engineDisplacementCC ? [[tr("spec.displacement"), `${vehicleForm.engineDisplacementCC} cc`]] : []),
+            [tr("publish.listingTitle"), listingForm.title || tr("publish.titleAuto")],
+            [tr("loc.short"), listingForm.locationText || tr("publish.noLocation")],
+            [tr("publish.pricePerDay"), `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
+            [tr("publish.photos"), tr(photos.length === 1 ? "publish.photoCountOne" : "publish.photoCountMany", { count: photos.length })],
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           ].map(([k, v]) => (
             <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f3f4f6", fontSize: isMobile ? 13 : 14 }}>
               <span style={{ color: "#6b7280" }}>{k}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+<<<<<<< HEAD
                 {k === "Color" && colorHex && (
+=======
+                {k === tr("spec.color") && colorHex && (
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                   <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db" }} />
                 )}
                 <span style={{ fontWeight: 600, color: "#111827" }}>{v}</span>
@@ -886,12 +1357,21 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
           ))}
           <div style={{ marginTop: 16, padding: "12px 16px", background: "#eff6ff", borderRadius: 10, fontSize: 13, color: "#2563eb", fontWeight: 500 }}>
+<<<<<<< HEAD
             Se creará el vehículo y el listing activo en la plataforma.
           </div>
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>← Atrás</button>
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
               {loading ? <><span style={s.spinner} /> Publicando...</> : "Publicar ahora"}
+=======
+            {tr("publish.willCreate")}
+          </div>
+          <div style={s.btnRow}>
+            <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
+            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
+              {loading ? <Spinner size={14} color="#fff" label={tr("publish.publishing")} /> : tr("publish.publishNow")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </button>
           </div>
         </div>  

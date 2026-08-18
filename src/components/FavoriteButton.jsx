@@ -13,6 +13,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 /**
  * `side` dice de qué lado se ubica el corazón. En el detalle del auto va a la
@@ -21,6 +25,10 @@ import { useFavorites } from "../context/FavoritesContext";
  * así que sigue arriba a la derecha.
  */
 export default function FavoriteButton({ listingId, size = 30, disabled = false, side = "right" }) {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -46,9 +54,15 @@ export default function FavoriteButton({ listingId, size = 30, disabled = false,
       onClick={handleClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+<<<<<<< HEAD
       aria-label={active ? "Quitar de favoritos" : "Guardar en favoritos"}
       aria-pressed={active}
       title={disabled ? "Disponible al publicar autos reales" : active ? "Quitar de favoritos" : "Guardar en favoritos"}
+=======
+      aria-label={tr(active ? "fav.remove" : "fav.add")}
+      aria-pressed={active}
+      title={disabled ? tr("fav.mockOnly") : tr(active ? "fav.remove" : "fav.add")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       style={{
         position: "absolute", top: 12, ...(side === "left" ? { left: 12 } : { right: 12 }),
         width: size, height: size,

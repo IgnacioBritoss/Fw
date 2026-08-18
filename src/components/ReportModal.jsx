@@ -20,6 +20,10 @@
 import { useState } from "react";
 import { createReport } from "../services/api";
 import { uploadImageToCloudinary } from "../services/cloudinary";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 import Select from "./Select";
 
 // Estilos en línea de la ventana modal.
@@ -69,6 +73,7 @@ const OTHER = "__otro__";
 /** Tope de archivos y de peso por archivo (el backend valida lo mismo). */
 const MAX_EVIDENCE = 5;
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+<<<<<<< HEAD
 const REASONS = [
   "Información falsa en la publicación",
   "Comportamiento inapropiado",
@@ -79,6 +84,16 @@ const REASONS = [
 ];
 
 export default function ReportModal({ targetId, targetLabel, targetType, onClose }) {
+=======
+// Los motivos se guardan como CLAVES: el reporte que llega al admin lleva el
+// texto en el idioma en que lo eligió la persona, y la lista se lee traducida.
+const REASON_KEYS = [
+  "report.r1", "report.r2", "report.r3", "report.r4", "report.r5", "report.r6",
+];
+
+export default function ReportModal({ targetId, targetLabel, targetType, onClose }) {
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const [reason, setReason] = useState("");          // motivo elegido de la lista
   const [customReason, setCustomReason] = useState(""); // motivo escrito a mano
   const [detail, setDetail] = useState("");          // descripción escrita
@@ -106,17 +121,29 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
 
     const libres = MAX_EVIDENCE - evidence.length;
     if (libres <= 0) {
+<<<<<<< HEAD
       setError(`Podés adjuntar hasta ${MAX_EVIDENCE} archivos.`);
+=======
+      setError(tr("report.maxFiles", { max: MAX_EVIDENCE }));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       return;
     }
 
     for (const file of files.slice(0, libres)) {
       if (!file.type.startsWith("image/")) {
+<<<<<<< HEAD
         setError("Solo se pueden adjuntar imágenes (foto o captura de pantalla).");
         continue;
       }
       if (file.size > MAX_FILE_BYTES) {
         setError(`"${file.name}" pesa más de 5MB. Probá con una foto más liviana.`);
+=======
+        setError(tr("report.onlyImages"));
+        continue;
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        setError(tr("report.tooBig", { name: file.name }));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         continue;
       }
       const reader = new FileReader();
@@ -155,7 +182,11 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       });
       setDone(true);
     } catch (err) {
+<<<<<<< HEAD
       setError(err.message || "No pudimos enviar el reporte. Intentá de nuevo.");
+=======
+      setError(err.message || tr("report.sendFailed"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     } finally {
       setSending(false);
     }
@@ -166,13 +197,19 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.success}>
           <div style={s.successIcon}><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+<<<<<<< HEAD
           <div style={s.successTitle}>Reporte enviado correctamente</div>
           <div style={s.successSub}>
             Ya quedó registrado y le llega al equipo de administración.
             Gracias por ayudarnos a mantener la comunidad segura.
+=======
+          <div style={s.successTitle}>{tr("report.sent")}</div>
+          <div style={s.successSub}>
+            {tr("report.sentNote")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </div>
           <button style={{ ...s.btnReport, marginTop: 20, width: "100%" }}
-            onClick={onClose}>Cerrar</button>
+            onClick={onClose}>{tr("common.close")}</button>
         </div>
       </div>
     </div>
@@ -183,18 +220,27 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       <div style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
           <div style={s.title}>
+<<<<<<< HEAD
             Reportar {targetType === "car" ? "publicación" : "usuario"}
+=======
+            {tr(targetType === "car" ? "report.titleListing" : "report.titleUser")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             {targetLabel ? <span style={{ fontWeight: 500, color: "#6b7280" }}>: {targetLabel}</span> : null}
           </div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
 
+<<<<<<< HEAD
         <label style={s.label}>Motivo del reporte</label>
+=======
+        <label style={s.label}>{tr("report.reason")}</label>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         {/* Desplegable propio: el <select> nativo abre la lista del sistema
             operativo, que no respeta nada del diseño de la página. */}
         <Select
           value={reason}
           onChange={setReason}
+<<<<<<< HEAD
           placeholder="Seleccioná un motivo..."
           options={[
             ...REASONS.map(r => ({ value: r, label: r })),
@@ -217,16 +263,103 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
             }}
           />
         )}
+=======
+          placeholder={tr("report.pickReason")}
+          options={[
+            ...REASON_KEYS.map(k => ({ value: tr(k), label: tr(k) })),
+            { value: OTHER, label: tr("report.other") },
+          ]}
+          style={{ marginBottom: 16 }}
+        />
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
-        <label style={s.label}>Descripción detallada</label>
+        {/* Motivo propio: aparece solo al elegir "Otro motivo". */}
+        {reason === OTHER && (
+          <input
+            value={customReason}
+            onChange={e => setCustomReason(e.target.value)}
+            maxLength={160}
+            placeholder={tr("report.phOwnReason")}
+            style={{
+              width: "100%", padding: "11px 14px", borderRadius: 8,
+              border: "1.5px solid #d1d5db", fontSize: 14, marginBottom: 16,
+              outline: "none", boxSizing: "border-box", color: "#111827",
+            }}
+          />
+        )}
+
+        <label style={s.label}>{tr("report.detail")}</label>
         <textarea
           style={s.textarea}
-          placeholder="Describí con detalle qué pasó. Cuanta más información des, más fácil será para el equipo revisar tu reporte. Mínimo 30 caracteres."
+          placeholder={tr("report.phDetail")}
           value={detail}
           onChange={e => setDetail(e.target.value)}
           maxLength={500}
         />
-        <div style={s.counter}>{detail.length}/500 caracteres · mínimo 30</div>
+        <div style={s.counter}>{tr("report.counter", { count: detail.length })}</div>
+
+        {/* PRUEBAS — obligatorias.
+            Un reporte sin evidencia es la palabra de uno contra la del otro: el
+            admin no tiene con qué decidir si pausar una publicación o suspender
+            una cuenta, y abre la puerta a reportes hechos por despecho. */}
+        <label style={s.label}>
+          {tr("report.proof")} <span style={{ color: "#dc2626" }}>*</span>
+        </label>
+        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10, lineHeight: 1.5 }}>
+          {tr("report.proofNote", { max: MAX_EVIDENCE })}
+        </div>
+
+        <input
+          id="report-evidence"
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={e => { addFiles(e.target.files); e.target.value = ""; }}
+        />
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          {evidence.map(item => (
+            <div key={item.id} style={{ position: "relative", width: 74, height: 74 }}>
+              <img src={item.dataUrl} alt=""
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
+              <button
+                type="button"
+                onClick={() => removeEvidence(item.id)}
+                aria-label={tr("report.removeProof")}
+                style={{
+                  position: "absolute", top: -6, right: -6, width: 22, height: 22,
+                  minHeight: 22, borderRadius: "50%", background: "#111827", color: "#fff",
+                  border: "2px solid #fff", cursor: "pointer", fontSize: 13, lineHeight: 1,
+                  display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+
+          {evidence.length < MAX_EVIDENCE && (
+            <button
+              type="button"
+              onClick={() => document.getElementById("report-evidence")?.click()}
+              style={{
+                width: 74, height: 74, minHeight: 74, borderRadius: 8,
+                border: `1.5px dashed ${evidence.length === 0 ? "#fca5a5" : "#d1d5db"}`,
+                background: evidence.length === 0 ? "#fef2f2" : "#f9fafb",
+                cursor: "pointer", display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: 3,
+                color: "#6b7280", fontSize: 11, fontWeight: 600, padding: 0,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              {tr("report.add")}
+            </button>
+          )}
+        </div>
 
         {/* PRUEBAS — obligatorias.
             Un reporte sin evidencia es la palabra de uno contra la del otro: el
@@ -293,17 +426,25 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
         </div>
 
         <div style={s.warning}>
+<<<<<<< HEAD
           Importante: los reportes falsos o malintencionados pueden resultar en la suspensión
           de tu cuenta. Solo reportá situaciones reales.
+=======
+          {tr("report.warning")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
 
         <div style={s.btnRow}>
-          <button style={s.btnCancel} onClick={onClose}>Cancelar</button>
+          <button style={s.btnCancel} onClick={onClose}>{tr("common.cancel")}</button>
           <button
             style={{ ...s.btnReport, ...(canSubmit && !sending ? {} : s.btnReportDisabled) }}
             onClick={handleSubmit}
             disabled={!canSubmit || sending}>
+<<<<<<< HEAD
             {sending ? "Enviando..." : "Enviar reporte"}
+=======
+            {sending ? tr("common.sending") : tr("report.submit")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </button>
         </div>
         {error && (

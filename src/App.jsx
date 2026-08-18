@@ -19,6 +19,7 @@ import { initTheme } from "./services/theme";
 import { PrivateRoute } from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import ChatBot from "./components/ChatBot";
+import { useI18n } from "./i18n/core";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
@@ -52,6 +53,7 @@ const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
 // Pantalla para cualquier dirección que no exista. Sin esto, escribir mal una URL
 // (o tocar un link a una ruta que falta) dejaba la pantalla completamente en
 // blanco, sin ningún aviso.
+<<<<<<< HEAD
 const NotFound = () => (
   <div style={{ textAlign: "center", padding: "80px 24px" }}>
     <div style={{ fontSize: 46, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>404</div>
@@ -64,6 +66,23 @@ const NotFound = () => (
     </Link>
   </div>
 );
+=======
+const NotFound = () => {
+  const { t: tr } = useI18n();
+  return (
+  <div style={{ textAlign: "center", padding: "80px 24px" }}>
+    <div style={{ fontSize: 46, fontWeight: 800, color: "#2563eb", marginBottom: 8 }}>404</div>
+    <div style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 8 }}>{tr("nf.title")}</div>
+    <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>
+      {tr("nf.note")}
+    </div>
+    <Link to="/" style={{ display: "inline-block", padding: "12px 26px", background: "#2563eb", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+      {tr("common.goHome")}
+    </Link>
+  </div>
+  );
+};
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 export default function App() {
   // Al arrancar, aplicamos el modo claro/oscuro guardado por el usuario.

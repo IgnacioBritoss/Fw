@@ -17,6 +17,13 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getMyConversations } from "../services/api";
 import { hasUnreadNotifications } from "../services/notifications";
+<<<<<<< HEAD
+=======
+import BrandLogo from "./Logo";
+import CarIcon from "./CarIcon";
+import Avatar from "./Avatar";
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
 // sistema y desentona con el resto de la interfaz.
@@ -31,13 +38,19 @@ const HomeIcon = icon(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5
 const SearchIcon = icon(<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>);
 const CalendarIcon = icon(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></>);
 const HeartIcon = icon(<path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7 3.7c0 4.9-7 9.3-7 9.3z" />);
+<<<<<<< HEAD
 const CarIcon = icon(<><path d="M5 17h14M4 17v-4l2-5h12l2 5v4" /><circle cx="7.5" cy="17.5" r="1.5" /><circle cx="16.5" cy="17.5" r="1.5" /></>);
+=======
+// El auto ahora vive en su propio componente (components/CarIcon): antes era un
+// trapecio con dos círculos apoyados al lado, que no se leía como un auto.
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 const PlusIcon = icon(<><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>);
 const ShieldIcon = icon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />);
 
 // Estructura del menú lateral, agrupada por secciones. `adminOnly` hace que la
 // opción se muestre únicamente a las cuentas administradoras.
 const NAV = [
+<<<<<<< HEAD
   { group: "Navegación", items: [
     { label: "Inicio", path: "/", Icon: HomeIcon },
     { label: "Buscar autos", path: "/buscar", Icon: SearchIcon },
@@ -60,6 +73,28 @@ const Logo = () => (
       <circle cx="16" cy="16" r="4" fill="#2563eb" />
     </svg>
     <span style={{ fontWeight: 800, fontSize: 17, color: "#111827" }}>Freewheel</span>
+=======
+  { group: "nav.section.main", items: [
+    { label: "nav.home", path: "/", Icon: HomeIcon },
+    { label: "nav.search", path: "/buscar", Icon: SearchIcon },
+    { label: "nav.bookings", path: "/my-bookings", Icon: CalendarIcon },
+    { label: "nav.favorites", path: "/favoritos", Icon: HeartIcon },
+  ]},
+  { group: "nav.section.owners", items: [
+    { label: "nav.myCars", path: "/dashboard", Icon: CarIcon },
+    { label: "nav.publish", path: "/publish", Icon: PlusIcon },
+    // El panel de administración es una opción más del menú, debajo de
+    // "Publicar auto", y solo aparece si la cuenta es admin.
+    { label: "nav.admin", path: "/admin", Icon: ShieldIcon, adminOnly: true },
+  ]},
+];
+
+// La marca vive en components/Logo.jsx. Estaba copiada acá y en tres pantallas
+// más, así que arreglarla en un lado no la arreglaba en los otros.
+const Logo = () => (
+  <div style={{ display: "flex", alignItems: "center", padding: "0 12px 8px" }}>
+    <BrandLogo size={17} />
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   </div>
 );
 
@@ -89,6 +124,10 @@ const GearIcon = ({ size = 18, color = "#374151" }) => (
 );
 
 export default function Layout({ children }) {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const { user, logout } = useAuth();
   const { count: favoritesCount } = useFavorites();
   const navigate = useNavigate();
@@ -147,11 +186,19 @@ export default function Layout({ children }) {
       <div style={{ flex: 1, overflowY: "auto" }}>
         {NAV.map((g, gi) => (
           <div key={gi}>
+<<<<<<< HEAD
             <div style={t.navGroup}>{g.group}</div>
             {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
               <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}>
                 <span style={t.navIcon(isActive(it))}><it.Icon /></span>
                 <span style={{ flex: 1 }}>{it.label}</span>
+=======
+            <div style={t.navGroup}>{tr(g.group)}</div>
+            {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
+              <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}>
+                <span style={t.navIcon(isActive(it))}><it.Icon /></span>
+                <span style={{ flex: 1 }}>{tr(it.label)}</span>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 {/* Cantidad de favoritos guardados, al lado del ítem. */}
                 {it.path === "/favoritos" && favoritesCount > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "#eff6ff", color: isActive(it) ? "#fff" : "#2563eb" }}>
@@ -171,12 +218,23 @@ export default function Layout({ children }) {
 
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+<<<<<<< HEAD
           <div onClick={() => go("/profile")} style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
             <div style={{ fontSize: 11, color: "#9ca3af" }}>Ver perfil</div>
           </div>
           <button onClick={() => { logout(); navigate("/"); }} title="Salir"
+=======
+          <div onClick={() => go("/profile")} style={{ cursor: "pointer", flexShrink: 0 }}>
+            <Avatar src={user?.profilePhotoUrl} initials={initials} size={36} alt="" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
+            <div style={{ fontSize: 11, color: "#9ca3af" }}>{tr("nav.profile")}</div>
+          </div>
+          <button onClick={() => { logout(); navigate("/"); }} title={tr("nav.logout")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: 4, display: "flex" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
@@ -191,7 +249,11 @@ export default function Layout({ children }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       {user ? (
         /* Mensajes (con puntito azul si hay no leídos) */
+<<<<<<< HEAD
         <div style={t.iconBtn} onClick={() => navigate("/chat")} title="Mensajes"
+=======
+        <div style={t.iconBtn} onClick={() => navigate("/chat")} title={tr("nav.messages")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
           <MessageIcon />
@@ -202,7 +264,11 @@ export default function Layout({ children }) {
       ) : null}
       {user && (
         /* Notificaciones */
+<<<<<<< HEAD
         <div style={t.iconBtn} onClick={() => navigate("/notificaciones")} title="Notificaciones"
+=======
+        <div style={t.iconBtn} onClick={() => navigate("/notificaciones")} title={tr("nav.notifications")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
           <BellIcon />
@@ -213,7 +279,11 @@ export default function Layout({ children }) {
       )}
       {user && (
         /* Ajustes */
+<<<<<<< HEAD
         <div style={t.iconBtn} onClick={() => navigate("/ajustes")} title="Ajustes"
+=======
+        <div style={t.iconBtn} onClick={() => navigate("/ajustes")} title={tr("nav.settings")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#ececec"; }}>
           <GearIcon />
@@ -222,8 +292,22 @@ export default function Layout({ children }) {
       {!user && (
         /* Sin cuenta: registrarse / iniciar sesión */
         <>
+<<<<<<< HEAD
           <button onClick={() => navigate("/login")} style={{ padding: "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Iniciar sesión</button>
           <button onClick={() => navigate("/register")} style={{ padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Registrarse</button>
+=======
+          {/* En un teléfono de 390px, "Iniciar sesión" + "Registrarse" con 16px de
+              padding cada uno no entran: uno se partía en dos renglones y el otro
+              quedaba cortado contra el borde derecho. Textos cortos y sin envolver. */}
+          <button onClick={() => navigate("/login")}
+            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {isMobile ? tr("auth.loginShort") : tr("auth.loginBtn")}
+          </button>
+          <button onClick={() => navigate("/register")}
+            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {isMobile ? tr("auth.registerShort") : tr("auth.registerFree")}
+          </button>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </>
       )}
     </div>
@@ -250,7 +334,11 @@ export default function Layout({ children }) {
           background: "#fff", padding: "24px 16px", display: "flex", flexDirection: "column",
           boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
+<<<<<<< HEAD
           transition: "transform .22s ease",
+=======
+          transition: "transform .3s cubic-bezier(.32,.72,0,1)",
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         } : {
           width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec",
           padding: "24px 16px", display: "flex", flexDirection: "column",
@@ -260,14 +348,30 @@ export default function Layout({ children }) {
         {sidebarInner()}
       </aside>
 
+<<<<<<< HEAD
       {/* Fondo oscuro detrás del cajón, solo en celular y con el menú abierto */}
       {isMobile && drawerOpen && (
         <div onClick={() => setDrawerOpen(false)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 100 }} />
+=======
+      {/* Fondo oscuro detrás del cajón. Se deja siempre montado y se le cambia la
+          opacidad: si se monta y se desmonta, aparece y desaparece de golpe y el
+          panel parece deslizarse sobre nada. `pointerEvents` evita que tape los
+          clics cuando está invisible. */}
+      {isMobile && (
+        <div onClick={() => setDrawerOpen(false)} aria-hidden={!drawerOpen}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(3,7,18,.45)", zIndex: 100,
+            opacity: drawerOpen ? 1 : 0,
+            pointerEvents: drawerOpen ? "auto" : "none",
+            transition: "opacity .3s ease",
+          }} />
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
+<<<<<<< HEAD
           display: "flex", alignItems: "center", gap: 16, background: "#fff",
           borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
           padding: isMobile ? "12px 16px" : "14px 32px",
@@ -281,6 +385,46 @@ export default function Layout({ children }) {
             </button>
           )}
           {isMobile && <Logo />}
+=======
+          display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "#fff",
+          borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
+          padding: isMobile ? "12px 12px" : "14px 32px",
+        }}>
+          {/* Las tres barritas se convierten en una X: la de arriba y la de abajo
+              rotan hasta cruzarse y la del medio se desvanece. Antes cambiaban de
+              golpe y no se entendía que el mismo botón cerraba el menú. */}
+          {isMobile && (
+            <button onClick={() => setDrawerOpen(o => !o)}
+              aria-label={drawerOpen ? tr("nav.closeMenu") : tr("nav.openMenu")}
+              aria-expanded={drawerOpen}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  position: "absolute", left: 6, width: 20, height: 2,
+                  background: "#111827", borderRadius: 2,
+                  transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
+                  top: drawerOpen ? 15 : 9 + i * 6,
+                  opacity: drawerOpen && i === 1 ? 0 : 1,
+                  transform: drawerOpen
+                    ? (i === 0 ? "rotate(45deg)" : i === 2 ? "rotate(-45deg)" : "scaleX(.4)")
+                    : "none",
+                }} />
+              ))}
+            </button>
+          )}
+          {/*
+            Con sesión abierta va el símbolo Y la palabra: los botones de entrar y
+            crear cuenta ya no están, así que sobra lugar y la barra no puede
+            quedar con el logo suelto y un hueco al lado.
+            Sin sesión va solo el símbolo, porque con "Freewheel" escrito los dos
+            botones no entran en 390px y uno queda cortado contra el borde.
+          */}
+          {isMobile && (
+            <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
+              <BrandLogo size={user ? 14 : 17} wordmark={Boolean(user)} />
+            </div>
+          )}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           <div style={{ flex: 1 }} />
           {topbarRight()}
         </div>

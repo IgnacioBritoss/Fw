@@ -21,6 +21,10 @@
 //  ejemplo quedan solo para la app recién estrenada, con la base realmente vacía.
 // ============================================================================
 import { useCallback, useEffect, useState } from "react";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 import { getListings } from "../services/api";
 import { itemsOf, normalizeListing } from "../services/listings";
 import { mockCars } from "../data/mockData";
@@ -28,6 +32,10 @@ import { mockCars } from "../data/mockData";
 const MOCK_CARS = mockCars.map(normalizeListing);
 
 export function useListings(filters = {}, { includeMocks = true } = {}) {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -75,14 +83,22 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
       // El backend no respondió. Se avisa y NO se muestran autos de ejemplo:
       // inventar autos cuando el servidor falla hace pensar que la app perdió
       // las publicaciones propias.
+<<<<<<< HEAD
       setError(err.message || "No pudimos cargar los autos.");
+=======
+      setError(err.message || tr("home.errCars"));
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       setCars([]);
       setTotal(0);
       setShowingMocks(false);
     } finally {
       setLoading(false);
     }
+<<<<<<< HEAD
   }, [filtersKey, includeMocks]);
+=======
+  }, [filtersKey, includeMocks, tr]);
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
   useEffect(() => { load(); }, [load]);
 

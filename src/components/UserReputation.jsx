@@ -19,6 +19,7 @@
 // ============================================================================
 import { useEffect, useState } from "react";
 import { getUserReputation } from "../services/api";
+<<<<<<< HEAD
 
 /** Estrellas llenas según el promedio, más el número al lado. */
 function Stars({ average, count, label, compact }) {
@@ -26,6 +27,16 @@ function Stars({ average, count, label, compact }) {
     return (
       <span style={{ fontSize: compact ? 12 : 12.5, color: "#9ca3af" }}>
         {label}: sin reseñas todavía
+=======
+import { useI18n } from "../i18n/core";
+
+/** Estrellas llenas según el promedio, más el número al lado. */
+function Stars({ average, count, label, noneLabel, compact }) {
+  if (!count) {
+    return (
+      <span style={{ fontSize: compact ? 12 : 12.5, color: "#9ca3af" }}>
+        {label}: {noneLabel}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       </span>
     );
   }
@@ -48,6 +59,10 @@ function Stars({ average, count, label, compact }) {
 }
 
 export default function UserReputation({ userId, role = "both", compact = false, style }) {
+<<<<<<< HEAD
+=======
+  const { t: tr } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const [reputation, setReputation] = useState(null);
 
   useEffect(() => {
@@ -71,10 +86,17 @@ export default function UserReputation({ userId, role = "both", compact = false,
       ...style,
     }}>
       {showDriver && (
+<<<<<<< HEAD
         <Stars {...reputation.asDriver} label="Como conductor" compact={compact} />
       )}
       {showOwner && (
         <Stars {...reputation.asOwner} label="Como dueño" compact={compact} />
+=======
+        <Stars {...reputation.asDriver} label={tr("profile.asDriver")} noneLabel={tr("profile.noReviewsShort")} compact={compact} />
+      )}
+      {showOwner && (
+        <Stars {...reputation.asOwner} label={tr("profile.asOwnerShort")} noneLabel={tr("profile.noReviewsShort")} compact={compact} />
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
       )}
     </div>
   );

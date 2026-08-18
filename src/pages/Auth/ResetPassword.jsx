@@ -9,6 +9,10 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+<<<<<<< HEAD
+=======
+import { useI18n } from "../../i18n/core";
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -44,6 +48,10 @@ const styles = (isMobile) => ({
 
 export default function ResetPassword() {
   const { isMobile } = useIsMobile();
+<<<<<<< HEAD
+=======
+  const { t } = useI18n();
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
   const s = styles(isMobile);
   const { resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -63,9 +71,15 @@ export default function ResetPassword() {
     return (
       <div style={s.page}>
         <div style={s.card}>
+<<<<<<< HEAD
           <div style={s.error}>Link inválido o expirado.</div>
           <Link to="/forgot-password" style={{ color:"#2563eb", fontWeight:600, fontSize:14 }}>
             Solicitá un nuevo link
+=======
+          <div style={s.error}>{t("reset.badLink")}</div>
+          <Link to="/forgot-password" style={{ color:"#2563eb", fontWeight:600, fontSize:14 }}>
+            {t("reset.askNewLink")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
           </Link>
         </div>
       </div>
@@ -74,9 +88,15 @@ export default function ResetPassword() {
 
   // Valida (largo mínimo y que ambas coincidan) y guarda la nueva contraseña.
   const handleSubmit = async () => {
+<<<<<<< HEAD
     if (!form.password) { setError("Ingresá una nueva contraseña."); return; }
     if (form.password.length < 6) { setError("Mínimo 6 caracteres."); return; }
     if (form.password !== form.confirm) { setError("Las contraseñas no coinciden."); return; }
+=======
+    if (!form.password) { setError(t("reset.errEmpty")); return; }
+    if (form.password.length < 6) { setError(t("reset.errShort")); return; }
+    if (form.password !== form.confirm) { setError(t("reg.errPassMatch")); return; }
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
     setLoading(true);
     setError("");
     const result = await resetPassword({ token, userId, newPassword: form.password });
@@ -89,12 +109,18 @@ export default function ResetPassword() {
   return (
     <div style={s.page}>
       <div style={s.card}>
+<<<<<<< HEAD
         <div style={s.title}>Nueva contraseña</div>
         <div style={s.sub}>Elegí una contraseña segura para tu cuenta.</div>
+=======
+        <div style={s.title}>{t("reset.title")}</div>
+        <div style={s.sub}>{t("reset.sub")}</div>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
 
         {error && <div style={s.error}>{error}</div>}
 
         {done ? (
+<<<<<<< HEAD
           <div style={s.success}>Contraseña actualizada. Redirigiendo al login...</div>
         ) : (
           <>
@@ -103,6 +129,16 @@ export default function ResetPassword() {
               <input style={{ ...s.input, paddingRight:40 }}
                 type={showPassword ? "text" : "password"}
                 placeholder="Mínimo 6 caracteres"
+=======
+          <div style={s.success}>{t("reset.done")}</div>
+        ) : (
+          <>
+            <label style={s.label}>{t("reset.title")}</label>
+            <div style={s.wrapper}>
+              <input style={{ ...s.input, paddingRight:40 }}
+                type={showPassword ? "text" : "password"}
+                placeholder={t("reset.phMin")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 value={form.password}
                 onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               <button type="button" style={s.eyeBtn} onClick={() => setShowPassword(v => !v)}>
@@ -110,11 +146,19 @@ export default function ResetPassword() {
               </button>
             </div>
 
+<<<<<<< HEAD
             <label style={s.label}>Confirmar contraseña</label>
             <div style={s.wrapper}>
               <input style={{ ...s.input, paddingRight:40 }}
                 type={showConfirm ? "text" : "password"}
                 placeholder="Repetí la contraseña"
+=======
+            <label style={s.label}>{t("auth.confirmPassword")}</label>
+            <div style={s.wrapper}>
+              <input style={{ ...s.input, paddingRight:40 }}
+                type={showConfirm ? "text" : "password"}
+                placeholder={t("reset.phRepeat")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
                 value={form.confirm}
                 onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
@@ -125,13 +169,21 @@ export default function ResetPassword() {
 
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }}
               onClick={handleSubmit} disabled={loading}>
+<<<<<<< HEAD
               {loading ? "Guardando..." : "Cambiar contraseña"}
+=======
+              {loading ? t("common.saving") : t("reset.submit")}
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
             </button>
           </>
         )}
 
         <div style={s.back}>
+<<<<<<< HEAD
           <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>← Volver al login</Link>
+=======
+          <Link to="/login" style={{ color:"#2563eb", fontWeight:600 }}>{t("auth.backToLogin")}</Link>
+>>>>>>> 837a25de31f8ed7993b3ceb5ec2eab71b1c03c9a
         </div>
       </div>
     </div>
