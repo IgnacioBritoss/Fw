@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useDraggableFab, aparcadoIzquierda } from "../hooks/useDraggableFab";
+import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import { useI18n } from "../i18n/core";
 
 // "System prompt": instrucciones ocultas que definen la personalidad y los
@@ -75,6 +76,10 @@ function getViewportData() {
     offsetTop: 0,
   };
 }
+
+/** Cuánto mide la ventana del asistente en computadora. */
+const ANCHO_VENTANA = 360;
+const ALTO_VENTANA = 500;
 
 /**
  * DÓNDE NO VA EL ASISTENTE.
@@ -246,13 +251,24 @@ function Asistente() {
     }
   };
 
+  /*
+    La ventana abierta se puede mover por toda la pantalla, agarrándola de la
+    barra azul del título. Antes estaba clavada abajo a la derecha y tapaba
+    justo lo que uno estaba mirando cuando le preguntaba algo al asistente.
+
+    El lugar por defecto es el de siempre, así que a quien nunca la mueva no le
+    cambia nada; en el chat entre usuarios arranca a la izquierda, como antes,
+    porque a la derecha le queda encima a la conversación.
+  */
+  const ventana = useDraggableWindow({
+    ancho: ANCHO_VENTANA, alto: ALTO_VENTANA,
+    activo: !isMobile, ladoIzquierdo: isChat,
+  });
+
   const desktopWidgetStyle = {
-    position: "fixed",
-    bottom: 92,
-    right: isChat ? "auto" : 28,
-    left: isChat ? 28 : "auto",
-    width: 360,
-    height: 500,
+    ...ventana.style,
+    width: ANCHO_VENTANA,
+    height: ALTO_VENTANA,
     background: "#fff",
     borderRadius: 16,
     boxShadow: "0 8px 40px rgba(0,0,0,.15)",
@@ -300,6 +316,8 @@ function Asistente() {
   // Encabezado del chat: logo, título "Asistente Freewheel" y botón de cerrar.
   const Header = (
     <div
+      {...ventana.asa}
+      title={isMobile ? undefined : tr("chat.dragWindow")}
       style={{
         background: "#0f6ce6",
         padding: "16px 18px",
@@ -307,6 +325,9 @@ function Asistente() {
         alignItems: "center",
         justifyContent: "space-between",
         flexShrink: 0,
+        // En el teléfono la ventana ocupa toda la pantalla, así que no hay
+        // adónde moverla y `asa` viene vacío.
+        ...ventana.asa.style,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

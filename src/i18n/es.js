@@ -704,6 +704,7 @@ export default {
   "chat.closeAssistant": "Cerrar el asistente",
   "chat.openAssistant": "Abrir el asistente (se puede arrastrar)",
   "chat.dragHint": "Tocá para abrir. Sostené y arrastrá para moverlo.",
+  "chat.dragWindow": "Arrastrá de acá para mover el asistente",
   "notif.catBookings": "Reservas",
   "notif.catMessages": "Mensajes",
   "notif.catSystem": "Sistema",

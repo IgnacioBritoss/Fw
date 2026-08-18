@@ -681,6 +681,7 @@ export default {
   "chat.closeAssistant": "关闭助手",
   "chat.openAssistant": "打开助手（可拖动）",
   "chat.dragHint": "点击打开。长按并拖动可以移动。",
+  "chat.dragWindow": "拖动这里可以移动助手窗口",
   "notif.catBookings": "订单",
   "notif.catMessages": "消息",
   "notif.catSystem": "系统",
