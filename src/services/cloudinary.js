@@ -112,19 +112,20 @@ export async function uploadImageToCloudinary(imageOrDataUrl) {
  * sin firmar, ni siquiera sabiéndola. Quien la necesita —un administrador
  * revisando— la pide firmada y con vencimiento.
  *
- * Si el backend todavía no tiene el endpoint (404 durante un despliegue a medias)
- * se cae al camino viejo, que al menos deja la foto subida.
+ * NO HAY CAMINO ALTERNATIVO, Y ES A PROPÓSITO. Antes, si el pedido de la firma
+ * fallaba con 404, esta función subía la foto con la firma genérica de la app
+ * —carpeta `freewheel`, asset PÚBLICO— "para no trabar el trámite". Eso hacía dos
+ * cosas malas a la vez: dejaba el DNI y la licencia de una persona en una carpeta
+ * que se abre sin credenciales, y el envío fallaba igual un paso después con
+ * INVALID_DOCUMENT_URL, porque el backend exige que el archivo esté en
+ * `identity/<tu-id>/`. O sea: se filtraba el documento y encima no servía.
+ *
+ * Si la firma no se puede pedir, la subida FALLA con el motivo a la vista. Es la
+ * única respuesta correcta: sin firma no hay lugar donde guardar estas fotos que
+ * no sea uno que no debería existir.
  */
 export async function uploadIdentityDocument(file, { document, side }) {
-  let firma;
-  try {
-    firma = await getIdentityUploadSignature({ document, side });
-  } catch (err) {
-    // 404: backend viejo, sin el endpoint. Cualquier otro error sí es real
-    // (sin sesión, sin Cloudinary configurado) y conviene que se vea.
-    if (err?.status !== 404) throw err;
-    return uploadImageToCloudinary(file);
-  }
+  const firma = await getIdentityUploadSignature({ document, side });
 
   const form = new FormData();
   form.append("file", file);
@@ -147,6 +148,14 @@ export async function uploadIdentityDocument(file, { document, side }) {
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch { /* respuesta no JSON */ }
+    // Los tres errores que Cloudinary devuelve de verdad, dichos en términos de
+    // lo que la persona puede hacer. El texto crudo ("Invalid Signature") no le
+    // dice nada a nadie que no esté leyendo este archivo.
+    if (res.status === 401) throw new Error(tSync("kyc.errUploadSignature"));
+    if (res.status === 400 && /file size|too large/i.test(detail)) {
+      throw new Error(tSync("kyc.errTooBig"));
+    }
+    if (res.status === 420 || res.status === 429) throw new Error(tSync("kyc.errTooMany"));
     throw new Error(detail || tSync("net.uploadFailed"));
   }
   const data = await res.json();

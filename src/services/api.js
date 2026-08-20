@@ -48,7 +48,7 @@ const isAuthRoute = (path) => AUTH_ROUTES.some(route => path.startsWith(route));
 // - En cualquier error lanza una excepción con el mensaje del backend, para que
 //   la pantalla que llamó pueda mostrarlo. Nunca devuelve `undefined` en un
 //   error: si lo hiciera, quien la llamó reventaría al leer `data.user`.
-async function apiFetch(path, options = {}) {
+async function apiFetch(path, { timeoutMs, ...options } = {}) {
   const token = getToken();
   const headers = {
     "Content-Type": "application/json",
@@ -56,15 +56,38 @@ async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
+  // Sin un tope, un pedido que no contesta deja la pantalla girando para
+  // siempre. `timeoutMs` lo pone quien llama porque no todos duran lo mismo: el
+  // envío de documentos corre la revisión adentro del pedido y tarda hasta 50
+  // segundos, mientras que leer el estado tiene que contestar en el acto.
+  const abortador = timeoutMs ? new AbortController() : null;
+  const reloj = abortador ? setTimeout(() => abortador.abort(), timeoutMs) : null;
+
   let res;
   try {
-    res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  } catch {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+      ...(abortador ? { signal: abortador.signal } : {}),
+    });
+  } catch (fallo) {
+    // Se acabó el tiempo. Se marca aparte de "no hay internet" porque no
+    // significa lo mismo: el pedido PUEDE haber llegado y estar ejecutándose en
+    // el servidor, así que quien llama tiene que ir a mirar cómo quedó la cosa
+    // en vez de dar el error por bueno y reintentar a ciegas.
+    if (fallo?.name === "AbortError") {
+      const err = new Error(tSync("net.timeout"));
+      err.status = 0;
+      err.timedOut = true;
+      throw err;
+    }
     // Falló la red (sin internet, backend caído): mensaje claro en vez de
     // "Failed to fetch", que no le dice nada al usuario.
     const err = new Error(tSync("net.offline"));
     err.status = 0;
     throw err;
+  } finally {
+    if (reloj) clearTimeout(reloj);
   }
 
   if (!res.ok) {
@@ -82,9 +105,18 @@ async function apiFetch(path, options = {}) {
       }
     }
 
-    const err = new Error(message);
+    // La cuenta sin verificar es un 403 que puede aparecer en CUALQUIER acción
+    // protegida: publicar, editar, reservar, aceptar, cobrar, ver el contrato. Las
+    // pantallas grandes ya lo explican y ofrecen el camino, pero el resto mostraba
+    // el texto crudo del servidor —en castellano, con la cuenta puesta en inglés—
+    // sin decir qué hacer. Se traduce una vez acá y se marca el error, para que
+    // cualquier pantalla pueda ofrecer el botón sin repetir la comprobación.
+    const noVerificada = res.status === 403 && payload?.code === "ACCOUNT_NOT_VERIFIED";
+
+    const err = new Error(noVerificada ? tSync("net.notVerified") : message);
     err.status = res.status;
     err.code = payload?.code;                  // ej: ACCOUNT_NOT_VERIFIED
+    err.needsVerification = noVerificada;
     err.payload = payload;
     throw err;
   }
@@ -335,7 +367,19 @@ export async function removeFavorite(listingId) {
 // Para publicar o reservar, el backend exige la cuenta VERIFICADA: email +
 // teléfono + DNI y licencia. getVerificationStatus() devuelve el checklist con
 // lo que falta.
-export async function getVerificationStatus() { return apiFetch("/verification/me/status"); }
+// Cuánto se espera cada ruta de verificación antes de cortar. Los números no son
+// redondeos de escritorio: leer el estado es una consulta y tiene que ser
+// inmediata, mientras que enviar los documentos CORRE LA REVISIÓN ENTERA adentro
+// del pedido (lee el código de barras del DNI, el MRZ del dorso, el QR de la
+// licencia y cruza todo contra la cuenta), y eso tarda entre 5 y 50 segundos.
+// Con el tope de 10 segundos que se usa en el resto de la app, cada envío se
+// cortaba solo justo cuando estaba por contestar.
+const ESPERA_CONSULTA = 10_000;
+export const ESPERA_REVISION = 70_000;
+
+export async function getVerificationStatus() {
+  return apiFetch("/verification/me/status", { timeoutMs: ESPERA_CONSULTA });
+}
 export async function requestPhoneCode() {
   return apiFetch("/verification/phone/request", { method: "POST" });
 }
@@ -353,10 +397,21 @@ export async function getMyIdentity() {
   return apiFetch("/verification/identity/me");
 }
 
-// Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
+/**
+ * Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
+ *
+ * El pedido no "encola" nada: la revisión entera corre acá adentro y la respuesta
+ * ya trae el veredicto (VERIFIED / REJECTED / ID_SUBMITTED). Por eso el tope es
+ * de 70 segundos y no de 10.
+ *
+ * Se mandan SOLO las cuatro URLs. El backend valida el cuerpo con lista blanca y
+ * rechaza con 400 cualquier propiedad que no esté en el contrato, así que sumar
+ * un campo "por las dudas" rompe el envío.
+ */
 export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }) {
   return apiFetch("/verification/identity/submit", {
     method: "POST",
+    timeoutMs: ESPERA_REVISION,
     body: JSON.stringify({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }),
   });
 }
@@ -378,6 +433,7 @@ export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl,
 export async function getIdentityUploadSignature({ document, side }) {
   return apiFetch("/verification/identity/upload-signature", {
     method: "POST",
+    timeoutMs: ESPERA_CONSULTA,
     body: JSON.stringify(side ? { document, side } : { document }),
   });
 }
@@ -388,7 +444,11 @@ export async function getIdentityUploadSignature({ document, side }) {
  * proveedor) o después de corregir el DNI, el CUIL o el domicilio.
  */
 export async function retryIdentityReview() {
-  return apiFetch("/verification/identity/review-retry", { method: "POST" });
+  // Vuelve a correr la revisión completa, igual que el envío: mismo tope.
+  return apiFetch("/verification/identity/review-retry", {
+    method: "POST",
+    timeoutMs: ESPERA_REVISION,
+  });
 }
 
 /**
