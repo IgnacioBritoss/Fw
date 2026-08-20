@@ -145,6 +145,7 @@ const MOTIVOS = {
   DNI_ALREADY_VERIFIED: "kyc.rcDniTaken",
   // No se pudo decidir.
   NO_AUTHORITATIVE_SOURCE: "kyc.rcNoSource",
+  LICENSE_CODE_UNAVAILABLE: "kyc.rcLicenseCode",
   MANUAL_REVIEW_REQUIRED: "kyc.rcManual",
   REVIEW_TIMEOUT: "kyc.rcTimeout",
   REVIEW_ERROR: "kyc.rcError",
@@ -189,4 +190,57 @@ export function motivoDeRevision(code) {
   }
 
   return { code, clave: null };
+}
+
+// ============================================================================
+//  Qué hacer con el resultado
+// ----------------------------------------------------------------------------
+//  Un listado de motivos no es una respuesta: la persona que acaba de recibir
+//  cuatro códigos necesita saber cuál es el ÚNICO botón que le sirve. Y no es
+//  siempre el mismo: "el CUIL no corresponde al DNI" se arregla escribiendo bien
+//  un número, y volver a sacar las fotos no lo cambia; "no pudimos leer el código
+//  del DNI" se arregla con otra foto, y corregir el perfil no lo cambia.
+//
+//  Estos tres conjuntos son los del contrato del backend. Van de más urgente a
+//  menos: primero lo que NO tiene salida desde la app, después lo que se arregla
+//  con datos y por último lo que se arregla con fotos. Cualquier otra cosa
+//  (timeout, proveedor caído) es simplemente volver a pedir la revisión.
+// ============================================================================
+
+/** No se arreglan desde acá: el documento hay que renovarlo o hablar con soporte. */
+const SIN_SALIDA = new Set([
+  "UNDERAGE", "DNI_EXPIRED", "LICENSE_EXPIRED", "DNI_ALREADY_VERIFIED",
+]);
+
+/** Se arreglan corrigiendo el DNI, el CUIL, el domicilio o el perfil. */
+const SE_ARREGLA_CON_DATOS = new Set([
+  "DNI_NUMBER_MISMATCH", "SURNAME_MISMATCH", "GIVEN_NAMES_MISMATCH",
+  "DOB_MISMATCH", "CUIL_INVALID", "CUIL_DNI_MISMATCH", "CUIL_OCR_MISMATCH",
+  "ADDRESS_MISMATCH",
+]);
+
+/** Se arreglan sacando otra vez las fotos. */
+const SE_ARREGLA_CON_FOTOS = new Set([
+  "SLOT_CONTENT_MISMATCH", "NO_AUTHORITATIVE_SOURCE",
+  "LICENSE_CODE_UNAVAILABLE", "SOURCE_CONFLICT",
+]);
+
+/**
+ * La acción principal que corresponde ofrecer para una lista de motivos:
+ *   "soporte"  → no se arregla desde la app
+ *   "datos"    → corregir DNI / CUIL / domicilio
+ *   "fotos"    → volver a sacar las cuatro fotos
+ *   "reintentar" → solo volver a pedir la revisión (timeout, proveedor caído)
+ *
+ * Un motivo ilegible (`_UNREADABLE`) se cuenta como "sacar mejor la foto": el
+ * dato no se pudo LEER, así que corregirlo en el perfil no cambiaría nada.
+ */
+export function accionSugerida(codes = []) {
+  const lista = codes.map(String);
+  if (lista.some((code) => SIN_SALIDA.has(code))) return "soporte";
+  if (lista.some((code) => SE_ARREGLA_CON_DATOS.has(code))) return "datos";
+  if (lista.some((code) => SE_ARREGLA_CON_FOTOS.has(code) || code.endsWith(SUFIJO_ILEGIBLE))) {
+    return "fotos";
+  }
+  return "reintentar";
 }

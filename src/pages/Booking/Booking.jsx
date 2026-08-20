@@ -54,7 +54,7 @@ function CarSummaryCard({ car, mobile }) {
 export default function Booking() {
   const { t: tr } = useI18n();
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, isVerified } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [listing, setListing] = useState(null);
@@ -115,6 +115,22 @@ export default function Booking() {
     }
   };
 
+  /**
+   * Aviso de cuenta sin verificar.
+   *
+   * Se muestra ANTES de intentar reservar, no después del rechazo del servidor.
+   * El backend contesta 403 igual —esa es la garantía—, pero enterarse recién al
+   * apretar "confirmar", con las fechas ya elegidas, es hacerle perder el tiempo a
+   * la persona por algo que se sabía desde que entró a la pantalla.
+   */
+  const avisoVerificacion = (needsVerification || (user && !isVerified)) && (
+    <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ fontSize: 13, color: "#9a3412" }}>{tr("booking.needVerified")}</div>
+      <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        onClick={() => navigate("/kyc")}>{tr("profile.verifyNow")}</button>
+    </div>
+  );
+
   if (loading) return <Spinner block label={tr("common.loading")} />;
   if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>{tr("booking.notFound")}</div>;
 
@@ -127,10 +143,7 @@ export default function Booking() {
         <div>
           <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
           {error && <div style={s.errorBox}>{error}</div>}
-          {needsVerification && (
-            <button style={{ width: "100%", marginTop: 10, padding: 12, background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-              onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
-          )}
+          {avisoVerificacion}
           {submitting && <Spinner block label={tr("booking.creating")} />}
           <div style={{ ...s.infoBox, marginTop: 16 }}><strong>{tr("booking.remember")}</strong> {tr("booking.rememberNote")}</div>
         </div>
@@ -139,10 +152,7 @@ export default function Booking() {
           <div>
             <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
             {error && <div style={s.errorBox}>{error}</div>}
-            {needsVerification && (
-              <button style={{ marginTop: 10, padding: "12px 22px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-                onClick={() => navigate("/kyc")}>Verificar mi cuenta</button>
-            )}
+            {avisoVerificacion}
             {submitting && <Spinner block label={tr("booking.creating")} />}
           </div>
           <div>
