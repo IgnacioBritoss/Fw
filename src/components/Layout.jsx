@@ -66,6 +66,50 @@ const Logo = () => (
   </div>
 );
 
+/**
+ * LAS TRES RAYAS QUE SE CONVIERTEN EN X.
+ *
+ * Se dibuja DOS VECES: una en la barra de arriba y otra adentro del cajón, al
+ * costado del logo. Suena raro, pero nunca se ven las dos: cuando el cajón está
+ * cerrado vive corrido fuera de la pantalla y sólo se ve la de la barra; cuando
+ * se abre, el cajón le pasa por encima a la de la barra y se ve la de adentro.
+ *
+ * POR QUÉ HIZO FALTA: la animación de rayas a X dura 280ms y antes no se veía
+ * nunca. El cajón entra desde la izquierda, mide 248px y le tapa justo el botón,
+ * que está pegado al borde izquierdo. La animación corría abajo del cajón.
+ *
+ * Y por qué no alcanza con subirle el z-index al botón de la barra: la barra de
+ * arriba arma su propio contexto de apilamiento, así que el z-index del botón se
+ * compara contra sus hermanos de la barra y no contra el cajón. El botón queda
+ * atrapado abajo por más alto que sea el número.
+ *
+ * Las dos copias están SIEMPRE dibujadas, así que ninguna se vuelve a montar al
+ * abrir o cerrar y las dos animan de verdad.
+ *
+ * `oculto` marca a la que en ese momento no se ve. Dibujarlas es necesario para
+ * la animación, pero para un lector de pantalla serían dos botones de menú
+ * distintos anunciados a la vez, y uno de ellos apuntando a un lugar de la
+ * pantalla donde no hay nada. Con esto, en cada momento hay exactamente uno.
+ */
+const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
+  <button onClick={onToggle} aria-label={etiqueta} aria-expanded={abierto}
+    aria-hidden={oculto || undefined} tabIndex={oculto ? -1 : 0}
+    style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
+    {[0, 1, 2].map(i => (
+      <span key={i} style={{
+        position: "absolute", left: 6, width: 20, height: 2,
+        background: "#111827", borderRadius: 2,
+        transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
+        top: abierto ? 15 : 9 + i * 6,
+        opacity: abierto && i === 1 ? 0 : 1,
+        transform: abierto
+          ? (i === 0 ? "rotate(45deg)" : i === 2 ? "rotate(-45deg)" : "scaleX(.4)")
+          : "none",
+      }} />
+    ))}
+  </button>
+);
+
 // Ícono de mensajes (burbuja de chat) — profesional, sin emoji
 const MessageIcon = ({ size = 18, color = "#374151" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -158,7 +202,27 @@ export default function Layout({ children }) {
 
   const t = {
     navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
-    navItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 2, background: active ? "#111827" : "transparent", color: active ? "#fff" : "#374151", transition: "background .15s" }),
+    /*
+      EL SELECCIONADO ES UNA FRANJA, NO UN BOTÓN.
+
+      Antes era un rectángulo negro redondeado, flotando con aire a los costados:
+      se leía como un botón apretado y no como "estás acá". Ahora es una franja
+      azul que cruza la barra lateral de lado a lado, que es como se marca la
+      posición en un menú.
+
+      Los márgenes negativos son los que la hacen llegar a los bordes: la barra
+      lateral tiene 16px de padding, así que -16 de cada lado la sacan hasta el
+      borde, y el padding de adentro los recupera (16 + 12 = 28) para que el
+      ícono no se corra de donde estaba.
+    */
+    navItem: (active) => ({
+      display: "flex", alignItems: "center", gap: 12,
+      padding: "10px 28px", marginLeft: -16, marginRight: -16,
+      borderRadius: 0, fontSize: 14, fontWeight: active ? 600 : 500,
+      cursor: "pointer", marginBottom: 2,
+      background: active ? "#0f6ce6" : "transparent",
+      color: active ? "#fff" : "#374151", transition: "background .15s",
+    }),
     navIcon: (active) => ({ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0, color: active ? "#fff" : "#6b7280" }),
     /*
       Los botones de la derecha ocupan el ALTO ENTERO de la franja y se separan
@@ -191,7 +255,15 @@ export default function Layout({ children }) {
   // botón de admin (si corresponde) y bloque de perfil con botón de salir.
   const sidebarInner = () => (
     <>
-      <Logo />
+      {isMobile ? (
+        // Al costado del logo: es la copia que se ve mientras el cajón está
+        // abierto, y la que muestra la X.
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <Logo />
+          <BotonMenu abierto={drawerOpen} onToggle={() => setDrawerOpen(o => !o)}
+            etiqueta={tr("nav.closeMenu")} oculto={!drawerOpen} />
+        </div>
+      ) : <Logo />}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {NAV.map((g, gi) => (
           <div key={gi}>
@@ -256,21 +328,39 @@ export default function Layout({ children }) {
         </TopButton>
       )}
       {!user && (
-        /* Sin cuenta: registrarse / iniciar sesión. Van centrados y NO estirados:
-           los que ocupan el alto de la franja son los de ícono. */
-        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingRight: isMobile ? 12 : 32 }}>
-          {/* En un teléfono de 390px, "Iniciar sesión" + "Registrarse" con 16px de
-              padding cada uno no entran: uno se partía en dos renglones y el otro
-              quedaba cortado contra el borde derecho. Textos cortos y sin envolver. */}
-          <button onClick={() => navigate("/login")}
-            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-            {isMobile ? tr("auth.loginShort") : tr("auth.loginBtn")}
-          </button>
-          <button onClick={() => navigate("/register")}
-            style={{ padding: isMobile ? "9px 12px" : "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-            {isMobile ? tr("auth.registerShort") : tr("auth.registerFree")}
-          </button>
-        </div>
+        /*
+          Sin cuenta: entrar y crear cuenta, con la MISMA forma que los botones
+          de mensajes, notificaciones y ajustes.
+
+          Antes eran dos pastillas redondeadas flotando en el medio de la franja
+          —una con borde gris y otra azul— mientras que al lado, para quien sí
+          tiene sesión, los tres botones ocupan el alto entero y se separan con
+          una línea. Eran dos barras distintas según quién mirara. Ahora es una
+          sola: columnas de la misma altura, separadas por la misma línea.
+
+          "Crear cuenta" queda en azul porque es la acción que la barra quiere
+          empujar; la diferencia se hace con el color de la letra y no con una
+          cápsula, para no volver a meter una forma distinta.
+
+          En un teléfono de 390px los textos van cortos: con los largos, uno se
+          partía en dos renglones y el otro quedaba cortado contra el borde.
+        */
+        <>
+          <TopButton
+            style={{ ...t.iconBtn, width: "auto", padding: isMobile ? "0 12px" : "0 18px" }}
+            onClick={() => navigate("/login")} title={tr("auth.loginBtn")}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", whiteSpace: "nowrap" }}>
+              {isMobile ? tr("auth.loginShort") : tr("auth.loginBtn")}
+            </span>
+          </TopButton>
+          <TopButton
+            style={{ ...t.iconBtn, width: "auto", padding: isMobile ? "0 12px" : "0 18px" }}
+            onClick={() => navigate("/register")} title={tr("auth.registerFree")}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#0f6ce6", whiteSpace: "nowrap" }}>
+              {isMobile ? tr("auth.registerShort") : tr("auth.registerFree")}
+            </span>
+          </TopButton>
+        </>
       )}
     </div>
   );
@@ -334,23 +424,8 @@ export default function Layout({ children }) {
               rotan hasta cruzarse y la del medio se desvanece. Antes cambiaban de
               golpe y no se entendía que el mismo botón cerraba el menú. */}
           {isMobile && (
-            <button onClick={() => setDrawerOpen(o => !o)}
-              aria-label={drawerOpen ? tr("nav.closeMenu") : tr("nav.openMenu")}
-              aria-expanded={drawerOpen}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
-              {[0, 1, 2].map(i => (
-                <span key={i} style={{
-                  position: "absolute", left: 6, width: 20, height: 2,
-                  background: "#111827", borderRadius: 2,
-                  transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
-                  top: drawerOpen ? 15 : 9 + i * 6,
-                  opacity: drawerOpen && i === 1 ? 0 : 1,
-                  transform: drawerOpen
-                    ? (i === 0 ? "rotate(45deg)" : i === 2 ? "rotate(-45deg)" : "scaleX(.4)")
-                    : "none",
-                }} />
-              ))}
-            </button>
+            <BotonMenu abierto={drawerOpen} onToggle={() => setDrawerOpen(o => !o)}
+              etiqueta={tr("nav.openMenu")} oculto={drawerOpen} />
           )}
           {/*
             Con sesión abierta va el símbolo Y la palabra: los botones de entrar y

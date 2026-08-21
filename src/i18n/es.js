@@ -227,6 +227,7 @@ export default {
   "settings.report": "Reportar errores",
   "settings.reportTitle": "Reportar errores de la página",
   "settings.reportSub": "Si algo no funciona como debería, contanos",
+  "report.action": "Reportar",
   "report.title": "Contanos qué pasó",
   "report.sub": "Cuanto más concreto, más fácil es encontrar el problema.",
   "report.what": "Qué pasó",
