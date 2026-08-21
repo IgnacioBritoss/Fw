@@ -28,6 +28,16 @@ import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
 import { localeFor } from "../i18n/dates";
 
+/**
+ * Hasta cuántos meses adelante se puede reservar.
+ *
+ * El mismo número manda en dos lugares —hasta dónde se consulta la
+ * disponibilidad y hasta dónde deja elegir el calendario—, y tienen que ser el
+ * mismo: si el calendario dejara elegir más allá de lo consultado, mostraría
+ * como libres días que no lo están.
+ */
+const MESES_DE_ANTICIPACION = 6;
+
 // Estilos en línea del componente (agrupados acá para no ensuciar el JSX).
 const s = {
   wrap: { background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e5e7eb" },
@@ -53,8 +63,8 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [availError, setAvailError] = useState("");
 
-  // Al cargar (o cambiar de publicación), consulta la disponibilidad de los
-  // próximos 6 meses y guarda los días ocupados para bloquearlos.
+  // Al cargar (o cambiar de publicación), consulta la disponibilidad de todo el
+  // período que se puede reservar y guarda los días ocupados para bloquearlos.
   useEffect(() => {
     if (!listingId) return;
     let active = true;
@@ -62,7 +72,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
     setAvailError("");
 
     const from = new Date();
-    const to = addMonths(from, 6);
+    const to = addMonths(from, MESES_DE_ANTICIPACION);
 
     getListingAvailability(listingId, from.toISOString(), to.toISOString())
       .then((data) => {
@@ -137,6 +147,21 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
         selectsRange startDate={start} endDate={end}
         onChange={(update) => setRange(update)}
         minDate={addDays(new Date(), 1)}
+        /*
+          HASTA SEIS MESES.
+
+          Antes no había tope, y eso no era "más libertad": la disponibilidad se
+          consulta para los próximos 6 meses, así que más allá de eso el
+          calendario no sabe qué días están ocupados y los muestra TODOS libres.
+          Alguien podía elegir una fecha a un año, verla en blanco, y que la
+          reserva se rechazara al confirmar.
+
+          Con el tope puesto en los mismos 6 meses que se consultan, todo lo que
+          se puede elegir tiene disponibilidad de verdad detrás. Y son seis meses
+          de navegación, no dos: los dos que se ven son los que entran en
+          pantalla, y las flechas llegan hasta el final del sexto.
+        */
+        maxDate={addMonths(new Date(), MESES_DE_ANTICIPACION)}
         filterDate={(date) => !isDayBlocked(date)}
         excludeDates={excludeDates}
         inline locale={localeFor(lang)} monthsShown={2}

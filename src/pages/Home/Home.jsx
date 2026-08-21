@@ -24,6 +24,12 @@ import { useListings } from "../../hooks/useListings";
 import { CATEGORIES, filterCars, priceOf, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
 import { firstBookableInput } from "../../services/dates";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { addMonths, format } from "date-fns";
+import AutocompleteInput from "../../components/AutocompleteInput";
+import { AUTOS, ZONAS } from "../../data/sugerencias";
+import { localeFor } from "../../i18n/dates";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import LandingBanner from "../../components/LandingBanner";
@@ -32,11 +38,28 @@ import LandingBanner from "../../components/LandingBanner";
 // mismo día (ver services/dates.js).
 
 export default function Home() {
-  const { t: tr } = useI18n();
+  const { t: tr, lang } = useI18n();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
 
+  /*
+    DOS CAMPOS Y NO UNO.
+
+    Antes había un solo "Dónde" que decía "Ciudad, barrio o modelo": el mismo
+    cuadro para dos cosas que no se buscan igual. Un lugar filtra por zona en el
+    servidor; una marca filtra por texto entre los autos. Metidos en un campo,
+    escribir "Palermo" y escribir "Suran" iban por el mismo camino y uno de los
+    dos siempre salía mal.
+
+    Separados, cada uno va a donde corresponde: `where` a la zona y `q` al auto.
+    La pantalla de Buscar ya los recibía por separado; el inicio no se los
+    mandaba.
+  */
+  const [zona, setZona] = useState("");
   const [search, setSearch] = useState("");
+  // ¿Está abierto el calendario? Una sola vez para los dos campos de fecha,
+  // porque es un solo calendario con el rango entero, como el de Airbnb.
+  const [calendario, setCalendario] = useState(false);
   const [cat, setCat] = useState("");            // "" = todas las categorías
   const [pickup, setPickup] = useState("");      // fecha de retiro (YYYY-MM-DD)
   const [dropoff, setDropoff] = useState("");    // fecha de devolución
@@ -207,10 +230,60 @@ export default function Home() {
     return result;
   }, [cars]);
 
+  /*
+    Las sugerencias del campo del auto: la lista fija MÁS lo que hay publicado.
+
+    La lista fija sola envejece —un modelo nuevo tarda en entrar— y lo publicado
+    solo no alcanza, porque al principio hay dos autos. Juntas, la lista da algo
+    desde el primer día y lo publicado la mantiene al día sin que nadie la toque.
+
+    Se sacan repetidos comparando en minúsculas: "Fiat" de la lista y "fiat"
+    escrito por un dueño son lo mismo, y aparecer dos veces no ayuda a nadie.
+  */
+  const sugerenciasDeAutos = useMemo(() => {
+    const vistas = new Set(AUTOS.map((a) => a.toLowerCase()));
+    const extra = [];
+    for (const car of cars) {
+      for (const dato of [car.brand, car.model]) {
+        const limpio = String(dato || "").trim();
+        if (!limpio || vistas.has(limpio.toLowerCase())) continue;
+        vistas.add(limpio.toLowerCase());
+        extra.push(limpio);
+      }
+    }
+    // Lo publicado va al final: la lista curada está ordenada por lo más común,
+    // y eso es lo que conviene ofrecer primero.
+    return [...AUTOS, ...extra];
+  }, [cars]);
+
+  /** Qué dice el campo de fechas cuando está cerrado. */
+  const textoDeFechas = () => {
+    if (!pickup) return tr("home.datesPlaceholder");
+    const desde = format(new Date(`${pickup}T12:00:00`), "d MMM", { locale: localeFor(lang) });
+    if (!dropoff) return desde;
+    const hasta = format(new Date(`${dropoff}T12:00:00`), "d MMM", { locale: localeFor(lang) });
+    return `${desde} - ${hasta}`;
+  };
+
+  /**
+   * Lo que devuelve el calendario de rango: [inicio, fin], y el fin viene null
+   * mientras se está eligiendo la primera punta.
+   *
+   * El calendario se cierra solo al completar el rango. Es lo que uno espera
+   * —ya no queda nada por elegir— y ahorra el toque en "Listo".
+   */
+  const elegirRango = ([desde, hasta]) => {
+    const aTexto = (d) => (d ? format(d, "yyyy-MM-dd") : "");
+    setPickup(aTexto(desde));
+    setDropoff(aTexto(hasta));
+    if (desde && hasta) setCalendario(false);
+  };
+
   // Manda al buscador con los filtros ya puestos, para no perderlos al cambiar
   // de pantalla.
   const goToSearch = () => {
     const params = new URLSearchParams();
+    if (zona) params.set("where", zona);
     if (search) params.set("q", search);
     if (cat) params.set("category", cat);
     if (pickup) params.set("from", pickup);
@@ -255,7 +328,17 @@ export default function Home() {
     */
     searchRow: isMobile
       ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 4, padding: 8, marginTop: 20 }
-      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 4, overflow: "hidden", marginTop: 26 },
+      /*
+        SIN `overflow: hidden`.
+
+        Estaba para recortar las puntas cuadradas del botón azul y que la fila
+        quedara con sus 4px de redondeo. El problema es que también recorta lo que
+        SALE de la fila, y ahora sale algo: el calendario se abre para abajo y
+        quedaba cortado en el borde, se veía apenas la última fila de días.
+
+        El redondeo del botón se resuelve en el botón, que es donde correspondía.
+      */
+      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 4, marginTop: 26 },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
     // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
@@ -411,20 +494,109 @@ export default function Home() {
           <div style={{ fontSize: 14.5, opacity: .85, marginTop: 12 }}>{tr("home.subtitle")}</div>
 
           <div className="fw-hero-search" style={t.searchRow}>
+            {/*
+              ZONA. El campo va completando lo que se escribe: "cór" ofrece
+              "Córdoba" y con Tab queda puesto. Ver AutocompleteInput.
+            */}
             <div className="fw-plain-field" style={t.searchCell}>
               <div style={t.searchLabel}>{tr("home.where")}</div>
-              <input style={t.searchInput} placeholder={tr("home.wherePlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
+              <AutocompleteInput
+                value={zona} onChange={setZona} opciones={ZONAS}
+                onEnter={goToSearch}
+                placeholder={tr("home.zonePlaceholder")}
+                inputStyle={{ color: "#111827" }}
+              />
             </div>
-            {/* Fechas reales: antes eran texto fijo y no filtraban nada. */}
+
+            {/* MARCA O MODELO, con las mismas ayudas pero su propia lista. */}
             <div className="fw-plain-field" style={t.searchCell}>
-              <div style={t.searchLabel}>{tr("home.pickup")}</div>
-              <input type="date" style={t.searchInput} min={firstBookableInput()} value={pickup}
-                onChange={e => { setPickup(e.target.value); if (dropoff && new Date(dropoff) < new Date(e.target.value)) setDropoff(""); }} />
+              <div style={t.searchLabel}>{tr("home.carLabel")}</div>
+              <AutocompleteInput
+                value={search} onChange={setSearch} opciones={sugerenciasDeAutos}
+                onEnter={goToSearch}
+                placeholder={tr("home.carPlaceholder")}
+                inputStyle={{ color: "#111827" }}
+              />
             </div>
-            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}) }}>
-              <div style={t.searchLabel}>{tr("home.dropoff")}</div>
-              <input type="date" style={t.searchInput} min={pickup || firstBookableInput()} value={dropoff}
-                onChange={e => setDropoff(e.target.value)} />
+
+            {/*
+              FECHAS: UN SOLO CAMPO CON EL RANGO ENTERO.
+
+              Antes eran dos campos `type="date"`, o sea dos calendarios del
+              sistema que se abren de a uno. Elegir del 22 al 29 eran cuatro
+              gestos —abrir, elegir, abrir el otro, elegir— y en el segundo
+              calendario ya no se veía qué día se había elegido en el primero,
+              que es justamente lo que hace falta para decidir.
+
+              Ahora es un botón que abre DOS MESES juntos y se marcan las dos
+              puntas de un tirón, con el rango pintado en el medio.
+            */}
+            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}), position: "relative" }}>
+              <div style={t.searchLabel}>{tr("home.dates")}</div>
+              <button type="button" onClick={() => setCalendario((v) => !v)}
+                aria-expanded={calendario}
+                style={{
+                  ...t.searchInput, textAlign: "left", cursor: "pointer", padding: 0,
+                  color: pickup ? "#111827" : "#9ca3af",
+                }}>
+                {textoDeFechas()}
+              </button>
+
+              {calendario && (
+                <>
+                  {/* Tocar afuera cierra. Va detrás del panel y delante de todo
+                      lo demás, que es lo que hace que "afuera" sea afuera. */}
+                  <div onClick={() => setCalendario(false)}
+                    style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 10px)",
+                    // En el teléfono se pega a la izquierda del campo, que ocupa
+                    // todo el ancho; en computadora se centra bajo el campo.
+                    left: isMobile ? 0 : "50%",
+                    transform: isMobile ? "none" : "translateX(-50%)",
+                    zIndex: 41, background: "#fff", borderRadius: 14,
+                    boxShadow: "0 12px 40px rgba(0,0,0,.18)", padding: 14,
+                    border: "1px solid #ececec",
+                    /*
+                      `max-content` es lo que pone los dos meses UNO AL LADO DEL
+                      OTRO. Un elemento absoluto sin ancho se encoge hasta el
+                      ancho de su contenedor —la casilla de fechas, unos 330px—,
+                      y ahí los dos meses de 250px no entran, así que el
+                      calendario los apilaba en vertical y quedaba larguísimo.
+
+                      El tope es para que en una pantalla angosta el panel no se
+                      salga por el costado.
+                    */
+                    width: "max-content",
+                    maxWidth: "calc(100vw - 32px)",
+                  }}>
+                    <DatePicker
+                      selectsRange
+                      startDate={pickup ? new Date(`${pickup}T12:00:00`) : null}
+                      endDate={dropoff ? new Date(`${dropoff}T12:00:00`) : null}
+                      onChange={elegirRango}
+                      minDate={new Date(`${firstBookableInput()}T12:00:00`)}
+                      // Hasta seis meses: es lo mismo que acepta la reserva, así
+                      // que no se puede elegir acá una fecha que después se
+                      // rechace al reservar.
+                      maxDate={addMonths(new Date(), 6)}
+                      monthsShown={isMobile ? 1 : 2}
+                      inline
+                      locale={localeFor(lang)}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10 }}>
+                      <button type="button" onClick={() => { setPickup(""); setDropoff(""); }}
+                        style={{ background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                        {tr("home.clearDates")}
+                      </button>
+                      <button type="button" onClick={() => setCalendario(false)}
+                        style={{ background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                        {tr("common.ready")}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             {/* Acá había un select "Tipo" con el diseño por defecto del
                 navegador. Se quitó: justo abajo está "Explorá por categoría",
@@ -439,7 +611,9 @@ export default function Home() {
                 fontWeight: 700, fontSize: 14, cursor: "pointer",
                 ...(isMobile
                   ? { width: "100%", padding: "14px", marginTop: 8, borderRadius: 4 }
-                  : { padding: "0 30px", borderRadius: 0, flexShrink: 0 }),
+                  // Las puntas de la derecha acompañan el redondeo de la fila;
+                  // las de la izquierda van rectas porque ahí sigue el campo.
+                  : { padding: "0 30px", borderRadius: "0 4px 4px 0", flexShrink: 0 }),
               }}
               onClick={goToSearch}>{tr("home.searchCars")}</button>
           </div>
