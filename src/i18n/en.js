@@ -206,6 +206,7 @@ export default {
   "settings.report": "Report a problem",
   "settings.reportTitle": "Report a problem with the page",
   "settings.reportSub": "If something is not working as it should, tell us",
+  "report.action": "Report",
   "report.title": "Tell us what happened",
   "report.sub": "The more specific it is, the easier the problem is to find.",
   "report.what": "What happened",

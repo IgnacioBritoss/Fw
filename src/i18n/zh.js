@@ -209,6 +209,7 @@ export default {
   "settings.report": "反馈问题",
   "settings.reportTitle": "反馈页面问题",
   "settings.reportSub": "如果有什么不对，告诉我们",
+  "report.action": "举报",
   "report.title": "说说发生了什么",
   "report.sub": "写得越具体，越容易找到问题。",
   "report.what": "发生了什么",

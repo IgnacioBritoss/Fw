@@ -205,6 +205,7 @@ export default {
   "settings.report": "Segnala problemi",
   "settings.reportTitle": "Segnala problemi della pagina",
   "settings.reportSub": "Se qualcosa non funziona come dovrebbe, dillo a noi",
+  "report.action": "Segnala",
   "report.title": "Raccontaci cosa è successo",
   "report.sub": "Più è concreto, più è facile trovare il problema.",
   "report.what": "Cosa è successo",

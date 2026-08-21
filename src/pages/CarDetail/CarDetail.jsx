@@ -551,13 +551,22 @@ export default function CarDetail() {
         {!isOwner && (
           <button
             onClick={() => user ? setShowReportUser(true) : navigate("/login")}
+            /*
+              Rojo lleno y letra blanca, no un contorno rosa claro.
+
+              Con el borde `#fecaca` sobre fondo blanco, el botón quedaba casi
+              invisible al lado del nombre del dueño, y encima el rosa pálido se
+              lee como "deshabilitado". Reportar a alguien es una acción seria y
+              tiene que verse como tal, aunque no sea la que uno usa todos los
+              días.
+            */
             style={{
-              background: "none", border: "1px solid #fecaca",
-              borderRadius: 8, color: "#dc2626", fontSize: 11,
-              cursor: "pointer", padding: "4px 10px",
+              background: "#dc2626", border: "none",
+              borderRadius: 8, color: "#fff", fontSize: 11, fontWeight: 600,
+              cursor: "pointer", padding: "5px 12px",
             }}
           >
-            Reportar
+            {tr("report.action")}
           </button>
         )}
       </div>
