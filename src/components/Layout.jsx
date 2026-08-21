@@ -61,7 +61,7 @@ const NAV = [
 // La marca vive en components/Logo.jsx. Estaba copiada acá y en tres pantallas
 // más, así que arreglarla en un lado no la arreglaba en los otros.
 const Logo = () => (
-  <div style={{ display: "flex", alignItems: "center", padding: "0 12px 8px" }}>
+  <div style={{ display: "flex", alignItems: "center", padding: "0 28px 8px" }}>
     <BrandLogo size={17} />
   </div>
 );
@@ -201,7 +201,7 @@ export default function Layout({ children }) {
   const isAdmin = user?.role === "ADMIN"; // ¿el usuario es administrador?
 
   const t = {
-    navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 12px 8px" },
+    navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 28px 8px" },
     /*
       EL SELECCIONADO ES UNA FRANJA, NO UN BOTÓN.
 
@@ -210,14 +210,25 @@ export default function Layout({ children }) {
       azul que cruza la barra lateral de lado a lado, que es como se marca la
       posición en un menú.
 
-      Los márgenes negativos son los que la hacen llegar a los bordes: la barra
-      lateral tiene 16px de padding, así que -16 de cada lado la sacan hasta el
-      borde, y el padding de adentro los recupera (16 + 12 = 28) para que el
-      ícono no se corra de donde estaba.
+      CÓMO LLEGA A LOS BORDES, y por qué NO con márgenes negativos.
+
+      El primer intento fue -16px de cada lado para compensar el padding de la
+      barra. Se veía bien al medirlo y estaba mal: el menú vive dentro de un
+      contenedor que scrollea, y algo más ancho que él no se sale, se RECORTA.
+      Quedaba una franja con margen blanco a los costados y encima aparecía una
+      barra de scroll horizontal abajo.
+
+      Y no se notaba midiendo, porque el recorte de un ancestro no cambia las
+      medidas del elemento: la caja seguía diciendo 0..248 mientras lo pintado
+      iba de 20 a 240. Hay que preguntar qué se dibuja en cada punto.
+
+      Lo correcto es más simple: la barra no lleva padding a los costados, y el
+      padding lo pone cada cosa que va adentro. Así la franja ocupa el ancho de
+      verdad, sin desbordar nada y sin barra de scroll.
     */
     navItem: (active) => ({
       display: "flex", alignItems: "center", gap: 12,
-      padding: "10px 28px", marginLeft: -16, marginRight: -16,
+      padding: "10px 28px",
       borderRadius: 0, fontSize: 14, fontWeight: active ? 600 : 500,
       cursor: "pointer", marginBottom: 2,
       background: active ? "#0f6ce6" : "transparent",
@@ -258,7 +269,7 @@ export default function Layout({ children }) {
       {isMobile ? (
         // Al costado del logo: es la copia que se ve mientras el cajón está
         // abierto, y la que muestra la X.
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingRight: 16 }}>
           <Logo />
           <BotonMenu abierto={drawerOpen} onToggle={() => setDrawerOpen(o => !o)}
             etiqueta={tr("nav.closeMenu")} oculto={!drawerOpen} />
@@ -290,7 +301,7 @@ export default function Layout({ children }) {
           opción más del menú, que es donde se lo busca. */}
 
       {user && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 16px 0", paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
           <div onClick={() => go("/profile")} style={{ cursor: "pointer", flexShrink: 0 }}>
             <Avatar src={user?.profilePhotoUrl} initials={initials} size={36} alt="" />
           </div>
@@ -383,13 +394,15 @@ export default function Layout({ children }) {
       <aside
         style={isMobile ? {
           position: "fixed", top: 0, left: 0, bottom: 0, width: 248, zIndex: 101,
-          background: "#fff", padding: "24px 16px", display: "flex", flexDirection: "column",
+          // Sin padding a los costados: lo pone cada cosa de adentro, para que
+          // la franja del seleccionado pueda llegar a los bordes.
+          background: "#fff", padding: "24px 0", display: "flex", flexDirection: "column",
           boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform .3s cubic-bezier(.32,.72,0,1)",
         } : {
           width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec",
-          padding: "24px 16px", display: "flex", flexDirection: "column",
+          padding: "24px 0", display: "flex", flexDirection: "column",
           position: "sticky", top: 0, height: "100vh",
         }}
       >
