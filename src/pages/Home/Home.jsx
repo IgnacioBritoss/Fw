@@ -37,6 +37,22 @@ import LandingBanner from "../../components/LandingBanner";
 // El mínimo de los selectores de fecha es MAÑANA: no hay alquileres para el
 // mismo día (ver services/dates.js).
 
+/**
+ * La lupa del buscador.
+ *
+ * Dibujada acá y no un emoji: los emojis los pinta el sistema operativo, así que
+ * la misma lupa sale distinta en Windows, en Android y en iPhone, y no hay forma
+ * de que combine con el resto. Un trazo de 2.2 y las puntas redondeadas para que
+ * a 20px se lea como una lupa y no como un charquito.
+ */
+const LupaIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.6-3.6" />
+  </svg>
+);
+
 export default function Home() {
   const { t: tr, lang } = useI18n();
   const navigate = useNavigate();
@@ -327,7 +343,7 @@ export default function Home() {
       `overflow: hidden` recorta el botón contra el redondeo de la tarjeta.
     */
     searchRow: isMobile
-      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 4, padding: 8, marginTop: 20 }
+      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 18, padding: 8, marginTop: 20 }
       /*
         SIN `overflow: hidden`.
 
@@ -338,7 +354,10 @@ export default function Home() {
 
         El redondeo del botón se resuelve en el botón, que es donde correspondía.
       */
-      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 4, marginTop: 26 },
+      // Bien redondeada: la barra pasa a leerse como una sola pieza y no como
+      // tres cajas pegadas. La lupa va adentro, así que el redondeo grande no
+      // choca contra ninguna punta cuadrada.
+      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 999, marginTop: 26 },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
     // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
@@ -346,6 +365,8 @@ export default function Home() {
     // pantalla del teléfono y había que scrolear para ver los autos.
     searchCell: isMobile
       ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
+      // El primer campo lleva más aire a la izquierda: con el redondeo grande,
+      // pegado al borde el texto se mete adentro de la curva.
       : { flex: 1, minWidth: 140, padding: "16px 20px", borderRight: "1px solid #eee" },
     searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
@@ -601,21 +622,40 @@ export default function Home() {
             {/* Acá había un select "Tipo" con el diseño por defecto del
                 navegador. Se quitó: justo abajo está "Explorá por categoría",
                 que hace exactamente lo mismo y se ve mucho mejor. */}
-            {/* En escritorio el botón NO es un rectángulo adentro del rectángulo
-                blanco: ocupa la punta derecha entera, de arriba abajo, y lo que
-                lo separa del último campo es la línea de esa celda. En el
-                teléfono se queda como estaba, que ahí sí funciona apilado. */}
+            {/*
+              LA LUPA, no un botón con la palabra "Buscar autos".
+
+              El botón azul con texto era la pieza más pesada de la barra y
+              repetía algo que ya se entiende: en una barra con dónde, qué y
+              cuándo, lo único que falta es buscar. La lupa lo dice sin ocupar
+              media barra, y es lo que la gente ya busca con el ojo.
+
+              El dibujo es propio y no un emoji: los emojis los pinta el sistema
+              operativo, así que la misma lupa sale distinta en Windows, en
+              Android y en iPhone, y ninguna de las tres combina con el resto.
+
+              En el teléfono se queda ancho y con la palabra: ahí la barra está
+              apilada, un círculo suelto abajo de todo no se lee como el cierre
+              de nada.
+            */}
             <button
+              onClick={goToSearch}
+              aria-label={tr("home.searchCars")}
+              title={tr("home.searchCars")}
               style={{
                 background: "#0f6ce6", color: "#fff", border: "none",
                 fontWeight: 700, fontSize: 14, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 ...(isMobile
-                  ? { width: "100%", padding: "14px", marginTop: 8, borderRadius: 4 }
-                  // Las puntas de la derecha acompañan el redondeo de la fila;
-                  // las de la izquierda van rectas porque ahí sigue el campo.
-                  : { padding: "0 30px", borderRadius: "0 4px 4px 0", flexShrink: 0 }),
-              }}
-              onClick={goToSearch}>{tr("home.searchCars")}</button>
+                  ? { width: "100%", padding: "14px", marginTop: 8, borderRadius: 999 }
+                  : {
+                      width: 46, height: 46, borderRadius: "50%",
+                      flexShrink: 0, alignSelf: "center", marginRight: 8,
+                    }),
+              }}>
+              <LupaIcon />
+              {isMobile && tr("home.searchCars")}
+            </button>
           </div>
           {dateError && (
             <div style={{ marginTop: 12, fontSize: 13, background: "rgba(255,255,255,.16)", borderRadius: 8, padding: "8px 12px", display: "inline-block" }}>{dateError}</div>
