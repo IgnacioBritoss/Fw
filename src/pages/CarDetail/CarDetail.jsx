@@ -235,7 +235,7 @@ export default function CarDetail() {
     if (!id || mockCar) return undefined;
     let active = true;
     const from = new Date();
-    getListingAvailability(id, from.toISOString(), addMonths(from, 3).toISOString())
+    getListingAvailability(id, from.toISOString(), addMonths(from, 6).toISOString())
       .then(data => { if (active) setUnavailableDates(data?.unavailableDates || []); })
       .catch(() => { /* sin disponibilidad cargada */ });
     return () => { active = false; };
