@@ -558,7 +558,7 @@ export default function Home() {
       ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid var(--fw-line-soft)", boxSizing: "border-box" }
       // El primer campo lleva más aire a la izquierda: con el redondeo grande,
       // pegado al borde el texto se mete adentro de la curva.
-      : { flex: 1, minWidth: 140, padding: "16px 20px", borderRight: "1px solid #eee" },
+      : { flex: 1, minWidth: 140, padding: "16px 20px", borderRight: "1px solid var(--fw-line)" },
     searchLabel: { fontSize: 10.5, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
     searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "var(--fw-text)", background: "transparent", width: "100%" },
     sectionTitle: { fontSize: 19, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.3px" },
@@ -811,7 +811,13 @@ export default function Home() {
                 busca el ojo —dónde, cuándo, qué— y además así el calendario
                 se abre centrado bajo la barra y no colgando de una punta. */}
             <div className="fw-plain-field"
-              style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}) }}>
+              style={{
+                ...t.searchCell,
+                // Es el último: la línea separa un campo del otro, y del lado
+                // derecho ya no hay otro campo sino la lupa. La raya quedaba
+                // suelta, pegada contra el botón.
+                ...(isMobile ? { borderBottom: "none" } : { borderRight: "none" }),
+              }}>
               <div style={t.searchLabel}>{tr("home.carLabel")}</div>
               <AutocompleteInput
                 value={search} onChange={setSearch} opciones={sugerenciasDeAutos}
@@ -965,9 +971,11 @@ export default function Home() {
               {/*
                 AGRANDAR EL MAPA.
 
-                Abajo a la izquierda, que es la esquina que Leaflet deja libre:
-                arriba a la izquierda están el + y el −, y abajo a la derecha la
-                firma de OpenStreetMap, que por licencia tiene que verse.
+                Arriba a la derecha. Es la esquina donde uno busca el control de
+                tamaño de cualquier ventana, y no choca con nada del mapa: los
+                botones de zoom van arriba a la izquierda y la firma de
+                OpenStreetMap —que por licencia tiene que verse— abajo a la
+                derecha.
 
                 El dibujo es el de "pantalla completa" de toda la vida —las
                 cuatro esquinas— y da vuelta cuando el mapa ya está grande. Es
@@ -982,7 +990,7 @@ export default function Home() {
                   aria-label={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                   title={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                   style={{
-                    position: "absolute", left: 12, bottom: 12, zIndex: 2,
+                    position: "absolute", right: 12, top: 12, zIndex: 2,
                     display: "flex", alignItems: "center", gap: 8,
                     padding: "9px 13px", borderRadius: 10,
                     background: "var(--fw-surface)", color: "var(--fw-text-2)",
