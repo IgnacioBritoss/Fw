@@ -10,7 +10,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { useDraggableFab, aparcadoIzquierda } from "../hooks/useDraggableFab";
+import { useAsistente } from "../context/AssistantContext";
 import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import { useI18n } from "../i18n/core";
 
@@ -108,10 +108,21 @@ function Asistente() {
   const { isMobile } = useIsMobile();
   const location = useLocation();
   const isChat = location.pathname === "/chat";     // ¿estamos en la pantalla de chat?
-  const hideFab = isMobile && isChat;               // ocultar el botón para no tapar el chat real
 
   const { t: tr, lang } = useI18n();
-  const [open, setOpen] = useState(false);              // ¿está abierto el asistente?
+  /*
+    EL BOTÓN QUE ABRE EL ASISTENTE YA NO ES EL REDONDEL FLOTANTE.
+
+    Ahora vive en la franja de arriba, al lado de la rueda de ajustes, junto con
+    los demás. El redondel se fue porque era el único elemento de toda la app
+    que flotaba encima del contenido: tapaba lo que hubiera abajo, había que
+    arrastrarlo cuando molestaba, y en el chat de verdad se le venía encima al
+    botón de mandar.
+
+    Como el botón lo dibuja Layout y el asistente lo dibuja este componente, lo
+    único que comparten —si está abierto— pasa por un contexto.
+  */
+  const { abierto: open, cerrar } = useAsistente();
   /**
    * El saludo NO se guarda como texto: se guarda una marca y se traduce al
    * dibujarlo. Antes se armaba con `useState(() => tr("chat.greeting"))`, o sea
@@ -279,40 +290,6 @@ function Asistente() {
     border: "1px solid var(--fw-border)",
   };
 
-  // El botón flotante en celular quedaba justo encima de los botones de la
-  // pantalla ("Eliminar publicación", "Reservar ahora") y les robaba el toque.
-  // Se lo baja al borde y se lo hace un poco más chico.
-  const fabSize = isMobile ? 46 : 50;
-  // El botón se puede arrastrar: dónde molesta depende de la pantalla, así que la
-  // decisión es de quien lo usa. El hook pone position/left/top.
-  /*
-    En el chat entre usuarios el botón se estaciona abajo a la IZQUIERDA. En la
-    esquina de siempre —abajo a la derecha— le queda justo encima al último
-    mensaje y al botón de mandar. Al salir del chat vuelve solo a donde estaba,
-    porque su posición arrastrable no se toca.
-  */
-  const fab = useDraggableFab({
-    size: fabSize,
-    onTap: () => setOpen((o) => !o),
-    fijo: isChat ? aparcadoIzquierda(fabSize) : null,
-  });
-
-  const fabStyle = {
-    width: isMobile ? 46 : 50,
-    height: isMobile ? 46 : 50,
-    borderRadius: "50%",
-    background: "var(--fw-blue)",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
-    boxShadow: "0 4px 16px rgba(37,99,235,.4)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 999,
-    transition: "transform .15s, box-shadow .15s",
-  };
-
   // Encabezado del chat: logo, título "Asistente Freewheel" y botón de cerrar.
   const Header = (
     <div
@@ -375,7 +352,7 @@ function Asistente() {
       </div>
 
       <button
-        onClick={() => setOpen(false)}
+        onClick={cerrar}
         style={{
           background: "none",
           border: "none",
@@ -667,46 +644,6 @@ function Asistente() {
             {InputBar}
           </div>
         ))}
-
-      {/* Botón flotante (FAB) que abre/cierra el asistente. */}
-      {!hideFab && (
-        <button
-          style={{ ...fabStyle, ...fab.style }}
-          {...fab.handlers}
-          aria-label={tr(open ? "chat.closeAssistant" : "chat.openAssistant")}
-          title={tr("chat.dragHint")}
-          onMouseEnter={(e) => {
-            if (fab.dragging) return;
-            e.currentTarget.style.transform = "scale(1.08)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(37,99,235,.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(37,99,235,.4)";
-          }}
-        >
-          {open ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M18 6L6 18M6 6L18 18"
-                stroke="#fff"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-        </button>
-      )}
     </>
   );
 }

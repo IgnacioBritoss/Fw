@@ -350,9 +350,9 @@ export default {
   "search.viewAsList": "以列表查看",
   "search.viewOnMap": "在地图上查看",
 
-  "chat.title": "Freewheel 助手",
+  "chat.title": "助手威利",
   "chat.online": "在线",
-  "chat.greeting": "你好，我是 Freewheel 助手。关于安全、支付、如何发布车辆、取消预订等问题都可以问我。需要什么帮助？",
+  "chat.greeting": "你好，我是威利（Wili），你的助手。关于安全、支付、如何发布车辆、取消预订等问题都可以问我。需要什么帮助？",
   "chat.placeholder": "输入你的问题…",
   "chat.send": "发送",
 
@@ -706,9 +706,8 @@ export default {
   "chat.uploadFailed": "上传文件失败",
   "chat.rateLimit": "你发送消息太快了，请稍等一下再继续。",
   "chat.connectError": "连接出现问题，请稍后再试。",
-  "chat.closeAssistant": "关闭助手",
-  "chat.openAssistant": "打开助手（可拖动）",
-  "chat.dragHint": "点击打开。长按并拖动可以移动。",
+  "chat.closeAssistant": "关闭助手威利",
+  "chat.openAssistant": "打开助手威利",
   "chat.dragWindow": "拖动这里可以移动助手窗口",
   "notif.catBookings": "订单",
   "notif.catMessages": "消息",

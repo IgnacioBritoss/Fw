@@ -19,6 +19,7 @@ import { initTheme } from "./services/theme";
 import { PrivateRoute } from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import ChatBot from "./components/ChatBot";
+import { AsistenteProvider } from "./context/AssistantContext";
 import { useI18n } from "./i18n/core";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login";
@@ -78,6 +79,7 @@ export default function App() {
           contador y la pantalla /favoritos), por eso viven en un provider. */}
       <FavoritesProvider>
       <BrowserRouter>
+        <AsistenteProvider>
         <Routes>
           {/* Pantallas de autenticación / onboarding — sin Layout */}
           <Route path="/login" element={<Login />} />
@@ -114,6 +116,7 @@ export default function App() {
           <Route path="*" element={app(<NotFound />)} />
         </Routes>
         <ChatBot />
+        </AsistenteProvider>
       </BrowserRouter>
       </FavoritesProvider>
     </AuthProvider>
