@@ -17,9 +17,11 @@ import { itemsOf, normalizeListing, priceOf, categoryLabel, transmissionLabel } 
 import FavoriteButton from "../../components/FavoriteButton";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
+import { useCurrency } from "../../context/CurrencyContext";
 
 export default function Favorites() {
   const { t: tr } = useI18n();
+  const { precio } = useCurrency();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { favoriteIds } = useFavorites();
@@ -108,7 +110,7 @@ export default function Favorites() {
                   {car.transmissionCode && <span style={t.tag}>{transmissionLabel(tr, car.transmissionCode)}</span>}
                 </div>
                 <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+                  <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
                   <button style={{ background: "#111827", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                     onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("favorites.viewCar")}</button>
                 </div>

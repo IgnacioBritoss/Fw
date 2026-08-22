@@ -35,6 +35,7 @@ import Spinner from "../../components/Spinner";
 import Avatar from "../../components/Avatar";
 import { initialsOf, nameOf } from "../../services/people";
 import { localeFor, shortDate } from "../../i18n/dates";
+import { useCurrency } from "../../context/CurrencyContext";
 
 // Caja, combustible y tracción son texto que el usuario LEE, así que se guardan
 // como CÓDIGO del backend y se traducen al dibujar. Antes esta pantalla tenía su
@@ -174,6 +175,7 @@ const s = {
 
 export default function CarDetail() {
   const { t: tr, lang } = useI18n();
+  const { precio } = useCurrency();
   const dateLocale = localeFor(lang);
   const { id } = useParams();
   const { user } = useAuth();
@@ -422,7 +424,7 @@ export default function CarDetail() {
    */
   const priceCard = () => (
     <div style={isMobile ? s.priceCardMobile : s.priceCard}>
-      <div style={s.price}>${Number(car.price_per_day).toLocaleString()}</div>
+      <div style={s.price}>{precio(car.price_per_day)}</div>
       <div style={s.priceSub}>{tr("car.perDay")}</div>
       {/* Ejemplo de 3 días, aclarado como tal: el total real depende de las
           fechas que se elijan y lo calcula el servidor al reservar. */}
@@ -431,20 +433,20 @@ export default function CarDetail() {
       </div>
       <div style={s.row}>
         <span>{tr("car.rent3")}</span>
-        <span>${(car.price_per_day * 3).toLocaleString()}</span>
+        <span>{precio(car.price_per_day * 3)}</span>
       </div>
       <div style={s.row}>
         <span>{tr("car.fee")}</span>
-        <span>${Math.round(car.price_per_day * 3 * 0.1).toLocaleString()}</span>
+        <span>{precio(Math.round(car.price_per_day * 3 * 0.1))}</span>
       </div>
       <div style={s.row}>
         <span>{tr("car.deposit")}</span>
-        <span>${(car.price_per_day * 2).toLocaleString()}</span>
+        <span>{precio(car.price_per_day * 2)}</span>
       </div>
       <div style={s.total}>
         <span>{tr("car.estTotal")}</span>
         <span>
-          ${Math.round(car.price_per_day * 3 * 1.1 + car.price_per_day * 2).toLocaleString()}
+          {precio(Math.round(car.price_per_day * 3 * 1.1 + car.price_per_day * 2))}
         </span>
       </div>
 

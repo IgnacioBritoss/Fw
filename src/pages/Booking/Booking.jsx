@@ -13,6 +13,7 @@ import BookingCalendar from "../../components/BookingCalendar";
 import { getListingById, createBooking } from "../../services/api";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
@@ -35,6 +36,7 @@ const s = {
 // Tarjeta chica con la foto y datos del auto que se está por reservar.
 function CarSummaryCard({ car, mobile }) {
   const { t: tr } = useI18n();
+  const { precio } = useCurrency();
   return (
     <div style={s.carCard}>
       <div style={mobile ? s.carImgMobile : s.carImg}>
@@ -45,7 +47,7 @@ function CarSummaryCard({ car, mobile }) {
       <div style={s.carBody}>
         <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
         <div style={s.carMeta}>{car.location}</div>
-        <div style={s.carPrice}>${Number(car.price_per_day).toLocaleString()}{tr("common.perDay")}</div>
+        <div style={s.carPrice}>{precio(car.price_per_day)}{tr("common.perDay")}</div>
       </div>
     </div>
   );

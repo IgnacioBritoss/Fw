@@ -10,12 +10,16 @@
 // ============================================================================
 import { useEffect, useRef } from "react";
 import { useI18n } from "../i18n/core";
+import { useCurrency } from "../context/CurrencyContext";
 
 export default function MapView({ cars, onCarClick, height = "500px" }) {
   // El globo del pin se arma con HTML a mano (Leaflet no es de React), así que la
   // traducción se resuelve acá y se interpola.
   const { t: tr } = useI18n();
   const perDayLabel = tr("common.perDay");
+  // El precio, en la moneda elegida. Como el globo se arma con texto,
+  // se resuelve acá y se interpola ya escrito.
+  const { precio } = useCurrency();
   const mapRef = useRef(null);       // el <div> donde se dibuja el mapa
   const instanceRef = useRef(null);  // la instancia de Leaflet ya creada
 
@@ -77,7 +81,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
           box-shadow: 0 2px 8px rgba(0,0,0,.25);
           border: 2px solid #fff;
           cursor: pointer;
-        ">$${Number(car.price_per_day).toLocaleString()}</div>`,
+        ">${precio(car.price_per_day)}</div>`,
         iconAnchor: [30, 16],
       });
 
@@ -105,7 +109,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
             ${car.location}
           </div>
           <div style="font-weight:700;font-size:16px;color:#0b55c0">
-            $${Number(car.price_per_day).toLocaleString()}<span style="font-weight:400;font-size:12px;color:#6b7280">${perDayLabel}</span>
+            ${precio(car.price_per_day)}<span style="font-weight:400;font-size:12px;color:#6b7280">${perDayLabel}</span>
           </div>
           ${car.rating ? `<div style="font-size:12px;color:#f59e0b;margin-top:4px">★ ${car.rating}</div>` : ""}
         </div>
@@ -114,7 +118,9 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       marker.bindPopup(popup);
       marker.addTo(map);
     });
-  }, [cars, perDayLabel]);
+    // `precio` cambia al elegir otra moneda: los pines llevan el precio
+    // escrito adentro, así que hay que volver a dibujarlos.
+  }, [cars, perDayLabel, precio]);
 
   // 3) El popup del mapa es HTML "plano" (no React), así que exponemos una
   //    función global window.fwOpenCar para que su onclick pueda avisar a React.

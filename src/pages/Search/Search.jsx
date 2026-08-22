@@ -29,6 +29,7 @@ import Select from "../../components/Select";
 import { firstBookableInput } from "../../services/dates";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
+import { useCurrency } from "../../context/CurrencyContext";
 
 // Los filtros guardan el CÓDIGO del backend, no el texto que se ve. Antes el
 // estado era la palabra en castellano ("Automático") y se buscaba el código en
@@ -109,6 +110,7 @@ function Dropdown({ label, value, options, onChange, active, celda }) {
 
 export default function Search() {
   const { t: tr } = useI18n();
+  const { precio } = useCurrency();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const [urlParams, setUrlParams] = useSearchParams();
@@ -374,7 +376,7 @@ export default function Search() {
               ? { flexDirection: "column", alignItems: "stretch" }
               : { justifyContent: "space-between", alignItems: "flex-end" }),
           }}>
-            <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+            <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
             <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
               onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")}</button>
           </div>
@@ -575,7 +577,7 @@ export default function Search() {
                     </div>
                     <div style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 8px" }}>{selectedCar.location}{selectedCar.rating > 0 ? ` · ${selectedCar.rating} ★` : ""}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(selectedCar).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+                      <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{precio(priceOf(selectedCar))}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
                       <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>{tr("search.viewDetail")}</button>
                     </div>
                   </div>
