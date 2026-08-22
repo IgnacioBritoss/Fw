@@ -18,6 +18,7 @@
 //   · El corazón de favoritos no se podía tocar: el clic abría la publicación.
 // ============================================================================
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useListings } from "../../hooks/useListings";
@@ -29,6 +30,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { addMonths, format } from "date-fns";
 import AutocompleteInput from "../../components/AutocompleteInput";
 import { AUTOS, ZONAS } from "../../data/sugerencias";
+import { agruparPorPantalla, centroDe, htmlDelMonton } from "../../services/mapaClusters";
+import MapCarPopup from "../../components/MapCarPopup";
+import { useCurrency } from "../../context/CurrencyContext";
 import { localeFor } from "../../i18n/dates";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
@@ -55,6 +59,7 @@ const LupaIcon = ({ size = 20 }) => (
 
 export default function Home() {
   const { t: tr, lang } = useI18n();
+  const { precio } = useCurrency();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
 
@@ -76,16 +81,52 @@ export default function Home() {
   // ¿Está abierto el calendario? Una sola vez para los dos campos de fecha,
   // porque es un solo calendario con el rango entero, como el de Airbnb.
   const [calendario, setCalendario] = useState(false);
+  /*
+    EN COMPUTADORA LA LISTA Y EL MAPA VAN LOS DOS A LA VEZ.
+
+    Antes eran excluyentes: se elegía uno y el otro desaparecía. Buscar un auto
+    es justamente cruzar las dos cosas —"este me gusta, ¿dónde queda?"— y con el
+    botón había que ir y volver perdiendo el lugar cada vez. Y al volver a la
+    lista quedaba el hueco gris de donde había estado el mapa.
+
+    `foco` es sobre cuál está el mouse: el de abajo del cursor se agranda y el
+    otro se achica, sin llegar a desaparecer. Así se tiene un mapa grande cuando
+    se está mirando el mapa y una lista cómoda cuando se está mirando la lista,
+    sin apretar nada.
+
+    En el teléfono no: dos columnas en 390px no son dos columnas. Ahí sigue el
+    botón de siempre y `view` manda.
+  */
+  const [foco, setFoco] = useState(null);
   const [cat, setCat] = useState("");            // "" = todas las categorías
   const [pickup, setPickup] = useState("");      // fecha de retiro (YYYY-MM-DD)
   const [dropoff, setDropoff] = useState("");    // fecha de devolución
   const [view, setView] = useState("lista");
-  const [dateError, setDateError] = useState("");
 
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
-  const [mapLoaded, setMapLoaded] = useState(false);
+  // Si la librería ya está cargada al montar, se arranca con eso puesto en vez
+  // de montar primero en falso y corregirlo con un efecto.
+  const [mapLoaded, setMapLoaded] = useState(() => typeof window !== "undefined" && !!window.L);
+
+  /*
+    EL GLOBO DEL PIN, DIBUJADO POR REACT.
+
+    Leaflet pone el globo donde va y lo mantiene pegado al punto cuando se
+    arrastra el mapa; el contenido lo dibuja React adentro de este div suelto,
+    con un portal. El portal es lo que hace posible el corazón de favoritos y el
+    pasador de fotos: al seguir colgando del árbol de React, la tarjeta hereda la
+    sesión, los favoritos y el idioma. Con una cadena de HTML, como estaba antes,
+    nada de eso existe.
+
+    Un solo div para todos los pines: hay un solo globo abierto por vez.
+  */
+  const [pinAbierto, setPinAbierto] = useState(null);
+  // El globo que está abierto ahora mismo. Ver la nota de `popupclose`.
+  const globoRef = useRef(null);
+  const [nodoGlobo] = useState(() =>
+    (typeof document === "undefined" ? null : document.createElement("div")));
 
   /**
    * Filtros que se envían al backend: SOLO las fechas, porque son las únicas que
@@ -118,20 +159,36 @@ export default function Home() {
     [cars, search, cat],
   );
 
-  // Avisa si el rango de fechas está al revés o incompleto.
-  useEffect(() => {
-    if (pickup && dropoff && new Date(dropoff) < new Date(pickup)) {
-      setDateError(tr("home.dateBackwards"));
-    } else if ((pickup && !dropoff) || (!pickup && dropoff)) {
-      setDateError(tr("home.dateIncomplete"));
-    } else {
-      setDateError("");
-    }
+  /*
+    El auto del globo, pero SOLO si sigue en la lista.
+
+    Cambiar un filtro puede dejar afuera justo el auto que estaba abierto: el pin
+    desaparece y el globo quedaría flotando sobre un punto que ya no existe. Se
+    resuelve mirando la lista en el momento de dibujar, y no con un efecto que
+    corrija el estado después: así no hay ningún render intermedio con el globo
+    huérfano en pantalla.
+  */
+  const pinVisible = pinAbierto && filtered.some((c) => c.id === pinAbierto.id)
+    ? pinAbierto
+    : null;
+
+  /*
+    El aviso de las fechas se CALCULA a partir de las fechas, no se guarda aparte.
+
+    Antes era un estado que un efecto mantenía al día. Un estado que solo copia
+    lo que ya está en otros dos siempre puede quedar desfasado un render —el
+    aviso viejo con las fechas nuevas— y encima obliga a dibujar de nuevo la
+    pantalla para nada.
+  */
+  const dateError = useMemo(() => {
+    if (pickup && dropoff && new Date(dropoff) < new Date(pickup)) return tr("home.dateBackwards");
+    if ((pickup && !dropoff) || (!pickup && dropoff)) return tr("home.dateIncomplete");
+    return "";
   }, [pickup, dropoff, tr]);
 
   // Carga la librería del mapa (Leaflet) una sola vez.
   useEffect(() => {
-    if (window.L) { setMapLoaded(true); return; }
+    if (window.L) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
@@ -142,14 +199,17 @@ export default function Home() {
     document.head.appendChild(script);
   }, []);
 
-  // Si el usuario vuelve a la vista de Lista, destruye el mapa para liberar memoria.
+  /** ¿Hay mapa en pantalla? En computadora siempre; en el teléfono, si lo eligió. */
+  const hayMapa = !isMobile || view === "mapa";
+
+  // En el teléfono, al volver a la lista se destruye el mapa para liberar memoria.
   useEffect(() => {
-    if (view === "lista" && mapInstanceRef.current) {
+    if (!hayMapa && mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
       markersRef.current = {};
     }
-  }, [view]);
+  }, [hayMapa]);
 
   // Dibuja en el mapa un pin + un círculo de "zona aproximada" por cada auto
   // filtrado, con un popup que lleva al detalle. Borra los pines anteriores.
@@ -163,7 +223,33 @@ export default function Home() {
     });
     markersRef.current = {};
 
-    filtered.forEach(car => {
+    /*
+      LOS QUE QUEDAN ENCIMA SE MUESTRAN COMO UNO.
+
+      Alejando el mapa, varios autos del mismo barrio se pisan y no se puede
+      tocar ninguno. Se agrupan por la distancia EN PANTALLA con el zoom actual
+      —no en kilómetros: dos autos a 500m están encima a zoom de ciudad y
+      separados a zoom de barrio— y cada montón se dibuja con el número adentro.
+      Al acercarse se vuelven a separar solos.
+    */
+    const grupos = agruparPorPantalla(map, filtered);
+
+    grupos.filter((g) => g.length > 1).forEach((grupo) => {
+      const centro = centroDe(grupo);
+      const icono = L.divIcon({
+        className: "", html: htmlDelMonton(grupo.length), iconAnchor: [26, 26],
+      });
+      const monton = L.marker(centro, { icon: icono });
+      // Tocarlo acerca hasta que el montón se abre. `fitBounds` con los puntos
+      // del grupo deja el zoom justo donde dejan de pisarse.
+      monton.on("click", () => {
+        map.fitBounds(grupo.map((c) => [c.lat, c.lng]), { padding: [60, 60], maxZoom: 17 });
+      });
+      monton.addTo(map);
+      markersRef.current[`monton-${centro.join(",")}`] = { marker: monton };
+    });
+
+    grupos.filter((g) => g.length === 1).map((g) => g[0]).forEach(car => {
       if (!car.lat || !car.lng) return;
       const icon = L.divIcon({
         className: "",
@@ -175,51 +261,128 @@ export default function Home() {
         fillOpacity: 0.18, weight: 1.5, interactive: false,
       }).addTo(map);
       const marker = L.marker([car.lat, car.lng], { icon });
-      marker.bindPopup(L.popup({ closeButton: false, maxWidth: 220 }).setContent(`
-        <div style="cursor:pointer;font-family:sans-serif" onclick="window.__fwOpen('${car.id}')">
-          <div style="width:100%;height:120px;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#e5e7eb;">
-            ${car.photos?.length > 0
-              ? `<img src="${car.photos[0]}" style="width:100%;height:100%;object-fit:cover"/>`
-              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#9ca3af">—</div>`}
-          </div>
-          <div style="font-weight:600;font-size:14px;margin-bottom:2px;color:#111827">${car.brand} ${car.model} ${car.year}</div>
-          <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${car.location} <span style="color:#9ca3af;font-size:10px">(zona aprox.)</span></div>
-          <div style="font-weight:700;font-size:15px;color:#0f6ce6">
-            $${priceOf(car).toLocaleString()}
-            <span style="font-weight:400;font-size:12px;color:#6b7280">${tr("common.perDay")}</span>
-          </div>
-          <div style="margin-top:8px;padding:7px;background:#0f6ce6;color:#fff;border-radius:8px;text-align:center;font-size:12px;font-weight:600;">${tr("car.bookNow")}</div>
-        </div>
-      `));
+      // El globo NO se abre solo con bindPopup: primero se avisa cuál es el auto
+      // para que React dibuje la tarjeta, y recién después se abre. Al revés,
+      // Leaflet mediría un globo todavía vacío y le saldría del tamaño
+      // equivocado.
+      marker.on("click", () => setPinAbierto(car));
       marker.addTo(map);
       markersRef.current[car.id] = { marker, circle };
     });
-    window.__fwOpen = (id) => navigate(`/cars/${id}`);
-  }, [filtered, navigate, tr]);
+  }, [filtered]);
 
-  // Cuando se activa la vista de Mapa, crea el mapa y coloca los marcadores.
+  /*
+    El dibujante SIEMPRE al día.
+
+    `addMarkers` se rehace cada vez que cambia la lista filtrada, pero el oyente
+    de `zoomend` se registra una sola vez, al crear el mapa: se quedaría con la
+    versión de ese momento. Después de cambiar un filtro, mover el zoom traería
+    de vuelta los autos viejos. Guardando la última versión en una referencia, el
+    oyente siempre llama a la de ahora.
+  */
+  const dibujarRef = useRef(addMarkers);
+  useEffect(() => { dibujarRef.current = addMarkers; }, [addMarkers]);
+
+  /*
+    CREAR EL MAPA: hay que esperar DOS cosas, no una.
+
+    Hacen falta la librería y el div donde va el mapa, y ninguna de las dos está
+    lista al montar: la librería baja de internet, y el div todavía no existe
+    porque mientras carga la lista en su lugar está el cartel de "cargando".
+
+    Antes se probaba una sola vez, 150ms después de tener la librería. Si en ese
+    momento el div no estaba —que es lo normal cuando el backend tarda un poco
+    más que eso— el mapa no se creaba nunca, y como el efecto que dibuja los
+    pines ya había pasado con la lista todavía vacía, el mapa terminaba en
+    blanco: sin un solo punto, y sin nada que lo volviera a intentar.
+
+    Ahora se reintenta hasta que las dos estén, y apenas el mapa queda hecho se
+    dibujan los pines con la lista de ESE momento —por eso `dibujarRef` y no
+    `addMarkers` directo, que sería la versión vieja.
+  */
   useEffect(() => {
-    if (view !== "mapa") return;
-    const init = () => {
-      if (!mapRef.current || mapInstanceRef.current) return;
+    if (!hayMapa) return;
+    const intentar = () => {
+      if (mapInstanceRef.current) return true;
       const L = window.L;
-      if (!L) return;
+      if (!L || !mapRef.current) return false;
       // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
       const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: isMobile ? 11 : 12, scrollWheelZoom: false });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
       mapInstanceRef.current = map;
-      addMarkers(map, L);
-    };
-    if (window.L) { const t = setTimeout(init, 150); return () => clearTimeout(t); }
-    const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 150); } }, 100);
-    return () => clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, mapLoaded, isMobile]);
+      /*
+        Al cambiar el zoom hay que volver a agrupar: lo que estaba junto se
+        separa y al revés. `zoomend` y no `zoom`, que se dispara en cada cuadro
+        de la animación y redibujaría los pines cincuenta veces por gesto.
+      */
+      map.on("zoomend", () => dibujarRef.current(map, L));
+      /*
+        Al cerrar el globo hay que soltar el auto elegido, o al volver a tocar el
+        MISMO pin el estado no cambiaría y no se abriría de nuevo.
 
+        Pero SOLO si el que se cerró es el que está abierto. Abrir un globo
+        cierra el anterior, y ese cierre también avisa por acá: sin la
+        comparación, tocar un segundo pin abriría su globo y el aviso de cierre
+        del primero lo apagaría en el acto.
+      */
+      map.on("popupclose", (e) => {
+        if (e?.popup && e.popup !== globoRef.current) return;
+        globoRef.current = null;
+        setPinAbierto(null);
+      });
+      dibujarRef.current(map, L);
+      return true;
+    };
+    if (intentar()) return;
+    const iv = setInterval(() => { if (intentar()) clearInterval(iv); }, 100);
+    return () => clearInterval(iv);
+  }, [hayMapa, mapLoaded, isMobile, loading]);
+
+  // Y de nuevo cada vez que cambia la lista filtrada.
   useEffect(() => {
-    if (view !== "mapa" || !mapInstanceRef.current || !window.L) return;
+    if (!hayMapa || !mapInstanceRef.current || !window.L) return;
     addMarkers(mapInstanceRef.current, window.L);
-  }, [filtered, addMarkers, view]);
+  }, [filtered, addMarkers, hayMapa]);
+
+  /*
+    Abre el globo con la tarjeta YA dibujada.
+
+    Este efecto corre después del render, así que cuando Leaflet mide el globo
+    para acomodarlo, adentro del div ya está la foto, el corazón y el precio. Si
+    se abriera en el mismo clic —que es lo que hace `bindPopup`— mediría un div
+    vacío y el globo quedaría chico y mal ubicado.
+  */
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !window.L || !nodoGlobo) return;
+    if (!pinVisible) { map.closePopup(); return; }
+    // Se anota cuál es el nuestro ANTES de abrirlo: abrirlo cierra el anterior y
+    // dispara su aviso de cierre, que con la referencia ya cambiada se ignora.
+    const globo = window.L.popup({ closeButton: true, maxWidth: 240, minWidth: 208, autoPan: true })
+      .setLatLng([pinVisible.lat, pinVisible.lng])
+      .setContent(nodoGlobo);
+    globoRef.current = globo;
+    globo.openOn(map);
+  }, [pinVisible, nodoGlobo]);
+
+
+  /*
+    AL CAMBIAR EL ANCHO DE LA COLUMNA HAY QUE AVISARLE AL MAPA.
+
+    Leaflet calcula qué pedazos del mapa (tiles) bajar según el tamaño que tenía
+    el contenedor cuando se creó. Si el contenedor cambia de ancho y nadie le
+    avisa, la parte nueva queda SIN PEDAZOS: gris. Es exactamente el gris que se
+    veía al ir y volver entre lista y mapa.
+
+    `invalidateSize` es el aviso. Se llama después de que termina la animación de
+    las columnas —350ms—, porque durante la transición el ancho todavía se está
+    moviendo y medirlo antes da un número que ya no vale.
+  */
+  useEffect(() => {
+    if (!hayMapa || !mapInstanceRef.current) return;
+    const t = setTimeout(() => mapInstanceRef.current?.invalidateSize(), 380);
+    return () => clearTimeout(t);
+  }, [foco, hayMapa]);
 
   /**
    * Precio más barato de cada categoría, calculado con los autos que hay. Es lo
@@ -431,15 +594,22 @@ export default function Home() {
           </div>
         )}
         <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>${priceOf(car).toLocaleString()}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
           <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("home.book")}</button>
         </div>
       </div>
     </div>
   );
 
-  // Grilla de categorías: cada tarjeta filtra por ese tipo de auto al clickearla.
-  const CategoriesSection = () => (
+  /*
+    Las dos secciones de abajo son PEDAZOS DE JSX, no componentes.
+
+    Estaban escritas como componentes definidos adentro de Home, y eso significa
+    que en cada dibujado React ve un tipo de componente nuevo: desmonta el
+    anterior y monta uno de cero. Guardadas como JSX se dibujan igual, pero sin
+    ese desmontar y montar por cada tecla que se escribe en el buscador.
+  */
+  const seccionCategorias = (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 16 }}>{tr("home.categories")}</div>
       {/* Cuatro columnas y no seis: son ocho categorías, así quedan dos filas
@@ -468,7 +638,7 @@ export default function Home() {
               <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
               <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#0f6ce6" : "#9ca3af", marginTop: 4 }}>
-                {min ? tr("home.from", { price: `$${min.toLocaleString()}` }) : count > 0 ? `${count}` : tr("home.noneYet")}
+                {min ? tr("home.from", { price: precio(min) }) : count > 0 ? `${count}` : tr("home.noneYet")}
               </div>
             </div>
           );
@@ -477,7 +647,7 @@ export default function Home() {
     </>
   );
 
-  const StepsSection = () => (
+  const seccionPasos = (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>
       <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
@@ -671,7 +841,7 @@ export default function Home() {
         <div style={{ ...t.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
       )}
 
-      <CategoriesSection />
+      {seccionCategorias}
 
       {/* Encabezado de la grilla */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
@@ -691,7 +861,9 @@ export default function Home() {
               {tr("search.clearFilters")}
             </button>
           )}
-          {[["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
+          {/* Sólo en el teléfono: en computadora están los dos a la vez y elegir
+              uno no significa nada. */}
+          {isMobile && [["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
             <button key={k} onClick={() => setView(k)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
               border: view === k ? "2px solid #0f6ce6" : "1.5px solid #e5e7eb",
@@ -704,26 +876,83 @@ export default function Home() {
       {/* Resultados */}
       {loading ? (
         <Spinner block label={tr("common.loading")} />
-      ) : view === "lista" ? (
-        // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba en 170px:
-        // el nombre del auto se partía en dos renglones y el precio con el botón
-        // "Reservar" no entraban en la misma fila, así que el botón aparecía
-        // cortado contra el borde de la tarjeta.
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(250px,1fr))", gap: isMobile ? 12 : 16 }}>
-          {filtered.map(car => <CarCard key={car.id} car={car} />)}
-          {filtered.length === 0 && (
-            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
-              {tr("home.noResults")}
-              {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>{tr("home.tryOther")}</div>}
+      ) : (
+        /*
+          LOS DOS A LA VEZ, y el de abajo del mouse se agranda.
+
+          Las proporciones: en reposo mitad y mitad, y con el mouse encima el que
+          se mira pasa a 1.7 contra 1. No se lleva todo el ancho a propósito: el
+          otro tiene que seguir a la vista, si no volvería a ser el botón de
+          antes con una animación.
+
+          La transición va sobre `grid-template-columns`, que los navegadores
+          animan. Cuando termina hay que avisarle al mapa que cambió de tamaño
+          (ver `invalidateSize` más arriba), o la parte nueva queda gris.
+        */
+        <div
+          // Marca para poder encontrarlo desde las pruebas sin depender de los
+          // estilos, que cambian.
+          data-fw-split
+          style={{
+            display: isMobile ? "block" : "grid",
+            gridTemplateColumns: foco === "lista" ? "1.7fr 1fr"
+              : foco === "mapa" ? "1fr 1.7fr" : "1fr 1fr",
+            transition: "grid-template-columns .35s cubic-bezier(.4,0,.2,1)",
+            gap: 16, alignItems: "start",
+          }}
+        >
+          {/* La lista. En el teléfono se muestra solo si está elegida. */}
+          {(!isMobile || view === "lista") && (
+            <div
+              onMouseEnter={() => !isMobile && setFoco("lista")}
+              onMouseLeave={() => !isMobile && setFoco(null)}
+              style={{
+                display: "grid",
+                // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba
+                // en 170px: el nombre se partía en dos renglones y el precio con
+                // el botón no entraban en la misma fila.
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(230px,1fr))",
+                gap: isMobile ? 12 : 16,
+                ...(isMobile ? {} : { maxHeight: "calc(100vh - 240px)", overflowY: "auto", paddingRight: 4 }),
+              }}
+            >
+              {filtered.map(car => <CarCard key={car.id} car={car} />)}
+              {filtered.length === 0 && (
+                <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
+                  {tr("home.noResults")}
+                  {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>{tr("home.tryOther")}</div>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* El mapa. */}
+          {hayMapa && (
+            <div
+              onMouseEnter={() => !isMobile && setFoco("mapa")}
+              onMouseLeave={() => !isMobile && setFoco(null)}
+              style={{ position: isMobile ? "static" : "sticky", top: 90 }}
+            >
+              <div ref={mapRef} style={{
+                height: isMobile ? "60vh" : "calc(100vh - 240px)",
+                borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid #e5e7eb",
+              }} />
+              {/* La tarjeta del globo: vive en el árbol de React aunque se vea
+                  adentro del mapa. */}
+              {nodoGlobo && pinVisible
+                && createPortal(
+                  // `key`: al tocar otro pin el componente se rehace, y las fotos
+                  // arrancan de la primera sin ningún efecto de por medio.
+                  <MapCarPopup key={pinVisible.id} car={pinVisible} precio={precio} />,
+                  nodoGlobo,
+                )}
             </div>
           )}
         </div>
-      ) : (
-        <div ref={mapRef} style={{ height: isMobile ? "60vh" : "calc(100vh - 240px)", borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid #e5e7eb" }} />
       )}
 
       <div style={{ height: 28 }} />
-      <StepsSection />
+      {seccionPasos}
 
       {/*
         Abajo de todo, la propaganda que lleva a la presentación del proyecto.
