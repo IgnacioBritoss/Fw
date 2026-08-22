@@ -69,13 +69,13 @@ export default function LangPicker({ tono = "claro", style }) {
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
-        aria-label={`${tr("settings.language")}: ${actual.label}`}
-        title={tr("settings.language")}
+        aria-label={`${tr("common.language")}: ${actual.label}`}
+        title={tr("common.language")}
         style={{
           display: "flex", alignItems: "center", gap: 6,
           padding: "7px 10px", borderRadius: 9,
           border: `1px solid ${borde}`,
-          background: oscuro ? "rgba(255,255,255,.08)" : "#fff",
+          background: oscuro ? "rgba(255,255,255,.08)" : "var(--fw-surface)",
           color: colorTexto, cursor: "pointer",
           fontSize: 12.5, fontWeight: 700, letterSpacing: ".03em",
         }}
@@ -87,7 +87,7 @@ export default function LangPicker({ tono = "claro", style }) {
       {abierto && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 30,
-          background: "#fff", border: "1px solid #ececec", borderRadius: 12,
+          background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 12,
           boxShadow: "0 8px 28px rgba(0,0,0,.12)", padding: 5, minWidth: 168,
         }}>
           {LANGUAGES.map((l) => {
@@ -101,15 +101,15 @@ export default function LangPicker({ tono = "claro", style }) {
                 style={{
                   display: "flex", alignItems: "center", gap: 10, width: "100%",
                   padding: "9px 10px", borderRadius: 8, border: "none",
-                  background: elegido ? "#eff6ff" : "transparent",
-                  color: elegido ? "#0f6ce6" : "#374151",
+                  background: elegido ? "var(--fw-blue-bg)" : "transparent",
+                  color: elegido ? "var(--fw-blue)" : "var(--fw-text-2)",
                   fontSize: 13.5, fontWeight: elegido ? 700 : 500,
                   cursor: "pointer", textAlign: "left",
                 }}
               >
                 <span style={{
                   fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
-                  color: elegido ? "#0f6ce6" : "#9ca3af", width: 20, flexShrink: 0,
+                  color: elegido ? "var(--fw-blue)" : "var(--fw-text-4)", width: 20, flexShrink: 0,
                 }}>
                   {l.flagless}
                 </span>

@@ -23,31 +23,38 @@ const PESOS_POR_UNIDAD = {
   ARS: 1,
   USD: 1470,
   EUR: 1600,
+  GBP: 1870,
   BRL: 270,
   CLP: 1.55,
   UYU: 37,
   PYG: 0.2,
-  GBP: 1870,
+  BOB: 213,
 };
 
 /**
  * Las monedas que se ofrecen, en el orden en que aparecen.
  *
- * Primero el peso, que es la moneda real de la operación. Después el dólar y el
- * euro, que son las dos referencias que entiende cualquiera. Y al final las de
- * los países de donde más gente puede venir a alquilar un auto acá.
+ * Son las que alguien podría de verdad estar mirando desde el otro lado, y
+ * ninguna más: una lista de cincuenta monedas obliga a buscar la propia entre
+ * cuarenta y nueve que no le sirven a nadie.
+ *
+ *  · El peso primero, que es la moneda real de la operación.
+ *  · Dólar, euro y libra: las tres referencias que entiende cualquiera.
+ *  · Y las de los países que hacen frontera con Argentina, que es de donde
+ *    llega la mayor parte de quien cruza y alquila un auto acá.
  */
 export const MONEDAS = [
   { code: "ARS", simbolo: "$", locale: "es-AR" },
   { code: "USD", simbolo: "US$", locale: "en-US" },
   { code: "EUR", simbolo: "€", locale: "de-DE" },
+  { code: "GBP", simbolo: "£", locale: "en-GB" },
   { code: "BRL", simbolo: "R$", locale: "pt-BR" },
-  // El peso chileno usa el mismo signo que el argentino: acá lleva el código
-  // adelante, o "$26.000" no diría nada.
+  // El peso chileno y el uruguayo usan el mismo signo que el argentino: acá
+  // llevan algo adelante, o "$26.000" no diría de cuál se trata.
   { code: "CLP", simbolo: "CLP$", locale: "es-CL" },
   { code: "UYU", simbolo: "$U", locale: "es-UY" },
   { code: "PYG", simbolo: "₲", locale: "es-PY" },
-  { code: "GBP", simbolo: "£", locale: "en-GB" },
+  { code: "BOB", simbolo: "Bs", locale: "es-BO" },
 ];
 
 export const MONEDA_POR_DEFECTO = "ARS";
