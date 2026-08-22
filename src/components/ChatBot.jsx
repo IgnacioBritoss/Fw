@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useAsistente } from "../context/AssistantContext";
+import { useAuth } from "../context/AuthContext";
 import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import { useI18n } from "../i18n/core";
 
@@ -100,7 +101,10 @@ const SIN_ASISTENTE = new Set([
 
 export default function ChatBot() {
   const { pathname } = useLocation();
-  if (SIN_ASISTENTE.has(pathname)) return null;
+  const { user } = useAuth();
+  // Sin sesión iniciada no hay botón que lo abra —ver Layout—, así que tampoco
+  // hace falta tenerlo montado esperando.
+  if (!user || SIN_ASISTENTE.has(pathname)) return null;
   return <Asistente />;
 }
 

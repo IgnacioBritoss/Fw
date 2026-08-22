@@ -377,6 +377,7 @@ export default function Layout({ children }) {
 
   // Contenido del menú lateral: logo, links de navegación, tarjeta "Publicar",
   // botón de admin (si corresponde) y bloque de perfil con botón de salir.
+  let turno = 0;
   const sidebarInner = () => (
     <>
       {isMobile ? (
@@ -423,6 +424,13 @@ export default function Layout({ children }) {
         ...(isMobile ? {} : { borderRight: "1px solid var(--fw-line)" }),
       }}>
       <div style={{ flex: 1, overflowY: "auto", paddingTop: isMobile ? 8 : 0 }}>
+        {/*
+          El desfase de la animación: cada nombre entra un poco después que el
+          anterior. `turno` cuenta los renglones que ya se dibujaron, títulos de
+          grupo incluidos, así el escalonado no se corta al pasar de un grupo al
+          otro.
+        */}
+        {(() => { turno = 0; return null; })()}
         {NAV.map((g, gi) => (
           <div key={gi}>
             {/* Angosta y en el primer grupo no va NADA arriba del primer ítem:
@@ -431,14 +439,21 @@ export default function Layout({ children }) {
                 parejos. Un espacio de diez píxeles los desalineaba. */}
             {angosta
               ? (gi > 0 ? <div style={t.navSeparador} /> : null)
-              : <div style={t.navGroup}>{tr(g.group)}</div>}
+              : <div className="fw-menu-texto" style={{ ...t.navGroup, animationDelay: `${(turno++) * 40}ms` }}>
+                  {tr(g.group)}
+                </div>}
             {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
               // `title`: angosta el nombre no está escrito, así que el globito
               // del navegador es lo único que dice a dónde lleva cada dibujo.
               <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}
                 title={angosta ? tr(it.label) : undefined}>
                 <span style={t.navIcon(isActive(it))}><it.Icon /></span>
-                {!angosta && <span style={{ flex: 1 }}>{tr(it.label)}</span>}
+                {!angosta && (
+                  <span className="fw-menu-texto"
+                    style={{ flex: 1, animationDelay: `${(turno++) * 40}ms` }}>
+                    {tr(it.label)}
+                  </span>
+                )}
                 {/* Cantidad de favoritos guardados, al lado del ítem. */}
                 {!angosta && it.path === "/favoritos" && favoritesCount > 0 && (
                   <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "var(--fw-blue-bg)", color: isActive(it) ? "#fff" : "var(--fw-blue)" }}>
@@ -510,13 +525,16 @@ export default function Layout({ children }) {
         Acá es un botón más de la franja, en el lugar donde ya se buscan las
         herramientas de la app. Abre y cierra la misma ventana de siempre.
 
-        Va también sin sesión iniciada: preguntar cómo funciona esto es
-        justamente lo que hace alguien que todavía no se registró.
+        Solo con la sesión iniciada. Sin cuenta, la franja tiene los botones de
+        entrar y crear cuenta, que es lo único que hay para hacer ahí: meter un
+        tercer botón al lado desdibuja esos dos, que son los que importan.
       */}
-      <TopButton style={t.iconBtn} onClick={alternarAsistente}
-        title={tr(asistenteAbierto ? "chat.closeAssistant" : "chat.openAssistant")}>
-        <RobotIcon color={asistenteAbierto ? "var(--fw-blue)" : undefined} />
-      </TopButton>
+      {user && (
+        <TopButton style={t.iconBtn} onClick={alternarAsistente}
+          title={tr(asistenteAbierto ? "chat.closeAssistant" : "chat.openAssistant")}>
+          <RobotIcon color={asistenteAbierto ? "var(--fw-blue)" : undefined} />
+        </TopButton>
+      )}
       {!user && (
         /*
           Sin cuenta: entrar y crear cuenta, con la MISMA forma que los botones
@@ -645,6 +663,22 @@ export default function Layout({ children }) {
           {isMobile && (
             <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
               <BrandLogo size={user ? 14 : 17} wordmark={Boolean(user)} />
+            </div>
+          )}
+          {/*
+            LA MARCA NO DESAPARECE NUNCA.
+
+            Con la barra lateral cerrada, "Freewheel" y el auto se iban con
+            ella: quedaba una pantalla sin marca por ningún lado. Acá vuelven,
+            en el hueco que la franja tiene libre justo a la izquierda.
+
+            Y solo con la barra cerrada, porque abierta ya está en su
+            encabezado: dibujarla en los dos lados sería la misma marca dos
+            veces, una al lado de la otra.
+          */}
+          {angosta && (
+            <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
+              <BrandLogo size={17} />
             </div>
           )}
           <div style={{ flex: 1 }} />
