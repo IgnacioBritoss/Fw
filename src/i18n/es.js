@@ -372,9 +372,9 @@ export default {
   "search.viewOnMap": "Ver en el mapa",
 
   // ── Asistente ────────────────────────────────────────────────────────────
-  "chat.title": "Asistente Freewheel",
+  "chat.title": "Wili, el asistente",
   "chat.online": "En línea",
-  "chat.greeting": "Hola, soy el asistente de Freewheel. Puedo ayudarte con dudas sobre seguridad, pagos, cómo publicar tu auto, cancelaciones y más. ¿En qué puedo ayudarte?",
+  "chat.greeting": "Hola, soy Wili, el asistente. Puedo ayudarte con dudas sobre seguridad, pagos, cómo publicar tu auto, cancelaciones y más. ¿En qué puedo ayudarte?",
   "chat.placeholder": "Escribí tu pregunta...",
   "chat.send": "Enviar",
 
@@ -729,9 +729,8 @@ export default {
   "chat.uploadFailed": "Error al subir el archivo",
   "chat.rateLimit": "Estás enviando muchos mensajes muy rápido. Esperá un momento antes de seguir.",
   "chat.connectError": "Hubo un problema al conectarme. Intentá de nuevo en un momento.",
-  "chat.closeAssistant": "Cerrar el asistente",
-  "chat.openAssistant": "Abrir el asistente (se puede arrastrar)",
-  "chat.dragHint": "Tocá para abrir. Sostené y arrastrá para moverlo.",
+  "chat.closeAssistant": "Cerrar a Wili, el asistente",
+  "chat.openAssistant": "Abrir a Wili, el asistente",
   "chat.dragWindow": "Arrastrá de acá para mover el asistente",
   "notif.catBookings": "Reservas",
   "notif.catMessages": "Mensajes",
