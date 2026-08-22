@@ -10,7 +10,8 @@
 //
 //  Prop: children = el contenido de la página que se está mostrando.
 // ============================================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
@@ -203,6 +204,161 @@ const TopButton = ({ style, dotStyle, onClick, title, dot = false, children }) =
     </span>
   </button>
 );
+
+/**
+ * El símbolo de incógnito: el sombrero y los anteojos de siempre.
+ *
+ * Es el dibujo que todo el mundo asocia con "estás sin identificar", así que no
+ * hace falta explicarlo. Va dibujado con los mismos trazos que el resto de los
+ * iconos del menú —no es un emoji— para que no desentone.
+ */
+const IconoIncognito = ({ size = 20, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7.4 10.4 8.7 5.7a1.6 1.6 0 0 1 2-1.1l1.3.4 1.3-.4a1.6 1.6 0 0 1 2 1.1l1.3 4.7" />
+    <path d="M3.5 11.4h17" />
+    <circle cx="7.6" cy="16.4" r="2.9" />
+    <circle cx="16.4" cy="16.4" r="2.9" />
+    <path d="M10.5 16.1c.9-.6 2.1-.6 3 0" />
+  </svg>
+);
+
+/**
+ * PieIncognito — El pie de la barra lateral cuando NO hay sesión iniciada
+ * --------------------------------------------------------------------------
+ *  Con la sesión abierta, abajo de todo está el avatar con el nombre. Sin
+ *  sesión no había nada: la barra terminaba en el aire y ese rincón —donde uno
+ *  ya aprendió que está "quién sos"— quedaba mudo.
+ *
+ *  Ahora está el símbolo de incógnito, que dice exactamente eso: estás mirando
+ *  sin nombre. Y al tocarlo se abre un globo que cuenta qué se está perdiendo y
+ *  ofrece los dos caminos, en vez de mandar a la pantalla de entrar de una: no
+ *  es un botón de login disfrazado, es una explicación con la puerta al lado.
+ *
+ *  EL GLOBO VA POR FUERA DE LA BARRA. La barra lateral recorta lo que se sale
+ *  (`overflow: hidden`, que es lo que hace que la animación de abrir y cerrar se
+ *  vea limpia). Un globo dibujado adentro quedaría cortado justo cuando la barra
+ *  está angosta, que es cuando más falta hace. Por eso se dibuja pegado al
+ *  `body` y se ubica a partir de dónde quedó el botón.
+ */
+const PieIncognito = ({ angosta, tr, onEntrar, onCrearCuenta }) => {
+  const [abierto, setAbierto] = useState(false);
+  const [donde, setDonde] = useState(null);
+  const botonRef = useRef(null);
+
+  const alternar = () => {
+    if (abierto) { setAbierto(false); return; }
+    const r = botonRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setDonde({
+      // A la derecha del botón y alineado con su base: el botón está abajo a la
+      // izquierda de la pantalla, así que para arriba y hacia adentro es el
+      // único lado donde el globo entra entero.
+      izquierda: r.right + 10,
+      abajo: Math.max(12, window.innerHeight - r.bottom - 6),
+    });
+    setAbierto(true);
+  };
+
+  // Escape lo cierra, y también moverse o cambiar el tamaño de la ventana: el
+  // globo está ubicado con las medidas del momento en que se abrió, así que si
+  // el botón se corre, lo que se ve queda flotando en cualquier lado.
+  useEffect(() => {
+    if (!abierto) return;
+    const cerrar = () => setAbierto(false);
+    const tecla = (e) => { if (e.key === "Escape") cerrar(); };
+    window.addEventListener("keydown", tecla);
+    window.addEventListener("resize", cerrar);
+    window.addEventListener("scroll", cerrar, true);
+    return () => {
+      window.removeEventListener("keydown", tecla);
+      window.removeEventListener("resize", cerrar);
+      window.removeEventListener("scroll", cerrar, true);
+    };
+  }, [abierto]);
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      justifyContent: angosta ? "center" : "flex-start",
+      margin: angosta ? "16px 8px 0" : "16px 16px 0",
+      paddingTop: 16, borderTop: "1px solid var(--fw-line-soft)",
+    }}>
+      <button
+        ref={botonRef}
+        type="button"
+        onClick={alternar}
+        aria-expanded={abierto}
+        aria-label={tr("nav.incognito")}
+        title={angosta ? tr("nav.incognito") : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 10,
+          width: angosta ? 36 : "100%", height: 36,
+          justifyContent: angosta ? "center" : "flex-start",
+          padding: angosta ? 0 : "0 6px",
+          background: abierto ? "var(--fw-surface-2)" : "transparent",
+          border: "none", borderRadius: 8, cursor: "pointer",
+          color: "var(--fw-text-3)", textAlign: "left",
+        }}
+      >
+        <IconoIncognito />
+        {!angosta && (
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: "var(--fw-text-2)" }}>
+              {tr("nav.incognito")}
+            </span>
+            <span style={{ display: "block", fontSize: 11, color: "var(--fw-text-4)" }}>
+              {tr("nav.incognitoHint")}
+            </span>
+          </span>
+        )}
+      </button>
+
+      {abierto && donde && createPortal(
+        <>
+          {/* Una capa invisible que ocupa todo: tocar en cualquier lado cierra el
+              globo. Es lo que uno espera de algo que se abrió al tocar. */}
+          <div style={{ position: "fixed", inset: 0, zIndex: 2400 }}
+            onMouseDown={() => setAbierto(false)} />
+          <div
+            role="dialog" aria-label={tr("nav.incognito")}
+            className="fw-aviso"
+            style={{
+              position: "fixed", left: donde.izquierda, bottom: donde.abajo,
+              zIndex: 2401, width: 250, maxWidth: "calc(100vw - 32px)",
+              background: "var(--fw-surface)", color: "var(--fw-text)",
+              border: "1px solid var(--fw-border)", borderRadius: 12,
+              boxShadow: "0 12px 36px rgba(0,0,0,.22)", padding: 14,
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <IconoIncognito size={17} color="var(--fw-text-3)" />
+              <span style={{ fontSize: 13.5, fontWeight: 700 }}>{tr("nav.incognito")}</span>
+            </div>
+            <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 12 }}>
+              {tr("nav.incognitoBody")}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" onClick={onEntrar}
+                style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none",
+                  background: "var(--fw-blue)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                {tr("auth.loginBtn")}
+              </button>
+              <button type="button" onClick={onCrearCuenta}
+                style={{ flex: 1, padding: "9px 0", borderRadius: 8,
+                  border: "1px solid var(--fw-border-2)", background: "transparent",
+                  color: "var(--fw-text-2)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                {tr("auth.registerShort")}
+              </button>
+            </div>
+          </div>
+        </>,
+        document.body,
+      )}
+    </div>
+  );
+};
 
 export default function Layout({ children }) {
   const { t: tr } = useI18n();
@@ -455,6 +611,16 @@ export default function Layout({ children }) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>}
         </div>
+      )}
+
+      {/* Sin sesión, el mismo rincón lo ocupa el incógnito. Ver PieIncognito. */}
+      {!user && (
+        <PieIncognito
+          angosta={angosta}
+          tr={tr}
+          onEntrar={() => go("/login")}
+          onCrearCuenta={() => go("/register")}
+        />
       )}
       </div>
     </>
