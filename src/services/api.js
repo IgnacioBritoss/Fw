@@ -19,6 +19,24 @@ import { tSync, idiomaInicial } from "../i18n/core";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://free-wheel-back.vercel.app";
 
+/**
+ * Dirección del servicio de IA propio (repo freewheel-ia).
+ *
+ * POR QUÉ HAY DOS SERVIDORES. El asistente, el autocompletado de
+ * especificaciones y el precio sugerido dejaron de andar los tres el mismo día,
+ * y para arreglarlo había que esperar a que otra persona desplegara el backend.
+ * El servicio de IA ahora es un proyecto aparte que se despliega solo, así que
+ * probar un modelo, cargar una clave o arreglar algo no depende de nadie.
+ *
+ * La verificación de identidad NO se mudó: el DNI y la licencia siguen yendo al
+ * backend principal, que es el que guarda los documentos y las cuentas.
+ *
+ * Sin VITE_IA_URL cargada, esto queda vacío y todo sigue yendo al backend de
+ * siempre. Así el front nuevo funciona igual antes de que el servicio esté
+ * publicado, y no hay un rato en el que la IA quede sin nadie que la atienda.
+ */
+const IA_URL = (import.meta.env.VITE_IA_URL || "").replace(/\/$/, "");
+
 // URL a la que se redirige al usuario para iniciar sesión con Google (OAuth).
 export const GOOGLE_AUTH_URL = `${BASE_URL}/auth/google`;
 
@@ -48,7 +66,8 @@ const isAuthRoute = (path) => AUTH_ROUTES.some(route => path.startsWith(route));
 // - En cualquier error lanza una excepción con el mensaje del backend, para que
 //   la pantalla que llamó pueda mostrarlo. Nunca devuelve `undefined` en un
 //   error: si lo hiciera, quien la llamó reventaría al leer `data.user`.
-async function apiFetch(path, { timeoutMs, ...options } = {}) {
+async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
+  const servidor = base || BASE_URL;
   const token = getToken();
   const headers = {
     "Content-Type": "application/json",
@@ -65,7 +84,7 @@ async function apiFetch(path, { timeoutMs, ...options } = {}) {
 
   let res;
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
+    res = await fetch(`${servidor}${path}`, {
       ...options,
       headers,
       ...(abortador ? { signal: abortador.signal } : {}),
@@ -98,7 +117,12 @@ async function apiFetch(path, { timeoutMs, ...options } = {}) {
       : payload?.message || `Error ${res.status}`;
 
     // Sesión vencida o token inválido en una ruta que requiere estar logueado.
-    if (res.status === 401 && !isAuthRoute(path)) {
+    //
+    // Solo cuenta si el 401 vino del backend principal, que es el único que
+    // sabe de sesiones. El servicio de IA no maneja cuentas: un 401 suyo sería
+    // por SU clave, y cerrarle la sesión a la persona por eso la echaría de la
+    // app por algo que no tiene nada que ver con ella.
+    if (res.status === 401 && !isAuthRoute(path) && servidor === BASE_URL) {
       localStorage.removeItem("fw_user");
       if (!window.location.pathname.startsWith("/login")) {
         window.location.href = "/login?expired=1";
@@ -459,6 +483,12 @@ export async function retryIdentityReview() {
  * Las pantallas NO deberían llamar a esto directo, sino a checkDocument() de
  * services/groq.js, que además achica la foto (si no, el backend la rechaza por
  * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
+ *
+ * ESTA SE QUEDA EN EL BACKEND PRINCIPAL, a diferencia del chat, la foto del auto
+ * y las notas de voz, que se mudaron al servicio propio. El DNI y la licencia
+ * son datos de identidad: los guarda, los coteja contra lo declarado y los
+ * muestra al administrador el backend que tiene las cuentas. Partir eso en dos
+ * servidores sería mandar documentos a un lugar que no los necesita.
  */
 export async function aiDocument(image, kind) {
   return postConIdioma("/ai/document", { image, kind });
@@ -509,10 +539,11 @@ let backendEntiendeIdioma = true;
 const rechazaElIdioma = (err) =>
   err?.status === 400 && /\blang\b/i.test(String(err?.message ?? ""));
 
-async function postConIdioma(path, payload) {
+async function postConIdioma(path, payload, base) {
   if (backendEntiendeIdioma) {
     try {
       return await apiFetch(path, {
+        base,
         method: "POST",
         body: JSON.stringify({ ...payload, lang: idiomaInicial() }),
       });
@@ -521,23 +552,70 @@ async function postConIdioma(path, payload) {
       backendEntiendeIdioma = false;
     }
   }
-  return apiFetch(path, { method: "POST", body: JSON.stringify(payload) });
+  return apiFetch(path, { base, method: "POST", body: JSON.stringify(payload) });
+}
+
+// ── A QUÉ SERVIDOR LE HABLA CADA COSA ──────────────────────────
+/**
+ * ¿El servicio de IA propio está publicado y contesta?
+ *
+ *   null  → todavía no se probó
+ *   true  → contesta, se usa siempre
+ *   false → no está, se usa el backend de siempre y no se vuelve a intentar
+ *
+ * Existe para que el front nuevo no se rompa mientras el servicio todavía no
+ * está desplegado, y para no pagar el viaje de ida y vuelta en cada llamada una
+ * vez que se sabe que no está. Sin esto, subir esta versión antes de publicar el
+ * servicio dejaría el asistente mudo hasta que las dos partes estuvieran
+ * arriba; con esto, el orden en que se suban no importa.
+ */
+let servicioPropio = IA_URL ? null : false;
+
+/**
+ * ¿Este error significa "el servicio no está ahí" y no "el servicio falló"?
+ *
+ * Solo con estos se pasa al backend viejo. Un 502 o un 503 del servicio propio
+ * son problemas SUYOS —falta la clave, Groq no contesta— y hay que mostrarlos
+ * tal cual: taparlos yendo al otro servidor es esconder justamente lo que hay
+ * que arreglar, y volveríamos a no saber por qué la IA no anda.
+ */
+const noEstaPublicado = (err) =>
+  err?.status === 0 || err?.status === 403 || err?.status === 404 || err?.status === 405;
+
+/** Llama al servicio propio y, si no está, repite contra el backend de siempre. */
+async function conServicioDeIa(llamar) {
+  if (servicioPropio !== false) {
+    try {
+      const data = await llamar(IA_URL);
+      servicioPropio = true;
+      return data;
+    } catch (err) {
+      if (servicioPropio === true || !noEstaPublicado(err)) throw err;
+      servicioPropio = false;
+    }
+  }
+  return llamar(undefined);
 }
 
 // La clave de la IA vive únicamente en el servidor: el navegador le pide al
 // backend y el backend habla con el proveedor. Antes el front llamaba a la API
 // de IA directo con la clave incluida en el bundle, a la vista de cualquiera.
 export async function aiChat(messages, temperature) {
-  return apiFetch("/ai/chat", {
+  return conServicioDeIa((base) => apiFetch("/ai/chat", {
+    base,
     method: "POST",
     body: JSON.stringify({ messages, ...(temperature !== undefined ? { temperature } : {}) }),
-  });
+  }));
 }
 export async function aiVision(imageDataUrl) {
-  return postConIdioma("/ai/vision", { imageDataUrl });
+  return conServicioDeIa((base) => postConIdioma("/ai/vision", { imageDataUrl }, base));
 }
 export async function aiTranscribe(audioUrl) {
-  return apiFetch("/ai/transcribe", { method: "POST", body: JSON.stringify({ audioUrl }) });
+  return conServicioDeIa((base) => apiFetch("/ai/transcribe", {
+    base,
+    method: "POST",
+    body: JSON.stringify({ audioUrl }),
+  }));
 }
 
 // ── RESEÑAS ────────────────────────────────────────────────────
