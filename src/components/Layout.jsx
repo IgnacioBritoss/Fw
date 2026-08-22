@@ -78,10 +78,17 @@ const Logo = () => (
 /**
  * LAS TRES RAYAS QUE SE CONVIERTEN EN X.
  *
- * Se dibuja DOS VECES: una en la barra de arriba y otra adentro del cajón, al
- * costado del logo. Suena raro, pero nunca se ven las dos: cuando el cajón está
- * cerrado vive corrido fuera de la pantalla y sólo se ve la de la barra; cuando
- * se abre, el cajón le pasa por encima a la de la barra y se ve la de adentro.
+ * Es el mismo botón en las dos partes: en el teléfono abre y cierra el cajón, y
+ * en computadora abre y cierra la barra lateral. Antes en computadora había
+ * otro que se convertía en una flecha, y no hacía falta: una cruz es lo que
+ * todo el mundo busca para cerrar algo, y la flecha además obligaba a explicar
+ * hacia dónde apuntaba.
+ *
+ * EN EL TELÉFONO se dibuja DOS VECES: una en la barra de arriba y otra adentro
+ * del cajón, al costado del logo. Suena raro, pero nunca se ven las dos: cuando
+ * el cajón está cerrado vive corrido fuera de la pantalla y sólo se ve la de la
+ * barra; cuando se abre, el cajón le pasa por encima a la de la barra y se ve
+ * la de adentro.
  *
  * POR QUÉ HIZO FALTA: la animación de rayas a X dura 280ms y antes no se veía
  * nunca. El cajón entra desde la izquierda, mide 248px y le tapa justo el botón,
@@ -107,7 +114,9 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
     {[0, 1, 2].map(i => (
       <span key={i} style={{
         position: "absolute", left: 6, width: 20, height: 2,
-        background: "var(--fw-chip)", borderRadius: 2,
+        // Del color del texto, no de las etiquetas oscuras: en modo oscuro el
+        // gris de las etiquetas casi no se despega del fondo de la barra.
+        background: "var(--fw-text)", borderRadius: 2,
         transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
         top: abierto ? 15 : 9 + i * 6,
         opacity: abierto && i === 1 ? 0 : 1,
@@ -116,50 +125,6 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
           : "none",
       }} />
     ))}
-  </button>
-);
-
-/**
- * LAS TRES RAYAS QUE SE CONVIERTEN EN FLECHA (computadora).
- *
- * Es el botón que abre y cierra la barra lateral. Cerrada muestra tres rayas
- * —"acá hay un menú"— y abierta una flecha hacia la izquierda, que es hacia
- * donde se va la barra al cerrarse. La misma pieza dice las dos cosas.
- *
- * CÓMO SE HACE LA FLECHA con las mismas tres rayas: la del medio se queda
- * quieta y es el palo. Las otras dos se acortan, se mudan a la altura del palo
- * y giran 45 grados para arriba y para abajo, girando desde su PUNTA IZQUIERDA
- * (`transformOrigin`). Al girar desde ahí las dos arrancan del mismo punto que
- * el palo y arman la punta. Sin fijar el origen girarían desde el centro y
- * quedarían dos rayitas cruzadas en el medio.
- *
- * POR QUÉ LAS DOS RAYAS ARRANCAN UN POCO MÁS A LA IZQUIERDA QUE EL PALO: las
- * tres rayas tienen las puntas redondeadas. Si las tres empezaran exactamente
- * en el mismo punto, las tres tapitas redondas se juntarían formando una
- * muesca —la flecha se veía abierta, como un tenedor, en vez de terminar en
- * punta—. Corriéndolas 2px, sus tapitas quedan por delante del palo y las tres
- * curvas se funden en una sola punta.
- */
-const BotonBarra = ({ abierta, onToggle, etiqueta }) => (
-  <button onClick={onToggle} aria-label={etiqueta} aria-expanded={abierta} title={etiqueta}
-    style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
-    {[0, 1, 2].map((i) => {
-      const barba = i !== 1;
-      return (
-        <span key={i} style={{
-          position: "absolute", height: 2,
-          background: "var(--fw-text)", borderRadius: 2,
-          transformOrigin: "left center",
-          transition: "top .3s cubic-bezier(.4,0,.2,1), left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1)",
-          left: abierta && barba ? 4 : 6,
-          width: abierta && barba ? 10 : 20,
-          top: abierta ? 15 : 9 + i * 6,
-          transform: abierta
-            ? (i === 0 ? "rotate(-45deg)" : i === 2 ? "rotate(45deg)" : "none")
-            : "none",
-        }} />
-      );
-    })}
   </button>
 );
 
@@ -390,39 +355,38 @@ export default function Layout({ children }) {
         </div>
       ) : (
         /*
-          En computadora: el botón a la IZQUIERDA de la marca, que es de donde
-          sale y a donde vuelve la barra. Angosta queda solo el botón, centrado.
+          EL ENCABEZADO DE LA BARRA, SIN NINGUNA LÍNEA ABAJO.
 
-          LA ESQUINA. Este encabezado mide EXACTAMENTE lo mismo que la franja de
-          arriba y lleva la misma línea abajo, así que las dos líneas se
-          encuentran y se leen como una sola que cruza la pantalla entera. Antes
-          la barra tenía su línea vertical corriendo hasta arriba de todo y la
-          franja la suya terminando contra ella: dos líneas que se cruzaban en
-          la esquina formando una cruz, que es lo que se veía desprolijo.
+          Tenía una, para que se encontrara con la de la franja de arriba y las
+          dos se leyeran como una sola. No funcionó: adentro de la barra esa
+          línea corta la marca de la navegación y se ve como si fueran dos
+          cajas apiladas. La única línea que queda es la vertical del costado,
+          que corre entera de arriba abajo —también con la barra cerrada— y es
+          lo único que hace falta para separar la barra del contenido.
+
+          El alto igual se conserva: es lo que hace que el primer ítem del menú
+          arranque justo donde arranca el bloque azul de la pantalla.
+
+          ABIERTA: la marca a la izquierda y la cruz de cerrar a la derecha, que
+          es donde se cierra cualquier cosa. CERRADA: las tres rayas solas,
+          centradas, porque no hay lugar para más.
         */
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
           height: ALTO_FRANJA.escritorio, flexShrink: 0, boxSizing: "border-box",
-          borderBottom: "1px solid var(--fw-line)",
-          justifyContent: angosta ? "center" : "flex-start",
-          padding: angosta ? 0 : "0 20px",
+          justifyContent: angosta ? "center" : "space-between",
+          padding: angosta ? 0 : "0 16px 0 20px",
         }}>
-          <BotonBarra abierta={!barraCerrada} onToggle={cambiarBarra}
-            etiqueta={tr(barraCerrada ? "nav.openMenu" : "nav.closeMenu")} />
           {!angosta && (
             <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
               <BrandLogo size={17} />
             </div>
           )}
+          <BotonMenu abierto={!barraCerrada} onToggle={cambiarBarra}
+            etiqueta={tr(barraCerrada ? "nav.openMenu" : "nav.closeMenu")} />
         </div>
       )}
-      <div style={{
-        flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
-        // La línea vertical arranca DEBAJO de la horizontal, no antes: por eso
-        // va acá, envolviendo lo que está bajo el encabezado, y no en la barra
-        // entera. Arriba de esa línea la barra y la franja son una sola cosa.
-        ...(isMobile ? {} : { borderRight: "1px solid var(--fw-line)" }),
-      }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, overflowY: "auto", paddingTop: isMobile ? 8 : 0 }}>
         {/*
           El desfase de la animación: cada nombre entra un poco después que el
@@ -611,6 +575,9 @@ export default function Layout({ children }) {
           width: angosta ? 68 : 248,
           transition: "width .3s cubic-bezier(.32,.72,0,1)",
           overflow: "hidden",
+          // La única línea de la barra: la del costado, de arriba abajo y
+          // también con la barra cerrada. Un pelo, del gris más suave que hay.
+          borderRight: "1px solid var(--fw-line)",
           flexShrink: 0, background: "var(--fw-surface)",
           // Sin relleno arriba: el encabezado ya mide lo que tiene que medir, y
           // cualquier relleno acá lo correría hacia abajo y desalinearía la
