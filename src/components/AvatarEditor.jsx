@@ -51,7 +51,6 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
-import PhotoVisibilityChoice from "./PhotoVisibilityChoice";
 
 /** Lado máximo del archivo que se sube. */
 const SALIDA_MAX = 512;
@@ -170,7 +169,17 @@ export default function AvatarEditor({
   const [lado, setLado] = useState(ladoDeVista);
   // Quién va a poder ver esta foto. Se elige ACÁ, en el mismo momento de ponerla:
   // que la decisión esté escondida en otra pantalla es lo mismo que no darla.
-  const [quienLaVe, setQuienLaVe] = useState(visibility);
+  /*
+    QUIÉN VE LA FOTO YA NO SE ELIGE ACÁ.
+
+    Esta ventana es para encuadrar: mover la foto y acercarla. Meterle también
+    la elección de quién la ve mezclaba dos decisiones que no tienen nada que
+    ver —una es cómo se recorta, la otra es de privacidad— y encima la duplicaba,
+    porque esa elección ya vive abajo en el perfil, que es donde se la busca.
+
+    El valor entra y sale sin tocarse: se lo devuelve tal cual para que al
+    guardar la foto no se pise lo que la persona ya había elegido.
+  */
 
   const lienzo = useRef(null);
   const muestra = useRef(null);
@@ -347,6 +356,15 @@ export default function AvatarEditor({
     [imagen, zMax, centro],
   );
 
+  // Escape cierra, como cualquier ventana que se abre encima de todo. Mientras
+  // está guardando no: la foto se está subiendo y cerrar dejaría el pedido a
+  // medio camino.
+  useEffect(() => {
+    const tecla = (e) => { if (e.key === "Escape" && !busy) onCancel(); };
+    window.addEventListener("keydown", tecla);
+    return () => window.removeEventListener("keydown", tecla);
+  }, [busy, onCancel]);
+
   // La rueda del mouse, con un listener puesto a mano y NO pasivo.
   //
   // Con `onWheel` de React no alcanza: React registra el listener de la rueda como
@@ -386,7 +404,7 @@ export default function AvatarEditor({
 
   const confirmar = async () => {
     if (!imagen || busy) return;
-    onConfirm(await recortar(), quienLaVe);
+    onConfirm(await recortar(), visibility);
   };
 
   const s = {
@@ -440,7 +458,38 @@ export default function AvatarEditor({
   return (
     <div style={s.fondo} onClick={busy ? undefined : onCancel}>
       <div style={s.caja} onClick={(e) => e.stopPropagation()}>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "var(--fw-text)", marginBottom: 3 }}>
+        {/*
+          LA CRUZ, arriba a la derecha. Para salir había que bajar hasta el
+          final y apretar "Cancelar": una ventana que se abre encima de todo se
+          cierra por la cruz, y si la pantalla es baja el botón de abajo ni
+          siquiera se ve sin scrolear.
+
+          `position: sticky` y no `absolute`: la tarjeta scrollea cuando no
+          entra, y con `absolute` la cruz se iba para arriba junto con el
+          contenido.
+        */}
+        <div style={{ position: "sticky", top: 0, height: 0, textAlign: "right", zIndex: 2 }}>
+          <button
+            type="button"
+            onClick={busy ? undefined : onCancel}
+            disabled={busy}
+            aria-label={tr("common.close")}
+            title={tr("common.close")}
+            style={{
+              width: 30, height: 30, minHeight: 30, borderRadius: "50%",
+              border: "none", background: "var(--fw-surface-2)", color: "var(--fw-text-3)",
+              cursor: busy ? "default" : "pointer", opacity: busy ? .5 : 1,
+              display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ fontSize: 16, fontWeight: 800, color: "var(--fw-text)", marginBottom: 3, paddingRight: 34 }}>
           {tr("profile.frameTitle")}
         </div>
         <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 14 }}>
@@ -527,16 +576,7 @@ export default function AvatarEditor({
           </div>
         </div>
 
-        {/* Quién la va a ver. Va acá, junto a la foto, y no solo en el perfil:
-            poner una foto y elegir quién la ve son la misma decisión. */}
-        <div style={{ borderTop: "1px solid var(--fw-line-soft)", marginTop: 16, paddingTop: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 9 }}>
-            {tr("profile.photoWho")}
-          </div>
-          <PhotoVisibilityChoice value={quienLaVe} onChange={setQuienLaVe} disabled={busy} />
-        </div>
-
-        <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
           <button
             type="button"
             onClick={onCancel}
