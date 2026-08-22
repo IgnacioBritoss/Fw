@@ -33,6 +33,7 @@ import { addMonths, format } from "date-fns";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import Avatar from "../../components/Avatar";
+import Aviso from "../../components/Aviso";
 import { initialsOf, nameOf } from "../../services/people";
 import { localeFor, shortDate } from "../../i18n/dates";
 import { useCurrency } from "../../context/CurrencyContext";
@@ -185,6 +186,9 @@ export default function CarDetail() {
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [contactLoading, setContactLoading] = useState(false);
+  // Si no se puede abrir la conversación se avisa abajo, sin tapar la
+  // publicación. Antes era un `alert()`, que congelaba la pestaña entera.
+  const [aviso, setAviso] = useState("");
   const [showReport, setShowReport] = useState(false);
   const [showReportUser, setShowReportUser] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
@@ -263,7 +267,7 @@ export default function CarDetail() {
       const conv = await startConversation(id);
       navigate(`/chat?conv=${conv.id}`);
     } catch (err) {
-      alert(err.message || tr("car.chatFailed"));
+      setAviso(err.message || tr("car.chatFailed"));
       setContactLoading(false);
     }
   };
@@ -796,6 +800,8 @@ export default function CarDetail() {
           </div>
         </div>
       )}
+
+      <Aviso mensaje={aviso} onCerrar={() => setAviso("")} />
     </div>
   );
 }

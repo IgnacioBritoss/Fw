@@ -433,6 +433,28 @@ html.fw-dark .fw-hero-search [role="option"] {
 }
 
 /* ============================================================================
+   El aviso de abajo (components/Aviso.jsx)
+   ----------------------------------------------------------------------------
+   Sube unos píxeles al aparecer. No es adorno: un cartel que se materializa
+   quieto sobre la pantalla no se distingue de algo que ya estaba ahí, y este
+   aparece justo cuando la persona está mirando otra cosa. El movimiento es lo
+   que hace que se note sin tener que taparlo todo, que es lo que hacía el
+   `alert` que reemplaza.
+   ========================================================================== */
+@keyframes fw-aviso-entra {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fw-aviso {
+  animation: fw-aviso-entra .22s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-aviso { animation: none; }
+}
+
+/* ============================================================================
    La propaganda de la landing (components/LandingBanner.jsx)
    ----------------------------------------------------------------------------
    Va en CSS por lo mismo que el spinner: los keyframes no se pueden declarar en
