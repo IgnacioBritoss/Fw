@@ -36,6 +36,9 @@ export function CurrencyProvider({ children }) {
   const valor = useMemo(() => ({
     moneda,
     monedas: MONEDAS,
+    // Las cotizaciones, para quien necesite mostrar un mismo precio en varias
+    // monedas a la vez (la lista de Ajustes) y no solo en la elegida.
+    tasas,
     setMoneda: (code) => { setMonedaEstado(code); guardarMoneda(code); },
     /** Un precio en pesos → el texto que se muestra. */
     precio: (pesos) => formatearPrecio(pesos, moneda, tasas),
@@ -53,6 +56,7 @@ export function CurrencyProvider({ children }) {
 const SIN_PROVEEDOR = {
   moneda: MONEDA_POR_DEFECTO,
   monedas: MONEDAS,
+  tasas: TASAS_DE_RESPALDO,
   setMoneda: () => {},
   precio: (pesos) => formatearPrecio(pesos, MONEDA_POR_DEFECTO, TASAS_DE_RESPALDO),
   esMonedaReal: true,

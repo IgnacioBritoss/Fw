@@ -14,7 +14,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
 import ReportIssueCard from "../../components/ReportIssueCard";
-import CurrencyPicker from "../../components/CurrencyPicker";
+import { useCurrency } from "../../context/CurrencyContext";
+import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
@@ -55,8 +56,15 @@ const loadPrefs = () => {
   try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch { return {}; }
 };
 
+/**
+ * El precio de ejemplo de la lista de monedas: un alquiler de un día cualquiera.
+ * Un número redondo y creíble, para que la conversión se entienda de un vistazo.
+ */
+const EJEMPLO_DE_PRECIO = 40000;
+
 export default function Settings() {
   const { t: tr, lang, setLang } = useI18n();
+  const { moneda, monedas, setMoneda, tasas } = useCurrency();
   const { user, login, logout, refreshUser, isVerified } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -448,20 +456,67 @@ export default function Settings() {
                 esto se entienda desde donde estoy"— y es la razón por la que
                 Airbnb las tiene en el mismo lugar.
               */}
+              {/*
+                UNA FILA POR MONEDA, igual que los idiomas de arriba, y no un
+                desplegable.
+
+                El desplegable estaba mal por dos motivos. Uno: acá adentro no
+                hace falta esconder nada, hay lugar de sobra y una lista a la
+                vista se lee de un vistazo, mientras que el desplegable obliga a
+                abrir para ver qué hay. Dos: se abría hacia abajo desde el borde
+                derecho de la tarjeta, así que en una pantalla común se salía
+                por el costado y estiraba la página.
+
+                El desplegable sigue existiendo para las pantallas de entrada,
+                donde sí hace falta que ocupe poco.
+              */}
               <div style={{ ...t.card, padding: isMobile ? 18 : 26, marginTop: 16 }}>
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  gap: 14, flexWrap: "wrap",
-                }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>
-                      {tr("settings.currency")}
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginTop: 3, lineHeight: 1.6 }}>
-                      {tr("settings.currencyNote")}
-                    </div>
-                  </div>
-                  <CurrencyPicker />
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>
+                  {tr("settings.currency")}
+                </div>
+                <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginTop: 3, marginBottom: 6, lineHeight: 1.6 }}>
+                  {tr("settings.currencyNote")}
+                </div>
+                {monedas.map((m, i) => {
+                  const elegida = m.code === moneda;
+                  return (
+                    <button key={m.code} onClick={() => setMoneda(m.code)}
+                      aria-pressed={elegida}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 14, width: "100%",
+                        padding: "14px 4px", background: "none", border: "none",
+                        borderBottom: i === monedas.length - 1 ? "none" : "1px solid var(--fw-line-soft)",
+                        cursor: "pointer", textAlign: "left",
+                      }}>
+                      <span style={{
+                        width: 38, height: 28, borderRadius: 6, flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
+                        background: elegida ? "var(--fw-blue)" : "var(--fw-bg)",
+                        color: elegida ? "#fff" : "var(--fw-text-3)",
+                      }}>
+                        {m.code}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: elegida ? 700 : 500, color: "var(--fw-text)" }}>
+                        {tr(`currency.${m.code}`)}
+                      </span>
+                      {/* El precio de referencia: sin esto, elegir una moneda es
+                          elegir a ciegas. Con el ejemplo al lado se ve al toque
+                          cuánto es en la que uno maneja. */}
+                      <span style={{ fontSize: 13, color: "var(--fw-text-4)", fontVariantNumeric: "tabular-nums" }}>
+                        {formatearPrecio(EJEMPLO_DE_PRECIO, m.code, tasas)}
+                      </span>
+                      {elegida && (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
+                          strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 14, lineHeight: 1.6 }}>
+                  {tr("currency.note")}
                 </div>
               </div>
             </>
