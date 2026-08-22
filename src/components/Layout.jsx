@@ -20,6 +20,7 @@ import { hasUnreadNotifications } from "../services/notifications";
 import BrandLogo from "./Logo";
 import CarIcon from "./CarIcon";
 import Avatar from "./Avatar";
+import { useAsistente } from "../context/AssistantContext";
 import { useI18n } from "../i18n/core";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
@@ -42,6 +43,14 @@ const ShieldIcon = icon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
 
 // Estructura del menú lateral, agrupada por secciones. `adminOnly` hace que la
 // opción se muestre únicamente a las cuentas administradoras.
+/**
+ * El alto de la franja de arriba. Vive acá y no escrito en cada lugar porque lo
+ * usan DOS cosas que tienen que medir exactamente lo mismo: la franja y el
+ * encabezado de la barra lateral. Si se separan, sus líneas de abajo dejan de
+ * encontrarse en la esquina.
+ */
+const ALTO_FRANJA = { movil: 56, escritorio: 66 };
+
 const NAV = [
   { group: "nav.section.main", items: [
     { label: "nav.home", path: "/", Icon: HomeIcon },
@@ -118,11 +127,18 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
  * donde se va la barra al cerrarse. La misma pieza dice las dos cosas.
  *
  * CÓMO SE HACE LA FLECHA con las mismas tres rayas: la del medio se queda
- * quieta y es el palo. Las otras dos se acortan a la mitad, se mudan a la
- * altura del palo y giran 45 grados para arriba y para abajo, girando desde su
- * PUNTA IZQUIERDA (`transformOrigin`). Al girar desde ahí, las dos arrancan del
- * mismo punto que el palo y arman la punta de flecha. Sin fijar el origen
- * girarían desde el centro y quedarían dos rayitas cruzadas en el medio.
+ * quieta y es el palo. Las otras dos se acortan, se mudan a la altura del palo
+ * y giran 45 grados para arriba y para abajo, girando desde su PUNTA IZQUIERDA
+ * (`transformOrigin`). Al girar desde ahí las dos arrancan del mismo punto que
+ * el palo y arman la punta. Sin fijar el origen girarían desde el centro y
+ * quedarían dos rayitas cruzadas en el medio.
+ *
+ * POR QUÉ LAS DOS RAYAS ARRANCAN UN POCO MÁS A LA IZQUIERDA QUE EL PALO: las
+ * tres rayas tienen las puntas redondeadas. Si las tres empezaran exactamente
+ * en el mismo punto, las tres tapitas redondas se juntarían formando una
+ * muesca —la flecha se veía abierta, como un tenedor, en vez de terminar en
+ * punta—. Corriéndolas 2px, sus tapitas quedan por delante del palo y las tres
+ * curvas se funden en una sola punta.
  */
 const BotonBarra = ({ abierta, onToggle, etiqueta }) => (
   <button onClick={onToggle} aria-label={etiqueta} aria-expanded={abierta} title={etiqueta}
@@ -131,11 +147,12 @@ const BotonBarra = ({ abierta, onToggle, etiqueta }) => (
       const barba = i !== 1;
       return (
         <span key={i} style={{
-          position: "absolute", left: 6, height: 2,
-          background: "var(--fw-chip)", borderRadius: 2,
+          position: "absolute", height: 2,
+          background: "var(--fw-text)", borderRadius: 2,
           transformOrigin: "left center",
-          transition: "top .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1)",
-          width: abierta && barba ? 11 : 20,
+          transition: "top .3s cubic-bezier(.4,0,.2,1), left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1)",
+          left: abierta && barba ? 4 : 6,
+          width: abierta && barba ? 10 : 20,
           top: abierta ? 15 : 9 + i * 6,
           transform: abierta
             ? (i === 0 ? "rotate(-45deg)" : i === 2 ? "rotate(45deg)" : "none")
@@ -144,6 +161,29 @@ const BotonBarra = ({ abierta, onToggle, etiqueta }) => (
       );
     })}
   </button>
+);
+
+/**
+ * WILI, el asistente: una cara de robot.
+ *
+ * NO SE PARECE A NINGÚN OTRO de la franja, que es justo lo que hacía falta: el
+ * asistente ES un chat, así que dibujarlo con una burbuja lo dejaba idéntico al
+ * botón de mensajes que tiene al lado, y eran dos cosas distintas con el mismo
+ * símbolo. Una cara de robot dice "esto contesta una máquina" y además le pone
+ * cara a Wili, que es el nombre con el que se presenta.
+ *
+ * Está armado con lo mínimo que se lee a 18 píxeles: la cabeza redondeada, la
+ * antenita arriba, dos ojos y la boca. Con orejas, cuello o tornillos, a ese
+ * tamaño se convierte en una mancha.
+ */
+const RobotIcon = ({ size = 18, color = "#374151" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v3" />
+    <rect x="3.5" y="7" width="17" height="13" rx="4" />
+    <path d="M9 12.5v1.5M15 12.5v1.5" />
+    <path d="M9.5 17h5" />
+  </svg>
 );
 
 // Ícono de mensajes (burbuja de chat) — profesional, sin emoji.
@@ -186,7 +226,11 @@ const GearIcon = ({ size = 18, color = "#374151" }) => (
  */
 const TopButton = ({ style, dotStyle, onClick, title, dot = false, children }) => (
   <button type="button" onClick={onClick} title={title} aria-label={title} style={style}
-    onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f2f4"; }}
+    /* El gris del hover sale de la paleta y no de un número escrito acá: con
+       "#f1f2f4" fijo, en modo oscuro pasar el mouse encendía un rectángulo casi
+       blanco en medio de la franja. Ahora es un escalón sobre el fondo de la
+       franja, que en claro aclara y en oscuro aclara también, pero poquito. */
+    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--fw-surface-2)"; }}
     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
     <span style={{ position: "relative", display: "flex" }}>
       {children}
@@ -202,6 +246,9 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useIsMobile();
+  // Wili vive en components/ChatBot, que se dibuja fuera de las rutas: lo único
+  // que comparten es si está abierto, y eso viaja por el contexto.
+  const { abierto: asistenteAbierto, alternar: alternarAsistente } = useAsistente();
   const [drawerOpen, setDrawerOpen] = useState(false);       // menú lateral abierto (celular)
   /*
     LA BARRA LATERAL SE PUEDE CERRAR EN COMPUTADORA.
@@ -341,12 +388,23 @@ export default function Layout({ children }) {
             etiqueta={tr("nav.closeMenu")} oculto={!drawerOpen} />
         </div>
       ) : (
-        // En computadora: el botón a la IZQUIERDA de la marca, que es de donde
-        // sale y a donde vuelve la barra. Angosta queda solo el botón, centrado.
+        /*
+          En computadora: el botón a la IZQUIERDA de la marca, que es de donde
+          sale y a donde vuelve la barra. Angosta queda solo el botón, centrado.
+
+          LA ESQUINA. Este encabezado mide EXACTAMENTE lo mismo que la franja de
+          arriba y lleva la misma línea abajo, así que las dos líneas se
+          encuentran y se leen como una sola que cruza la pantalla entera. Antes
+          la barra tenía su línea vertical corriendo hasta arriba de todo y la
+          franja la suya terminando contra ella: dos líneas que se cruzaban en
+          la esquina formando una cruz, que es lo que se veía desprolijo.
+        */
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
+          height: ALTO_FRANJA.escritorio, flexShrink: 0, boxSizing: "border-box",
+          borderBottom: "1px solid var(--fw-line)",
           justifyContent: angosta ? "center" : "flex-start",
-          padding: angosta ? "0 0 8px" : "0 20px 8px",
+          padding: angosta ? 0 : "0 20px",
         }}>
           <BotonBarra abierta={!barraCerrada} onToggle={cambiarBarra}
             etiqueta={tr(barraCerrada ? "nav.openMenu" : "nav.closeMenu")} />
@@ -357,11 +415,22 @@ export default function Layout({ children }) {
           )}
         </div>
       )}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div style={{
+        flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
+        // La línea vertical arranca DEBAJO de la horizontal, no antes: por eso
+        // va acá, envolviendo lo que está bajo el encabezado, y no en la barra
+        // entera. Arriba de esa línea la barra y la franja son una sola cosa.
+        ...(isMobile ? {} : { borderRight: "1px solid var(--fw-line)" }),
+      }}>
+      <div style={{ flex: 1, overflowY: "auto", paddingTop: isMobile ? 8 : 0 }}>
         {NAV.map((g, gi) => (
           <div key={gi}>
+            {/* Angosta y en el primer grupo no va NADA arriba del primer ítem:
+                así su franja azul arranca justo donde arranca el bloque azul de
+                la pantalla, del otro lado de la línea, y los dos quedan
+                parejos. Un espacio de diez píxeles los desalineaba. */}
             {angosta
-              ? (gi > 0 ? <div style={t.navSeparador} /> : <div style={{ height: 10 }} />)
+              ? (gi > 0 ? <div style={t.navSeparador} /> : null)
               : <div style={t.navGroup}>{tr(g.group)}</div>}
             {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
               // `title`: angosta el nombre no está escrito, así que el globito
@@ -408,6 +477,7 @@ export default function Layout({ children }) {
           </button>}
         </div>
       )}
+      </div>
     </>
   );
 
@@ -431,6 +501,22 @@ export default function Layout({ children }) {
           <GearIcon />
         </TopButton>
       )}
+      {/*
+        WILI, EL ASISTENTE. Antes era un redondel azul flotando encima del
+        contenido: el único elemento de toda la app que tapaba lo que hubiera
+        abajo. Había que arrastrarlo cuando molestaba, y en el chat de verdad se
+        le venía encima al botón de mandar.
+
+        Acá es un botón más de la franja, en el lugar donde ya se buscan las
+        herramientas de la app. Abre y cierra la misma ventana de siempre.
+
+        Va también sin sesión iniciada: preguntar cómo funciona esto es
+        justamente lo que hace alguien que todavía no se registró.
+      */}
+      <TopButton style={t.iconBtn} onClick={alternarAsistente}
+        title={tr(asistenteAbierto ? "chat.closeAssistant" : "chat.openAssistant")}>
+        <RobotIcon color={asistenteAbierto ? "var(--fw-blue)" : undefined} />
+      </TopButton>
       {!user && (
         /*
           Sin cuenta: entrar y crear cuenta, con la MISMA forma que los botones
@@ -507,8 +593,11 @@ export default function Layout({ children }) {
           width: angosta ? 68 : 248,
           transition: "width .3s cubic-bezier(.32,.72,0,1)",
           overflow: "hidden",
-          flexShrink: 0, background: "var(--fw-surface)", borderRight: "1px solid var(--fw-line)",
-          padding: "24px 0", display: "flex", flexDirection: "column",
+          flexShrink: 0, background: "var(--fw-surface)",
+          // Sin relleno arriba: el encabezado ya mide lo que tiene que medir, y
+          // cualquier relleno acá lo correría hacia abajo y desalinearía la
+          // línea de la esquina.
+          padding: "0 0 24px", display: "flex", flexDirection: "column",
           position: "sticky", top: 0, height: "100vh",
         }}
       >
@@ -536,7 +625,7 @@ export default function Layout({ children }) {
         <div style={{
           display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "var(--fw-surface)",
           borderBottom: "1px solid var(--fw-line)", position: "sticky", top: 0, zIndex: 20,
-          height: isMobile ? 56 : 66,
+          height: isMobile ? ALTO_FRANJA.movil : ALTO_FRANJA.escritorio,
           padding: isMobile ? "0 0 0 12px" : "0 0 0 32px",
         }}>
           {/* Las tres barritas se convierten en una X: la de arriba y la de abajo
