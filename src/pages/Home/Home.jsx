@@ -57,6 +57,27 @@ const LupaIcon = ({ size = 20 }) => (
   </svg>
 );
 
+/**
+ * Las cuatro esquinas de "pantalla completa": flechas hacia afuera para
+ * agrandar, hacia adentro para volver. Es el símbolo que ya conoce cualquiera
+ * de los reproductores de video, así que no necesita explicación.
+ */
+const IconoAgrandar = ({ cerrando = false, size = 15 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true">
+    {cerrando ? (
+      <>
+        <path d="M9 3v6H3M21 9h-6V3M15 21v-6h6M3 15h6v6" />
+      </>
+    ) : (
+      <>
+        <path d="M3 9V3h6M21 9V3h-6M15 21h6v-6M9 21H3v-6" />
+      </>
+    )}
+  </svg>
+);
+
 export default function Home() {
   const { t: tr, lang } = useI18n();
   const { precio } = useCurrency();
@@ -89,15 +110,22 @@ export default function Home() {
     botón había que ir y volver perdiendo el lugar cada vez. Y al volver a la
     lista quedaba el hueco gris de donde había estado el mapa.
 
-    `foco` es sobre cuál está el mouse: el de abajo del cursor se agranda y el
-    otro se achica, sin llegar a desaparecer. Así se tiene un mapa grande cuando
-    se está mirando el mapa y una lista cómoda cuando se está mirando la lista,
-    sin apretar nada.
+    DE ENTRADA MANDAN LOS AUTOS. La primera versión repartía mitad y mitad y no
+    servía: a media pantalla las tarjetas quedan angostas, la etiqueta de
+    categoría se come el ancho de la foto y el auto se ve chiquito, que es
+    justo lo que se vino a mirar. Así que el reparto de arranque es el de la
+    lista grande, y el mapa queda al costado como referencia.
+
+    Para verlo grande está el botón de agrandar, abajo a la izquierda del mapa.
+    Es un botón y no el mouse por encima: con el mouse, el mapa se agrandaba y
+    se achicaba solo cada vez que uno lo cruzaba para llegar a otra cosa, y
+    mirar un mapa que se mueve mientras se lo mira es incómodo. Apretado queda
+    grande hasta que se lo vuelve a apretar.
 
     En el teléfono no: dos columnas en 390px no son dos columnas. Ahí sigue el
     botón de siempre y `view` manda.
   */
-  const [foco, setFoco] = useState(null);
+  const [mapaGrande, setMapaGrande] = useState(false);
   const [cat, setCat] = useState("");            // "" = todas las categorías
   const [pickup, setPickup] = useState("");      // fecha de retiro (YYYY-MM-DD)
   const [dropoff, setDropoff] = useState("");    // fecha de devolución
@@ -253,11 +281,11 @@ export default function Home() {
       if (!car.lat || !car.lng) return;
       const icon = L.divIcon({
         className: "",
-        html: `<div style="width:14px;height:14px;background:#0f6ce6;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
+        html: `<div style="width:14px;height:14px;background:var(--fw-blue);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
         iconAnchor: [7, 7],
       });
       const circle = L.circle([car.lat, car.lng], {
-        radius: 600, color: "#0f6ce6", fillColor: "#bfdbfe",
+        radius: 600, color: "var(--fw-blue)", fillColor: "#bfdbfe",
         fillOpacity: 0.18, weight: 1.5, interactive: false,
       }).addTo(map);
       const marker = L.marker([car.lat, car.lng], { icon });
@@ -382,7 +410,7 @@ export default function Home() {
     if (!hayMapa || !mapInstanceRef.current) return;
     const t = setTimeout(() => mapInstanceRef.current?.invalidateSize(), 380);
     return () => clearTimeout(t);
-  }, [foco, hayMapa]);
+  }, [mapaGrande, hayMapa]);
 
   /**
    * Precio más barato de cada categoría, calculado con los autos que hay. Es lo
@@ -492,7 +520,7 @@ export default function Home() {
       corta la página no tiene esquinas.
     */
     hero: {
-      borderRadius: 0, background: "#0b55c0", color: "#fff", position: "relative",
+      borderRadius: 0, background: "var(--fw-blue-strong)", color: "#fff", position: "relative",
       padding: isMobile ? "26px 18px" : "44px 36px",
       marginTop: isMobile ? -20 : -28,
       marginLeft: isMobile ? -16 : -32,
@@ -506,7 +534,7 @@ export default function Home() {
       `overflow: hidden` recorta el botón contra el redondeo de la tarjeta.
     */
     searchRow: isMobile
-      ? { display: "flex", flexDirection: "column", gap: 2, background: "#fff", borderRadius: 18, padding: 8, marginTop: 20 }
+      ? { display: "flex", flexDirection: "column", gap: 2, background: "var(--fw-surface)", borderRadius: 18, padding: 8, marginTop: 20 }
       /*
         SIN `overflow: hidden`.
 
@@ -520,20 +548,20 @@ export default function Home() {
       // Bien redondeada: la barra pasa a leerse como una sola pieza y no como
       // tres cajas pegadas. La lupa va adentro, así que el redondeo grande no
       // choca contra ninguna punta cuadrada.
-      : { display: "flex", alignItems: "stretch", background: "#fff", borderRadius: 999, marginTop: 26 },
+      : { display: "flex", alignItems: "stretch", background: "var(--fw-surface)", borderRadius: 999, marginTop: 26 },
     // En celular cada campo ocupa todo el ancho y se separa con una línea abajo
     // en vez de a la derecha, que es lo que se lee bien apilado.
     // El renglón de cada campo estaba altísimo (etiqueta + campo de 14px con
     // padding generoso), así que las tres filas del buscador se comían media
     // pantalla del teléfono y había que scrolear para ver los autos.
     searchCell: isMobile
-      ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid #f1f1f1", boxSizing: "border-box" }
+      ? { width: "100%", padding: "7px 12px", borderBottom: "1px solid var(--fw-line-soft)", boxSizing: "border-box" }
       // El primer campo lleva más aire a la izquierda: con el redondeo grande,
       // pegado al borde el texto se mete adentro de la curva.
       : { flex: 1, minWidth: 140, padding: "16px 20px", borderRight: "1px solid #eee" },
-    searchLabel: { fontSize: 10.5, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
-    searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent", width: "100%" },
-    sectionTitle: { fontSize: 19, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" },
+    searchLabel: { fontSize: 10.5, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 2 },
+    searchInput: { border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "var(--fw-text)", background: "transparent", width: "100%" },
+    sectionTitle: { fontSize: 19, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.3px" },
     /*
       La tarjeta del auto.
 
@@ -542,27 +570,27 @@ export default function Home() {
       repetido cinco veces, uno adentro del otro. Ahora el borde suave queda
       para la tarjeta y nada más.
     */
-    carCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 6, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
+    carCard: { background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 6, overflow: "hidden", cursor: "pointer", display: "flex", flexDirection: "column" },
     /*
       Las dos fichas de datos (combustible, asientos) ya no son píldoras sueltas:
       son dos celdas de una misma barra, separadas por una línea. Se leen como una
       ficha técnica y no como dos etiquetas decorativas.
     */
-    fichaFila: { display: "flex", border: "1px solid #ececec", borderRadius: 4, marginBottom: 14, overflow: "hidden" },
-    fichaCelda: { flex: 1, fontSize: 11.5, color: "#4b5563", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid #ececec" },
-    reservar: { background: "#111827", color: "#fff", border: "none", borderRadius: 4, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
-    stepCard: { background: "#fff", border: "1px solid #ececec", borderRadius: 14, padding: 20 },
-    banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 20 },
+    fichaFila: { display: "flex", border: "1px solid var(--fw-line)", borderRadius: 4, marginBottom: 14, overflow: "hidden" },
+    fichaCelda: { flex: 1, fontSize: 11.5, color: "var(--fw-text-2)", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid var(--fw-line)" },
+    reservar: { background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 4, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+    stepCard: { background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 14, padding: 20 },
+    banner: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "var(--fw-amber-text)", marginBottom: 20 },
   };
 
   // ─────────────────────────────────────────── Subcomponentes
   // Tarjeta individual de un auto en la grilla (foto, datos, precio y botón).
   const CarCard = ({ car }) => (
     <div style={t.carCard} onClick={() => navigate(`/cars/${car.id}`)}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "#e5e7eb" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "var(--fw-surface-3)" }}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
         {/* La categoría va PEGADA a la esquina de la foto, no flotando a 12px de
             los dos bordes con forma de píldora. Apoyada en la esquina se lee como
             parte de la foto; flotando parecía un globito encima. */}
@@ -573,8 +601,8 @@ export default function Home() {
         <FavoriteButton listingId={car.id} disabled={car.isMock} />
       </div>
       <div style={{ padding: 16 }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)", marginBottom: 3 }}>{car.brand} {car.model} {car.year}</div>
+        <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginBottom: 12 }}>
           {car.location && `${car.location} · `}
           {car.rating > 0 && `${car.rating} ★ · `}{transmissionLabel(tr, car.transmissionCode)}
         </div>
@@ -593,8 +621,8 @@ export default function Home() {
             )}
           </div>
         )}
-        <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+        <div style={{ borderTop: "1px solid var(--fw-line-soft)", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div><span style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 12, color: "var(--fw-text-4)" }}>{tr("common.perDay")}</span></div>
           <button style={t.reservar} onClick={(e) => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("home.book")}</button>
         </div>
       </div>
@@ -625,19 +653,19 @@ export default function Home() {
             <div key={c.id}
               onClick={() => setCat(active ? "" : c.id)}
               style={{
-                background: "#fff",
-                border: active ? "1.5px solid #0f6ce6" : "1px solid #ececec",
+                background: "var(--fw-surface)",
+                border: active ? "1.5px solid var(--fw-blue)" : "1px solid var(--fw-line)",
                 borderRadius: 14, padding: "20px 18px", cursor: "pointer",
                 transition: "transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .35s ease",
                 boxShadow: active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)",
               }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.10)"; if (!active) e.currentTarget.style.borderColor = "#bfd8fb"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "#ececec"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "var(--fw-line)"; }}
             >
-              <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "#0f6ce6" : "#e5e7eb", marginBottom: 16, transition: "background .35s ease" }} />
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#111827", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
+              <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "var(--fw-blue)" : "var(--fw-surface-3)", marginBottom: 16, transition: "background .35s ease" }} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fw-text)", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
               {/* Ahora sí hay dato: precio mínimo real y cantidad de autos. */}
-              <div style={{ fontSize: 12, fontWeight: 500, color: active ? "#0f6ce6" : "#9ca3af", marginTop: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: active ? "var(--fw-blue)" : "var(--fw-text-4)", marginTop: 4 }}>
                 {min ? tr("home.from", { price: precio(min) }) : count > 0 ? `${count}` : tr("home.noneYet")}
               </div>
             </div>
@@ -650,7 +678,7 @@ export default function Home() {
   const seccionPasos = (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>
-      <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
+      <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {[
           ["01", "home.step1", "home.step1Sub"],
@@ -659,9 +687,9 @@ export default function Home() {
           ["04", "home.step4", "home.step4Sub"],
         ].map(([n, ti, d]) => (
           <div key={n} style={t.stepCard}>
-            <div style={{ fontSize: 26, fontWeight: 800, color: "#0f6ce6", marginBottom: 8 }}>{n}</div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{tr(ti)}</div>
-            <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.5 }}>{tr(d)}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--fw-blue)", marginBottom: 8 }}>{n}</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)", marginBottom: 4 }}>{tr(ti)}</div>
+            <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.5 }}>{tr(d)}</div>
           </div>
         ))}
       </div>
@@ -695,18 +723,7 @@ export default function Home() {
                 value={zona} onChange={setZona} opciones={ZONAS}
                 onEnter={goToSearch}
                 placeholder={tr("home.zonePlaceholder")}
-                inputStyle={{ color: "#111827" }}
-              />
-            </div>
-
-            {/* MARCA O MODELO, con las mismas ayudas pero su propia lista. */}
-            <div className="fw-plain-field" style={t.searchCell}>
-              <div style={t.searchLabel}>{tr("home.carLabel")}</div>
-              <AutocompleteInput
-                value={search} onChange={setSearch} opciones={sugerenciasDeAutos}
-                onEnter={goToSearch}
-                placeholder={tr("home.carPlaceholder")}
-                inputStyle={{ color: "#111827" }}
+                inputStyle={{ color: "var(--fw-text)" }}
               />
             </div>
 
@@ -722,13 +739,13 @@ export default function Home() {
               Ahora es un botón que abre DOS MESES juntos y se marcan las dos
               puntas de un tirón, con el rango pintado en el medio.
             */}
-            <div className="fw-plain-field" style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}), position: "relative" }}>
+            <div className="fw-plain-field" style={{ ...t.searchCell, position: "relative" }}>
               <div style={t.searchLabel}>{tr("home.dates")}</div>
               <button type="button" onClick={() => setCalendario((v) => !v)}
                 aria-expanded={calendario}
                 style={{
                   ...t.searchInput, textAlign: "left", cursor: "pointer", padding: 0,
-                  color: pickup ? "#111827" : "#9ca3af",
+                  color: pickup ? "var(--fw-text)" : "var(--fw-text-4)",
                 }}>
                 {textoDeFechas()}
               </button>
@@ -745,9 +762,9 @@ export default function Home() {
                     // todo el ancho; en computadora se centra bajo el campo.
                     left: isMobile ? 0 : "50%",
                     transform: isMobile ? "none" : "translateX(-50%)",
-                    zIndex: 41, background: "#fff", borderRadius: 14,
+                    zIndex: 41, background: "var(--fw-surface)", borderRadius: 14,
                     boxShadow: "0 12px 40px rgba(0,0,0,.18)", padding: 14,
-                    border: "1px solid #ececec",
+                    border: "1px solid var(--fw-line)",
                     /*
                       `max-content` es lo que pone los dos meses UNO AL LADO DEL
                       OTRO. Un elemento absoluto sin ancho se encoge hasta el
@@ -777,11 +794,11 @@ export default function Home() {
                     />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10 }}>
                       <button type="button" onClick={() => { setPickup(""); setDropoff(""); }}
-                        style={{ background: "none", border: "none", color: "#6b7280", fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                        style={{ background: "none", border: "none", color: "var(--fw-text-3)", fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
                         {tr("home.clearDates")}
                       </button>
                       <button type="button" onClick={() => setCalendario(false)}
-                        style={{ background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                        style={{ background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                         {tr("common.ready")}
                       </button>
                     </div>
@@ -789,6 +806,21 @@ export default function Home() {
                 </>
               )}
             </div>
+            {/* MARCA O MODELO, con las mismas ayudas pero su propia lista.
+                Va último: las fechas quedan en el medio, que es donde las
+                busca el ojo —dónde, cuándo, qué— y además así el calendario
+                se abre centrado bajo la barra y no colgando de una punta. */}
+            <div className="fw-plain-field"
+              style={{ ...t.searchCell, ...(isMobile ? { borderBottom: "none" } : {}) }}>
+              <div style={t.searchLabel}>{tr("home.carLabel")}</div>
+              <AutocompleteInput
+                value={search} onChange={setSearch} opciones={sugerenciasDeAutos}
+                onEnter={goToSearch}
+                placeholder={tr("home.carPlaceholder")}
+                inputStyle={{ color: "var(--fw-text)" }}
+              />
+            </div>
+
             {/* Acá había un select "Tipo" con el diseño por defecto del
                 navegador. Se quitó: justo abajo está "Explorá por categoría",
                 que hace exactamente lo mismo y se ve mucho mejor. */}
@@ -813,7 +845,7 @@ export default function Home() {
               aria-label={tr("home.searchCars")}
               title={tr("home.searchCars")}
               style={{
-                background: "#0f6ce6", color: "#fff", border: "none",
+                background: "var(--fw-blue)", color: "#fff", border: "none",
                 fontWeight: 700, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 ...(isMobile
@@ -838,7 +870,7 @@ export default function Home() {
         <div style={t.banner}>{tr("home.sampleCars")}</div>
       )}
       {error && !showingMocks && (
-        <div style={{ ...t.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
+        <div style={{ ...t.banner, background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text-2)" }}>{error}</div>
       )}
 
       {seccionCategorias}
@@ -849,7 +881,7 @@ export default function Home() {
           <div style={t.sectionTitle}>
             {cat ? `${tr("home.available")} · ${categoryLabel(tr, cat)}` : tr("home.available")}
           </div>
-          <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginTop: 2 }}>
             {loading ? tr("common.loading") : tr("home.availableCount", { count: filtered.length })}
             {pickup && dropoff && !dateError && " en las fechas elegidas"}
           </div>
@@ -857,7 +889,7 @@ export default function Home() {
         <div style={{ display: "flex", gap: 6 }}>
           {(cat || search || pickup || dropoff) && (
             <button onClick={() => { setCat(""); setSearch(""); setPickup(""); setDropoff(""); }}
-              style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600, border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151" }}>
+              style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600, border: "1.5px solid var(--fw-border)", background: "var(--fw-surface)", color: "var(--fw-text-2)" }}>
               {tr("search.clearFilters")}
             </button>
           )}
@@ -866,8 +898,8 @@ export default function Home() {
           {isMobile && [["lista", tr("home.list")], ["mapa", tr("home.map")]].map(([k, l]) => (
             <button key={k} onClick={() => setView(k)} style={{
               padding: "7px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: 600,
-              border: view === k ? "2px solid #0f6ce6" : "1.5px solid #e5e7eb",
-              background: view === k ? "#0f6ce6" : "#fff", color: view === k ? "#fff" : "#374151",
+              border: view === k ? "2px solid var(--fw-blue)" : "1.5px solid var(--fw-border)",
+              background: view === k ? "var(--fw-blue)" : "var(--fw-surface)", color: view === k ? "#fff" : "var(--fw-text-2)",
             }}>{l}</button>
           ))}
         </div>
@@ -878,12 +910,11 @@ export default function Home() {
         <Spinner block label={tr("common.loading")} />
       ) : (
         /*
-          LOS DOS A LA VEZ, y el de abajo del mouse se agranda.
+          LOS DOS A LA VEZ, con los autos grandes y el mapa al costado.
 
-          Las proporciones: en reposo mitad y mitad, y con el mouse encima el que
-          se mira pasa a 1.7 contra 1. No se lleva todo el ancho a propósito: el
-          otro tiene que seguir a la vista, si no volvería a ser el botón de
-          antes con una animación.
+          1.7 contra 1, que da vuelta con el botón de agrandar. Ninguno de los
+          dos se lleva el ancho entero a propósito: el otro tiene que seguir a
+          la vista, si no volvería a ser el botón de antes con una animación.
 
           La transición va sobre `grid-template-columns`, que los navegadores
           animan. Cuando termina hay que avisarle al mapa que cambió de tamaño
@@ -895,8 +926,7 @@ export default function Home() {
           data-fw-split
           style={{
             display: isMobile ? "block" : "grid",
-            gridTemplateColumns: foco === "lista" ? "1.7fr 1fr"
-              : foco === "mapa" ? "1fr 1.7fr" : "1fr 1fr",
+            gridTemplateColumns: mapaGrande ? "1fr 1.7fr" : "1.7fr 1fr",
             transition: "grid-template-columns .35s cubic-bezier(.4,0,.2,1)",
             gap: 16, alignItems: "start",
           }}
@@ -904,8 +934,6 @@ export default function Home() {
           {/* La lista. En el teléfono se muestra solo si está elegida. */}
           {(!isMobile || view === "lista") && (
             <div
-              onMouseEnter={() => !isMobile && setFoco("lista")}
-              onMouseLeave={() => !isMobile && setFoco(null)}
               style={{
                 display: "grid",
                 // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba
@@ -918,7 +946,7 @@ export default function Home() {
             >
               {filtered.map(car => <CarCard key={car.id} car={car} />)}
               {filtered.length === 0 && (
-                <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "#9ca3af" }}>
+                <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 60, color: "var(--fw-text-4)" }}>
                   {tr("home.noResults")}
                   {(cat || pickup) && <div style={{ fontSize: 13, marginTop: 8 }}>{tr("home.tryOther")}</div>}
                 </div>
@@ -928,15 +956,45 @@ export default function Home() {
 
           {/* El mapa. */}
           {hayMapa && (
-            <div
-              onMouseEnter={() => !isMobile && setFoco("mapa")}
-              onMouseLeave={() => !isMobile && setFoco(null)}
-              style={{ position: isMobile ? "static" : "sticky", top: 90 }}
-            >
+            <div style={{ position: isMobile ? "static" : "sticky", top: 90 }}>
               <div ref={mapRef} style={{
                 height: isMobile ? "60vh" : "calc(100vh - 240px)",
-                borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid #e5e7eb",
+                borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid var(--fw-border)",
               }} />
+
+              {/*
+                AGRANDAR EL MAPA.
+
+                Abajo a la izquierda, que es la esquina que Leaflet deja libre:
+                arriba a la izquierda están el + y el −, y abajo a la derecha la
+                firma de OpenStreetMap, que por licencia tiene que verse.
+
+                El dibujo es el de "pantalla completa" de toda la vida —las
+                cuatro esquinas— y da vuelta cuando el mapa ya está grande. Es
+                un trazo propio y no un emoji: los emojis los pinta el sistema
+                operativo y salen distintos en cada máquina.
+              */}
+              {!isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setMapaGrande((v) => !v)}
+                  aria-pressed={mapaGrande}
+                  aria-label={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
+                  title={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
+                  style={{
+                    position: "absolute", left: 12, bottom: 12, zIndex: 2,
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "9px 13px", borderRadius: 10,
+                    background: "var(--fw-surface)", color: "var(--fw-text-2)",
+                    border: "1px solid var(--fw-border)",
+                    boxShadow: "0 2px 10px rgba(0,0,0,.16)",
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  <IconoAgrandar cerrando={mapaGrande} />
+                  {tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
+                </button>
+              )}
               {/* La tarjeta del globo: vive en el árbol de React aunque se vea
                   adentro del mapa. */}
               {nodoGlobo && pinVisible
