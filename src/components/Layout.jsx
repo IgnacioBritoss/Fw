@@ -98,7 +98,7 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
     {[0, 1, 2].map(i => (
       <span key={i} style={{
         position: "absolute", left: 6, width: 20, height: 2,
-        background: "#111827", borderRadius: 2,
+        background: "var(--fw-chip)", borderRadius: 2,
         transition: "transform .28s cubic-bezier(.4,0,.2,1), opacity .18s ease, top .28s cubic-bezier(.4,0,.2,1)",
         top: abierto ? 15 : 9 + i * 6,
         opacity: abierto && i === 1 ? 0 : 1,
@@ -110,7 +110,47 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
   </button>
 );
 
-// Ícono de mensajes (burbuja de chat) — profesional, sin emoji
+/**
+ * LAS TRES RAYAS QUE SE CONVIERTEN EN FLECHA (computadora).
+ *
+ * Es el botón que abre y cierra la barra lateral. Cerrada muestra tres rayas
+ * —"acá hay un menú"— y abierta una flecha hacia la izquierda, que es hacia
+ * donde se va la barra al cerrarse. La misma pieza dice las dos cosas.
+ *
+ * CÓMO SE HACE LA FLECHA con las mismas tres rayas: la del medio se queda
+ * quieta y es el palo. Las otras dos se acortan a la mitad, se mudan a la
+ * altura del palo y giran 45 grados para arriba y para abajo, girando desde su
+ * PUNTA IZQUIERDA (`transformOrigin`). Al girar desde ahí, las dos arrancan del
+ * mismo punto que el palo y arman la punta de flecha. Sin fijar el origen
+ * girarían desde el centro y quedarían dos rayitas cruzadas en el medio.
+ */
+const BotonBarra = ({ abierta, onToggle, etiqueta }) => (
+  <button onClick={onToggle} aria-label={etiqueta} aria-expanded={abierta} title={etiqueta}
+    style={{ background: "none", border: "none", cursor: "pointer", padding: 6, width: 32, height: 32, position: "relative", flexShrink: 0 }}>
+    {[0, 1, 2].map((i) => {
+      const barba = i !== 1;
+      return (
+        <span key={i} style={{
+          position: "absolute", left: 6, height: 2,
+          background: "var(--fw-chip)", borderRadius: 2,
+          transformOrigin: "left center",
+          transition: "top .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1), transform .3s cubic-bezier(.4,0,.2,1)",
+          width: abierta && barba ? 11 : 20,
+          top: abierta ? 15 : 9 + i * 6,
+          transform: abierta
+            ? (i === 0 ? "rotate(-45deg)" : i === 2 ? "rotate(45deg)" : "none")
+            : "none",
+        }} />
+      );
+    })}
+  </button>
+);
+
+// Ícono de mensajes (burbuja de chat) — profesional, sin emoji.
+// Los grises van escritos como número y no como variable: terminan en un
+// atributo de SVG (`stroke=`), donde `var()` no es seguro en todos los
+// navegadores. El modo oscuro los cambia desde theme.js, con una regla que
+// apunta a ese valor exacto.
 const MessageIcon = ({ size = 18, color = "#374151" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
@@ -163,6 +203,26 @@ export default function Layout({ children }) {
   const location = useLocation();
   const { isMobile } = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);       // menú lateral abierto (celular)
+  /*
+    LA BARRA LATERAL SE PUEDE CERRAR EN COMPUTADORA.
+
+    Cerrada no desaparece: queda una franja angosta con los íconos solos. Es lo
+    que hace falta —los 248px de la barra son bastante pantalla, y en una
+    grilla de autos o en el mapa ese ancho se nota— sin perder la navegación,
+    que es lo que pasaría si se escondiera del todo.
+
+    La elección se recuerda: si alguien la cerró es porque quiere la pantalla
+    ancha, y volver a abrirla en cada visita sería desandarlo.
+  */
+  const [barraCerrada, setBarraCerrada] = useState(() => {
+    try { return localStorage.getItem("fw_barra") === "cerrada"; } catch { return false; }
+  });
+  const cambiarBarra = () => setBarraCerrada((v) => {
+    try { localStorage.setItem("fw_barra", v ? "abierta" : "cerrada"); } catch { /* almacenamiento bloqueado */ }
+    return !v;
+  });
+  // En el teléfono manda el cajón: la franja angosta no aplica.
+  const angosta = !isMobile && barraCerrada;
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);         // ¿hay mensajes sin leer?
   const [hasUnreadNotif, setHasUnreadNotif] = useState(false); // ¿hay notificaciones sin leer?
@@ -201,7 +261,10 @@ export default function Layout({ children }) {
   const isAdmin = user?.role === "ADMIN"; // ¿el usuario es administrador?
 
   const t = {
-    navGroup: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 28px 8px" },
+    navGroup: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".08em", textTransform: "uppercase", margin: "20px 28px 8px" },
+    /* Con la barra angosta no entra el título del grupo: en su lugar va una
+       línea, que separa igual sin necesitar ancho. */
+    navSeparador: { height: 1, background: "var(--fw-bg)", margin: "14px 14px 10px" },
     /*
       EL SELECCIONADO ES UNA FRANJA, NO UN BOTÓN.
 
@@ -228,13 +291,16 @@ export default function Layout({ children }) {
     */
     navItem: (active) => ({
       display: "flex", alignItems: "center", gap: 12,
-      padding: "10px 28px",
+      // Angosta: el ícono va centrado y sin relleno a los costados, para que la
+      // franja azul siga cruzando de borde a borde.
+      justifyContent: angosta ? "center" : "flex-start",
+      padding: angosta ? "11px 0" : "10px 28px",
       borderRadius: 0, fontSize: 14, fontWeight: active ? 600 : 500,
       cursor: "pointer", marginBottom: 2,
-      background: active ? "#0f6ce6" : "transparent",
-      color: active ? "#fff" : "#374151", transition: "background .15s",
+      background: active ? "var(--fw-blue)" : "transparent",
+      color: active ? "#fff" : "var(--fw-text-2)", transition: "background .15s",
     }),
-    navIcon: (active) => ({ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0, color: active ? "#fff" : "#6b7280" }),
+    navIcon: (active) => ({ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0, color: active ? "#fff" : "var(--fw-text-3)" }),
     /*
       Los botones de la derecha ocupan el ALTO ENTERO de la franja y se separan
       con una línea, como las columnas de una barra de herramientas.
@@ -249,16 +315,16 @@ export default function Layout({ children }) {
     */
     iconBtn: {
       alignSelf: "stretch", width: isMobile ? 46 : 54,
-      background: "transparent", border: "none", borderLeft: "1px solid #f1f2f4",
+      background: "transparent", border: "none", borderLeft: "1px solid var(--fw-line-soft)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      cursor: "pointer", padding: 0, color: "#374151",
+      cursor: "pointer", padding: 0, color: "var(--fw-text-2)",
       transition: "background .15s",
     },
     /* El puntito de "hay algo sin leer", pegado al ícono y no a la esquina del
        botón: el botón ahora es alto y la esquina queda lejos del dibujo. */
     dot: {
       position: "absolute", top: -3, right: -4, width: 8, height: 8,
-      borderRadius: "50%", background: "#0f6ce6", border: "2px solid #fff",
+      borderRadius: "50%", background: "var(--fw-blue)", border: "2px solid #fff",
     },
   };
 
@@ -274,18 +340,39 @@ export default function Layout({ children }) {
           <BotonMenu abierto={drawerOpen} onToggle={() => setDrawerOpen(o => !o)}
             etiqueta={tr("nav.closeMenu")} oculto={!drawerOpen} />
         </div>
-      ) : <Logo />}
+      ) : (
+        // En computadora: el botón a la IZQUIERDA de la marca, que es de donde
+        // sale y a donde vuelve la barra. Angosta queda solo el botón, centrado.
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          justifyContent: angosta ? "center" : "flex-start",
+          padding: angosta ? "0 0 8px" : "0 20px 8px",
+        }}>
+          <BotonBarra abierta={!barraCerrada} onToggle={cambiarBarra}
+            etiqueta={tr(barraCerrada ? "nav.openMenu" : "nav.closeMenu")} />
+          {!angosta && (
+            <div onClick={() => navigate("/")} style={{ cursor: "pointer", display: "flex" }}>
+              <BrandLogo size={17} />
+            </div>
+          )}
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {NAV.map((g, gi) => (
           <div key={gi}>
-            <div style={t.navGroup}>{tr(g.group)}</div>
+            {angosta
+              ? (gi > 0 ? <div style={t.navSeparador} /> : <div style={{ height: 10 }} />)
+              : <div style={t.navGroup}>{tr(g.group)}</div>}
             {g.items.filter(it => !it.adminOnly || isAdmin).map((it, ii) => (
-              <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}>
+              // `title`: angosta el nombre no está escrito, así que el globito
+              // del navegador es lo único que dice a dónde lleva cada dibujo.
+              <div key={ii} style={t.navItem(isActive(it))} onClick={() => go(it.path)}
+                title={angosta ? tr(it.label) : undefined}>
                 <span style={t.navIcon(isActive(it))}><it.Icon /></span>
-                <span style={{ flex: 1 }}>{tr(it.label)}</span>
+                {!angosta && <span style={{ flex: 1 }}>{tr(it.label)}</span>}
                 {/* Cantidad de favoritos guardados, al lado del ítem. */}
-                {it.path === "/favoritos" && favoritesCount > 0 && (
-                  <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "#eff6ff", color: isActive(it) ? "#fff" : "#0f6ce6" }}>
+                {!angosta && it.path === "/favoritos" && favoritesCount > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 10, padding: "2px 7px", background: isActive(it) ? "rgba(255,255,255,.22)" : "var(--fw-blue-bg)", color: isActive(it) ? "#fff" : "var(--fw-blue)" }}>
                     {favoritesCount}
                   </span>
                 )}
@@ -301,18 +388,24 @@ export default function Layout({ children }) {
           opción más del menú, que es donde se lo busca. */}
 
       {user && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 16px 0", paddingTop: 16, borderTop: "1px solid #f3f4f6" }}>
-          <div onClick={() => go("/profile")} style={{ cursor: "pointer", flexShrink: 0 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          justifyContent: angosta ? "center" : "flex-start",
+          margin: angosta ? "16px 8px 0" : "16px 16px 0",
+          paddingTop: 16, borderTop: "1px solid var(--fw-line-soft)",
+        }}>
+          <div onClick={() => go("/profile")} title={angosta ? firstName : undefined}
+            style={{ cursor: "pointer", flexShrink: 0 }}>
             <Avatar src={user?.profilePhotoUrl} initials={initials} size={36} alt="" />
           </div>
-          <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{firstName}</div>
-            <div style={{ fontSize: 11, color: "#9ca3af" }}>{tr("nav.profile")}</div>
-          </div>
-          <button onClick={() => { logout(); navigate("/"); }} title={tr("nav.logout")}
-            style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: 4, display: "flex" }}>
+          {!angosta && <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => go("/profile")}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)" }}>{firstName}</div>
+            <div style={{ fontSize: 11, color: "var(--fw-text-4)" }}>{tr("nav.profile")}</div>
+          </div>}
+          {!angosta && <button onClick={() => { logout(); navigate("/"); }} title={tr("nav.logout")}
+            style={{ background: "none", border: "none", color: "var(--fw-red-text)", cursor: "pointer", padding: 4, display: "flex" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-          </button>
+          </button>}
         </div>
       )}
     </>
@@ -360,14 +453,14 @@ export default function Layout({ children }) {
           <TopButton
             style={{ ...t.iconBtn, width: "auto", padding: isMobile ? "0 12px" : "0 18px" }}
             onClick={() => navigate("/login")} title={tr("auth.loginBtn")}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", whiteSpace: "nowrap" }}>
               {isMobile ? tr("auth.loginShort") : tr("auth.loginBtn")}
             </span>
           </TopButton>
           <TopButton
             style={{ ...t.iconBtn, width: "auto", padding: isMobile ? "0 12px" : "0 18px" }}
             onClick={() => navigate("/register")} title={tr("auth.registerFree")}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#0f6ce6", whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-blue)", whiteSpace: "nowrap" }}>
               {isMobile ? tr("auth.registerShort") : tr("auth.registerFree")}
             </span>
           </TopButton>
@@ -389,19 +482,32 @@ export default function Layout({ children }) {
   // estilos, así que `children` nunca se desmonta y el estado de la página se
   // conserva al cambiar el tamaño de la ventana.
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6", display: "flex" }}>
+    <div style={{ minHeight: "100vh", background: "var(--fw-bg)", display: "flex" }}>
       {/* Menú lateral: fijo en escritorio, cajón deslizable en celular */}
       <aside
         style={isMobile ? {
           position: "fixed", top: 0, left: 0, bottom: 0, width: 248, zIndex: 101,
           // Sin padding a los costados: lo pone cada cosa de adentro, para que
           // la franja del seleccionado pueda llegar a los bordes.
-          background: "#fff", padding: "24px 0", display: "flex", flexDirection: "column",
+          background: "var(--fw-surface)", padding: "24px 0", display: "flex", flexDirection: "column",
           boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform .3s cubic-bezier(.32,.72,0,1)",
         } : {
-          width: 248, flexShrink: 0, background: "#fff", borderRight: "1px solid #ececec",
+          /*
+            El ancho es lo único que cambia, y por eso se puede animar: el
+            contenido de al lado es un `flex: 1`, así que se estira solo para
+            ocupar lo que la barra deja libre, y las pantallas ya venían
+            centradas con `margin: 0 auto`. No hay nada más que mover.
+
+            `overflow: hidden` es para la animación: mientras la barra se cierra
+            los nombres todavía están escritos y sin esto asomarían por el
+            costado durante el tercio de segundo que dura.
+          */
+          width: angosta ? 68 : 248,
+          transition: "width .3s cubic-bezier(.32,.72,0,1)",
+          overflow: "hidden",
+          flexShrink: 0, background: "var(--fw-surface)", borderRight: "1px solid var(--fw-line)",
           padding: "24px 0", display: "flex", flexDirection: "column",
           position: "sticky", top: 0, height: "100vh",
         }}
@@ -428,8 +534,8 @@ export default function Layout({ children }) {
             lo que les permite a los botones de la derecha ocupar el alto entero.
             El relleno vertical se va a 0 y queda solo el horizontal. */}
         <div style={{
-          display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "#fff",
-          borderBottom: "1px solid #ececec", position: "sticky", top: 0, zIndex: 20,
+          display: "flex", alignItems: "center", gap: isMobile ? 9 : 16, background: "var(--fw-surface)",
+          borderBottom: "1px solid var(--fw-line)", position: "sticky", top: 0, zIndex: 20,
           height: isMobile ? 56 : 66,
           padding: isMobile ? "0 0 0 12px" : "0 0 0 32px",
         }}>
