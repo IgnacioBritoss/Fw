@@ -24,6 +24,8 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
+import AutocompleteInput from "../../components/AutocompleteInput";
+import { MARCAS, modelosDe } from "../../data/sugerencias";
 
 // Colores predefinidos que se ofrecen como "chips" al elegir el color del auto.
 const PRESET_COLORS = [
@@ -643,13 +645,42 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
         <div style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.vehicleData")}</div>
           <div style={isMobile ? s.grid3Mobile : s.grid3}>
+            {/*
+              MARCA Y MODELO SE AUTOCOMPLETAN, igual que en el buscador de la
+              home. Es el mismo problema de las dos puntas: escribir la marca a
+              mano se presta a "Volwagen", "Peugot" o "Citroen" sin diéresis, y
+              después el auto no aparece en ninguna búsqueda —el filtro compara
+              texto—. Ofreciendo la palabra escrita como corresponde, con Tab
+              queda puesta bien.
+
+              El modelo ofrece SOLO los de la marca elegida: si ya dijo Ford,
+              proponerle "Corolla" no tiene sentido, y con la lista entera
+              cualquier letra ofrece el modelo de otra marca. Mientras no haya
+              marca, ofrece todos.
+            */}
             <div style={s.field}>
               <label style={s.label}>{tr("publish.brand")} *</label>
-              <input style={s.input} placeholder="Toyota" value={vehicleForm.brand} onChange={(e) => setV("brand", e.target.value)} />
+              <AutocompleteInput
+                value={vehicleForm.brand}
+                onChange={(v) => setV("brand", v)}
+                opciones={MARCAS}
+                placeholder="Toyota"
+                style={{ ...s.input, padding: 0 }}
+                relleno="11px 14px"
+                peso={400}
+              />
             </div>
             <div style={s.field}>
               <label style={s.label}>{tr("publish.model")} *</label>
-              <input style={s.input} placeholder="Corolla" value={vehicleForm.model} onChange={(e) => setV("model", e.target.value)} />
+              <AutocompleteInput
+                value={vehicleForm.model}
+                onChange={(v) => setV("model", v)}
+                opciones={modelosDe(vehicleForm.brand)}
+                placeholder="Corolla"
+                style={{ ...s.input, padding: 0 }}
+                relleno="11px 14px"
+                peso={400}
+              />
             </div>
             <div style={s.field}>
               <label style={s.label}>{tr("publish.year")} *</label>
