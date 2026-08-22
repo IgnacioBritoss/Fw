@@ -650,6 +650,7 @@ export default {
   "booking.notFound": "Annuncio non trovato.",
   "booking.needVerified": "Per prenotare devi verificare il tuo account (telefono, documento e patente).",
   "booking.createFailed": "Errore nella creazione della prenotazione.",
+  "cal.goToMonth": "Vai al mese",
   "cal.pickDates": "Seleziona le date",
   "cal.loadingAvail": "Caricamento della disponibilità...",
   "cal.free": "Disponibile",

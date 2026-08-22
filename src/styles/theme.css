@@ -56,29 +56,84 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--fw-surface-3); border-radius: 3px; }
 
-/* Datepicker override */
+/* ============================================================================
+   El calendario (react-datepicker)
+   ----------------------------------------------------------------------------
+   ESTO ESTABA ROTO Y NO SE VEÍA A SIMPLE VISTA. En la versión 9 de la librería
+   cambió el armado interno del calendario, y estos estilos —escritos para la
+   versión anterior— dejaron de caer donde caían antes. Resultado, en la pantalla
+   de reservar:
+
+    · LAS FLECHAS ERAN BLANCAS SOBRE BLANCO. Antes las flechas quedaban dentro de
+      la franja azul del mes, así que pintarlas de blanco tenía sentido. Ahora se
+      ubican contra el borde del calendario entero, que es blanco: la flecha de
+      "mes siguiente" seguía ahí, se podía tocar, pero era invisible. Por eso
+      parecía que solo se podían reservar los dos meses que se ven, cuando en
+      realidad el calendario siempre llegó hasta los seis. No era un límite: era
+      una flecha que no se veía.
+    · LOS DÍAS DE LA SEMANA TAMBIÉN. "lu ma mi ju vi sá do" quedó fuera de la
+      franja azul, y al seguir siendo blancos desaparecieron: en su lugar había
+      un hueco vacío arriba de los números.
+    · LOS DOS MESES SE APILABAN. Cada mes flota a la izquierda, y los dos juntos
+      no entraban en el ancho de la columna, así que el segundo caía abajo del
+      primero y el calendario quedaba larguísimo.
+
+   Ahora: los meses van uno al lado del otro con `flex`, los días de la semana se
+   leen, y las flechas son dos botones redondos con el color del texto, que se
+   ven en los dos modos.
+   ========================================================================== */
 .react-datepicker {
   font-family: inherit !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--fw-border) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
+  background: var(--fw-surface) !important;
+  /* Los meses, uno al lado del otro. Las flechas son hijas directas pero están
+     posicionadas por encima, así que no cuentan como columnas. */
+  display: flex !important;
+  width: 100%;
+  padding: 4px;
+}
+.react-datepicker__month-container {
+  float: none !important;
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Las filas centradas: al repartir el ancho sobra espacio, y sin esto los días
+   quedarían todos pegados al borde izquierdo de su mes. */
+.react-datepicker__day-names,
+.react-datepicker__week {
+  display: flex;
+  justify-content: center;
 }
 .react-datepicker__header {
   background: var(--primary) !important;
   border-bottom: none !important;
   border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+  padding: 8px 0 !important;
 }
-.react-datepicker__current-month,
-.react-datepicker__day-name {
+.react-datepicker__current-month {
+  /* Blanco fijo: encima está el azul de la marca, que es el mismo en los dos
+     modos, así que la letra también. */
   color: #fff !important;
+  font-size: 14px !important;
+}
+.react-datepicker__day-name {
+  /* Ya NO va dentro de la franja azul: si fuera blanco, no se vería. */
+  color: var(--fw-text-3) !important;
+}
+.react-datepicker__day {
+  color: var(--fw-text) !important;
+}
+.react-datepicker__day--outside-month,
+.react-datepicker__day--disabled {
+  color: var(--fw-text-4) !important;
 }
 .react-datepicker__day--selected,
 .react-datepicker__day--in-range,
 .react-datepicker__day--range-start,
 .react-datepicker__day--range-end {
   background: var(--primary) !important;
-  /* Blanco fijo: el fondo es el azul de la marca, que es el mismo en los dos
-     modos, así que la letra encima también. */
   color: #fff !important;
 }
 .react-datepicker__day--in-selecting-range {
@@ -89,8 +144,36 @@ body {
   background: var(--primary-bg) !important;
   color: var(--primary) !important;
 }
+.react-datepicker__day--disabled:hover {
+  background: transparent !important;
+  color: var(--fw-text-4) !important;
+}
+
+/* Las flechas de mes: dos botones redondos, arriba de todo y bien a la vista. */
+.react-datepicker__navigation {
+  top: 8px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: var(--fw-surface) !important;
+  border: 1px solid var(--fw-border) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+  z-index: 2;
+}
+.react-datepicker__navigation--previous { left: 8px !important; }
+.react-datepicker__navigation--next { right: 8px !important; }
+.react-datepicker__navigation:hover {
+  background: var(--primary-bg) !important;
+  border-color: var(--primary) !important;
+}
 .react-datepicker__navigation-icon::before {
-  border-color: #fff !important;
+  border-color: var(--fw-text-2) !important;
+  border-width: 2px 2px 0 0 !important;
+  width: 7px !important;
+  height: 7px !important;
+}
+.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: var(--primary) !important;
 }
 
 /* Fix z-index mapa vs navbar */

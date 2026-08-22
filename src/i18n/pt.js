@@ -650,6 +650,7 @@ export default {
   "booking.notFound": "Publicação não encontrada.",
   "booking.needVerified": "Para reservar você precisa verificar a sua conta (telefone, documento e carteira).",
   "booking.createFailed": "Erro ao criar a reserva.",
+  "cal.goToMonth": "Ir para o mês",
   "cal.pickDates": "Selecione as datas",
   "cal.loadingAvail": "Carregando disponibilidade...",
   "cal.free": "Disponível",

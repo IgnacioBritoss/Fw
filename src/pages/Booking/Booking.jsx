@@ -16,7 +16,11 @@ import { useI18n } from "../../i18n/core";
 import { useCurrency } from "../../context/CurrencyContext";
 
 const s = {
-  page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
+  // 1020 y no 900: con 900, la columna del calendario quedaba en 438px y los dos
+  // meses no entraban uno al lado del otro, así que el segundo caía abajo y la
+  // pantalla se estiraba al pedo. Con este ancho entran los dos, que es lo que
+  // sirve para elegir un rango que cruza de un mes al otro.
+  page: { maxWidth: 1020, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
   title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
   titleMobile: { fontSize: 20, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },

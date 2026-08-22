@@ -654,6 +654,7 @@ export default {
   "booking.notFound": "未找到该发布。",
   "booking.needVerified": "预订前需要先验证账户（手机、身份证和驾照）。",
   "booking.createFailed": "创建订单失败。",
+  "cal.goToMonth": "跳到月份",
   "cal.pickDates": "选择日期",
   "cal.loadingAvail": "正在加载可租日期…",
   "cal.free": "可租",
