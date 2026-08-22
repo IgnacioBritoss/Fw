@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
 import ReportIssueCard from "../../components/ReportIssueCard";
+import CurrencyPicker from "../../components/CurrencyPicker";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
@@ -435,6 +436,32 @@ export default function Settings() {
                 })}
                 <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
                   {tr("settings.languageNote")}
+                </div>
+              </div>
+
+              {/*
+                LA MONEDA, EN LA MISMA PANTALLA QUE EL IDIOMA.
+
+                Van juntas porque las necesita la misma persona en el mismo
+                momento: alguien de otro país que abre la app. Separarlas
+                obligaría a buscar dos veces lo que es una sola decisión —"que
+                esto se entienda desde donde estoy"— y es la razón por la que
+                Airbnb las tiene en el mismo lugar.
+              */}
+              <div style={{ ...t.card, padding: isMobile ? 18 : 26, marginTop: 16 }}>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 14, flexWrap: "wrap",
+                }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
+                      {tr("settings.currency")}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "#9ca3af", marginTop: 3, lineHeight: 1.6 }}>
+                      {tr("settings.currencyNote")}
+                    </div>
+                  </div>
+                  <CurrencyPicker />
                 </div>
               </div>
             </>

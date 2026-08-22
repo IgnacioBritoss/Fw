@@ -35,6 +35,7 @@ import StatusChip from "../../components/StatusChip";
 import { useI18n } from "../../i18n/core";
 import { localeFor } from "../../i18n/dates";
 import Spinner from "../../components/Spinner";
+import { useCurrency } from "../../context/CurrencyContext";
 
 // Configuración visual (texto y colores) de cada estado de una reserva.
 const STATUS_CONFIG = {
@@ -138,6 +139,7 @@ function nextStepFor(booking, isOwner) {
 
 export default function MyBookings() {
   const { t, lang } = useI18n();
+  const { precio } = useCurrency();
   const dateLocale = localeFor(lang);
   const { user } = useAuth();
   // Qué reservas se pueden reseñar y cuáles ya se reseñaron. Lo decide el
@@ -280,7 +282,7 @@ export default function MyBookings() {
             "total" estaba escrita a mano acá adentro y no se traducía. */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10 }}>
           <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "#111827" }}>
-            ${Number(total).toLocaleString()} <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>{t("common.total")}</span>
+            {precio(total)} <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>{t("common.total")}</span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (

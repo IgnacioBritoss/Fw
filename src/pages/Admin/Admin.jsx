@@ -24,6 +24,7 @@ import { useI18n } from "../../i18n/core";
 import Avatar from "../../components/Avatar";
 import { initialsOf } from "../../services/people";
 import { shortDate } from "../../i18n/dates";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
@@ -69,6 +70,7 @@ const userStatusColor = (status) => {
 
 export default function Admin() {
   const { t: tr, lang } = useI18n();
+  const { precio } = useCurrency();
   const { isMobile } = useIsMobile();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -307,7 +309,7 @@ export default function Admin() {
                   <span style={{ ...s.badge, ...(listingStatusColors[listing.status] || {}) }}>{listing.status}</span>
                 </div>
                 <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 2 }}>
-                  {listing.locationText} · ${Number(listing.pricePerDay).toLocaleString()}{tr("common.perDay")}
+                  {listing.locationText} · {precio(listing.pricePerDay)}{tr("common.perDay")}
                 </div>
                 <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
                   {shortDate(listing.createdAt, lang)}

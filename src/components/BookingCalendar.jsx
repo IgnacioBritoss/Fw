@@ -27,6 +27,7 @@ import { getListingAvailability } from "../services/api";
 import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
 import { localeFor } from "../i18n/dates";
+import { useCurrency } from "../context/CurrencyContext";
 
 /**
  * Hasta cuántos meses adelante se puede reservar.
@@ -57,6 +58,7 @@ const dayKey = (date) => format(date, "yyyy-MM-dd");
 
 export default function BookingCalendar({ listingId, car, onConfirm }) {
   const { t: tr, lang } = useI18n();
+  const { precio } = useCurrency();
   const [range, setRange] = useState([null, null]); // [fechaInicio, fechaFin] elegidas
   const [start, end] = range;
   const [unavailable, setUnavailable] = useState([]); // días ocupados (YYYY-MM-DD)
@@ -176,20 +178,20 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
       {start && end && days > 0 && (
         <div style={s.summary}>
           <div style={s.summaryRow}>
-            <span>${pricePerDay.toLocaleString()} x {days} {tr(days === 1 ? "common.day" : "common.days")}</span>
-            <span>${total.toLocaleString()}</span>
+            <span>{precio(pricePerDay)} x {days} {tr(days === 1 ? "common.day" : "common.days")}</span>
+            <span>{precio(total)}</span>
           </div>
           <div style={s.summaryRow}>
             <span>{tr("cal.fee")}</span>
-            <span>${commission.toLocaleString()}</span>
+            <span>{precio(commission)}</span>
           </div>
           <div style={s.summaryRow}>
             <span>{tr("payment.guarantee")}</span>
-            <span>${deposit.toLocaleString()}</span>
+            <span>{precio(deposit)}</span>
           </div>
           <div style={s.summaryTotal}>
             <span>Total</span>
-            <span>${(total + commission + deposit).toLocaleString()}</span>
+            <span>{precio(total + commission + deposit)}</span>
           </div>
           <button
             disabled={!canConfirm}

@@ -39,6 +39,7 @@ import { format, parseISO } from "date-fns";
 import Spinner from "../../components/Spinner";
 import { localeFor, shortDate } from "../../i18n/dates";
 import { useI18n } from "../../i18n/core";
+import { useCurrency } from "../../context/CurrencyContext";
 
 // Etiquetas de los estados de una reserva (mismas que en "Mis reservas").
 // Claves de traducción: son las mismas etiquetas que usa "Mis reservas".
@@ -105,6 +106,7 @@ const s = {
 
 export default function Dashboard() {
   const { t: tr, lang } = useI18n();
+  const { precio } = useCurrency();
   const { user, isVerified, refreshUser } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
@@ -233,7 +235,7 @@ export default function Dashboard() {
         {[
           [loadingCars ? "..." : myCars.length, tr("dash.publishedCars")],
           [loadingBookings ? "..." : requests.length, tr("dash.requests")],
-          [loadingBookings ? "..." : `$${earnings.toLocaleString()}`, tr("dash.earnings")],
+          [loadingBookings ? "..." : precio(earnings), tr("dash.earnings")],
         ].map(([num, label], i) => (
           <div key={label} style={{ ...s.franjaCelda, ...(i === 0 ? { borderLeft: "none" } : {}) }}>
             <div style={{ ...s.statNum, fontSize: isMobile ? 18 : 24 }}>{num}</div>
@@ -274,7 +276,7 @@ export default function Dashboard() {
               <div style={{ flex: 1, minWidth: 160 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{car.brand} {car.model} {car.year}</div>
                 <div style={{ color: "#6b7280", fontSize: 13 }}>
-                  {car.location} · ${priceOf(car).toLocaleString()}{tr("common.perDay")}
+                  {car.location} · {precio(priceOf(car))}{tr("common.perDay")}
                   {car.category ? ` · ${categoryLabel(tr, car.category)}` : ""}
                 </div>
               </div>
@@ -315,7 +317,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 13, color: "#6b7280" }}>{vehicleLabel(r)} · {dateRange(r)}</div>
               </div>
               <div style={{ fontWeight: 700, fontSize: 16, color: "#0f6ce6" }}>
-                ${Number(r.totalPriceSnapshot || 0).toLocaleString()}
+                {precio(r.totalPriceSnapshot || 0)}
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
@@ -352,7 +354,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
-                    ${Number(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0).toLocaleString()}
+                    {precio(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0)}
                   </div>
                   <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
                 </div>

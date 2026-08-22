@@ -64,7 +64,15 @@ function Row({ label, value }) {
   );
 }
 
-const money = (value) => `$${Number(value || 0).toLocaleString()}`;
+/*
+  ACÁ NO SE CONVIERTE LA MONEDA, A PROPÓSITO.
+
+  En el resto de la app el precio se muestra en la moneda que eligió cada uno,
+  para poder dimensionarlo. Pero esta es la pantalla del cobro: lo que se debita
+  son pesos argentinos, y escribir "US$ 26" al lado del botón de pagar sería
+  decir que se cobra en dólares. Los números de acá son los de la operación.
+*/
+const money = (value) => `$${Number(value || 0).toLocaleString("es-AR")} ARS`;
 
 export default function Payment() {
   const { t: tr, lang } = useI18n();
