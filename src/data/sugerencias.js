@@ -110,6 +110,75 @@ export const AUTOS = [
 ];
 
 /**
+ * Compara letras sin acentos y sin distinguir mayúsculas: quien escribe
+ * "cordoba" tiene que llegar a "Córdoba", y "citroen" a "Citroën".
+ */
+const sinAcentos = (s) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/**
+ * Las marcas solas, para el formulario de publicar.
+ *
+ * En el buscador de la home conviene tener marcas y modelos revueltos —quien
+ * busca escribe "Suran" o escribe "Fiat", y las dos cosas valen—. En el
+ * formulario no: el campo se llama Marca y ahí lo único que va es una marca.
+ * Ofrecerle "Suran" al campo Marca sería ofrecerle un error.
+ */
+export const MARCAS = [
+  "Fiat", "Volkswagen", "Chevrolet", "Renault", "Peugeot", "Toyota", "Ford",
+  "Citroën", "Nissan", "Honda", "Jeep", "Suzuki", "Hyundai", "Kia",
+  "Mercedes-Benz", "BMW", "Audi", "Volvo", "Subaru", "Mitsubishi",
+];
+
+/**
+ * Los modelos de cada marca.
+ *
+ * Sirve para que el campo Modelo ofrezca SOLO los de la marca que se eligió: si
+ * ya dijo Ford, ofrecerle "Corolla" no tiene ningún sentido, y además con la
+ * lista entera cualquier letra ofrece el modelo de otra marca.
+ */
+export const MODELOS = {
+  "Volkswagen": ["Suran", "Gol", "Gol Trend", "Polo", "Virtus", "Vento", "Amarok", "Tiguan", "T-Cross", "Nivus", "Taos", "Up"],
+  "Renault": ["Sandero", "Logan", "Duster", "Kangoo", "Clio", "Megane", "Stepway", "Kwid", "Captur", "Alaskan", "Oroch"],
+  "Fiat": ["Cronos", "Argo", "Mobi", "Toro", "Pulse", "Palio", "Uno", "Siena", "Strada", "Fiorino", "Fastback", "Fiat 600"],
+  "Chevrolet": ["Onix", "Prisma", "Cruze", "Tracker", "S10", "Spin", "Corsa", "Agile", "Montana", "Classic"],
+  "Peugeot": ["208", "308", "2008", "3008", "Partner", "Expert", "408", "5008"],
+  "Toyota": ["Etios", "Corolla", "Yaris", "Hilux", "SW4", "RAV4", "Corolla Cross", "Hiace"],
+  "Ford": ["Ka", "Fiesta", "Focus", "EcoSport", "Ranger", "Territory", "Maverick", "Bronco Sport", "Transit"],
+  "Citroën": ["C3", "C4", "C4 Cactus", "Berlingo", "C3 Aircross"],
+  "Nissan": ["Versa", "March", "Kicks", "Frontier", "Sentra", "X-Trail"],
+  "Honda": ["Fit", "City", "HR-V", "CR-V", "Civic", "WR-V"],
+  "Jeep": ["Renegade", "Compass", "Commander", "Wrangler"],
+  "Suzuki": ["Vitara", "Swift", "Jimny", "Baleno"],
+  "Hyundai": ["Creta", "Tucson", "HB20", "i10", "Santa Fe"],
+  "Kia": ["Cerato", "Sportage", "Rio", "Seltos", "Picanto"],
+  "Mercedes-Benz": ["Clase A", "Clase C", "GLA", "GLC", "Sprinter", "Vito"],
+  "BMW": ["Serie 1", "Serie 3", "X1", "X3", "X5"],
+  "Audi": ["A1", "A3", "A4", "Q2", "Q3", "Q5"],
+  "Volvo": ["XC40", "XC60", "XC90", "S60"],
+  "Subaru": ["Impreza", "Forester", "XV", "Outback"],
+  "Mitsubishi": ["L200", "Outlander", "ASX", "Montero"],
+};
+
+/** Todos los modelos juntos, sin repetir. Es lo que se ofrece mientras no haya
+ *  ninguna marca elegida todavía. */
+const TODOS_LOS_MODELOS = [...new Set(Object.values(MODELOS).flat())];
+
+/**
+ * Qué modelos ofrecerle a alguien que escribió esta marca.
+ *
+ * Compara sin distinguir mayúsculas ni acentos, porque nadie escribe "Citroën"
+ * con la diéresis. Si la marca todavía no está escrita, o no la reconoce,
+ * devuelve todos: es preferible ofrecer de más que no ofrecer nada.
+ */
+export function modelosDe(marca) {
+  const buscada = sinAcentos(String(marca || "").trim());
+  if (!buscada) return TODOS_LOS_MODELOS;
+  const encontrada = Object.keys(MODELOS).find((m) => sinAcentos(m) === buscada);
+  return encontrada ? MODELOS[encontrada] : TODOS_LOS_MODELOS;
+}
+
+/**
  * Busca con qué seguir lo que se está escribiendo.
  *
  * Devuelve el RESTO, no la palabra entera: quien escribió "su" recibe "ran", que
@@ -120,9 +189,6 @@ export const AUTOS = [
  * que llegar a "Córdoba"—, pero devuelve el resto TAL CUAL está escrito en la
  * lista, con sus acentos.
  */
-const sinAcentos = (s) =>
-  s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-
 export function completar(texto, lista) {
   const vacio = { resto: "", completa: "" };
   const escrito = String(texto ?? "");

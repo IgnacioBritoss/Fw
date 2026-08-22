@@ -37,6 +37,12 @@ export default function AutocompleteInput({
   placeholder,
   style,
   inputStyle,
+  // Lo que ocupa lugar TIENE que ser igual en las dos capas, si no la
+  // sugerencia gris queda corrida de lo escrito. Por eso el relleno y el grosor
+  // de la letra entran por acá y se aplican a las dos, en vez de dejarlos
+  // sueltos en `inputStyle`, que solo llega a una.
+  relleno = 0,
+  peso = 600,
   ...resto
 }) {
   const id = useId();
@@ -87,9 +93,9 @@ export default function AutocompleteInput({
   // Las dos capas tienen que compartir TODO lo que ocupa lugar. Se arma una vez
   // y se usa en las dos para que no se puedan desincronizar por descuido.
   const tipografia = {
-    fontSize: 14, fontWeight: 600, lineHeight: "20px",
+    fontSize: 14, fontWeight: peso, lineHeight: "20px",
     fontFamily: "inherit", letterSpacing: "normal",
-    padding: 0, border: "none", margin: 0,
+    padding: relleno, border: "none", margin: 0,
   };
 
   return (
@@ -119,7 +125,9 @@ export default function AutocompleteInput({
         // El navegador también quiere autocompletar y dibuja su propia lista
         // encima; con dos ayudas al mismo tiempo no se entiende ninguna.
         autoCorrect="off" spellCheck="false"
-        style={{ ...tipografia, background: "transparent", outline: "none", width: "100%", position: "relative", ...inputStyle }}
+        // `boxSizing`: con relleno propio, sin esto el campo mide 100% MÁS el
+        // relleno y se sale de su columna.
+        style={{ ...tipografia, background: "transparent", outline: "none", width: "100%", boxSizing: "border-box", position: "relative", ...inputStyle }}
         {...resto}
       />
     </div>
