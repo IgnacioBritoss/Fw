@@ -54,13 +54,13 @@ export default function CompleteProfile() {
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
 
   const s = {
-    page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
-    card: { background:"#fff", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:440, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
-    label: { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:5 },
-    input: { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827", boxSizing:"border-box" },
-    btn: { width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
-    error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-    hint: { fontSize:12, color:"#9ca3af", marginTop:6 },
+    page: { minHeight:"100vh", background:"var(--fw-surface-2)", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
+    card: { background:"var(--fw-surface)", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:440, boxShadow:"0 4px 24px rgba(0,0,0,.08)" },
+    label: { display:"block", fontSize:13, fontWeight:500, color:"var(--fw-text-2)", marginBottom:5 },
+    input: { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid var(--fw-border)", fontSize: isMobile ? 16 : 14, outline:"none", color:"var(--fw-text)", boxSizing:"border-box" },
+    btn: { width:"100%", padding:13, background:"var(--fw-blue)", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer" },
+    error: { background:"var(--fw-red-bg)", border:"1.5px solid var(--fw-red-line)", borderRadius:8, padding:"10px 14px", color:"var(--fw-red-text-2)", fontSize:13, marginBottom:16 },
+    hint: { fontSize:12, color:"var(--fw-text-4)", marginTop:6 },
   };
 
   // Guarda la fecha de nacimiento (obligatoria) y, si se cargó, el teléfono.
@@ -96,10 +96,10 @@ export default function CompleteProfile() {
   return (
     <div style={s.page}>
       <div style={s.card}>
-        <div style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>
+        <div style={{ fontSize:22, fontWeight:800, color:"var(--fw-text)", marginBottom:8 }}>
           {firstName ? t("complete.helloName", { name: firstName }) : t("complete.almost")}
         </div>
-        <div style={{ color:"#6b7280", fontSize:14, marginBottom:24, lineHeight:1.6 }}>
+        <div style={{ color:"var(--fw-text-3)", fontSize:14, marginBottom:24, lineHeight:1.6 }}>
           {t("complete.sub")}
         </div>
         {error && <div style={s.error}>{error}</div>}

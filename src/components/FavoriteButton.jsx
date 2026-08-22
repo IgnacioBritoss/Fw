@@ -73,7 +73,7 @@ export default function FavoriteButton({ listingId, size = 30, disabled = false,
         // `minHeight` va acá adentro a propósito: un estilo en línea le gana a la
         // regla de theme.css, así el botón no puede volver a estirarse solo.
         minHeight: lado,
-        borderRadius: "50%", background: "#fff", border: "none", padding: 0,
+        borderRadius: "50%", background: "var(--fw-surface)", border: "none", padding: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: hover ? "0 3px 10px rgba(0,0,0,.20)" : "0 1px 4px rgba(0,0,0,.12)",
         cursor: disabled ? "not-allowed" : "pointer", opacity: busy || disabled ? 0.65 : 1,

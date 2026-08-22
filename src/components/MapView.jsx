@@ -71,7 +71,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       const icon = L.divIcon({
         className: "",
         html: `<div style="
-          background: #0b55c0;
+          background: var(--fw-blue-strong);
           color: #fff;
           padding: 6px 10px;
           border-radius: 20px;
@@ -94,7 +94,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       }).setContent(`
         <div style="padding:4px;cursor:pointer" onclick="window.fwOpenCar('${car.id}')">
           <div style="
-            width:100%;height:120px;background:#e5e7eb;border-radius:8px;
+            width:100%;height:120px;background:var(--fw-surface-3);border-radius:8px;
             overflow:hidden;margin-bottom:10px;display:flex;align-items:center;
             justify-content:center;font-size:40px;
           ">
@@ -105,13 +105,13 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
           <div style="font-weight:700;font-size:14px;margin-bottom:2px">
             ${car.brand} ${car.model} ${car.year}
           </div>
-          <div style="font-size:12px;color:#6b7280;margin-bottom:6px">
+          <div style="font-size:12px;color:var(--fw-text-3);margin-bottom:6px">
             ${car.location}
           </div>
-          <div style="font-weight:700;font-size:16px;color:#0b55c0">
-            ${precio(car.price_per_day)}<span style="font-weight:400;font-size:12px;color:#6b7280">${perDayLabel}</span>
+          <div style="font-weight:700;font-size:16px;color:var(--fw-blue-strong)">
+            ${precio(car.price_per_day)}<span style="font-weight:400;font-size:12px;color:var(--fw-text-3)">${perDayLabel}</span>
           </div>
-          ${car.rating ? `<div style="font-size:12px;color:#f59e0b;margin-top:4px">★ ${car.rating}</div>` : ""}
+          ${car.rating ? `<div style="font-size:12px;color:var(--fw-amber);margin-top:4px">★ ${car.rating}</div>` : ""}
         </div>
       `);
 

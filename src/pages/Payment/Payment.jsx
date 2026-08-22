@@ -29,13 +29,13 @@ import { longDate } from "../../i18n/dates";
 const s = {
   page: { maxWidth: 600, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { maxWidth: 600, margin: "0 auto", padding: "20px 16px" },
-  title: { fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  sub: { fontSize: 14, color: "#6b7280", marginBottom: 28 },
-  card: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 14, padding: 24, marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
-  row: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "#374151", marginBottom: 8 },
-  totalRow: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "#111827", borderTop: "1px solid #e5e7eb", paddingTop: 12, marginTop: 4 },
-  payBtn: { width: "100%", padding: "15px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
-  payBtnDisabled: { width: "100%", padding: "15px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
+  title: { fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { fontSize: 14, color: "var(--fw-text-3)", marginBottom: 28 },
+  card: { background: "var(--fw-surface)", border: "1px solid var(--fw-border)", borderRadius: 14, padding: 24, marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
+  row: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--fw-text-2)", marginBottom: 8 },
+  totalRow: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "var(--fw-text)", borderTop: "1px solid var(--fw-border)", paddingTop: 12, marginTop: 4 },
+  payBtn: { width: "100%", padding: "15px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
+  payBtnDisabled: { width: "100%", padding: "15px", background: "var(--fw-blue-line)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
   /*
     El botón de forzar el rechazo: rojo lleno, letra blanca, SIEMPRE.
 
@@ -44,13 +44,13 @@ const s = {
     atrás, así que en modo oscuro quedaba letra roja sobre gris oscuro, que se
     lee mal. Con el fondo escrito acá el botón se ve igual en los dos modos.
   */
-  failBtn: { width: "100%", padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
+  failBtn: { width: "100%", padding: "12px", background: "var(--fw-red)", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
   successBox: { textAlign: "center", padding: "48px 0" },
-  successIcon: { width: 72, height: 72, borderRadius: "50%", background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
-  failIcon: { width: 72, height: 72, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
-  secureNote: { display: "flex", alignItems: "center", gap: 6, justifyContent: "center", fontSize: 12, color: "#9ca3af", marginTop: 16 },
-  error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
-  info: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 14, fontSize: 13, color: "#1e40af", marginBottom: 16 },
+  successIcon: { width: 72, height: 72, borderRadius: "50%", background: "var(--fw-blue-bg-2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
+  failIcon: { width: 72, height: 72, borderRadius: "50%", background: "var(--fw-red-bg)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
+  secureNote: { display: "flex", alignItems: "center", gap: 6, justifyContent: "center", fontSize: 12, color: "var(--fw-text-4)", marginTop: 16 },
+  error: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
+  info: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
   step: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, padding: "9px 12px", borderRadius: 8, marginBottom: 8 },
 };
 
@@ -58,7 +58,7 @@ const s = {
 function Row({ label, value }) {
   return (
     <div style={s.row}>
-      <span style={{ color: "#6b7280" }}>{label}</span>
+      <span style={{ color: "var(--fw-text-3)" }}>{label}</span>
       <strong>{value}</strong>
     </div>
   );
@@ -183,8 +183,8 @@ export default function Payment() {
       <div style={isMobile ? s.pageMobile : s.page}>
         <div style={s.successBox}>
           <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
-          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" }}>{tr("payment.confirmed")}</div>
-          <div style={{ color: "#6b7280", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "var(--fw-text)" }}>{tr("payment.confirmed")}</div>
+          <div style={{ color: "var(--fw-text-3)", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
             {tr("payment.confirmedNote")}
           </div>
           <div style={{ ...s.card, textAlign: "left" }}>
@@ -196,8 +196,8 @@ export default function Payment() {
             <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total)}</span></div>
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button style={{ padding: "12px 28px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
-            <button style={{ padding: "12px 28px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</button>
+            <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
+            <button style={{ padding: "12px 28px", background: "transparent", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)", borderRadius: 10, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</button>
           </div>
         </div>
       </div>
@@ -215,7 +215,7 @@ export default function Payment() {
       {error && <div style={s.error}>{error}</div>}
 
       <div style={s.card}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "#111827" }}>{tr("payment.summary")}</div>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--fw-text)" }}>{tr("payment.summary")}</div>
         {vehicleLabel && <Row label={tr("payment.vehicle")} value={vehicleLabel} />}
         {startDate && <Row label={tr("payment.from")} value={longDate(startDate, lang)} />}
         {endDate && <Row label={tr("payment.to")} value={longDate(endDate, lang)} />}
@@ -226,25 +226,25 @@ export default function Payment() {
         )}
         {commission != null && <Row label={tr("car.fee")} value={money(commission)} />}
         {insurance != null && <Row label={tr("payment.insurance")} value={money(insurance)} />}
-        <div style={s.totalRow}><span>Total</span><span style={{ color: "#0f6ce6" }}>{money(total)}</span></div>
+        <div style={s.totalRow}><span>Total</span><span style={{ color: "var(--fw-blue)" }}>{money(total)}</span></div>
       </div>
 
       {/* Los tres tramos del pago, con lo que ya está cubierto */}
       <div style={s.card}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "#111827" }}>{tr("payment.howToPay")}</div>
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--fw-text)" }}>{tr("payment.howToPay")}</div>
         {[
           ["payment.sena", sena, paymentStatus === "DEPOSIT_PAID" || isPaid],
           ["payment.balance", balance, isPaid],
           ["payment.guarantee", deposit, isPaid],
         ].map(([label, amount, done]) => (
-          <div key={label} style={{ ...s.step, background: done ? "#f0fdf4" : "#f9fafb", border: `1px solid ${done ? "#bbf7d0" : "#f3f4f6"}` }}>
-            <span style={{ color: done ? "#166534" : "#374151" }}>{tr(label)}</span>
-            <strong style={{ color: done ? "#166534" : "#111827" }}>
+          <div key={label} style={{ ...s.step, background: done ? "var(--fw-green-bg)" : "var(--fw-surface-2)", border: `1px solid ${done ? "var(--fw-green-line)" : "var(--fw-line-soft)"}` }}>
+            <span style={{ color: done ? "var(--fw-green-text-2)" : "var(--fw-text-2)" }}>{tr(label)}</span>
+            <strong style={{ color: done ? "var(--fw-green-text-2)" : "var(--fw-text)" }}>
               {amount != null ? money(amount) : "—"}{done ? " ✓" : ""}
             </strong>
           </div>
         ))}
-        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 10 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 10 }}>
           {tr("payment.depositNote")}
         </div>
       </div>

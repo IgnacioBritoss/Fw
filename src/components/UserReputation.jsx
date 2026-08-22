@@ -25,7 +25,7 @@ import { useI18n } from "../i18n/core";
 function Stars({ average, count, label, noneLabel, compact }) {
   if (!count) {
     return (
-      <span style={{ fontSize: compact ? 12 : 12.5, color: "#9ca3af" }}>
+      <span style={{ fontSize: compact ? 12 : 12.5, color: "var(--fw-text-4)" }}>
         {label}: {noneLabel}
       </span>
     );
@@ -33,15 +33,15 @@ function Stars({ average, count, label, noneLabel, compact }) {
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-      <span style={{ fontSize: compact ? 12 : 12.5, color: "#6b7280" }}>{label}:</span>
-      <span style={{ color: "#f59e0b", fontSize: compact ? 13 : 14, letterSpacing: 1 }}>
+      <span style={{ fontSize: compact ? 12 : 12.5, color: "var(--fw-text-3)" }}>{label}:</span>
+      <span style={{ color: "var(--fw-amber)", fontSize: compact ? 13 : 14, letterSpacing: 1 }}>
         {"★".repeat(Math.round(average))}
-        <span style={{ color: "#e5e7eb" }}>{"★".repeat(5 - Math.round(average))}</span>
+        <span style={{ color: "var(--fw-border)" }}>{"★".repeat(5 - Math.round(average))}</span>
       </span>
-      <strong style={{ fontSize: compact ? 12.5 : 13, color: "#111827" }}>
+      <strong style={{ fontSize: compact ? 12.5 : 13, color: "var(--fw-text)" }}>
         {average.toFixed(1)}
       </strong>
-      <span style={{ fontSize: compact ? 11.5 : 12, color: "#9ca3af" }}>
+      <span style={{ fontSize: compact ? 11.5 : 12, color: "var(--fw-text-4)" }}>
         ({count})
       </span>
     </span>

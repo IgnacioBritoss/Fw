@@ -18,19 +18,19 @@ import { useCurrency } from "../../context/CurrencyContext";
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
-  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  sub: { fontSize: 14, color: "#6b7280", marginBottom: 28 },
+  title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  titleMobile: { fontSize: 20, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { fontSize: 14, color: "var(--fw-text-3)", marginBottom: 28 },
   grid: { display: "grid", gridTemplateColumns: "1fr 340px", gap: 32 },
-  carCard: { background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #f3f4f6", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
-  carImg: { width: "100%", height: 180, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  carImgMobile: { width: "100%", height: 140, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  carCard: { background: "var(--fw-surface)", borderRadius: 12, overflow: "hidden", border: "1px solid var(--fw-line-soft)", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
+  carImg: { width: "100%", height: 180, background: "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  carImgMobile: { width: "100%", height: 140, background: "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   carBody: { padding: 16 },
-  carTitle: { fontWeight: 700, fontSize: 15, marginBottom: 4, color: "#111827" },
-  carMeta: { fontSize: 13, color: "#6b7280", marginBottom: 6 },
-  carPrice: { fontWeight: 800, fontSize: 18, color: "#0f6ce6" },
-  infoBox: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 14, fontSize: 13, color: "#1e40af", lineHeight: 1.6 },
-  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 14, fontSize: 13, color: "#b91c1c", marginTop: 12 },
+  carTitle: { fontWeight: 700, fontSize: 15, marginBottom: 4, color: "var(--fw-text)" },
+  carMeta: { fontSize: 13, color: "var(--fw-text-3)", marginBottom: 6 },
+  carPrice: { fontWeight: 800, fontSize: 18, color: "var(--fw-blue)" },
+  infoBox: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-blue-text)", lineHeight: 1.6 },
+  errorBox: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-red-text-2)", marginTop: 12 },
 };
 
 // Tarjeta chica con la foto y datos del auto que se está por reservar.
@@ -42,7 +42,7 @@ function CarSummaryCard({ car, mobile }) {
       <div style={mobile ? s.carImgMobile : s.carImg}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ color: "#9ca3af", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
+          : <div style={{ color: "var(--fw-text-4)", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
       </div>
       <div style={s.carBody}>
         <div style={s.carTitle}>{car.brand} {car.model} {car.year}</div>
@@ -126,15 +126,15 @@ export default function Booking() {
    * la persona por algo que se sabía desde que entró a la pantalla.
    */
   const avisoVerificacion = (needsVerification || (user && !isVerified)) && (
-    <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-      <div style={{ fontSize: 13, color: "#9a3412" }}>{tr("booking.needVerified")}</div>
-      <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+    <div style={{ background: "var(--fw-orange-bg)", border: "1.5px solid var(--fw-orange-line)", borderRadius: 10, padding: "12px 16px", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ fontSize: 13, color: "var(--fw-orange-text)" }}>{tr("booking.needVerified")}</div>
+      <button style={{ padding: "9px 16px", background: "var(--fw-orange)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
         onClick={() => navigate("/kyc")}>{tr("profile.verifyNow")}</button>
     </div>
   );
 
   if (loading) return <Spinner block label={tr("common.loading")} />;
-  if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>{tr("booking.notFound")}</div>;
+  if (!listing) return <div style={{ padding: 40, textAlign: "center", color: "var(--fw-text-3)" }}>{tr("booking.notFound")}</div>;
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>

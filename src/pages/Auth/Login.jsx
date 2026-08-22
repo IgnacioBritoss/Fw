@@ -88,7 +88,7 @@ export default function Login() {
       subtitle={
         <>
           {t("auth.noAccount")}{" "}
-          <Link to="/register" style={{ color: "#0f6ce6", fontWeight: 600, textDecoration: "none" }}>
+          <Link to="/register" style={{ color: "var(--fw-blue)", fontWeight: 600, textDecoration: "none" }}>
             {t("auth.registerFree")}
           </Link>
         </>
@@ -105,9 +105,9 @@ export default function Login() {
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-        <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
-        <span style={{ fontSize: 12, color: "#9ca3af" }}>{t("auth.orEmail")}</span>
-        <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+        <div style={{ flex: 1, height: 1, background: "var(--fw-bg)" }} />
+        <span style={{ fontSize: 12, color: "var(--fw-text-4)" }}>{t("auth.orEmail")}</span>
+        <div style={{ flex: 1, height: 1, background: "var(--fw-bg)" }} />
       </div>
 
       <div style={{ marginBottom: 16 }}>
@@ -129,14 +129,14 @@ export default function Login() {
             style={{ ...f.input, paddingRight: 44 }} />
           <button type="button" onClick={() => setShowPassword(v => !v)}
             aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
-            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 0 }}>
+            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--fw-text-4)", padding: 0 }}>
             {showPassword ? <EyeClosed /> : <EyeOpen />}
           </button>
         </div>
       </div>
 
       <div style={{ textAlign: "right", marginBottom: 24 }}>
-        <Link to="/forgot-password" style={{ fontSize: 12.5, color: "#0f6ce6", textDecoration: "none", fontWeight: 500 }}>
+        <Link to="/forgot-password" style={{ fontSize: 12.5, color: "var(--fw-blue)", textDecoration: "none", fontWeight: 500 }}>
           {t("auth.forgot")}
         </Link>
       </div>

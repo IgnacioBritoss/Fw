@@ -1,18 +1,29 @@
+/* ============================================================================
+   Los nombres viejos, apuntando a la paleta
+   ----------------------------------------------------------------------------
+   Estas variables son de antes de que existiera la paleta de services/theme.js y
+   todavía las usan varias reglas de este archivo. En vez de repetir los colores
+   —que era lo que hacía que el modo oscuro se olvidara justo de estas— cada una
+   apunta a la variable que le corresponde. Así hay UN solo lugar donde vive cada
+   color, y estas siguen al modo sin tocarlas.
+   ========================================================================== */
 :root {
-  --primary: #0f6ce6;
-  --primary-light: #3b82f6;
-  --primary-dark: #0b55c0;
-  --primary-bg: #eff6ff;
-  --accent: #0f6ce6;
-  --accent-hover: #0b55c0;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #9ca3af;
-  --border: #e5e7eb;
-  --border-dark: #d1d5db;
-  --surface: #ffffff;
-  --surface-2: #f5f5f3;
-  --surface-3: #f0f0ee;
+  --primary: var(--fw-blue);
+  --primary-light: var(--fw-blue);
+  --primary-dark: var(--fw-blue-strong);
+  --primary-bg: var(--fw-blue-bg);
+  --accent: var(--fw-blue);
+  --accent-hover: var(--fw-blue-strong);
+  --text-primary: var(--fw-text);
+  --text-secondary: var(--fw-text-2);
+  --text-muted: var(--fw-text-4);
+  --border: var(--fw-border);
+  --border-dark: var(--fw-border-2);
+  --surface: var(--fw-surface);
+  --surface-2: var(--fw-surface-2);
+  --surface-3: var(--fw-surface-3);
+  /* Los tres azules noche del encabezado y del menú no cambian: ya son
+     oscuros, y en modo oscuro se quedan exactamente como están. */
   --nav-bg: #0d0d0d;
   --hero-bg: #111827;
   --hero-bg-deep: #0f1a2e;
@@ -21,9 +32,9 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  --shadow-sm: 0 1px 3px var(--fw-sombra);
+  --shadow-md: 0 4px 16px var(--fw-sombra);
+  --shadow-lg: 0 8px 32px var(--fw-sombra-fuerte);
 }
 
 * {
@@ -35,15 +46,15 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  color: var(--text-primary);
-  background: var(--surface);
+  color: var(--fw-text);
+  background: var(--fw-bg);
   -webkit-font-smoothing: antialiased;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--fw-surface-3); border-radius: 3px; }
 
 /* Datepicker override */
 .react-datepicker {
@@ -66,6 +77,8 @@ body {
 .react-datepicker__day--range-start,
 .react-datepicker__day--range-end {
   background: var(--primary) !important;
+  /* Blanco fijo: el fondo es el azul de la marca, que es el mismo en los dos
+     modos, así que la letra encima también. */
   color: #fff !important;
 }
 .react-datepicker__day--in-selecting-range {
@@ -125,8 +138,8 @@ input[type="date"] {
   -moz-appearance: none;
   font: inherit;
   font-size: 14px;
-  color: var(--text-primary);
-  background-color: #fff;
+  color: var(--fw-text);
+  background-color: var(--fw-surface);
   border: 1.5px solid var(--border);
   border-radius: 8px;
   padding: 10px 38px 10px 12px;
@@ -157,7 +170,7 @@ input[type="date"]:focus {
 
 select:disabled,
 input[type="date"]:disabled {
-  background-color: #f9fafb;
+  background-color: var(--fw-surface-2);
   color: var(--text-muted);
   cursor: not-allowed;
 }
@@ -309,46 +322,50 @@ button {
 }
 
 /* ============================================================================
-   Modo oscuro: el bloque principal de la home
+   Modo oscuro: la tarjeta del buscador del bloque principal
    ----------------------------------------------------------------------------
-   El modo oscuro invierte la página entera (ver services/theme.js). Ese bloque
-   ya es oscuro de por sí —azul noche con letras blancas— así que la inversión lo
-   dejaba CELESTE CON LETRAS NEGRAS, exactamente al revés de lo que corresponde.
+   Casi toda la app cambia sola de modo, porque sus colores salen de las
+   variables de services/theme.js. Este bloque es la excepción y hace falta
+   explicar por qué.
 
-   La solución es marcarlo con data-no-invert, que lo vuelve a invertir y le
-   devuelve sus colores reales. Pero entonces el filtro tampoco alcanza a la
-   tarjeta del buscador que vive adentro, y esa sí es blanca: quedaría un recuadro
-   blanco con letras negras en medio del modo oscuro. Por eso se la oscurece acá a
-   mano, con colores literales (dentro de un subárbol re-invertido, lo que se
-   escribe es lo que se ve).
+   El bloque principal de la home es un azul noche con letras blancas, y así se
+   queda en los dos modos: ya es oscuro, no hay nada que oscurecer. Pero la
+   tarjeta del buscador que vive adentro sí es blanca, porque en modo claro
+   tiene que despegarse del azul. En modo oscuro esa tarjeta blanca queda como
+   un cartel encendido en medio de la pantalla.
+
+   No alcanza con darle `--fw-surface`: eso la volvería gris oscuro, que sobre
+   el azul noche del bloque casi no se distingue. Lo que necesita es el gris de
+   las etiquetas, un escalón más claro, y por eso va escrito acá y no sale de
+   la variable de superficie.
    ========================================================================== */
 html.fw-dark .fw-hero-search {
-  background: #111827 !important;
-  border: 1px solid #1f2937;
+  background: var(--fw-chip) !important;
+  border: 1px solid var(--fw-chip);
 }
 
 html.fw-dark .fw-hero-search input,
 html.fw-dark .fw-hero-search [role="combobox"] {
-  color: #f9fafb !important;
+  color: var(--fw-text) !important;
   background: transparent !important;
 }
 
 html.fw-dark .fw-hero-search input::placeholder {
-  color: #6b7280 !important;
+  color: var(--fw-text-3) !important;
 }
 
 /* Las líneas que separan un campo del otro adentro de la tarjeta. */
 html.fw-dark .fw-hero-search > div {
-  border-color: #1f2937 !important;
+  border-color: var(--fw-border-2) !important;
 }
 
 /* La lista que se abre en el desplegable de adentro de la tarjeta. */
 html.fw-dark .fw-hero-search [role="listbox"] {
-  background: #111827 !important;
-  border-color: #1f2937 !important;
+  background: var(--fw-chip) !important;
+  border-color: var(--fw-border-2) !important;
 }
 html.fw-dark .fw-hero-search [role="option"] {
-  color: #e5e7eb !important;
+  color: var(--fw-text) !important;
 }
 
 /* ============================================================================

@@ -112,9 +112,9 @@ export default function RankBadge({ count = 0, average = null, size = "md", show
         alignItems: "center",
         gap: small ? 7 : 10,
         borderLeft: `3px solid ${tier.color}`,
-        borderTop: "1px solid #ececec",
-        borderRight: "1px solid #ececec",
-        borderBottom: "1px solid #ececec",
+        borderTop: "1px solid var(--fw-line)",
+        borderRight: "1px solid var(--fw-line)",
+        borderBottom: "1px solid var(--fw-line)",
         borderRadius: 4,
         background: tier.bg,
         padding: small ? "4px 9px 4px 7px" : "9px 14px 9px 11px",
@@ -137,7 +137,7 @@ export default function RankBadge({ count = 0, average = null, size = "md", show
           {tr(`rank.${tier.key}`)}
         </div>
         {!small && (
-          <div style={{ fontSize: 11.5, color: "#6b7280", marginTop: 2 }}>
+          <div style={{ fontSize: 11.5, color: "var(--fw-text-3)", marginTop: 2 }}>
             {tier.key === "new"
               ? tr("rank.newHint")
               : upcoming

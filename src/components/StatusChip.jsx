@@ -30,13 +30,13 @@ const TONES = {
   // ok: algo terminó bien y no requiere nada (pago completo, verificado)
   ok: { bar: "#16a34a", text: "#15803d", bg: "#f6fdf9" },
   // info: un hecho, sin urgencia (completada, aceptada)
-  info: { bar: "#0f6ce6", text: "#0b55c0", bg: "#f5f8ff" },
+  info: { bar: "#0f6ce6", text: "#0b55c0", bg: "var(--fw-blue-bg)" },
   // warn: falta que alguien haga algo (pendiente, lista para retiro)
-  warn: { bar: "#f59e0b", text: "#b45309", bg: "#fffdf5" },
+  warn: { bar: "#f59e0b", text: "#b45309", bg: "var(--fw-amber-bg)" },
   // danger: algo salió mal (rechazada, en disputa, pago fallido)
   danger: { bar: "#dc2626", text: "#b91c1c", bg: "#fff6f6" },
   // neutral: pasó y ya no importa (cancelada, sin pagar)
-  neutral: { bar: "#9ca3af", text: "#4b5563", bg: "#fafafa" },
+  neutral: { bar: "#9ca3af", text: "#4b5563", bg: "var(--fw-surface-2)" },
   // live: está pasando ahora mismo (en curso). Lleva el punto lleno.
   live: { bar: "#0d9488", text: "#0f766e", bg: "#f4fdfc", pulse: true },
 };
@@ -51,9 +51,9 @@ export default function StatusChip({ tone = "neutral", children, title, style })
         display: "inline-flex", alignItems: "center", gap: 6,
         // La barra de color a la izquierda: el mismo recurso que los paneles.
         borderLeft: `3px solid ${t.bar}`,
-        borderTop: "1px solid #ececec",
-        borderRight: "1px solid #ececec",
-        borderBottom: "1px solid #ececec",
+        borderTop: "1px solid var(--fw-line)",
+        borderRight: "1px solid var(--fw-line)",
+        borderBottom: "1px solid var(--fw-line)",
         borderRadius: 4,
         background: t.bg,
         color: t.text,

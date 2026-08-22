@@ -22,19 +22,19 @@ import { useI18n } from "../i18n/core";
 import { shortDate } from "../i18n/dates";
 
 const s = {
-  panel: { background: "#f9fafb", border: "1px solid #ececec", borderRadius: 12, padding: 16, marginTop: 12 },
-  title: { fontSize: 14, fontWeight: 700, color: "#111827", marginBottom: 4 },
-  sub: { fontSize: 12.5, color: "#6b7280", marginBottom: 14 },
+  panel: { background: "var(--fw-surface-2)", border: "1px solid var(--fw-line)", borderRadius: 12, padding: 16, marginTop: 12 },
+  title: { fontSize: 14, fontWeight: 700, color: "var(--fw-text)", marginBottom: 4 },
+  sub: { fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 14 },
   row: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" },
   field: { display: "flex", flexDirection: "column", gap: 4 },
-  label: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".05em", textTransform: "uppercase" },
-  input: { padding: "9px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 13, outline: "none", color: "#111827" },
-  btn: { padding: "10px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" },
-  item: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#fff", border: "1px solid #ececec", borderRadius: 10, padding: "10px 12px", marginBottom: 8, flexWrap: "wrap" },
-  del: { background: "none", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 8, fontSize: 12, cursor: "pointer", padding: "5px 10px" },
-  error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 12 },
-  info: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#1e40af", marginBottom: 12 },
-  booked: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "9px 12px", marginBottom: 8, fontSize: 12.5, color: "#9a3412" },
+  label: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".05em", textTransform: "uppercase" },
+  input: { padding: "9px 12px", borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: 13, outline: "none", color: "var(--fw-text)" },
+  btn: { padding: "10px 18px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  item: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 10, padding: "10px 12px", marginBottom: 8, flexWrap: "wrap" },
+  del: { background: "none", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text)", borderRadius: 8, fontSize: 12, cursor: "pointer", padding: "5px 10px" },
+  error: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "var(--fw-red-text-2)", marginBottom: 12 },
+  info: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "var(--fw-blue-text)", marginBottom: 12 },
+  booked: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "var(--fw-orange-bg)", border: "1px solid var(--fw-orange-line)", borderRadius: 10, padding: "9px 12px", marginBottom: 8, fontSize: 12.5, color: "var(--fw-orange-text)" },
 };
 
 // El dueño SÍ puede bloquear el día de hoy: bloquear no es reservar, es avisar
@@ -149,20 +149,20 @@ export default function AvailabilityManager({ listingId }) {
 
       {/* Períodos bloqueados por el dueño */}
       <div style={{ marginTop: 18 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#374151", marginBottom: 8 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-text-2)", marginBottom: 8 }}>
           {tr("avail.yourBlocks")}
         </div>
         {loading ? (
           <Spinner size={16} />
         ) : blocks.length === 0 ? (
-          <div style={{ fontSize: 12.5, color: "#9ca3af" }}>{tr("avail.none")}</div>
+          <div style={{ fontSize: 12.5, color: "var(--fw-text-4)" }}>{tr("avail.none")}</div>
         ) : blocks.map(block => (
           <div key={block.id} style={s.item}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fw-text)" }}>
                 {fmt(block.startDate)} → {fmt(block.endDate)}
               </div>
-              {block.reason && <div style={{ fontSize: 12, color: "#6b7280" }}>{block.reason}</div>}
+              {block.reason && <div style={{ fontSize: 12, color: "var(--fw-text-3)" }}>{block.reason}</div>}
             </div>
             <button style={s.del} onClick={() => removeBlock(block.id)}>{tr("avail.remove")}</button>
           </div>
@@ -172,7 +172,7 @@ export default function AvailabilityManager({ listingId }) {
       {/* Reservas que ya ocupan el auto (no se pueden quitar desde acá) */}
       {bookedRanges.length > 0 && (
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: "#374151", marginBottom: 8 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-text-2)", marginBottom: 8 }}>
             {tr("avail.bookedBy")}
           </div>
           {bookedRanges.map(booking => (

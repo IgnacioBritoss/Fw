@@ -91,7 +91,7 @@ export function htmlDelMonton(cantidad) {
   const lado = Math.min(52, 34 + String(cantidad).length * 6);
   return `<div style="
     width:${lado}px;height:${lado}px;border-radius:50%;
-    background:#0f6ce6;border:3px solid #fff;
+    background:var(--fw-blue);border:3px solid #fff;
     box-shadow:0 3px 10px rgba(0,0,0,.32);
     display:flex;align-items:center;justify-content:center;
     color:#fff;font-weight:800;font-size:13px;font-family:sans-serif;

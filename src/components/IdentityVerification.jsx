@@ -75,18 +75,18 @@ const PAISES_ORDENADOS = [...PAISES].sort((a, b) => b.dial.length - a.dial.lengt
 // En celular: menos aire, campos de 16px (con menos, Safari en iPhone hace zoom
 // solo al tocarlos) y botones de ancho completo, alcanzables con el pulgar.
 const styles = (isMobile) => ({
-  card: { maxWidth: 720, margin: "0 auto", background: "#fff", borderRadius: 18, padding: isMobile ? 18 : 32, boxShadow: "0 4px 24px rgba(0,0,0,.06)", border: "1px solid #f0f0f0" },
-  title: { fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 4 },
-  sub: { fontSize: 14, color: "#6b7280", marginBottom: 24 },
-  btnPrimary: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 700, cursor: "pointer" },
-  btnGhost: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "#fff", color: "#374151", border: "1.5px solid #e5e7eb", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 600, cursor: "pointer" },
-  skip: { display: "block", width: "100%", marginTop: 16, padding: 6, background: "none", border: "none", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "center", textDecoration: "underline" },
-  error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 8, padding: "10px 14px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
-  info: { background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 8, padding: "10px 14px", color: "#1e40af", fontSize: 13, marginBottom: 16 },
-  input: { width: "100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline: "none", color: "#111827", boxSizing: "border-box" },
-  label: { display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 },
-  codeInput: { width: "100%", padding: 14, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 23 : 26, fontWeight: 700, letterSpacing: isMobile ? 8 : 10, textAlign: "center", outline: "none", color: "#111827", boxSizing: "border-box", marginBottom: 12 },
-  codeBox: { background: "#f9fafb", border: "1.5px dashed #d1d5db", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#374151", marginBottom: 16, lineHeight: 1.6 },
+  card: { maxWidth: 720, margin: "0 auto", background: "var(--fw-surface)", borderRadius: 18, padding: isMobile ? 18 : 32, boxShadow: "0 4px 24px rgba(0,0,0,.06)", border: "1px solid var(--fw-line-soft)" },
+  title: { fontSize: 22, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 },
+  sub: { fontSize: 14, color: "var(--fw-text-3)", marginBottom: 24 },
+  btnPrimary: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 700, cursor: "pointer" },
+  btnGhost: { padding: isMobile ? "14px 22px" : "12px 22px", width: isMobile ? "100%" : undefined, background: "var(--fw-surface)", color: "var(--fw-text-2)", border: "1.5px solid var(--fw-border)", borderRadius: 24, fontSize: isMobile ? 15 : 14, fontWeight: 600, cursor: "pointer" },
+  skip: { display: "block", width: "100%", marginTop: 16, padding: 6, background: "none", border: "none", color: "var(--fw-text-4)", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "center", textDecoration: "underline" },
+  error: { background: "var(--fw-red-bg)", border: "1.5px solid var(--fw-red-line)", borderRadius: 8, padding: "10px 14px", color: "var(--fw-red-text-2)", fontSize: 13, marginBottom: 16 },
+  info: { background: "var(--fw-blue-bg)", border: "1.5px solid var(--fw-blue-line)", borderRadius: 8, padding: "10px 14px", color: "var(--fw-blue-text)", fontSize: 13, marginBottom: 16 },
+  input: { width: "100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: isMobile ? 16 : 14, outline: "none", color: "var(--fw-text)", boxSizing: "border-box" },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 6 },
+  codeInput: { width: "100%", padding: 14, borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: isMobile ? 23 : 26, fontWeight: 700, letterSpacing: isMobile ? 8 : 10, textAlign: "center", outline: "none", color: "var(--fw-text)", boxSizing: "border-box", marginBottom: 12 },
+  codeBox: { background: "var(--fw-surface-2)", border: "1.5px dashed var(--fw-border-2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "var(--fw-text-2)", marginBottom: 16, lineHeight: 1.6 },
   /** Fila de botones: en celular se apilan y ocupan todo el ancho. */
   actions: isMobile
     ? { display: "flex", flexDirection: "column-reverse", gap: 10 }
@@ -101,14 +101,14 @@ const styles = (isMobile) => ({
 function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange }) {
   const { t: tr } = useI18n();
   const border =
-    review?.state === "invalid" ? "1.5px solid #dc2626"
+    review?.state === "invalid" ? "1.5px solid var(--fw-red)"
       : review?.state === "ok" ? "1.5px solid #16a34a"
         : value ? "1.5px solid #0f6ce6" : "1px solid #e5e7eb";
 
   return (
     <div style={{ flex: 1, minWidth: 220 }}>
       <div onClick={() => document.getElementById(id)?.click()}
-        style={{ border, borderRadius: 14, padding: 14, cursor: "pointer", background: "#fff" }}>
+        style={{ border, borderRadius: 14, padding: 14, cursor: "pointer", background: "var(--fw-surface)" }}>
         {/* El archivo se entrega crudo: quien lo recibe lo reencoda a JPEG y lo
             achica al tamaño que el lector de códigos necesita. Antes se leía acá
             como dataURL y se subía tal cual, así que la foto de un iPhone (HEIC)
@@ -121,15 +121,15 @@ function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange 
             e.target.value = "";
             if (file) onChange(file, kind);
           }} />
-        <div style={{ position: "relative", width: "100%", height: 120, borderRadius: 10, overflow: "hidden", background: value ? "#1f2937" : "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+        <div style={{ position: "relative", width: "100%", height: 120, borderRadius: 10, overflow: "hidden", background: value ? "var(--fw-chip)" : "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
           {value ? (
             <img src={value} alt={label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("kyc.pickPhoto")}</span>
+            <span style={{ fontSize: 13, color: "var(--fw-text-4)" }}>{tr("kyc.pickPhoto")}</span>
           )}
         </div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{label}</div>
-        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{hint}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fw-text)" }}>{label}</div>
+        <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 2 }}>{hint}</div>
       </div>
 
       {/* Resultado de la revisión automática de esta foto */}
@@ -137,12 +137,12 @@ function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange 
         <Spinner size={13} label={tr("kyc.checkingPhoto")} />
       )}
       {review?.state === "ok" && (
-        <div style={{ fontSize: 12, color: "#166534", marginTop: 6, fontWeight: 600 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-green-text-2)", marginTop: 6, fontWeight: 600 }}>
           {tr("kyc.photoOk")}
         </div>
       )}
       {review?.state === "invalid" && (
-        <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 6, fontWeight: 600 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-red-text-2)", marginTop: 6, fontWeight: 600 }}>
           {tr("kyc.photoBad")} {review.reasonKey ? tr(review.reasonKey) : review.reason}
         </div>
       )}
@@ -154,7 +154,7 @@ function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange 
         no queda verificada hasta que un administrador revise la foto a mano.
       */}
       {review?.state === "unknown" && (
-        <div style={{ fontSize: 12, color: "#92400e", marginTop: 6, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-amber-text)", marginTop: 6, lineHeight: 1.5 }}>
           {tr("kyc.photoUnknown")}
           {review.reasonKey ? ` (${tr(review.reasonKey)})` : review.reason ? ` (${review.reason})` : ""}
         </div>
@@ -165,7 +165,7 @@ function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange 
           el intento entero, porque una foto chica es la causa número uno de que
           la solicitud quede pendiente sin poder leer el código del DNI. */}
       {avisoClave && (
-        <div style={{ fontSize: 12, color: "#92400e", marginTop: 6, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-amber-text)", marginTop: 6, lineHeight: 1.5 }}>
           {tr(avisoClave)}
         </div>
       )}
@@ -184,14 +184,14 @@ function Stepper({ current, steps, isMobile }) {
             <div style={{
               width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 14, fontWeight: 700,
-              background: i < current ? "#16a34a" : i === current ? "#0f6ce6" : "#fff",
-              color: i <= current ? "#fff" : "#9ca3af",
-              border: i > current ? "1.5px solid #e5e7eb" : "none",
+              background: i < current ? "var(--fw-green)" : i === current ? "var(--fw-blue)" : "var(--fw-surface)",
+              color: i <= current ? "#fff" : "var(--fw-text-4)",
+              border: i > current ? "1.5px solid var(--fw-border)" : "none",
             }}>{i < current ? "✓" : i + 1}</div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: i === current ? "#111827" : "#9ca3af" }}>{tr(label)}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: i === current ? "var(--fw-text)" : "var(--fw-text-4)" }}>{tr(label)}</span>
           </div>
           {i < steps.length - 1 && (
-            <div style={{ width: isMobile ? 22 : 90, height: 2, margin: isMobile ? "0 4px" : "0 10px", marginBottom: 24, background: i < current ? "#16a34a" : i === current ? "#0f6ce6" : "#e5e7eb" }} />
+            <div style={{ width: isMobile ? 22 : 90, height: 2, margin: isMobile ? "0 4px" : "0 10px", marginBottom: 24, background: i < current ? "var(--fw-green)" : i === current ? "var(--fw-blue)" : "var(--fw-surface-3)" }} />
           )}
         </div>
       ))}
@@ -621,8 +621,8 @@ export default function IdentityVerification({ onDone, onCancel }) {
               : tr("kyc.reviewingNote")}
           </p>
           {progreso && (
-            <div style={{ height: 6, borderRadius: 3, background: "#f0f0f0", overflow: "hidden", maxWidth: 320, margin: "18px auto 0" }}>
-              <div style={{ height: "100%", width: `${(progreso.hecho / progreso.total) * 100}%`, background: "#0f6ce6", transition: "width .3s" }} />
+            <div style={{ height: 6, borderRadius: 3, background: "var(--fw-surface-3)", overflow: "hidden", maxWidth: 320, margin: "18px auto 0" }}>
+              <div style={{ height: "100%", width: `${(progreso.hecho / progreso.total) * 100}%`, background: "var(--fw-blue)", transition: "width .3s" }} />
             </div>
           )}
         </div>
@@ -650,14 +650,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 vuelve a revisar. Sin este botón habría que sacar y subir otra vez
                 las cuatro fotos para cambiar un dígito. */}
             {puedeReintentar && (
-              <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 12, padding: isMobile ? 13 : 16, marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>
+              <div style={{ background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 12, padding: isMobile ? 13 : 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-amber-text)", marginBottom: 6 }}>
                   {tr("kyc.alreadySent")}
                 </div>
                 {motivos.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
                     {motivos.map((motivo) => (
-                      <div key={motivo.code} style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                      <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                         · {textoDeMotivo(motivo)}
                       </div>
                     ))}
@@ -680,11 +680,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 aprobar: el backend compara lo que se escribe acá con lo que lee del
                 DNI y de la licencia. Una vez verificada la cuenta quedan
                 bloqueados, así que se muestran de solo lectura. */}
-            <div style={{ background: "#f9fafb", border: "1px solid #f0f0f0", borderRadius: 12, padding: isMobile ? 14 : 18, marginBottom: 22 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 3 }}>
+            <div style={{ background: "var(--fw-surface-2)", border: "1px solid var(--fw-line-soft)", borderRadius: 12, padding: isMobile ? 14 : 18, marginBottom: 22 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)", marginBottom: 3 }}>
                 {tr("kyc.dataTitle")}
               </div>
-              <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 14, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 14, lineHeight: 1.5 }}>
                 {datosBloqueados ? tr("kyc.dataLocked") : tr("kyc.dataSub")}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
@@ -703,7 +703,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                       escritos se puede decir si no se corresponden, sin esperar
                       al servidor. */}
                   {sugerenciaCuil && (
-                    <div style={{ fontSize: 11.5, color: "#92400e", marginTop: 5, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 11.5, color: "var(--fw-amber-text)", marginTop: 5, lineHeight: 1.5 }}>
                       {tr("kyc.cuilHintDni", { dni: sugerenciaCuil })}
                     </div>
                   )}
@@ -725,12 +725,12 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 kind="DNI_BACK" value={docs.dniBack?.preview} avisoClave={docs.dniBack?.avisoClave}
                 review={reviews.dniBack} onChange={handlePhoto("dniBack")} />
             </div>
-            <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 12 }}>{tr("kyc.tips")}</div>
+            <div style={{ borderTop: "1px solid var(--fw-line-soft)", paddingTop: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)", marginBottom: 12 }}>{tr("kyc.tips")}</div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {["kyc.tip1", "kyc.tip2", "kyc.tip3"].map(tip => (
-                  <div key={tip} style={{ display: "flex", alignItems: "center", gap: 7, background: "#f3f4f6", borderRadius: 20, padding: "7px 14px", fontSize: 12, color: "#374151" }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a" }} />{tr(tip)}
+                  <div key={tip} style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--fw-bg)", borderRadius: 20, padding: "7px 14px", fontSize: 12, color: "var(--fw-text-2)" }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--fw-green)" }} />{tr(tip)}
                   </div>
                 ))}
               </div>
@@ -740,11 +740,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 antes) y a trabar la verificación del todo cuando el servicio de IA
                 está caído. */}
             {sinRevisar > 0 && (
-              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
                 <input type="checkbox" checked={docsConfirmed}
                   onChange={(e) => setDocsConfirmed(e.target.checked)}
                   style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
-                <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                <span style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                   {tr(sinRevisar === 1 ? "kyc.confirmOne" : "kyc.confirmMany", { count: sinRevisar })}
                 </span>
               </label>
@@ -778,7 +778,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 kind="LICENSE_BACK" value={docs.licBack?.preview} avisoClave={docs.licBack?.avisoClave}
                 review={reviews.licBack} onChange={handlePhoto("licBack")} />
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 20 }}>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginBottom: 20 }}>
               {tr("kyc.dataNote")}
             </div>
                         {/* Si la IA no pudo revisar una foto, no se avanza sin que la persona
@@ -786,11 +786,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 antes) y a trabar la verificación del todo cuando el servicio de IA
                 está caído. */}
             {sinRevisar > 0 && (
-              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10, padding: "11px 13px", marginBottom: 16, cursor: "pointer" }}>
                 <input type="checkbox" checked={docsConfirmed}
                   onChange={(e) => setDocsConfirmed(e.target.checked)}
                   style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
-                <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                <span style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                   {tr(sinRevisar === 1 ? "kyc.confirmOne" : "kyc.confirmMany", { count: sinRevisar })}
                 </span>
               </label>
@@ -849,7 +849,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                   value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && verifyPhone()} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                  <button style={{ background: "none", border: "none", color: "#0f6ce6", fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}
+                  <button style={{ background: "none", border: "none", color: "var(--fw-blue)", fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}
                     onClick={sendPhoneCode} disabled={busy}>{tr("reg.resendCode")}</button>
                   <button style={{ ...st.btnPrimary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={verifyPhone}>
                     {busy ? tr("verify.checking") : tr("kyc.verifyPhone")}
@@ -867,7 +867,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
         {/* PASO 3: CONFIRMACIÓN — con el estado REAL del backend */}
         {step === 3 && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,#16a34a,#15803d)" : "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,var(--fw-green),#15803d)" : "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             <h2 style={st.title}>
@@ -890,7 +890,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 ["kyc.ckBirth", checklist.dateOfBirthProvided, true],
                 ["kyc.ckPhone", checklist.phoneVerified, phoneRequired],
               ].map(([label, ok, required]) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, fontWeight: 600, color: ok ? "#166534" : required ? "#9a3412" : "#6b7280", background: ok ? "#f0fdf4" : required ? "#fff7ed" : "#f9fafb", border: `1px solid ${ok ? "#bbf7d0" : required ? "#fed7aa" : "#e5e7eb"}`, borderRadius: 8, padding: "8px 12px" }}>
+                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, fontWeight: 600, color: ok ? "var(--fw-green-text-2)" : required ? "var(--fw-orange-text)" : "var(--fw-text-3)", background: ok ? "var(--fw-green-bg)" : required ? "var(--fw-orange-bg)" : "var(--fw-surface-2)", border: `1px solid ${ok ? "var(--fw-green-line)" : required ? "var(--fw-orange-line)" : "var(--fw-border)"}`, borderRadius: 8, padding: "8px 12px" }}>
                   <span>{tr(label)}{!required && !ok ? ` (${tr("common.optional")})` : ""}</span>
                   <span>{ok ? tr("kyc.ready") : required ? tr("profile.pending") : tr("kyc.notDone")}</span>
                 </div>
@@ -902,14 +902,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
             {motivos.length > 0 && !status?.fullyVerified && (
               <div style={{
                 textAlign: "left", maxWidth: 380, margin: "18px auto 0",
-                background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10,
+                background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10,
                 padding: "12px 14px",
               }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-amber-text)", marginBottom: 6 }}>
                   {tr("kyc.reviewNotes")}
                 </div>
                 {motivos.map((motivo) => (
-                  <div key={motivo.code} style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+                  <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                     · {textoDeMotivo(motivo)}
                   </div>
                 ))}
@@ -921,7 +921,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 la persona a chocar contra la misma pared. Se dice qué pasa y por
                 dónde seguir. */}
             {accion === "soporte" && (
-              <div style={{ maxWidth: 380, margin: "18px auto 0", fontSize: 12.5, color: "#6b7280", lineHeight: 1.6 }}>
+              <div style={{ maxWidth: 380, margin: "18px auto 0", fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6 }}>
                 {tr("kyc.ctaSupportNote")}
               </div>
             )}

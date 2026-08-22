@@ -269,14 +269,14 @@ function Asistente() {
     ...ventana.style,
     width: ANCHO_VENTANA,
     height: ALTO_VENTANA,
-    background: "#fff",
+    background: "var(--fw-surface)",
     borderRadius: 16,
     boxShadow: "0 8px 40px rgba(0,0,0,.15)",
     display: "flex",
     flexDirection: "column",
     zIndex: 1000,
     overflow: "hidden",
-    border: "1px solid #e5e7eb",
+    border: "1px solid var(--fw-border)",
   };
 
   // El botón flotante en celular quedaba justo encima de los botones de la
@@ -301,7 +301,7 @@ function Asistente() {
     width: isMobile ? 46 : 50,
     height: isMobile ? 46 : 50,
     borderRadius: "50%",
-    background: "#0f6ce6",
+    background: "var(--fw-blue)",
     color: "#fff",
     border: "none",
     cursor: "pointer",
@@ -319,7 +319,7 @@ function Asistente() {
       {...ventana.asa}
       title={isMobile ? undefined : tr("chat.dragWindow")}
       style={{
-        background: "#0f6ce6",
+        background: "var(--fw-blue)",
         padding: "16px 18px",
         display: "flex",
         alignItems: "center",
@@ -403,7 +403,7 @@ function Asistente() {
         display: "flex",
         flexDirection: "column",
         gap: 10,
-        background: "#f9fafb",
+        background: "var(--fw-surface-2)",
         minHeight: 0,
         WebkitOverflowScrolling: "touch",
         overscrollBehavior: "contain",
@@ -417,19 +417,19 @@ function Asistente() {
               ? {
                   alignSelf: "flex-start",
                   maxWidth: "85%",
-                  background: "#fff",
-                  border: "1px solid #e5e7eb",
+                  background: "var(--fw-surface)",
+                  border: "1px solid var(--fw-border)",
                   borderRadius: "12px 12px 12px 2px",
                   padding: "10px 14px",
                   fontSize: 13,
                   lineHeight: 1.6,
-                  color: "#111827",
+                  color: "var(--fw-text)",
                   whiteSpace: "pre-wrap",
                 }
               : {
                   alignSelf: "flex-end",
                   maxWidth: "85%",
-                  background: "#0f6ce6",
+                  background: "var(--fw-blue)",
                   color: "#fff",
                   borderRadius: "12px 12px 2px 12px",
                   padding: "10px 14px",
@@ -447,8 +447,8 @@ function Asistente() {
         <div
           style={{
             alignSelf: "flex-start",
-            background: "#fff",
-            border: "1px solid #e5e7eb",
+            background: "var(--fw-surface)",
+            border: "1px solid var(--fw-border)",
             borderRadius: "12px 12px 12px 2px",
             padding: "12px 16px",
             display: "flex",
@@ -461,7 +461,7 @@ function Asistente() {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: "#9ca3af",
+              background: "var(--fw-text-4)",
             }}
             className="fw-dot-1"
           />
@@ -470,7 +470,7 @@ function Asistente() {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: "#9ca3af",
+              background: "var(--fw-text-4)",
             }}
             className="fw-dot-2"
           />
@@ -479,7 +479,7 @@ function Asistente() {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: "#9ca3af",
+              background: "var(--fw-text-4)",
             }}
             className="fw-dot-3"
           />
@@ -496,7 +496,7 @@ function Asistente() {
         gap: 6,
         padding: "0 12px 10px",
         flexWrap: "wrap",
-        background: "#fff",
+        background: "var(--fw-surface)",
         flexShrink: 0,
       }}
     >
@@ -508,8 +508,8 @@ function Asistente() {
             padding: "5px 12px",
             borderRadius: 20,
             border: "1.5px solid #dbeafe",
-            background: "#eff6ff",
-            color: "#0f6ce6",
+            background: "var(--fw-blue-bg)",
+            color: "var(--fw-blue)",
             fontSize: 11,
             cursor: "pointer",
             fontWeight: 600,
@@ -529,8 +529,8 @@ function Asistente() {
         gap: 8,
         padding: "12px 14px",
         paddingBottom: "max(12px, env(safe-area-inset-bottom))",
-        borderTop: "1px solid #f3f4f6",
-        background: "#fff",
+        borderTop: "1px solid var(--fw-line-soft)",
+        background: "var(--fw-surface)",
         flexShrink: 0,
       }}
     >
@@ -540,10 +540,10 @@ function Asistente() {
           flex: 1,
           padding: "10px 14px",
           borderRadius: 24,
-          border: "1.5px solid #e5e7eb",
+          border: "1.5px solid var(--fw-border)",
           fontSize: 16,
           outline: "none",
-          color: "#111827",
+          color: "var(--fw-text)",
         }}
         placeholder={tr("chat.placeholder")}
         value={input}
@@ -572,7 +572,7 @@ function Asistente() {
           width: 38,
           height: 38,
           borderRadius: "50%",
-          background: "#0f6ce6",
+          background: "var(--fw-blue)",
           color: "#fff",
           border: "none",
           cursor: "pointer",
@@ -607,11 +607,14 @@ function Asistente() {
       <style>{`
         html, body {
           overscroll-behavior-y: none;
-          background: #fff;
+          /* El fondo de la página, no el de una tarjeta: esta regla le gana a
+             la de theme.css por venir después, y con la superficie dejaba toda
+             la app un escalón más clara de lo que corresponde en modo oscuro. */
+          background: var(--fw-bg);
         }
 
         #root {
-          background: #fff;
+          background: var(--fw-bg);
         }
 
         @keyframes bounce {
@@ -632,7 +635,7 @@ function Asistente() {
             style={{
               position: "fixed",
               inset: 0,
-              background: "#fff",
+              background: "var(--fw-surface)",
               zIndex: 1000,
               overflow: "hidden",
             }}
@@ -644,7 +647,7 @@ function Asistente() {
                 left: 0,
                 right: 0,
                 height: viewport.height || window.innerHeight,
-                background: "#fff",
+                background: "var(--fw-surface)",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",

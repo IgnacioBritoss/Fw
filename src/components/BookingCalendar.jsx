@@ -41,15 +41,15 @@ const MESES_DE_ANTICIPACION = 6;
 
 // Estilos en línea del componente (agrupados acá para no ensuciar el JSX).
 const s = {
-  wrap: { background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e5e7eb" },
-  title: { fontSize: 15, fontWeight: 600, color: "#111827", marginBottom: 16 },
+  wrap: { background: "var(--fw-surface)", borderRadius: 12, padding: 20, border: "1px solid var(--fw-border)" },
+  title: { fontSize: 15, fontWeight: 600, color: "var(--fw-text)", marginBottom: 16 },
   legend: { display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" },
-  legendItem: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280" },
+  legendItem: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--fw-text-3)" },
   dot: { width: 10, height: 10, borderRadius: "50%" },
-  summary: { background: "#f9fafb", borderRadius: 10, padding: 16, marginTop: 16 },
-  summaryRow: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "#374151", marginBottom: 8 },
-  summaryTotal: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "#111827", borderTop: "1px solid #e5e7eb", paddingTop: 10, marginTop: 4 },
-  warn: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: "#92400e", marginTop: 12 },
+  summary: { background: "var(--fw-surface-2)", borderRadius: 10, padding: 16, marginTop: 16 },
+  summaryRow: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--fw-text-2)", marginBottom: 8 },
+  summaryTotal: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "var(--fw-text)", borderTop: "1px solid var(--fw-border)", paddingTop: 10, marginTop: 4 },
+  warn: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: "var(--fw-amber-text)", marginTop: 12 },
 };
 
 // Un día como "YYYY-MM-DD" en horario local, para comparar contra la lista de
@@ -133,14 +133,14 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
         {loadingAvail && <Spinner size={14} label={tr("cal.loadingAvail")} />}
       </div>
       <div style={s.legend}>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#111827" }} /> {tr("cal.free")}</div>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#d1d5db" }} /> {tr("cal.taken")}</div>
-        <div style={s.legendItem}><div style={{ ...s.dot, background: "#0f6ce6" }} /> {tr("cal.chosen")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "var(--fw-chip)" }} /> {tr("cal.free")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "var(--fw-surface-3)" }} /> {tr("cal.taken")}</div>
+        <div style={s.legendItem}><div style={{ ...s.dot, background: "var(--fw-blue)" }} /> {tr("cal.chosen")}</div>
       </div>
 
       {availError && <div style={s.warn}>{availError}</div>}
       {!loadingAvail && !availError && unavailable.length > 0 && (
-        <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 12 }}>
+        <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 12 }}>
           {tr("cal.greyNote")}
         </div>
       )}
@@ -195,11 +195,11 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
           </div>
           <button
             disabled={!canConfirm}
-            style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "#0f6ce6" : "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
+            style={{ width: "100%", marginTop: 14, padding: "13px", background: canConfirm ? "var(--fw-blue)" : "var(--fw-blue-line)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: canConfirm ? "pointer" : "not-allowed" }}
             onClick={() => canConfirm && onConfirm({ start, end, days, total, commission, deposit, totalFinal: total + commission + deposit })}>
             {tr("cal.confirmBooking")}
           </button>
-          <div style={{ fontSize: 11.5, color: "#9ca3af", textAlign: "center", marginTop: 8 }}>
+          <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", textAlign: "center", marginTop: 8 }}>
             {tr("cal.ownerFirst")}
           </div>
         </div>

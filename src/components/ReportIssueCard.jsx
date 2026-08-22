@@ -151,32 +151,32 @@ export default function ReportIssueCard() {
   };
 
   const e = {
-    card: { background: "#fff", border: "1px solid #ececec", borderRadius: 18, boxShadow: "0 1px 3px rgba(0,0,0,.04)", padding: isMobile ? 20 : 26 },
-    titulo: { fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 },
-    sub: { fontSize: 13, color: "#9ca3af", marginBottom: 18 },
-    rotulo: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 7 },
+    card: { background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 18, boxShadow: "0 1px 3px rgba(0,0,0,.04)", padding: isMobile ? 20 : 26 },
+    titulo: { fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 },
+    sub: { fontSize: 13, color: "var(--fw-text-4)", marginBottom: 18 },
+    rotulo: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 7 },
     area: {
       width: "100%", boxSizing: "border-box", minHeight: 120, resize: "vertical",
-      border: "1px solid #ececec", borderRadius: 4, padding: "12px 14px",
-      fontSize: 14, color: "#111827", fontFamily: "inherit", lineHeight: 1.6,
-      outline: "none", background: "#fff",
+      border: "1px solid var(--fw-line)", borderRadius: 4, padding: "12px 14px",
+      fontSize: 14, color: "var(--fw-text)", fontFamily: "inherit", lineHeight: 1.6,
+      outline: "none", background: "var(--fw-surface)",
     },
     adjuntar: {
       display: "inline-flex", alignItems: "center", gap: 8,
-      border: "1px solid #ececec", background: "#fff", borderRadius: 4,
-      padding: "9px 14px", fontSize: 13, fontWeight: 600, color: "#374151",
+      border: "1px solid var(--fw-line)", background: "var(--fw-surface)", borderRadius: 4,
+      padding: "9px 14px", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)",
       cursor: "pointer",
     },
     fila: {
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      gap: 10, borderTop: "1px solid #f1f2f4", padding: "9px 0", fontSize: 13,
+      gap: 10, borderTop: "1px solid var(--fw-line-soft)", padding: "9px 0", fontSize: 13,
     },
     enviar: {
-      background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4,
+      background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4,
       padding: "12px 22px", fontSize: 14, fontWeight: 700, cursor: "pointer",
       ...(isMobile ? { width: "100%" } : {}),
     },
-    aviso: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "11px 14px", fontSize: 13, color: "#b91c1c", marginBottom: 14 },
+    aviso: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 4, padding: "11px 14px", fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 14 },
   };
 
   // ── Ya se envió uno hoy ──
@@ -187,7 +187,7 @@ export default function ReportIssueCard() {
           {/* El tilde, en el azul de Freewheel y no en verde: es el estado de
               algo que ya pasó, no una alarma ni una felicitación. */}
           <div style={{
-            width: 40, height: 40, borderRadius: "50%", background: "#f0f6ff",
+            width: 40, height: 40, borderRadius: "50%", background: "var(--fw-blue-bg)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -196,13 +196,13 @@ export default function ReportIssueCard() {
             </svg>
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#111827", marginBottom: 5 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "var(--fw-text)", marginBottom: 5 }}>
               {reciénEnviado ? tr("report.thanks") : tr("report.alreadyToday")}
             </div>
-            <div style={{ fontSize: 13.5, color: "#4b5563", lineHeight: 1.65 }}>
+            <div style={{ fontSize: 13.5, color: "var(--fw-text-2)", lineHeight: 1.65 }}>
               {reciénEnviado ? tr("report.thanksBody") : tr("report.alreadyTodayBody")}
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 12, borderTop: "1px solid #f1f2f4", paddingTop: 12 }}>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 12, borderTop: "1px solid var(--fw-line-soft)", paddingTop: 12 }}>
               {tr("report.sentOn", { date: shortDate(reporte.enviadoEl, lang) })}
               {reporte.archivos?.length > 0
                 ? ` · ${tr("report.withFiles", { count: reporte.archivos.length })}`
@@ -231,7 +231,7 @@ export default function ReportIssueCard() {
         maxLength={1500}
         onChange={(ev) => setMensaje(ev.target.value)}
       />
-      <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 6, textAlign: "right" }}>
+      <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", marginTop: 6, textAlign: "right" }}>
         {mensaje.length}/1500
       </div>
 
@@ -253,7 +253,7 @@ export default function ReportIssueCard() {
         </svg>
         {tr("report.attach")}
       </button>
-      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 8, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 8, lineHeight: 1.6 }}>
         {tr("report.filesNote", { max: MAX_ARCHIVOS })}
       </div>
 
@@ -261,13 +261,13 @@ export default function ReportIssueCard() {
         <div style={{ marginTop: 12 }}>
           {archivos.map((a, i) => (
             <div key={`${a.name}-${i}`} style={e.fila}>
-              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#374151" }}>
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--fw-text-2)" }}>
                 {a.name}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                <span style={{ color: "#9ca3af", fontSize: 12 }}>{pesoLegible(a.size)}</span>
+                <span style={{ color: "var(--fw-text-4)", fontSize: 12 }}>{pesoLegible(a.size)}</span>
                 <button type="button" onClick={() => quitar(i)}
-                  style={{ background: "none", border: "none", color: "#b91c1c", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}>
+                  style={{ background: "none", border: "none", color: "var(--fw-red-text-2)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}>
                   {tr("report.remove")}
                 </button>
               </span>
@@ -276,12 +276,12 @@ export default function ReportIssueCard() {
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid #f1f2f4", marginTop: 18, paddingTop: 18 }}>
+      <div style={{ borderTop: "1px solid var(--fw-line-soft)", marginTop: 18, paddingTop: 18 }}>
         <button type="button" style={{ ...e.enviar, opacity: enviando ? .65 : 1 }}
           onClick={enviar} disabled={enviando}>
           {enviando ? tr("report.sending") : tr("report.send")}
         </button>
-        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 12, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 12, lineHeight: 1.6 }}>
           {tr("report.oneADay")}
         </div>
       </div>

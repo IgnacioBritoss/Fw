@@ -59,7 +59,7 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
   // ── CELULAR: una sola columna, el panel oscuro reducido a una franja ──
   if (isMobile) {
     return (
-      <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
+      <div style={{ minHeight: "100vh", background: "var(--fw-surface)", display: "flex", flexDirection: "column" }}>
         <div style={{
           background: HERO_BG,
           // El área segura es el espacio que ocupan la barra de estado y el notch:
@@ -87,11 +87,11 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
         </div>
 
         <div style={{ flex: 1, padding: "26px 20px 40px" }}>
-          <h2 style={{ fontSize: 23, fontWeight: 800, color: "#111827", letterSpacing: "-.4px", marginBottom: 6 }}>
+          <h2 style={{ fontSize: 23, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px", marginBottom: 6 }}>
             {title}
           </h2>
           {subtitle && (
-            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 24, lineHeight: 1.6 }}>{subtitle}</p>
+            <p style={{ fontSize: 14, color: "var(--fw-text-3)", marginBottom: 24, lineHeight: 1.6 }}>{subtitle}</p>
           )}
           {children}
           {footer && <div style={{ marginTop: 22 }}>{footer}</div>}
@@ -104,7 +104,7 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
   // El panel va fijo (ver AuthAside), así que la columna del formulario le
   // reserva el lugar con un margen del mismo ancho en vez de ponerse al lado.
   return (
-    <div style={{ minHeight: "100vh", background: "#fff" }}>
+    <div style={{ minHeight: "100vh", background: "var(--fw-surface)" }}>
       <AuthAside
         foto={foto}
         titulo={hero?.title}
@@ -116,7 +116,7 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
 
       <div style={{
         marginLeft: PANEL, minHeight: "100vh",
-        display: "flex", flexDirection: "column", background: "#fff",
+        display: "flex", flexDirection: "column", background: "var(--fw-surface)",
       }}>
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "22px 28px 0" }}>
           <LangPicker />
@@ -127,10 +127,10 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
         }}>
           <div style={{ width: "100%", maxWidth }}>
             <div style={{ marginBottom: 30 }}>
-              <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px", marginBottom: 6 }}>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-0.5px", marginBottom: 6 }}>
                 {title}
               </h2>
-              {subtitle && <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6 }}>{subtitle}</p>}
+              {subtitle && <p style={{ fontSize: 14, color: "var(--fw-text-3)", lineHeight: 1.6 }}>{subtitle}</p>}
             </div>
             {children}
             {footer && <div style={{ marginTop: 22 }}>{footer}</div>}

@@ -99,13 +99,13 @@ export default function Select({
       display: "flex", alignItems: "center", justifyContent: "space-between",
       gap: 8, width: "100%", padding: 0, background: "transparent",
       border: "none", cursor: "pointer", textAlign: "left",
-      fontSize: 14, fontWeight: 700, color: "#111827", minHeight: 0,
+      fontSize: 14, fontWeight: 700, color: "var(--fw-text)", minHeight: 0,
     }
     : {
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      gap: 8, width: "100%", padding: "10px 12px", background: "#fff",
-      border: `1.5px solid ${open ? "#0f6ce6" : "#e5e7eb"}`, borderRadius: 8,
-      cursor: "pointer", textAlign: "left", fontSize: 14, color: "#111827",
+      gap: 8, width: "100%", padding: "10px 12px", background: "var(--fw-surface)",
+      border: `1.5px solid ${open ? "var(--fw-blue)" : "var(--fw-border)"}`, borderRadius: 8,
+      cursor: "pointer", textAlign: "left", fontSize: 14, color: "var(--fw-text)",
       boxShadow: open ? "0 0 0 3px #eff6ff" : "none",
       transition: "border-color .15s ease, box-shadow .15s ease",
       boxSizing: "border-box",
@@ -124,7 +124,7 @@ export default function Select({
         style={boxStyle}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {selected ? selected.label : <span style={{ color: "#9ca3af" }}>{placeholder}</span>}
+          {selected ? selected.label : <span style={{ color: "var(--fw-text-4)" }}>{placeholder}</span>}
         </span>
         {/* La flecha gira al abrir: deja claro que el panel de abajo es de este campo */}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280"
@@ -143,7 +143,7 @@ export default function Select({
             position: "absolute", top: "calc(100% + 6px)", left: 0,
             minWidth: "100%", maxHeight: 260, overflowY: "auto",
             margin: 0, padding: 6, listStyle: "none",
-            background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10,
+            background: "var(--fw-surface)", border: "1px solid var(--fw-border)", borderRadius: 10,
             boxShadow: "0 10px 30px rgba(0,0,0,.12)", zIndex: 60,
           }}
         >
@@ -161,9 +161,9 @@ export default function Select({
                   padding: "9px 11px", borderRadius: 7, cursor: "pointer",
                   fontSize: 13.5, whiteSpace: "nowrap",
                   fontWeight: isSelected ? 700 : 500,
-                  color: isSelected ? "#0b55c0" : "#374151",
+                  color: isSelected ? "var(--fw-blue-strong)" : "var(--fw-text-2)",
                   background: isHighlighted
-                    ? (isSelected ? "#dbeafe" : "#f3f4f6")
+                    ? (isSelected ? "var(--fw-blue-bg-2)" : "#f3f4f6")
                     : (isSelected ? "#eff6ff" : "transparent"),
                   display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
                 }}

@@ -30,36 +30,36 @@ const s = {
   // maxHeight + scroll propio: con las pruebas adjuntas el formulario creció, y
   // en un celular con 5 miniaturas el botón de enviar quedaba abajo del borde de
   // la pantalla sin manera de llegar.
-  modal: { background: "#fff", borderRadius: 16, padding: 28,
+  modal: { background: "var(--fw-surface)", borderRadius: 16, padding: 28,
     width: "90%", maxWidth: 480, boxShadow: "0 8px 40px rgba(0,0,0,.2)",
     maxHeight: "90vh", overflowY: "auto" },
   header: { display: "flex", justifyContent: "space-between",
     alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 18, fontWeight: 700, color: "#111827" },
+  title: { fontSize: 18, fontWeight: 700, color: "var(--fw-text)" },
   closeBtn: { background: "none", border: "none", fontSize: 22,
-    cursor: "pointer", color: "#6b7280" },
+    cursor: "pointer", color: "var(--fw-text-3)" },
   label: { display: "block", fontSize: 13, fontWeight: 500,
-    color: "#374151", marginBottom: 6 },
+    color: "var(--fw-text-2)", marginBottom: 6 },
   select: { width: "100%", padding: "11px 14px", borderRadius: 8,
-    border: "1px solid #d1d5db", fontSize: 14, marginBottom: 16, background: "#fff" },
+    border: "1px solid var(--fw-border-2)", fontSize: 14, marginBottom: 16, background: "var(--fw-surface)" },
   textarea: { width: "100%", padding: "11px 14px", borderRadius: 8,
-    border: "1px solid #d1d5db", fontSize: 14, height: 120,
+    border: "1px solid var(--fw-border-2)", fontSize: 14, height: 120,
     resize: "none", outline: "none", marginBottom: 6 },
-  counter: { fontSize: 11, color: "#9ca3af", textAlign: "right", marginBottom: 16 },
-  warning: { background: "#fef2f2", border: "1px solid #fecaca",
+  counter: { fontSize: 11, color: "var(--fw-text-4)", textAlign: "right", marginBottom: 16 },
+  warning: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)",
     borderRadius: 8, padding: "10px 14px", fontSize: 12,
-    color: "#b91c1c", marginBottom: 16, lineHeight: 1.6 },
+    color: "var(--fw-red-text-2)", marginBottom: 16, lineHeight: 1.6 },
   btnRow: { display: "flex", gap: 10 },
   btnCancel: { flex: 1, padding: "11px", background: "transparent",
-    border: "1px solid #d1d5db", borderRadius: 8, fontSize: 14,
-    cursor: "pointer", color: "#374151" },
-  btnReport: { flex: 1, padding: "11px", background: "#dc2626", color: "#fff",
+    border: "1px solid var(--fw-border-2)", borderRadius: 8, fontSize: 14,
+    cursor: "pointer", color: "var(--fw-text-2)" },
+  btnReport: { flex: 1, padding: "11px", background: "var(--fw-red)", color: "#fff",
     border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" },
   btnReportDisabled: { background: "#fca5a5", cursor: "not-allowed" },
   success: { textAlign: "center", padding: "20px 0" },
   successIcon: { fontSize: 48, marginBottom: 12 },
   successTitle: { fontSize: 16, fontWeight: 600, marginBottom: 6 },
-  successSub: { fontSize: 13, color: "#6b7280" },
+  successSub: { fontSize: 13, color: "var(--fw-text-3)" },
 };
 
 // Motivos sugeridos. La última opción abre un campo libre: ninguna lista cerrada
@@ -182,7 +182,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
         <div style={s.header}>
           <div style={s.title}>
             {tr(targetType === "car" ? "report.titleListing" : "report.titleUser")}
-            {targetLabel ? <span style={{ fontWeight: 500, color: "#6b7280" }}>: {targetLabel}</span> : null}
+            {targetLabel ? <span style={{ fontWeight: 500, color: "var(--fw-text-3)" }}>: {targetLabel}</span> : null}
           </div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
@@ -210,8 +210,8 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
             placeholder={tr("report.phOwnReason")}
             style={{
               width: "100%", padding: "11px 14px", borderRadius: 8,
-              border: "1.5px solid #d1d5db", fontSize: 14, marginBottom: 16,
-              outline: "none", boxSizing: "border-box", color: "#111827",
+              border: "1.5px solid var(--fw-border-2)", fontSize: 14, marginBottom: 16,
+              outline: "none", boxSizing: "border-box", color: "var(--fw-text)",
             }}
           />
         )}
@@ -231,9 +231,9 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
             admin no tiene con qué decidir si pausar una publicación o suspender
             una cuenta, y abre la puerta a reportes hechos por despecho. */}
         <label style={s.label}>
-          {tr("report.proof")} <span style={{ color: "#dc2626" }}>*</span>
+          {tr("report.proof")} <span style={{ color: "var(--fw-red-text)" }}>*</span>
         </label>
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 10, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginBottom: 10, lineHeight: 1.5 }}>
           {tr("report.proofNote", { max: MAX_EVIDENCE })}
         </div>
 
@@ -250,14 +250,14 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
           {evidence.map(item => (
             <div key={item.id} style={{ position: "relative", width: 74, height: 74 }}>
               <img src={item.dataUrl} alt=""
-                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8, border: "1px solid var(--fw-border)" }} />
               <button
                 type="button"
                 onClick={() => removeEvidence(item.id)}
                 aria-label={tr("report.removeProof")}
                 style={{
                   position: "absolute", top: -6, right: -6, width: 22, height: 22,
-                  minHeight: 22, borderRadius: "50%", background: "#111827", color: "#fff",
+                  minHeight: 22, borderRadius: "50%", background: "var(--fw-chip)", color: "#fff",
                   border: "2px solid #fff", cursor: "pointer", fontSize: 13, lineHeight: 1,
                   display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
                 }}
@@ -273,11 +273,11 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
               onClick={() => document.getElementById("report-evidence")?.click()}
               style={{
                 width: 74, height: 74, minHeight: 74, borderRadius: 8,
-                border: `1.5px dashed ${evidence.length === 0 ? "#fca5a5" : "#d1d5db"}`,
-                background: evidence.length === 0 ? "#fef2f2" : "#f9fafb",
+                border: `1.5px dashed ${evidence.length === 0 ? "var(--fw-red-line)" : "var(--fw-border-2)"}`,
+                background: evidence.length === 0 ? "var(--fw-red-bg)" : "var(--fw-surface-2)",
                 cursor: "pointer", display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "center", gap: 3,
-                color: "#6b7280", fontSize: 11, fontWeight: 600, padding: 0,
+                color: "var(--fw-text-3)", fontSize: 11, fontWeight: 600, padding: 0,
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280"

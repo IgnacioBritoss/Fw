@@ -14,17 +14,17 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
 
 const s = {
-  page: { minHeight:"100vh", background:"#f9fafb", padding:"40px 24px" },
-  container: { maxWidth:760, margin:"0 auto", background:"#fff", borderRadius:16, padding:"40px 48px", boxShadow:"0 4px 24px rgba(0,0,0,.07)" },
-  containerMobile: { background:"#fff", borderRadius:12, padding:"24px 20px" },
-  back: { display:"inline-flex", alignItems:"center", gap:6, color:"#0f6ce6", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
-  h1: { fontSize:28, fontWeight:800, color:"#111827", marginBottom:6 },
-  date: { fontSize:13, color:"#9ca3af", marginBottom:36 },
-  h2: { fontSize:17, fontWeight:700, color:"#111827", marginTop:32, marginBottom:10 },
-  p: { fontSize:14, color:"#374151", lineHeight:1.8, marginBottom:12 },
-  ul: { fontSize:14, color:"#374151", lineHeight:1.8, paddingLeft:20, marginBottom:12 },
-  divider: { border:"none", borderTop:"1px solid #f3f4f6", margin:"32px 0" },
-  highlight: { background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:8, padding:"12px 16px", fontSize:14, color:"#1e40af", marginBottom:16 },
+  page: { minHeight:"100vh", background:"var(--fw-surface-2)", padding:"40px 24px" },
+  container: { maxWidth:760, margin:"0 auto", background:"var(--fw-surface)", borderRadius:16, padding:"40px 48px", boxShadow:"0 4px 24px rgba(0,0,0,.07)" },
+  containerMobile: { background:"var(--fw-surface)", borderRadius:12, padding:"24px 20px" },
+  back: { display:"inline-flex", alignItems:"center", gap:6, color:"var(--fw-blue)", fontWeight:600, fontSize:14, textDecoration:"none", marginBottom:28 },
+  h1: { fontSize:28, fontWeight:800, color:"var(--fw-text)", marginBottom:6 },
+  date: { fontSize:13, color:"var(--fw-text-4)", marginBottom:36 },
+  h2: { fontSize:17, fontWeight:700, color:"var(--fw-text)", marginTop:32, marginBottom:10 },
+  p: { fontSize:14, color:"var(--fw-text-2)", lineHeight:1.8, marginBottom:12 },
+  ul: { fontSize:14, color:"var(--fw-text-2)", lineHeight:1.8, paddingLeft:20, marginBottom:12 },
+  divider: { border:"none", borderTop:"1px solid var(--fw-line-soft)", margin:"32px 0" },
+  highlight: { background:"var(--fw-blue-bg)", border:"1px solid var(--fw-blue-line)", borderRadius:8, padding:"12px 16px", fontSize:14, color:"var(--fw-blue-text)", marginBottom:16 },
 };
 
 // Cada sección: el número, su título, y o un párrafo (p) o una lista (items).
@@ -72,7 +72,7 @@ export default function Terms() {
         <p style={s.p}>{tr("terms.s10p")} <strong>{CONTACT_EMAIL}</strong>.</p>
 
         <hr style={s.divider} />
-        <p style={{ ...s.p, color:"#9ca3af", fontSize:13 }}>{tr("terms.rights")}</p>
+        <p style={{ ...s.p, color:"var(--fw-text-4)", fontSize:13 }}>{tr("terms.rights")}</p>
       </div>
     </div>
   );

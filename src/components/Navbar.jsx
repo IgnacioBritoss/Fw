@@ -65,7 +65,7 @@ export default function Navbar() {
           >
             <div style={{
               width: 34, height: 34, borderRadius: "50%",
-              background: "linear-gradient(135deg,#0f6ce6,#0b55c0)",
+              background: "linear-gradient(135deg,var(--fw-blue),var(--fw-blue-strong))",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontWeight: 700, fontSize: 13, color: "#fff",
               outline: dropdownOpen ? "2px solid rgba(37,99,235,.6)" : "2px solid transparent",
@@ -113,7 +113,7 @@ export default function Navbar() {
             <button style={{ padding: "7px 16px", background: "transparent", border: "1px solid rgba(255,255,255,.18)", color: "rgba(255,255,255,.8)", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Iniciar sesión</button>
           </Link>
           <Link to="/register">
-            <button style={{ padding: "7px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Registrarse</button>
+            <button style={{ padding: "7px 16px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Registrarse</button>
           </Link>
         </div>
       )}

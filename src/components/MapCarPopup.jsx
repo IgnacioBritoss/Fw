@@ -35,7 +35,7 @@ const Flecha = ({ hacia }) => (
 const botonFlecha = (lado) => ({
   position: "absolute", top: "50%", [lado]: 6, transform: "translateY(-50%)",
   width: 26, height: 26, minHeight: 26, borderRadius: "50%",
-  border: "none", padding: 0, background: "rgba(255,255,255,.92)", color: "#374151",
+  border: "none", padding: 0, background: "rgba(255,255,255,.92)", color: "var(--fw-text-2)",
   display: "flex", alignItems: "center", justifyContent: "center",
   boxShadow: "0 1px 5px rgba(0,0,0,.25)", cursor: "pointer", zIndex: 3,
 });
@@ -70,7 +70,7 @@ export default function MapCarPopup({ car, precio }) {
     >
       <div style={{
         position: "relative", width: "100%", height: ALTO_FOTO,
-        borderRadius: 10, overflow: "hidden", marginBottom: 10, background: "#e5e7eb",
+        borderRadius: 10, overflow: "hidden", marginBottom: 10, background: "var(--fw-surface-3)",
       }}>
         {fotos.length > 0 ? (
           <img src={fotos[i]} alt={`${car.brand} ${car.model}`}
@@ -78,7 +78,7 @@ export default function MapCarPopup({ car, precio }) {
         ) : (
           <div style={{
             width: "100%", height: "100%", display: "flex",
-            alignItems: "center", justifyContent: "center", fontSize: 30, color: "#9ca3af",
+            alignItems: "center", justifyContent: "center", fontSize: 30, color: "var(--fw-text-4)",
           }}>—</div>
         )}
 
@@ -99,7 +99,7 @@ export default function MapCarPopup({ car, precio }) {
               {fotos.slice(0, 6).map((_, n) => (
                 <span key={n} style={{
                   width: 5, height: 5, borderRadius: "50%",
-                  background: n === i % 6 ? "#fff" : "rgba(255,255,255,.5)",
+                  background: n === i % 6 ? "var(--fw-surface)" : "rgba(255,255,255,.5)",
                   boxShadow: "0 1px 2px rgba(0,0,0,.4)",
                 }} />
               ))}
@@ -108,18 +108,18 @@ export default function MapCarPopup({ car, precio }) {
         )}
       </div>
 
-      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: "#111827" }}>
+      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, color: "var(--fw-text)" }}>
         {car.brand} {car.model} {car.year}
       </div>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-        {car.location} <span style={{ color: "#9ca3af", fontSize: 10 }}>{tr("map.approxArea")}</span>
+      <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginBottom: 4 }}>
+        {car.location} <span style={{ color: "var(--fw-text-4)", fontSize: 10 }}>{tr("map.approxArea")}</span>
       </div>
-      <div style={{ fontWeight: 700, fontSize: 15, color: "#0f6ce6" }}>
+      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-blue)" }}>
         {precio(priceOf(car))}
-        <span style={{ fontWeight: 400, fontSize: 12, color: "#6b7280" }}> {tr("common.perDay")}</span>
+        <span style={{ fontWeight: 400, fontSize: 12, color: "var(--fw-text-3)" }}> {tr("common.perDay")}</span>
       </div>
       <div style={{
-        marginTop: 8, padding: 7, background: "#0f6ce6", color: "#fff",
+        marginTop: 8, padding: 7, background: "var(--fw-blue)", color: "#fff",
         borderRadius: 8, textAlign: "center", fontSize: 12, fontWeight: 600,
       }}>{tr("car.bookNow")}</div>
     </div>

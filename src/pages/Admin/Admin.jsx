@@ -29,43 +29,43 @@ import { useCurrency } from "../../context/CurrencyContext";
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { maxWidth: 900, margin: "0 auto", padding: "20px 14px" },
-  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
-  sub: { color: "#6b7280", fontSize: 14, marginTop: 2 },
+  title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" },
+  sub: { color: "var(--fw-text-3)", fontSize: 14, marginTop: 2 },
   tabs: {
-    display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid #f3f4f6",
+    display: "flex", gap: 4, marginBottom: 24, borderBottom: "2px solid var(--fw-line-soft)",
     overflowX: "auto", overflowY: "hidden",
     // Sin esto, en Chrome/Safari los hijos con flex se encogen y el texto se
     // parte en dos renglones en vez de dejar desplazar la fila.
     flexWrap: "nowrap", WebkitOverflowScrolling: "touch",
     scrollbarWidth: "none",
   },
-  tab: { padding: "10px 14px", fontSize: 13.5, whiteSpace: "nowrap", flexShrink: 0, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "#6b7280", borderBottom: "3px solid transparent" },
-  tabActive: { color: "#0f6ce6", borderBottom: "3px solid #0f6ce6" },
-  card: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid #f3f4f6" },
-  carImg: { width: 90, height: 66, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#9ca3af", flexShrink: 0, overflow: "hidden" },
-  btnDelete: { padding: "8px 18px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  btnSuspend: { padding: "8px 18px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  tab: { padding: "10px 14px", fontSize: 13.5, whiteSpace: "nowrap", flexShrink: 0, fontWeight: 500, cursor: "pointer", border: "none", background: "transparent", color: "var(--fw-text-3)", borderBottom: "3px solid transparent" },
+  tabActive: { color: "var(--fw-blue)", borderBottom: "3px solid var(--fw-blue)" },
+  card: { background: "var(--fw-surface)", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 14, border: "1px solid var(--fw-line-soft)" },
+  carImg: { width: 90, height: 66, borderRadius: 8, background: "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--fw-text-4)", flexShrink: 0, overflow: "hidden" },
+  btnDelete: { padding: "8px 18px", background: "var(--fw-red)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  btnSuspend: { padding: "8px 18px", background: "var(--fw-amber)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRestore: { padding: "8px 18px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRow: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
-  alertOk: { background: "#eff6ff", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 },
-  alertErr: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#991b1b", marginBottom: 16 },
-  empty: { textAlign: "center", padding: "40px 0", color: "#9ca3af" },
+  alertOk: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-green-line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
+  alertErr: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
+  empty: { textAlign: "center", padding: "40px 0", color: "var(--fw-text-4)" },
   accessDenied: { textAlign: "center", padding: "80px 24px" },
   badge: { padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 },
 };
 
 const listingStatusColors = {
-  ACTIVE: { background: "#dcfce7", color: "#166534" },
-  DRAFT: { background: "#f3f4f6", color: "#374151" },
-  PAUSED: { background: "#fef9c3", color: "#854d0e" },
-  DELETED: { background: "#fee2e2", color: "#991b1b" },
+  ACTIVE: { background: "var(--fw-green-bg)", color: "var(--fw-green-text-2)" },
+  DRAFT: { background: "var(--fw-bg)", color: "var(--fw-text-2)" },
+  PAUSED: { background: "var(--fw-amber-bg)", color: "var(--fw-amber-text)" },
+  DELETED: { background: "var(--fw-red-bg)", color: "var(--fw-red-text-2)" },
 };
 
 const userStatusColor = (status) => {
-  if (status === "ACTIVE") return { background: "#dcfce7", color: "#166534" };
-  if (status === "SUSPENDED") return { background: "#fef9c3", color: "#854d0e" };
-  if (status === "DELETED") return { background: "#fee2e2", color: "#991b1b" };
-  return { background: "#f3f4f6", color: "#374151" };
+  if (status === "ACTIVE") return { background: "var(--fw-green-bg)", color: "var(--fw-green-text-2)" };
+  if (status === "SUSPENDED") return { background: "var(--fw-amber-bg)", color: "var(--fw-amber-text)" };
+  if (status === "DELETED") return { background: "var(--fw-red-bg)", color: "var(--fw-red-text-2)" };
+  return { background: "var(--fw-bg)", color: "var(--fw-text-2)" };
 };
 
 export default function Admin() {
@@ -106,8 +106,8 @@ export default function Admin() {
     return (
       <div style={s.accessDenied}>
         <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{tr("admin.denied")}</div>
-        <div style={{ color: "#6b7280", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
-        <button style={{ padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
+        <div style={{ color: "var(--fw-text-3)", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
+        <button style={{ padding: "10px 24px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
           onClick={() => navigate("/")}>{tr("common.goHome")}</button>
       </div>
     );
@@ -305,13 +305,13 @@ export default function Admin() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{label}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)" }}>{label}</span>
                   <span style={{ ...s.badge, ...(listingStatusColors[listing.status] || {}) }}>{listing.status}</span>
                 </div>
-                <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 2 }}>
+                <div style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 2 }}>
                   {listing.locationText} · {precio(listing.pricePerDay)}{tr("common.perDay")}
                 </div>
-                <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 8 }}>
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginBottom: 8 }}>
                   {shortDate(listing.createdAt, lang)}
                 </div>
                 <div style={s.btnRow}>
@@ -343,19 +343,19 @@ export default function Admin() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Avatar src={u.profilePhotoUrl} initials={initialsOf(u) } size={40} alt="" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--fw-text)" }}>
                   {u.firstName} {u.lastName}
                   {u.role === "ADMIN" && (
-                    <span style={{ marginLeft: 8, ...s.badge, background: "#111827", color: "#fff" }}>ADMIN</span>
+                    <span style={{ marginLeft: 8, ...s.badge, background: "var(--fw-chip)", color: "#fff" }}>ADMIN</span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>{u.email}</div>
+                <div style={{ fontSize: 12, color: "var(--fw-text-3)" }}>{u.email}</div>
               </div>
               <span style={{ ...s.badge, ...userStatusColor(u.status) }}>{u.status}</span>
             </div>
 
             {expandedUser === u.id && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f3f4f6", fontSize: 12, color: "#6b7280", display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--fw-line-soft)", fontSize: 12, color: "var(--fw-text-3)", display: "flex", flexDirection: "column", gap: 4 }}>
                 <div><strong>ID:</strong> {u.id}</div>
                 <div><strong>{tr("auth.phone")}:</strong> {u.phone || "—"}</div>
                 <div><strong>{tr("admin.registered")}:</strong> {shortDate(u.createdAt, lang)}</div>
@@ -388,9 +388,9 @@ export default function Admin() {
         : reports.length === 0 ? <div style={s.empty}>{tr("admin.noReports")}</div>
         : reports.map(r => {
           const ai = {
-            COHERENT: { label: tr("admin.aiCoherent"), bg: "#fef3c7", color: "#92400e" },
-            INCOHERENT: { label: tr("admin.aiIncoherent"), bg: "#f3f4f6", color: "#4b5563" },
-            UNCLEAR: { label: tr("admin.aiUnclear"), bg: "#eff6ff", color: "#1e40af" },
+            COHERENT: { label: tr("admin.aiCoherent"), bg: "#fef3c7", color: "var(--fw-amber-text)" },
+            INCOHERENT: { label: tr("admin.aiIncoherent"), bg: "var(--fw-bg)", color: "var(--fw-text-2)" },
+            UNCLEAR: { label: tr("admin.aiUnclear"), bg: "var(--fw-blue-bg)", color: "var(--fw-blue-text)" },
           }[r.aiVerdict];
           const reporterName = r.reporter?.displayName
             || `${r.reporter?.firstName || ""} ${r.reporter?.lastName || ""}`.trim()
@@ -399,23 +399,23 @@ export default function Admin() {
           return (
             <div key={r.id} style={{ ...s.card, display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                <span style={{ ...s.badge, background: r.status === "OPEN" ? "#fee2e2" : "#f3f4f6", color: r.status === "OPEN" ? "#991b1b" : "#4b5563" }}>
+                <span style={{ ...s.badge, background: r.status === "OPEN" ? "var(--fw-red-bg)" : "var(--fw-bg)", color: r.status === "OPEN" ? "var(--fw-red-text-2)" : "var(--fw-text-2)" }}>
                   {r.status === "OPEN" ? tr("admin.unresolved") : r.status}
                 </span>
-                <span style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{r.reason}</span>
-                <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: "auto" }}>
+                <span style={{ fontWeight: 700, fontSize: 14, color: "var(--fw-text)" }}>{r.reason}</span>
+                <span style={{ fontSize: 12, color: "var(--fw-text-4)", marginLeft: "auto" }}>
                   {shortDate(r.createdAt, lang)}
                 </span>
               </div>
 
-              <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 8 }}>
+              <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 8 }}>
                 {r.targetType === "LISTING"
-                  ? <>{tr("admin.reportedListing")}: <strong style={{ color: "#374151" }}>{r.listing?.title || tr("admin.deletedListing")}</strong></>
-                  : <>{tr("admin.reportedAccount")}: <strong style={{ color: "#374151" }}>{r.targetUser?.firstName} {r.targetUser?.lastName}</strong></>}
+                  ? <>{tr("admin.reportedListing")}: <strong style={{ color: "var(--fw-text-2)" }}>{r.listing?.title || tr("admin.deletedListing")}</strong></>
+                  : <>{tr("admin.reportedAccount")}: <strong style={{ color: "var(--fw-text-2)" }}>{r.targetUser?.firstName} {r.targetUser?.lastName}</strong></>}
                 {" · "}{tr("admin.reportedBy", { name: reporterName })}
               </div>
 
-              <div style={{ fontSize: 13.5, color: "#374151", lineHeight: 1.6, background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
+              <div style={{ fontSize: 13.5, color: "var(--fw-text-2)", lineHeight: 1.6, background: "var(--fw-surface-2)", border: "1px solid var(--fw-line-soft)", borderRadius: 8, padding: "10px 12px", marginBottom: 10 }}>
                 {r.details}
               </div>
 
@@ -425,13 +425,13 @@ export default function Admin() {
                   conversación. */}
               {r.evidenceUrls?.length > 0 && (
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--fw-text-3)", marginBottom: 6 }}>
                     {tr("admin.evidence", { count: r.evidenceUrls.length })}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {r.evidenceUrls.map((url) => (
                       <a key={url} href={url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: "block", width: 84, height: 84, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                        style={{ display: "block", width: 84, height: 84, borderRadius: 8, overflow: "hidden", border: "1px solid var(--fw-border)" }}>
                         <img src={url} alt=""
                           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </a>
@@ -466,7 +466,7 @@ export default function Admin() {
                       {tr("admin.suspendAccount")}
                     </button>
                   )}
-                  <button style={{ ...s.btnSuspend, background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151" }}
+                  <button style={{ ...s.btnSuspend, background: "var(--fw-surface)", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)" }}
                     onClick={() => doResolveReport(r.id, "DISMISS", tr("admin.reportDismissed"))}>
                     {tr("admin.dismiss")}
                   </button>
@@ -507,10 +507,10 @@ export default function Admin() {
           <div style={{ ...s.card, display: "block" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <div>
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#111827" }}>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: "var(--fw-text)" }}>
                   {tr("admin.modelsTitle")}
                 </div>
-                <div style={{ fontSize: 12.5, color: "#6b7280", marginTop: 2 }}>
+                <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginTop: 2 }}>
                   {aiHealth
                     ? tr("admin.modelsConfigured", { list: (aiHealth.visionModels || []).join(", ") || "—" })
                     : tr("admin.modelsUnknown")}
@@ -547,9 +547,9 @@ export default function Admin() {
                       }}>
                         {tr(tono.etiqueta)}
                       </span>
-                      <code style={{ color: "#374151", wordBreak: "break-all" }}>{p.model}</code>
+                      <code style={{ color: "var(--fw-text-2)", wordBreak: "break-all" }}>{p.model}</code>
                       {p.error && (
-                        <span style={{ color: "#9ca3af", fontSize: 11.5, wordBreak: "break-all" }}>{p.error}</span>
+                        <span style={{ color: "var(--fw-text-4)", fontSize: 11.5, wordBreak: "break-all" }}>{p.error}</span>
                       )}
                     </div>
                   );
@@ -558,14 +558,14 @@ export default function Admin() {
                     backend explica qué hacer para saberlo de verdad. */}
                 {aiHealth?.note && (
                   <div style={{
-                    fontSize: 12, color: "#9a3412", background: "#fff7ed",
-                    border: "1px solid #fed7aa", borderRadius: 8,
+                    fontSize: 12, color: "var(--fw-orange-text)", background: "var(--fw-orange-bg)",
+                    border: "1px solid var(--fw-orange-line)", borderRadius: 8,
                     padding: "9px 11px", lineHeight: 1.6,
                   }}>
                     {aiHealth.note}
                   </div>
                 )}
-                <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 2, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", marginTop: 2, lineHeight: 1.6 }}>
                   {tr("admin.modelsHelp")}
                 </div>
               </div>
@@ -583,9 +583,9 @@ export default function Admin() {
               <div key={v.id} style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>{name}</div>
                     {person.email && (
-                      <div style={{ fontSize: 12.5, color: "#6b7280", marginTop: 2 }}>{person.email}</div>
+                      <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginTop: 2 }}>{person.email}</div>
                     )}
                   </div>
                 </div>
@@ -617,17 +617,17 @@ export default function Admin() {
         <div onClick={() => setConfirmModal(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3.5 21 19H3l9-15.5z" stroke="#dc2626" strokeWidth="1.8" strokeLinejoin="round"/><path d="M12 10v4M12 16.5h.01" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round"/></svg></div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{confirmModal.title}</div>
-            <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>{confirmModal.msg}</div>
+            style={{ background: "var(--fw-surface)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--fw-red-bg)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3.5 21 19H3l9-15.5z" stroke="#dc2626" strokeWidth="1.8" strokeLinejoin="round"/><path d="M12 10v4M12 16.5h.01" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round"/></svg></div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)", marginBottom: 6 }}>{confirmModal.title}</div>
+            <div style={{ fontSize: 14, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 24 }}>{confirmModal.msg}</div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setConfirmModal(null)}
-                style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                style={{ flex: 1, padding: "12px", background: "var(--fw-surface)", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 {tr("common.cancel")}
               </button>
               <button onClick={runConfirm}
-                style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                style={{ flex: 1, padding: "12px", background: "var(--fw-red)", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
                 {confirmModal.confirmLabel}
               </button>
             </div>

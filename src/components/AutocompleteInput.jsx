@@ -99,7 +99,7 @@ export default function AutocompleteInput({
         ...tipografia,
         position: "absolute", inset: 0,
         whiteSpace: "pre", overflow: "hidden",
-        pointerEvents: "none", color: "#9ca3af",
+        pointerEvents: "none", color: "var(--fw-text-4)",
         display: "flex", alignItems: "center",
       }}>
         <span style={{ color: "transparent" }}>{value}</span>

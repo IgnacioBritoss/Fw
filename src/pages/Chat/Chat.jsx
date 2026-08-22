@@ -396,7 +396,7 @@ export default function Chat() {
     if (kind === "file") {
       return (
         <a href={msg.content} target="_blank" rel="noreferrer"
-          style={{ color: isMe ? "#bfdbfe" : "#0f6ce6", fontSize: 13 }}>
+          style={{ color: isMe ? "#bfdbfe" : "var(--fw-blue)", fontSize: 13 }}>
           Abrir archivo
         </a>
       );
@@ -417,7 +417,7 @@ export default function Chat() {
         <div key={msg.id} style={{ display: "contents" }}>
           {showDate && (
             <div style={{ textAlign: "center", margin: "12px 0" }}>
-              <span style={{ fontSize: 11, color: "#6b7280", background: "#e5e7eb", borderRadius: 10, padding: "3px 12px", fontWeight: 500 }}>
+              <span style={{ fontSize: 11, color: "var(--fw-text-3)", background: "var(--fw-surface-3)", borderRadius: 10, padding: "3px 12px", fontWeight: 500 }}>
                 {dateLabel}
               </span>
             </div>
@@ -425,10 +425,10 @@ export default function Chat() {
           <div style={{
             alignSelf: isMe ? "flex-end" : "flex-start",
             maxWidth: "72%",
-            background: isMe ? "#0f6ce6" : "#fff",
-            color: isMe ? "#fff" : "#111827",
+            background: isMe ? "var(--fw-blue)" : "var(--fw-surface)",
+            color: isMe ? "#fff" : "var(--fw-text)",
             borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-            border: isMe ? "none" : "1px solid #e5e7eb",
+            border: isMe ? "none" : "1px solid var(--fw-border)",
             padding: "10px 14px",
             fontSize: 13.5, lineHeight: 1.5,
             boxShadow: isMe ? "0 1px 3px rgba(11,85,192,.25)" : "0 1px 3px rgba(0,0,0,.06)",
@@ -449,14 +449,14 @@ export default function Chat() {
   const renderInput = () => {
     if (pendingAudio) {
       return (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid var(--fw-line-soft)", background: "var(--fw-surface)", flexShrink: 0 }}>
           <audio controls src={pendingAudio.url} style={{ flex: 1, height: 36, minWidth: 0 }} />
           <button onClick={handleSendAudio} disabled={uploading}
-            style={{ padding: "9px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+            style={{ padding: "9px 18px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
             {uploading ? "..." : `${tr("chat.send")} ✓`}
           </button>
           <button onClick={handleCancelAudio}
-            style={{ padding: "9px 14px", background: "#f3f4f6", color: "#374151", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, flexShrink: 0 }}>
+            style={{ padding: "9px 14px", background: "var(--fw-bg)", color: "var(--fw-text-2)", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, flexShrink: 0 }}>
             ✕
           </button>
         </div>
@@ -465,10 +465,10 @@ export default function Chat() {
 
     if (recording) {
       return (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "#fef2f2", borderRadius: 24, padding: "10px 16px", border: "1.5px solid #fecaca" }}>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#dc2626", animation: "pulse 1s infinite" }} />
-            <span style={{ color: "#dc2626", fontSize: 14, fontWeight: 500 }}>Grabando... {recordingSeconds}s</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid var(--fw-line-soft)", background: "var(--fw-surface)", flexShrink: 0 }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "var(--fw-red-bg)", borderRadius: 24, padding: "10px 16px", border: "1.5px solid var(--fw-red-line)" }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--fw-red)", animation: "pulse 1s infinite" }} />
+            <span style={{ color: "var(--fw-red-text)", fontSize: 14, fontWeight: 500 }}>Grabando... {recordingSeconds}s</span>
           </div>
           <button onClick={stopRecording}
             style={{ padding: "9px 18px", background: "#374151", color: "#fff", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
@@ -479,10 +479,10 @@ export default function Chat() {
     }
 
     return (
-      <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid #f3f4f6", background: "#fff", flexShrink: 0 }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", padding: isMobile ? "10px 16px" : "12px 20px", paddingBottom: isMobile ? "max(10px, env(safe-area-inset-bottom))" : "12px", borderTop: "1px solid var(--fw-line-soft)", background: "var(--fw-surface)", flexShrink: 0 }}>
         <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.zip" style={{ display: "none" }} onChange={handleFileSelect} />
         <button onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Adjuntar"
-          style={{ width: 38, height: 38, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--fw-bg)", border: "none", cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
@@ -503,10 +503,10 @@ export default function Chat() {
             eso la barra se veía corrida a la derecha y el avioncito de enviar
             quedaba cortado contra el borde de la pantalla.
           */
-          style={{ flex: 1, minWidth: 0, padding: isMobile ? "10px 14px" : "10px 18px", borderRadius: 20, border: "1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "#111827", background: "#f9fafb" }}
+          style={{ flex: 1, minWidth: 0, padding: isMobile ? "10px 14px" : "10px 18px", borderRadius: 20, border: "1.5px solid var(--fw-border)", fontSize: isMobile ? 16 : 13.5, outline: "none", color: "var(--fw-text)", background: "var(--fw-surface-2)" }}
         />
         <button onClick={startRecording} title="Grabar audio"
-          style={{ width: 38, height: 38, borderRadius: "50%", background: "#f3f4f6", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--fw-bg)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -515,7 +515,7 @@ export default function Chat() {
           </svg>
         </button>
         <button onClick={handleSend} disabled={sending || !text.trim()}
-          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "#0f6ce6" : "#e5e7eb", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
+          style={{ width: 42, height: 42, borderRadius: "50%", background: text.trim() ? "var(--fw-blue)" : "var(--fw-surface-3)", border: "none", cursor: text.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background .15s", boxShadow: text.trim() ? "0 2px 8px rgba(37,99,235,.3)" : "none" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M22 2L11 13" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -532,12 +532,12 @@ export default function Chat() {
   // Panel izquierdo: buscador + lista de conversaciones (con avatar, último
   // mensaje y puntito de no leído).
   const convListJSX = (
-    <div style={{ background: "#fff", width: isMobile ? "100%" : 300, borderRight: "1px solid #f3f4f6", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto" }}>
-      <div style={{ padding: "18px 20px", borderBottom: "1px solid #f3f4f6" }}>
-        <div style={{ fontWeight: 800, fontSize: 17, color: "#111827", letterSpacing: "-.3px" }}>{tr("nav.messages")}</div>
+    <div style={{ background: "var(--fw-surface)", width: isMobile ? "100%" : 300, borderRight: "1px solid var(--fw-line-soft)", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto" }}>
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--fw-line-soft)" }}>
+        <div style={{ fontWeight: 800, fontSize: 17, color: "var(--fw-text)", letterSpacing: "-.3px" }}>{tr("nav.messages")}</div>
       </div>
-      <div style={{ padding: "10px 14px", borderBottom: "1px solid #f3f4f6" }}>
-        <div style={{ display: "flex", alignItems: "center", background: "#f3f4f6", borderRadius: 22, padding: "8px 14px", gap: 8 }}>
+      <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--fw-line-soft)" }}>
+        <div style={{ display: "flex", alignItems: "center", background: "var(--fw-bg)", borderRadius: 22, padding: "8px 14px", gap: 8 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
@@ -545,11 +545,11 @@ export default function Chat() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={tr("chat.searchConv")}
-            style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: "#111827" }}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: "var(--fw-text)" }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fw-text-4)", fontSize: 14, padding: 0, lineHeight: 1 }}>✕</button>
           )}
         </div>
       </div>
@@ -557,11 +557,11 @@ export default function Chat() {
       {!loading && conversations.length === 0 && (
         <div style={{ padding: 32, textAlign: "center" }}>
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 10px", display: "block" }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="#9ca3af" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500 }}>{tr("chat.noConversations")}</div>
+          <div style={{ fontSize: 13, color: "var(--fw-text-3)", fontWeight: 500 }}>{tr("chat.noConversations")}</div>
         </div>
       )}
       {!loading && filteredConversations.length === 0 && conversations.length > 0 && (
-        <div style={{ padding: 24, textAlign: "center", color: "#9ca3af", fontSize: 13 }}>{tr("chat.noResults")}</div>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--fw-text-4)", fontSize: 13 }}>{tr("chat.noResults")}</div>
       )}
       {filteredConversations.map(conv => {
         const other = conv.renterId === user?.id ? conv.owner : conv.renter;
@@ -586,17 +586,17 @@ export default function Chat() {
         const unread = hasUnread(conv);
         return (
           <div key={conv.id} onClick={() => setActiveConvId(conv.id)}
-            style={{ padding: "13px 18px", cursor: "pointer", borderBottom: "1px solid #f9fafb", background: isActive ? "#eff6ff" : "transparent", display: "flex", gap: 12, alignItems: "center", transition: "background .1s" }}>
+            style={{ padding: "13px 18px", cursor: "pointer", borderBottom: "1px solid #f9fafb", background: isActive ? "var(--fw-blue-bg)" : "transparent", display: "flex", gap: 12, alignItems: "center", transition: "background .1s" }}>
             <div style={{ position: "relative", flexShrink: 0 }}>
               <Avatar src={other?.profilePhotoUrl} initials={initialsOf(other)} size={42} alt={name} />
               {unread && (
-                <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "#0f6ce6", border: "2px solid #fff" }} />
+                <div style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, borderRadius: "50%", background: "var(--fw-blue)", border: "2px solid #fff" }} />
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: unread ? 700 : 600, fontSize: 14, color: "#111827", marginBottom: 1 }}>{name}</div>
-              <div style={{ fontSize: 11, color: "#0f6ce6", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{label}</div>
-              <div style={{ fontSize: 12, color: unread ? "#374151" : "#9ca3af", fontWeight: unread ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</div>
+              <div style={{ fontWeight: unread ? 700 : 600, fontSize: 14, color: "var(--fw-text)", marginBottom: 1 }}>{name}</div>
+              <div style={{ fontSize: 11, color: "var(--fw-blue)", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>{label}</div>
+              <div style={{ fontSize: 12, color: unread ? "var(--fw-text-2)" : "var(--fw-text-4)", fontWeight: unread ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{preview}</div>
             </div>
           </div>
         );
@@ -607,10 +607,10 @@ export default function Chat() {
   // Panel derecho: cabecera con el otro usuario + lista de mensajes + input.
   const chatAreaJSX = (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-      <div style={{ padding: isMobile ? "12px 16px" : "14px 20px", borderBottom: "1px solid #f3f4f6", background: "#fff", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+      <div style={{ padding: isMobile ? "12px 16px" : "14px 20px", borderBottom: "1px solid var(--fw-line-soft)", background: "var(--fw-surface)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
         {isMobile && (
           <button onClick={() => setActiveConvId(null)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#0f6ce6", fontSize: 22, fontWeight: 700, padding: "0 8px 0 0" }}>
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--fw-blue)", fontSize: 22, fontWeight: 700, padding: "0 8px 0 0" }}>
             ‹
           </button>
         )}
@@ -625,15 +625,15 @@ export default function Chat() {
         >
           <Avatar src={otherUser?.profilePhotoUrl} initials={initialsOf(otherUser)} size={40} alt={otherName} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>{otherName}</div>
-            {listingLabel && <div style={{ fontSize: 12, color: "#0f6ce6", fontWeight: 500 }}>{listingLabel}</div>}
+            <div style={{ fontWeight: 700, fontSize: 14, color: "var(--fw-text)" }}>{otherName}</div>
+            {listingLabel && <div style={{ fontSize: 12, color: "var(--fw-blue)", fontWeight: 500 }}>{listingLabel}</div>}
           </div>
         </button>
       </div>
       <div ref={messagesRef}
-        style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "16px 24px", display: "flex", flexDirection: "column", gap: 6, background: "#f9fafb", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
+        style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 16px" : "16px 24px", display: "flex", flexDirection: "column", gap: 6, background: "var(--fw-surface-2)", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, marginTop: 40 }}>
+          <div style={{ textAlign: "center", color: "var(--fw-text-4)", fontSize: 13, marginTop: 40 }}>
             Enviá un mensaje para empezar.
           </div>
         )}
@@ -651,7 +651,7 @@ export default function Chat() {
         html, body { overscroll-behavior-y: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
       `}</style>
-      <div style={{ position: "fixed", top: navbarHeight + viewport.offsetTop, left: 0, right: 0, height: Math.max(0, viewport.height - navbarHeight), display: "flex", flexDirection: "column", background: "#fff", zIndex: 50, overflow: "hidden" }}>
+      <div style={{ position: "fixed", top: navbarHeight + viewport.offsetTop, left: 0, right: 0, height: Math.max(0, viewport.height - navbarHeight), display: "flex", flexDirection: "column", background: "var(--fw-surface)", zIndex: 50, overflow: "hidden" }}>
         {!activeConvId ? convListJSX : chatAreaJSX}
       </div>
       {profileUserId && (
@@ -667,16 +667,16 @@ export default function Chat() {
         {convListJSX}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {!activeConvId ? (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14, background: "#f9fafb" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14, background: "var(--fw-surface-2)" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--fw-blue-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z"
                     stroke="#0f6ce6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", textAlign: "center" }}>{tr("chat.yourMessages")}</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", marginTop: 4 }}>{tr("chat.pickConversation")}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)", textAlign: "center" }}>{tr("chat.yourMessages")}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-4)", textAlign: "center", marginTop: 4 }}>{tr("chat.pickConversation")}</div>
               </div>
             </div>
           ) : chatAreaJSX}
