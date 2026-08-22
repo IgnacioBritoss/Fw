@@ -396,6 +396,38 @@ html.fw-dark .fw-hero-search [role="option"] {
    un spinner se declaraba su propio @keyframes, con nombres distintos y
    velocidades distintas.
    ========================================================================== */
+/* ============================================================================
+   Los nombres del menú, entrando al abrir la barra
+   ----------------------------------------------------------------------------
+   La barra tarda un tercio de segundo en abrirse, pero los nombres aparecían de
+   golpe apenas empezaba: se veía el texto plantado sobre una barra que todavía
+   se estaba estirando. Ahora entran corridos desde la izquierda y apareciendo,
+   uno atrás de otro, mientras la barra se abre.
+
+   El desfase entre uno y otro lo pone cada ítem con su `animation-delay`, y es
+   chico a propósito —cuarenta milisegundos— porque son ocho: con más, el último
+   llegaría cuando la barra ya está quieta hace rato.
+
+   `both` deja el estado inicial puesto ANTES de que arranque el retraso. Sin
+   eso, los que esperan su turno se dibujan ya visibles y recién ahí saltan a la
+   posición de arranque para animarse: se ve un parpadeo.
+
+   MENOS MOVIMIENTO: con la preferencia de accesibilidad activada aparecen sin
+   más, que es lo que corresponde.
+   ========================================================================== */
+@keyframes fw-entra-texto {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.fw-menu-texto {
+  animation: fw-entra-texto .32s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-menu-texto { animation: none; }
+}
+
 @keyframes fw-spin {
   to { transform: rotate(360deg); }
 }

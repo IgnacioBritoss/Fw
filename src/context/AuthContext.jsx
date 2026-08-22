@@ -32,6 +32,7 @@ import {
   getVerificationStatus,
 } from "../services/api";
 import { initMockCars } from "../data/mockData";
+import { siguientePortada } from "../services/portada";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "fw_user";
@@ -116,6 +117,11 @@ export function AuthProvider({ children }) {
       accessToken: data.accessToken,
       onboardingToken: null,
     });
+    // Cada entrada cambia la foto del bloque principal de la home. Va acá y no
+    // en la pantalla de login porque este es el ÚNICO lugar por el que pasa
+    // toda sesión que arranca de verdad: con contraseña, con Google, o al
+    // terminar de crear la cuenta.
+    siguientePortada();
     return { success: true, pending: null };
   }, [saveUser, tr]);
 

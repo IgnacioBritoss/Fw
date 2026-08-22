@@ -33,6 +33,8 @@ import { AUTOS, ZONAS } from "../../data/sugerencias";
 import { agruparPorPantalla, centroDe, htmlDelMonton } from "../../services/mapaClusters";
 import MapCarPopup from "../../components/MapCarPopup";
 import { useCurrency } from "../../context/CurrencyContext";
+import { useModoOscuro } from "../../hooks/useModoOscuro";
+import { portadaDeAhora, veloDePortada } from "../../services/portada";
 import { localeFor } from "../../i18n/dates";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
@@ -81,6 +83,16 @@ const IconoAgrandar = ({ cerrando = false, size = 15 }) => (
 export default function Home() {
   const { t: tr, lang } = useI18n();
   const { precio } = useCurrency();
+  /*
+    LA FOTO DEL BLOQUE PRINCIPAL.
+
+    Cuál toca lo decide services/portada: el modo elige el juego —de día o de
+    noche— y el turno, que avanza en cada entrada, elige cuál de las dos. Acá
+    solo hace falta saber en qué modo estamos, y eso sí tiene que ser reactivo:
+    al tocar el interruptor de modo oscuro la foto cambia sin recargar.
+  */
+  const oscuro = useModoOscuro();
+  const portada = portadaDeAhora(oscuro);
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
 
@@ -519,8 +531,20 @@ export default function Home() {
       flotando con dos franjas blancas al costado. Y sin redondeo: una franja que
       corta la página no tiene esquinas.
     */
+    /*
+      EL BLOQUE PRINCIPAL: una foto de la ciudad con un velo azul encima.
+
+      Los dos fondos van en la MISMA propiedad, separados por coma, y el
+      navegador los apila: primero el velo y abajo la foto. Con dos elementos
+      superpuestos habría que andar peleando con el z-index del contenido; así
+      es una sola caja.
+
+      El azul liso queda debajo de todo como respaldo: es lo que se ve mientras
+      la foto baja, y lo que queda si el archivo no está.
+    */
     hero: {
-      borderRadius: 0, background: "var(--fw-blue-strong)", color: "#fff", position: "relative",
+      borderRadius: 0, color: "#fff", position: "relative",
+      background: `${veloDePortada(oscuro)}, url("${portada}") center/cover no-repeat, var(--fw-blue-strong)`,
       padding: isMobile ? "26px 18px" : "44px 36px",
       marginTop: isMobile ? -20 : -28,
       marginLeft: isMobile ? -16 : -32,
