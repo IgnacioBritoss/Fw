@@ -20,6 +20,7 @@ import UserProfileModal from "../../components/UserProfileModal";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
 import Avatar from "../../components/Avatar";
+import Aviso from "../../components/Aviso";
 import { initialsOf } from "../../services/people";
 
 // Reproductor de las notas de voz: botón play/pausa + barritas de onda + tiempo.
@@ -196,6 +197,10 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
+  // Los fallos del micrófono, del audio y de las subidas se muestran acá.
+  // Antes eran `alert()`: el cartel del navegador, en el idioma del navegador,
+  // congelando la pestaña justo encima del chat que se estaba usando.
+  const [aviso, setAviso] = useState("");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [pendingAudio, setPendingAudio] = useState(null);
   const [viewport, setViewport] = useState(getViewportData());
@@ -335,7 +340,7 @@ export default function Chat() {
       setRecording(true);
       setRecordingSeconds(0);
       recordTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
-    } catch { alert(tr("chat.micFailed")); }
+    } catch { setAviso(tr("chat.micFailed")); }
   };
 
   // Detiene la grabación en curso.
@@ -355,7 +360,7 @@ export default function Chat() {
       const cloudUrl = await uploadAudioToCloudinary(blob);
       const msg = await sendMessage(activeConvId, { content: cloudUrl, type: "AUDIO" });
       setMessages(prev => [...prev, msg]);
-    } catch { alert(tr("chat.audioFailed")); }
+    } catch { setAviso(tr("chat.audioFailed")); }
     setUploading(false);
   };
 
@@ -377,7 +382,7 @@ export default function Chat() {
       const { url } = await uploadFileToCloudinary(file);
       const msg = await sendMessage(activeConvId, { content: url, type: "TEXT" });
       setMessages(prev => [...prev, msg]);
-    } catch { alert(tr("chat.uploadFailed")); }
+    } catch { setAviso(tr("chat.uploadFailed")); }
     setUploading(false);
   };
 
@@ -685,6 +690,7 @@ export default function Chat() {
       {profileUserId && (
         <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
       )}
+      <Aviso mensaje={aviso} onCerrar={() => setAviso("")} />
     </>
   );
 }

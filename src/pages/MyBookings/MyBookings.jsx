@@ -32,6 +32,7 @@ import {
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import StatusChip from "../../components/StatusChip";
+import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import { useI18n } from "../../i18n/core";
 import { localeFor } from "../../i18n/dates";
 import Spinner from "../../components/Spinner";
@@ -154,6 +155,10 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  // Qué reserva se está por cancelar. Cancelar no se deshace, así que no alcanza
+  // con apretar un botón: el cartel pide escribir la frase. Ver
+  // components/ConfirmarEscribiendo.jsx.
+  const [cancelando, setCancelando] = useState(null);
 
   // Trae todas las reservas del usuario. Se reutiliza tras cada acción.
   const load = useCallback(() => {
@@ -187,9 +192,17 @@ export default function MyBookings() {
   const handleAccept = (id) => runAction(`${id}-accept`, () => acceptBooking(id));
   const handleReject = (id) => runAction(`${id}-reject`, () => rejectBooking(id));
   const handleReady = (id) => runAction(`${id}-ready`, () => markReadyForPickup(id));
-  const handleCancel = (id) => {
-    if (!window.confirm(t("bookings.confirmCancel"))) return;
-    runAction(`${id}-cancel`, () => cancelBooking(id));
+  // Antes esto era un `window.confirm`: el cartel gris del navegador, en el
+  // idioma del navegador y con "Aceptar" a un centímetro de "Cancelar". Para
+  // algo que no se puede deshacer es poco. Ahora abre el cartel de la app, que
+  // pide escribir la frase.
+  const handleCancel = (id) => setCancelando(id);
+
+  const confirmarCancelacion = async () => {
+    const id = cancelando;
+    if (!id) return;
+    await runAction(`${id}-cancel`, () => cancelBooking(id));
+    setCancelando(null);
   };
 
   // Tarjeta de una reserva: decide qué botones se muestran según el estado y el
@@ -367,6 +380,17 @@ export default function MyBookings() {
           <div style={s.empty}>{t("bookings.noRequests")}</div>
         ) : myOwnerBookings.map((b) => <BookingCard key={b.id} b={b} isOwner={true} />)
       )}
+
+      <ConfirmarEscribiendo
+        abierto={Boolean(cancelando)}
+        titulo={t("bookings.confirmCancel")}
+        cuerpo={t("bookings.cancelBody")}
+        frase={t("bookings.cancelPhrase")}
+        textoBoton={t("bookings.cancelDo")}
+        trabajando={actionLoading === `${cancelando}-cancel`}
+        onConfirmar={confirmarCancelacion}
+        onCerrar={() => setCancelando(null)}
+      />
     </div>
   );
 }
