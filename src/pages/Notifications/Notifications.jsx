@@ -37,11 +37,11 @@ const Icon = ({ name, color = "#374151" }) => {
 const CAT_META = {
   // El azul de Freewheel, no un índigo. Era #4f46e5, que a 18px sobre un fondo
   // lila se lee directamente como violeta, y en esta app el violeta no existe.
-  reserva: { key: "notif.catBookings", icon: "reserva", bg: "#f0f6ff", fg: "#0f6ce6" },
+  reserva: { key: "notif.catBookings", icon: "reserva", bg: "var(--fw-blue-bg)", fg: "#0f6ce6" },
   mensaje: { key: "notif.catMessages", icon: "mensaje", bg: "#f1f5f9", fg: "#475569" },
   sistema: { key: "notif.catSystem", icon: "sistema", bg: "#ecfdf5", fg: "#059669" },
-  promo: { key: "notif.catPromos", icon: "promo", bg: "#fef9c3", fg: "#ca8a04" },
-  review: { key: "notif.catReviews", icon: "review", bg: "#fff7ed", fg: "#ea580c" },
+  promo: { key: "notif.catPromos", icon: "promo", bg: "var(--fw-amber-bg)", fg: "#ca8a04" },
+  review: { key: "notif.catReviews", icon: "review", bg: "var(--fw-orange-bg)", fg: "#ea580c" },
 };
 
 const TABS = [
@@ -143,8 +143,8 @@ export default function Notifications() {
 
   const s = {
     wrap: { padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1000, margin: "0 auto" },
-    title: { fontSize: isMobile ? 26 : 32, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
-    sub: { fontSize: 14, color: "#9ca3af", marginTop: 4 },
+    title: { fontSize: isMobile ? 26 : 32, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" },
+    sub: { fontSize: 14, color: "var(--fw-text-4)", marginTop: 4 },
     /*
       LA PANTALLA ERA UNA PILA DE BURBUJAS.
 
@@ -157,30 +157,30 @@ export default function Notifications() {
       pestañas son celdas de una franja, el mismo recurso del buscador y de los
       filtros. Lo único redondeado que queda es el puntito de "sin leer".
     */
-    btnGhost: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#fff", color: "#374151", border: "1px solid #ececec", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
-    btnDark: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
+    btnGhost: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "var(--fw-surface)", color: "var(--fw-text-2)", border: "1px solid var(--fw-line)", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
+    btnDark: { display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 4, fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
     // La franja de pestañas: celdas separadas por una línea. La activa se marca
     // con una barra abajo, no con un fondo negro que la convierte en un botón.
-    tabs: { display: "flex", flexWrap: "wrap", alignItems: "stretch", background: "#fff", border: "1px solid #ececec", borderRadius: 4, marginBottom: 18, overflow: "hidden" },
+    tabs: { display: "flex", flexWrap: "wrap", alignItems: "stretch", background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 4, marginBottom: 18, overflow: "hidden" },
     tab: (active) => ({
       display: "inline-flex", alignItems: "center", gap: 7, padding: "12px 18px",
       fontSize: 13.5, fontWeight: 600, cursor: "pointer", background: "transparent",
-      border: "none", borderLeft: "1px solid #f1f2f4",
-      borderBottom: active ? "2px solid #0f6ce6" : "2px solid transparent",
-      color: active ? "#0f6ce6" : "#6b7280",
+      border: "none", borderLeft: "1px solid var(--fw-line-soft)",
+      borderBottom: active ? "2px solid var(--fw-blue)" : "2px solid transparent",
+      color: active ? "var(--fw-blue)" : "var(--fw-text-3)",
     }),
-    tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "#0f6ce6" : "#9ca3af" }),
-    groupLabel: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 2px 8px" },
+    tabCount: (active) => ({ fontSize: 12, fontWeight: 700, color: active ? "var(--fw-blue)" : "var(--fw-text-4)" }),
+    groupLabel: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".08em", textTransform: "uppercase", margin: "22px 2px 8px" },
     // La lista entera es una sola caja; las notificaciones se separan con una
     // línea, como los renglones de una bandeja de entrada.
-    lista: { background: "#fff", border: "1px solid #ececec", borderRadius: 4, overflow: "hidden" },
+    lista: { background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 4, overflow: "hidden" },
     row: (read, primera) => ({
       display: "flex", alignItems: "center", gap: 14,
-      background: read ? "#fff" : "#f7faff",
-      borderTop: primera ? "none" : "1px solid #f1f2f4",
+      background: read ? "var(--fw-surface)" : "var(--fw-blue-bg)",
+      borderTop: primera ? "none" : "1px solid var(--fw-line-soft)",
       padding: "15px 16px", cursor: "pointer", transition: "background .15s",
     }),
-    dot: { width: 8, height: 8, borderRadius: "50%", background: "#0f6ce6", flexShrink: 0 },
+    dot: { width: 8, height: 8, borderRadius: "50%", background: "var(--fw-blue)", flexShrink: 0 },
     dotGap: { width: 8, flexShrink: 0 },
   };
 
@@ -220,9 +220,9 @@ export default function Notifications() {
       {loading && <Spinner block label={tr("common.loading")} />}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "70px 20px", color: "#9ca3af" }}>
+        <div style={{ textAlign: "center", padding: "70px 20px", color: "var(--fw-text-4)" }}>
           <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 12 }}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="#d1d5db" strokeWidth="1.8" strokeLinecap="round" /></svg>
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#6b7280" }}>{tr("notif.empty")}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "var(--fw-text-3)" }}>{tr("notif.empty")}</div>
           <div style={{ fontSize: 13, marginTop: 4 }}>{tr("notif.emptyHint")}</div>
         </div>
       )}
@@ -236,21 +236,21 @@ export default function Notifications() {
             const read = isRead(n);
             return (
               <div key={n.id} style={s.row(read, i === 0)} onClick={() => openNotif(n)}
-                onMouseEnter={e => { e.currentTarget.style.background = "#f3f4f6"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = read ? "#fff" : "#f7faff"; }}>
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--fw-bg)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = read ? "var(--fw-surface)" : "#f7faff"; }}>
                 {read ? <span style={s.dotGap} /> : <span style={s.dot} />}
                 <div style={{ width: 38, height: 38, borderRadius: 4, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Icon name={meta.icon} color={meta.fg} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "#111827" }}>{n.titleKey ? tr(n.titleKey, n.vars) : n.title}</div>
-                  <div style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.bodyKey ? tr(n.bodyKey, n.vars) : n.body}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: read ? 600 : 700, color: "var(--fw-text)" }}>{n.titleKey ? tr(n.titleKey, n.vars) : n.title}</div>
+                  <div style={{ fontSize: 13, color: "var(--fw-text-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.bodyKey ? tr(n.bodyKey, n.vars) : n.body}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                  <span style={{ fontSize: 12.5, color: "#9ca3af" }}>{timeLabel(n.ts, tr, lang)}</span>
+                  <span style={{ fontSize: 12.5, color: "var(--fw-text-4)" }}>{timeLabel(n.ts, tr, lang)}</span>
                   {!read && (
                     <button onClick={e => markOne(e, n)} title={tr("notif.markOne")}
-                      style={{ width: 28, height: 28, borderRadius: 4, border: "1px solid #ececec", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      style={{ width: 28, height: 28, borderRadius: 4, border: "1px solid var(--fw-line)", background: "var(--fw-surface)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#6b7280" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   )}

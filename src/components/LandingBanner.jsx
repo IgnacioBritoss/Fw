@@ -137,7 +137,7 @@ export default function LandingBanner() {
           aria-hidden="true"
           data-no-invert
           style={{
-            position: "absolute", inset: 0, background: "#fff",
+            position: "absolute", inset: 0, background: "var(--fw-surface)",
             opacity: encima ? 0.07 : 0,
             transition: "opacity .2s ease", pointerEvents: "none",
           }}
@@ -262,7 +262,7 @@ export default function LandingBanner() {
       style={{
         ...aTodoElAncho,
         position: "relative", overflow: "hidden", color: "#fff",
-        background: "linear-gradient(105deg, #081527 0%, #0b55c0 58%, #0f6ce6 100%)",
+        background: "linear-gradient(105deg, #081527 0%, var(--fw-blue-strong) 58%, var(--fw-blue) 100%)",
         padding: isMobile ? "30px 20px" : "44px 84px 44px 44px",
       }}
     >
@@ -291,7 +291,7 @@ export default function LandingBanner() {
           </div>
           <span style={{
             display: "inline-block", marginTop: isMobile ? 14 : 18,
-            background: "#fff", color: "#0b55c0",
+            background: "var(--fw-surface)", color: "var(--fw-blue-strong)",
             fontSize: isMobile ? 13.5 : 14.5, fontWeight: 800,
             padding: isMobile ? "10px 20px" : "12px 26px", borderRadius: 4,
           }}>

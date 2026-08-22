@@ -44,43 +44,43 @@ const PRESET_COLORS = [
 const s = {
   page: { maxWidth: 720, margin: "0 auto", padding: "48px 24px" },
   pageMobile: { padding: "20px 16px" },
-  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  sub: { color: "#6b7280", fontSize: 14, marginBottom: 32 },
-  card: { background: "#fff", borderRadius: 16, padding: 28, boxShadow: "0 1px 6px rgba(0,0,0,.06)", marginBottom: 16, border: "1px solid #f3f4f6" },
-  cardMobile: { background: "#fff", borderRadius: 14, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,.05)", marginBottom: 16, border: "1px solid #f3f4f6" },
-  sectionTitle: { fontSize: 13, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid #f3f4f6" },
+  title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { color: "var(--fw-text-3)", fontSize: 14, marginBottom: 32 },
+  card: { background: "var(--fw-surface)", borderRadius: 16, padding: 28, boxShadow: "0 1px 6px rgba(0,0,0,.06)", marginBottom: 16, border: "1px solid var(--fw-line-soft)" },
+  cardMobile: { background: "var(--fw-surface)", borderRadius: 14, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,.05)", marginBottom: 16, border: "1px solid var(--fw-line-soft)" },
+  sectionTitle: { fontSize: 13, fontWeight: 700, color: "var(--fw-text-4)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--fw-line-soft)" },
   field: { marginBottom: 16 },
-  label: { display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 },
-  input: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", color: "#111827", boxSizing: "border-box", background: "#fff" },
-  select: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 14, background: "#fff", color: "#111827" },
+  label: { display: "block", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 6 },
+  input: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, outline: "none", color: "var(--fw-text)", boxSizing: "border-box", background: "var(--fw-surface)" },
+  select: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, background: "var(--fw-surface)", color: "var(--fw-text)" },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
   grid2Mobile: { display: "grid", gridTemplateColumns: "1fr", gap: 0 },
   grid3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 },
   grid3Mobile: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
-  uploadArea: { border: "2px dashed #d1d5db", borderRadius: 12, padding: "36px 20px", textAlign: "center", cursor: "pointer", transition: ".15s", background: "#fafafa" },
+  uploadArea: { border: "2px dashed var(--fw-border-2)", borderRadius: 12, padding: "36px 20px", textAlign: "center", cursor: "pointer", transition: ".15s", background: "var(--fw-surface-2)" },
   photoGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginTop: 14 },
-  photoItem: { position: "relative", aspectRatio: "4/3", borderRadius: 10, overflow: "hidden", background: "#e5e7eb" },
+  photoItem: { position: "relative", aspectRatio: "4/3", borderRadius: 10, overflow: "hidden", background: "var(--fw-surface-3)" },
   photoImg: { width: "100%", height: "100%", objectFit: "cover" },
   photoRemove: { position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: 14, lineHeight: "22px", textAlign: "center" },
   btnRow: { display: "flex", gap: 10, marginTop: 20 },
-  btn: { flex: 1, padding: "13px", background: "linear-gradient(135deg,#0f6ce6,#0b55c0)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,.3)" },
+  btn: { flex: 1, padding: "13px", background: "linear-gradient(135deg,var(--fw-blue),var(--fw-blue-strong))", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,.3)" },
   btnDisabled: { opacity: 0.6, cursor: "not-allowed" },
-  btnBack: { flex: 1, padding: "13px", background: "transparent", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, cursor: "pointer" },
-  error: { background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 10, padding: "12px 16px", color: "#b91c1c", fontSize: 13, marginBottom: 16 },
-  warning: { background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "12px 16px", color: "#92400e", fontSize: 13, marginBottom: 16 },
+  btnBack: { flex: 1, padding: "13px", background: "transparent", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)", borderRadius: 10, fontSize: 14, cursor: "pointer" },
+  error: { background: "var(--fw-red-bg)", border: "1.5px solid var(--fw-red-line)", borderRadius: 10, padding: "12px 16px", color: "var(--fw-red-text-2)", fontSize: 13, marginBottom: 16 },
+  warning: { background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10, padding: "12px 16px", color: "var(--fw-amber-text)", fontSize: 13, marginBottom: 16 },
   success: { textAlign: "center", padding: "60px 20px" },
-  successTitle: { fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#111827" },
-  successSub: { color: "#6b7280", marginBottom: 24, lineHeight: 1.6 },
+  successTitle: { fontSize: 22, fontWeight: 800, marginBottom: 8, color: "var(--fw-text)" },
+  successSub: { color: "var(--fw-text-3)", marginBottom: 24, lineHeight: 1.6 },
   specGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
-  specItem: { background: "#f9fafb", border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "10px 14px" },
-  specLabel: { fontSize: 11, color: "#6b7280", marginBottom: 4, fontWeight: 600 },
+  specItem: { background: "var(--fw-surface-2)", border: "1.5px solid var(--fw-border)", borderRadius: 10, padding: "10px 14px" },
+  specLabel: { fontSize: 11, color: "var(--fw-text-3)", marginBottom: 4, fontWeight: 600 },
   spinner: { display: "inline-block", width: 14, height: 14, border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin .7s linear infinite" },
-  aiBox: { background: "linear-gradient(135deg,#eff6ff,#dbeafe)", border: "1.5px solid #bfdbfe", borderRadius: 12, padding: "16px 18px", marginBottom: 16 },
-  aiBoxTitle: { fontSize: 13, fontWeight: 700, color: "#1e40af", marginBottom: 10 },
+  aiBox: { background: "linear-gradient(135deg,var(--fw-blue-bg),var(--fw-blue-bg-2))", border: "1.5px solid var(--fw-blue-line)", borderRadius: 12, padding: "16px 18px", marginBottom: 16 },
+  aiBoxTitle: { fontSize: 13, fontWeight: 700, color: "var(--fw-blue-text)", marginBottom: 10 },
   aiBoxRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  aiBoxLabel: { fontSize: 13, color: "#374151" },
-  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "#0f6ce6" },
-  aiBoxNote: { fontSize: 12, color: "#6b7280", marginTop: 8, lineHeight: 1.6 },
+  aiBoxLabel: { fontSize: 13, color: "var(--fw-text-2)" },
+  aiBoxValue: { fontSize: 14, fontWeight: 700, color: "var(--fw-blue)" },
+  aiBoxNote: { fontSize: 12, color: "var(--fw-text-3)", marginTop: 8, lineHeight: 1.6 },
 };
 
 // Valida el formato de una patente argentina. Acepta el formato viejo (ABC123)
@@ -535,7 +535,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,var(--fw-blue),var(--fw-blue-strong))", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -557,7 +557,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
   // `val` es el CÓDIGO que se guarda; `label` el texto traducido que se lee.
   const chipBtn = (val, current, onClick, label = val) => (
     <button key={val} type="button" onClick={() => onClick(val)}
-      style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid #0f6ce6" : "1.5px solid #e5e7eb", background: current === val ? "#0f6ce6" : "#fff", color: current === val ? "#fff" : "#374151" }}>
+      style={{ padding: "7px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: current === val ? "1.5px solid var(--fw-blue)" : "1.5px solid var(--fw-border)", background: current === val ? "var(--fw-blue)" : "var(--fw-surface)", color: current === val ? "#fff" : "var(--fw-text-2)" }}>
       {label}
     </button>
   );
@@ -582,8 +582,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 width: isMobile ? 30 : 34, height: isMobile ? 30 : 34, borderRadius: "50%",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 13, fontWeight: 700, transition: "all .3s",
-                background: i < step ? "#0b55c0" : i === step ? "#0f6ce6" : "#e5e7eb",
-                color: i <= step ? "#fff" : "#9ca3af",
+                background: i < step ? "var(--fw-blue-strong)" : i === step ? "var(--fw-blue)" : "var(--fw-surface-3)",
+                color: i <= step ? "#fff" : "var(--fw-text-4)",
                 boxShadow: i === step ? "0 0 0 4px #dbeafe" : "none",
               }}>
                 {i < step ? (
@@ -592,12 +592,12 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   </svg>
                 ) : i + 1}
               </div>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "#0f6ce6" : i < step ? "#0b55c0" : "#9ca3af" }}>
+              <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 600, whiteSpace: "nowrap", color: i === step ? "var(--fw-blue)" : i < step ? "var(--fw-blue-strong)" : "var(--fw-text-4)" }}>
                 {tr(st)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "#0f6ce6" : "#e5e7eb", borderRadius: 2 }} />
+              <div style={{ flex: 1, height: 2, margin: "0 6px", marginBottom: 18, background: i < step ? "var(--fw-blue)" : "var(--fw-surface-3)", borderRadius: 2 }} />
             )}
           </div>
         ))}
@@ -606,7 +606,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* Se avisa cuando se recuperó lo que había quedado a medio cargar, con la
           opción de descartarlo y arrancar de cero. */}
       {draftRestored && !done && (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1e40af", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", background: "var(--fw-blue-bg)", border: "1.5px solid var(--fw-blue-line)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 }}>
           <span style={{ flex: 1, minWidth: 200 }}>
             {tr("publish.draftResumed")}
           </span>
@@ -618,7 +618,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               setVehicleForm(EMPTY_VEHICLE);
               setListingForm(EMPTY_LISTING);
             }}
-            style={{ background: "#fff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+            style={{ background: "var(--fw-surface)", border: "1.5px solid var(--fw-blue-line)", color: "var(--fw-blue-text)", borderRadius: 8, padding: "7px 14px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
             {tr("publish.startOver")}
           </button>
         </div>
@@ -629,11 +629,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {/* La cuenta sin verificar es el motivo más común de que publicar falle:
           se ofrece el camino para resolverlo en vez de dejar solo el error. */}
       {(needsVerification || !isVerified) && (
-        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 13, color: "#9a3412" }}>
+        <div style={{ background: "var(--fw-orange-bg)", border: "1.5px solid var(--fw-orange-line)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 13, color: "var(--fw-orange-text)" }}>
             {tr("publish.verifyFirst")}
           </div>
-          <button style={{ padding: "9px 16px", background: "#ea580c", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          <button style={{ padding: "9px 16px", background: "var(--fw-orange)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
             onClick={() => navigate("/kyc")}>{tr("profile.verifyNow")}</button>
         </div>
       )}
@@ -663,7 +663,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {CATEGORIES.map(c => chipBtn(c.id, vehicleForm.category, () => setV("category", c.id), tr(c.key)))}
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 6 }}>
               {tr("publish.categoryHint")}
             </div>
           </div>
@@ -703,24 +703,24 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                 return (
                   <button key={name} type="button" title={name} onClick={() => setV("color", name)}
                     style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: hex, border: sel ? "3px solid #0f6ce6" : "2px solid #d1d5db", boxShadow: sel ? "0 0 0 2px #bfdbfe" : "inset 0 0 0 1px rgba(0,0,0,.08)", transition: "all .15s" }} />
-                    <span style={{ fontSize: 10, color: sel ? "#0f6ce6" : "#6b7280", fontWeight: sel ? 700 : 400 }}>{name}</span>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: hex, border: sel ? "3px solid var(--fw-blue)" : "2px solid var(--fw-border-2)", boxShadow: sel ? "0 0 0 2px #bfdbfe" : "inset 0 0 0 1px rgba(0,0,0,.08)", transition: "all .15s" }} />
+                    <span style={{ fontSize: 10, color: sel ? "var(--fw-blue)" : "var(--fw-text-3)", fontWeight: sel ? 700 : 400 }}>{name}</span>
                   </button>
                 );
               })}
               <button type="button" title="Otro color" onClick={() => document.getElementById("fw-color-picker").click()}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: vehicleForm.color?.startsWith("#") ? vehicleForm.color : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", border: vehicleForm.color?.startsWith("#") ? "3px solid #0f6ce6" : "2px solid #d1d5db", boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none", transition: "all .15s" }} />
-                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "#0f6ce6" : "#6b7280", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>Otro</span>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: vehicleForm.color?.startsWith("#") ? vehicleForm.color : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", border: vehicleForm.color?.startsWith("#") ? "3px solid var(--fw-blue)" : "2px solid var(--fw-border-2)", boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none", transition: "all .15s" }} />
+                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "var(--fw-blue)" : "var(--fw-text-3)", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>Otro</span>
               </button>
               <input id="fw-color-picker" type="color" style={{ display: "none" }}
                 value={vehicleForm.color?.startsWith("#") ? vehicleForm.color : "#ffffff"}
                 onChange={(e) => setV("color", e.target.value)} />
             </div>
             {vehicleForm.color && (
-              <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db", flexShrink: 0 }} />
-                <span>Color: <strong style={{ color: "#111827" }}>{vehicleForm.color}</strong></span>
+              <div style={{ marginTop: 8, fontSize: 12, color: "var(--fw-text-3)", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid var(--fw-border-2)", flexShrink: 0 }} />
+                <span>Color: <strong style={{ color: "var(--fw-text)" }}>{vehicleForm.color}</strong></span>
               </div>
             )}
           </div>
@@ -733,7 +733,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             {/* La patente es el único dato que se pide y NO se publica: hace falta
                 para el contrato de alquiler. Se aclara para que no parezca que se
                 está pidiendo de más. */}
-            <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+            <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", marginTop: 4 }}>
               No se muestra en la publicación. Se usa solo para el contrato de alquiler.
             </div>
           </div>
@@ -743,7 +743,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {[["bluetooth", "spec.bluetooth"], ["rearCamera", "spec.rearCamera"], ["parkingSensors", "spec.parkingSensors"]].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setV(key, !vehicleForm[key])}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid #0f6ce6" : "1.5px solid #e5e7eb", background: vehicleForm[key] ? "#eff6ff" : "#fff", color: vehicleForm[key] ? "#0f6ce6" : "#374151" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", transition: "all .15s", border: vehicleForm[key] ? "1.5px solid var(--fw-blue)" : "1.5px solid var(--fw-border)", background: vehicleForm[key] ? "var(--fw-blue-bg)" : "var(--fw-surface)", color: vehicleForm[key] ? "var(--fw-blue)" : "var(--fw-text-2)" }}>
                   {vehicleForm[key]
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#d1d5db" strokeWidth="1.5" /></svg>}
@@ -754,8 +754,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{tr("publish.specs")}</div>
-            <button style={{ padding: "8px 16px", background: aiLoading ? "#e5e7eb" : "#111827", color: aiLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text-2)" }}>{tr("publish.specs")}</div>
+            <button style={{ padding: "8px 16px", background: aiLoading ? "var(--fw-surface-3)" : "var(--fw-chip)", color: aiLoading ? "var(--fw-text-4)" : "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: aiLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}
               onClick={fetchSpecs} disabled={aiLoading}>
               {aiLoading ? <Spinner size={14} label={tr("publish.filling")} /> : tr("publish.autofillAi")}
             </button>
@@ -769,7 +769,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             ].map(([key, label]) => (
               <div key={key} style={s.specItem}>
                 <div style={s.specLabel}>{tr(label)}</div>
-                <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "#111827", background: "transparent" }}
+                <input style={{ width: "100%", border: "none", outline: "none", fontSize: 14, fontWeight: 600, color: "var(--fw-text)", background: "transparent" }}
                   placeholder="—" value={vehicleForm[key] || ""} onChange={(e) => setV(key, e.target.value)} />
               </div>
             ))}
@@ -804,17 +804,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       {step === 1 && (
         <div style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.photos")}</div>
-          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 16, lineHeight: 1.6 }}>
             {tr("publish.photosHint")}
           </p>
-          <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "#0f6ce6", background: "#eff6ff" } : {}) }}
+          <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "var(--fw-blue)", background: "var(--fw-blue-bg)" } : {}) }}
             onMouseEnter={() => setUploadHover(true)}
             onMouseLeave={() => setUploadHover(false)}
             onClick={() => document.getElementById("car-photos").click()}>
             <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
           {photos.length > 0 && (
             <div style={s.photoGrid}>
@@ -831,7 +831,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   )}
                   {estadoFoto(i) === "ok" && (
                     <div style={{ position: "absolute", inset: 0, border: "2px solid #16a34a", borderRadius: 10, display: "flex", alignItems: "flex-start", pointerEvents: "none" }}>
-                      <div style={{ margin: 6, background: "#16a34a", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                      <div style={{ margin: 6, background: "var(--fw-green)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                         {photoValidations[i]?.detected
                           ? `${tr("publish.verified")}: ${photoValidations[i].detected}`
@@ -840,8 +840,8 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                     </div>
                   )}
                   {estadoFoto(i) === "invalid" && (
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid #dc2626", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
-                      <div style={{ margin: 6, background: "#dc2626", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid var(--fw-red)", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "var(--fw-red)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
                         {tr("publish.notValid")}
                       </div>
                       <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
@@ -851,7 +851,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   )}
                   {estadoFoto(i) === "unknown" && photos[i] && (
                     <div style={{ position: "absolute", inset: 0, border: "2px solid #f59e0b", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                      <div style={{ margin: 6, background: "#f59e0b", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "var(--fw-amber)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
                         {tr("publish.unreviewed")}
                       </div>
                       <button
@@ -862,7 +862,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                     </div>
                   )}
                   {i === 0 && estadoFoto(i) === "ok" && (
-                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "#0f6ce6", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
+                    <div style={{ position: "absolute", bottom: 6, left: 6, background: "var(--fw-blue)", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
                 </div>
@@ -870,7 +870,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
           )}
           {photos.length < 4 && photos.length > 0 && (
-            <div style={{ marginTop: 10, fontSize: 12, color: "#92400e", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
+            <div style={{ marginTop: 10, fontSize: 12, color: "var(--fw-amber-text)", background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 8, padding: "8px 12px" }}>
               Necesitás {4 - photos.length} foto{4 - photos.length !== 1 ? "s" : ""} más para continuar.
             </div>
           )}
@@ -881,10 +881,10 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             const noValidas = photos.filter((_, i) => estadoFoto(i) === "invalid").length;
             const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
             return (
-              <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "#374151" }}>
-                <span style={{ color: "#166534", fontWeight: 600 }}>{verificadas} verificada{verificadas !== 1 ? "s" : ""}</span>
-                {noValidas > 0 && <span style={{ color: "#b91c1c", fontWeight: 600 }}>{noValidas} no válida{noValidas !== 1 ? "s" : ""}</span>}
-                {sinRevisar > 0 && <span style={{ color: "#92400e", fontWeight: 600 }}>{sinRevisar} sin revisar</span>}
+              <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "var(--fw-text-2)" }}>
+                <span style={{ color: "var(--fw-green-text-2)", fontWeight: 600 }}>{verificadas} verificada{verificadas !== 1 ? "s" : ""}</span>
+                {noValidas > 0 && <span style={{ color: "var(--fw-red-text-2)", fontWeight: 600 }}>{noValidas} no válida{noValidas !== 1 ? "s" : ""}</span>}
+                {sinRevisar > 0 && <span style={{ color: "var(--fw-amber-text)", fontWeight: 600 }}>{sinRevisar} sin revisar</span>}
               </div>
             );
           })()}
@@ -893,11 +893,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               Es la alternativa a dejarlo pasar en silencio (lo de antes) y a trabar
               la publicación del todo cuando el servicio de IA está caído. */}
           {photos.some((_, i) => estadoFoto(i) === "unknown") && (
-            <label style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "11px 13px", cursor: "pointer" }}>
+            <label style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "flex-start", background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10, padding: "11px 13px", cursor: "pointer" }}>
               <input type="checkbox" checked={photosConfirmed}
                 onChange={(e) => setPhotosConfirmed(e.target.checked)}
                 style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
-              <span style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+              <span style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                 No pudimos revisar todas las fotos automáticamente. Confirmo que son
                 del auto que estoy publicando. Si no lo son, la publicación se puede
                 pausar y la cuenta suspender.
@@ -939,14 +939,14 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
               setL("longitude", approxLng);
             }}
           />
-          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr("publish.locPrivacy")}
           </div>
           <div style={{ ...s.field, marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <label style={{ ...s.label, marginBottom: 0 }}>{tr("publish.priceArs")} *</label>
-              <button style={{ padding: "6px 14px", background: pricingLoading ? "#e5e7eb" : "#111827", color: pricingLoading ? "#9ca3af" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
+              <button style={{ padding: "6px 14px", background: pricingLoading ? "var(--fw-surface-3)" : "var(--fw-chip)", color: pricingLoading ? "var(--fw-text-4)" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
                 onClick={fetchPricing} disabled={pricingLoading}>
                 {pricingLoading ? <Spinner size={11} label={tr("publish.analyzing")} /> : tr("publish.suggestAi")}
               </button>
@@ -963,7 +963,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
-                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
+                <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
               </div>
             )}
             <input style={s.input} type="number" placeholder="45000"
@@ -1000,17 +1000,17 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             [tr("publish.pricePerDay"), `$${Number(listingForm.pricePerDay || 0).toLocaleString()} ARS`],
             [tr("publish.photos"), tr(photos.length === 1 ? "publish.photoCountOne" : "publish.photoCountMany", { count: photos.length })],
           ].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f3f4f6", fontSize: isMobile ? 13 : 14 }}>
-              <span style={{ color: "#6b7280" }}>{k}</span>
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--fw-line-soft)", fontSize: isMobile ? 13 : 14 }}>
+              <span style={{ color: "var(--fw-text-3)" }}>{k}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {k === tr("spec.color") && colorHex && (
-                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid #d1d5db" }} />
+                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid var(--fw-border-2)" }} />
                 )}
-                <span style={{ fontWeight: 600, color: "#111827" }}>{v}</span>
+                <span style={{ fontWeight: 600, color: "var(--fw-text)" }}>{v}</span>
               </div>
             </div>
           ))}
-          <div style={{ marginTop: 16, padding: "12px 16px", background: "#eff6ff", borderRadius: 10, fontSize: 13, color: "#0f6ce6", fontWeight: 500 }}>
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--fw-blue-bg)", borderRadius: 10, fontSize: 13, color: "var(--fw-blue)", fontWeight: 500 }}>
             {tr("publish.willCreate")}
           </div>
           <div style={s.btnRow}>

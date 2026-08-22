@@ -19,17 +19,17 @@
 
 export const TIERS = [
   {
-    key: "platinum", minCount: 30, minAverage: 4.8, color: "#0b55c0", bg: "#f5f8ff",
+    key: "platinum", minCount: 30, minAverage: 4.8, color: "var(--fw-blue-strong)", bg: "var(--fw-blue-bg)",
     // Más claro y más frío que la plata, y el único con destello: son los dos
     // grises del juego y sin eso se confunden.
     metal: { light: "#dce7f5", dark: "#9db4d2", rim: "#7d95b6", shine: true },
   },
   {
-    key: "gold", minCount: 15, minAverage: 4.5, color: "#b7791f", bg: "#fffdf5",
+    key: "gold", minCount: 15, minAverage: 4.5, color: "#b7791f", bg: "var(--fw-amber-bg)",
     metal: { light: "#e8bd48", dark: "#c1901a", rim: "#9a7210" },
   },
   {
-    key: "silver", minCount: 5, minAverage: 4.0, color: "#64748b", bg: "#f8fafc",
+    key: "silver", minCount: 5, minAverage: 4.0, color: "#64748b", bg: "var(--fw-surface-2)",
     metal: { light: "#b4bfcb", dark: "#8b97a5", rim: "#6d7986" },
   },
   {
@@ -46,7 +46,7 @@ export const TIERS = [
  * rango está por verse en vez de dejar un escudo vacío que se lee como un error
  * de dibujo. El gris es oscuro y no claro: tiene que verse, no esconderse.
  */
-export const NEW_TIER = { key: "new", color: "#6b7280", bg: "#fafafa", metal: null };
+export const NEW_TIER = { key: "new", color: "var(--fw-text-3)", bg: "var(--fw-surface-2)", metal: null };
 
 /** En qué rango cae alguien con `count` reseñas y `average` de promedio. */
 export function rankOf(count = 0, average = null) {

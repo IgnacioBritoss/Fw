@@ -40,7 +40,7 @@ export default function Avatar({
 
   if (src && !broken) {
     return (
-      <div style={{ ...base, background: "#ece9e3" }}>
+      <div style={{ ...base, background: "var(--fw-surface-3)" }}>
         <img
           src={src}
           alt={alt}
@@ -54,8 +54,8 @@ export default function Avatar({
   return (
     <div style={{
       ...base,
-      background: "#ece9e3",
-      color: "#111827",
+      background: "var(--fw-surface-3)",
+      color: "var(--fw-text)",
       fontWeight: 800,
       fontSize: Math.max(11, Math.round(size * 0.34)),
       letterSpacing: ".01em",

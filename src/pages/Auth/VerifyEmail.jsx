@@ -15,17 +15,17 @@ import { useI18n } from "../../i18n/core";
 // componente. En celular: menos aire alrededor y campos de 16px, porque con
 // menos de 16 Safari en iPhone hace zoom solo al tocar un campo.
 const styles = (isMobile) => ({
-  page: { minHeight:"100vh", background:"#f9fafb", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
-  card: { background:"#fff", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)", textAlign:"center" },
+  page: { minHeight:"100vh", background:"var(--fw-surface-2)", display:"flex", alignItems: isMobile ? "flex-start" : "center", justifyContent:"center", padding: isMobile ? 16 : 24 },
+  card: { background:"var(--fw-surface)", borderRadius:16, padding: isMobile ? "28px 22px" : "40px 36px", width:"100%", maxWidth:420, boxShadow:"0 4px 24px rgba(0,0,0,.08)", textAlign:"center" },
   icon: { fontSize:48, marginBottom:12 },
-  title: { fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 },
-  sub: { color:"#6b7280", fontSize:14, marginBottom:28, lineHeight:1.6 },
-  input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 24 : 28, fontWeight:700, letterSpacing: isMobile ? 8 : 12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20 },
-  btn: { width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
+  title: { fontSize:22, fontWeight:800, color:"var(--fw-text)", marginBottom:8 },
+  sub: { color:"var(--fw-text-3)", fontSize:14, marginBottom:28, lineHeight:1.6 },
+  input: { width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid var(--fw-border)", fontSize: isMobile ? 24 : 28, fontWeight:700, letterSpacing: isMobile ? 8 : 12, textAlign:"center", outline:"none", color:"var(--fw-text)", marginBottom:20 },
+  btn: { width:"100%", padding:13, background:"var(--fw-blue)", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:"pointer", marginBottom:12 },
   btnDisabled: { opacity:0.6, cursor:"not-allowed" },
-  btnLink: { background:"none", border:"none", color:"#0f6ce6", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
-  error: { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:16 },
-  success: { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 },
+  btnLink: { background:"none", border:"none", color:"var(--fw-blue)", fontWeight:600, fontSize:13, cursor:"pointer", padding:0 },
+  error: { background:"var(--fw-red-bg)", border:"1.5px solid var(--fw-red-line)", borderRadius:8, padding:"10px 14px", color:"var(--fw-red-text-2)", fontSize:13, marginBottom:16 },
+  success: { background:"var(--fw-blue-bg)", border:"1.5px solid var(--fw-blue-line)", borderRadius:8, padding:"10px 14px", color:"var(--fw-blue-text)", fontSize:13, marginBottom:16 },
 });
 
 export default function VerifyEmail() {
@@ -94,7 +94,7 @@ export default function VerifyEmail() {
           {loading ? t("verify.checking") : t("verify.submit")}
         </button>
 
-        <div style={{ fontSize:13, color:"#6b7280" }}>
+        <div style={{ fontSize:13, color:"var(--fw-text-3)" }}>
           {t("verify.notArrived")}{" "}
           <button style={{ ...s.btnLink, opacity: resending ? 0.5 : 1 }}
             onClick={handleResend} disabled={resending}>

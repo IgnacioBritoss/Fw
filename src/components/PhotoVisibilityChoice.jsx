@@ -45,8 +45,8 @@ export default function PhotoVisibilityChoice({ value, onChange, disabled = fals
             style={{
               display: "flex", alignItems: "flex-start", gap: 11, width: "100%",
               textAlign: "left", padding: "11px 13px", marginBottom: 8,
-              background: elegida ? "#eff6ff" : "#fff",
-              border: `1.5px solid ${elegida ? "#0f6ce6" : "#e5e7eb"}`,
+              background: elegida ? "var(--fw-blue-bg)" : "var(--fw-surface)",
+              border: `1.5px solid ${elegida ? "var(--fw-blue)" : "var(--fw-border)"}`,
               borderRadius: 12, cursor: disabled ? "default" : "pointer",
               opacity: disabled ? 0.6 : 1, transition: "border-color .15s, background .15s",
             }}
@@ -54,18 +54,18 @@ export default function PhotoVisibilityChoice({ value, onChange, disabled = fals
             <span
               style={{
                 width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
-                background: elegida ? "#0f6ce6" : "#fff",
-                border: `1.5px solid ${elegida ? "#0f6ce6" : "#d1d5db"}`,
+                background: elegida ? "var(--fw-blue)" : "var(--fw-surface)",
+                border: `1.5px solid ${elegida ? "var(--fw-blue)" : "var(--fw-border-2)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
               {elegida && <Tilde />}
             </span>
             <span style={{ minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#111827" }}>
+              <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: "var(--fw-text)" }}>
                 {tr(opcion.title)}
               </span>
-              <span style={{ display: "block", fontSize: 12, color: "#6b7280", marginTop: 2, lineHeight: 1.45 }}>
+              <span style={{ display: "block", fontSize: 12, color: "var(--fw-text-3)", marginTop: 2, lineHeight: 1.45 }}>
                 {tr(opcion.desc)}
               </span>
             </span>

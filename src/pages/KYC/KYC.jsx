@@ -27,24 +27,24 @@ export default function KYC() {
   const firstName = user?.firstName || user?.name?.split(" ")[0] || "";
 
   return (
-    <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100vh", background:"var(--fw-surface-3)", display:"flex", flexDirection:"column" }}>
       {/* Barra superior */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding: isMobile ? "14px 16px" : "20px 32px", gap:10, flexWrap:"wrap", background:"#fff", borderBottom:"1px solid #ececec" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding: isMobile ? "14px 16px" : "20px 32px", gap:10, flexWrap:"wrap", background:"var(--fw-surface)", borderBottom:"1px solid var(--fw-line)" }}>
         <Logo />
         {/* El rótulo del medio se saca en celular: con 390px de ancho, logo +
             rótulo + link no entran en una fila y se apilan raro. */}
         {!isMobile && (
-          <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{tr("reg.accountEyebrow")}</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--fw-text-4)", letterSpacing:".08em" }}>{tr("reg.accountEyebrow")}</div>
         )}
-        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</div>
+        <div style={{ fontSize:13, color:"var(--fw-blue)", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</div>
       </div>
 
       <div style={{ flex:1, padding: isMobile ? "22px 14px 40px" : "40px 24px" }}>
         <div style={{ maxWidth:720, margin:"0 auto 20px" }}>
-          <div style={{ fontSize: isMobile ? 19 : 22, fontWeight:800, color:"#111827", marginBottom:4 }}>
+          <div style={{ fontSize: isMobile ? 19 : 22, fontWeight:800, color:"var(--fw-text)", marginBottom:4 }}>
             {firstName ? tr("kyc.letsVerifyName", { name: firstName }) : tr("kyc.letsVerify")}
           </div>
-          <div style={{ fontSize:14, color:"#6b7280" }}>
+          <div style={{ fontSize:14, color:"var(--fw-text-3)" }}>
             {tr("kyc.onceOnly")}
           </div>
         </div>

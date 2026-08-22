@@ -73,15 +73,15 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
   return (
     <div style={{
       marginTop: 14,
-      background: "#f8fafc",
-      border: "1px solid #e5e7eb",
-      borderLeft: "3px solid #0f6ce6",
+      background: "var(--fw-surface-2)",
+      border: "1px solid var(--fw-border)",
+      borderLeft: "3px solid var(--fw-blue)",
       borderRadius: 10,
       padding: isMobile ? "11px 13px" : "12px 14px",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 7,
-        fontSize: 12.5, fontWeight: 700, color: "#111827", marginBottom: 8,
+        fontSize: 12.5, fontWeight: 700, color: "var(--fw-text)", marginBottom: 8,
       }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -93,12 +93,12 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
 
       {/* Lo primero que se quiere saber: desde cuándo se puede alquilar. */}
       {free && (
-        <div style={{ fontSize: 13, color: "#374151", marginBottom: 9, lineHeight: 1.5 }}>
-          Libre desde el <strong style={{ color: "#111827" }}>{short(free)}</strong>
+        <div style={{ fontSize: 13, color: "var(--fw-text-2)", marginBottom: 9, lineHeight: 1.5 }}>
+          Libre desde el <strong style={{ color: "var(--fw-text)" }}>{short(free)}</strong>
         </div>
       )}
 
-      <div style={{ fontSize: 11.5, color: "#6b7280", marginBottom: 6 }}>
+      <div style={{ fontSize: 11.5, color: "var(--fw-text-3)", marginBottom: 6 }}>
         Días ya tomados
       </div>
 
@@ -106,7 +106,7 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
         {shown.map(range => (
           <span key={range.from} style={{
             fontSize: 12, fontWeight: 600, color: "#334155",
-            background: "#fff", border: "1px solid #e2e8f0",
+            background: "var(--fw-surface)", border: "1px solid #e2e8f0",
             borderRadius: 7, padding: "4px 9px", whiteSpace: "nowrap",
           }}>
             {range.from === range.to
@@ -116,7 +116,7 @@ export default function OccupiedDates({ days = [], isMobile = false }) {
         ))}
         {hidden > 0 && (
           <span style={{
-            fontSize: 12, fontWeight: 600, color: "#6b7280",
+            fontSize: 12, fontWeight: 600, color: "var(--fw-text-3)",
             padding: "4px 4px", whiteSpace: "nowrap",
           }}>
             +{hidden} más

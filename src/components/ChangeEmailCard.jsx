@@ -102,7 +102,7 @@ export default function ChangeEmailCard({ verified }) {
 
   return (
     <div style={{
-      border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px",
+      border: "1px solid var(--fw-line)", borderRadius: 14, padding: "14px 18px",
     }}>
       {/*
         EN EL TELÉFONO, EL BOTÓN VA ABAJO.
@@ -127,14 +127,14 @@ export default function ChangeEmailCard({ verified }) {
       }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{
-            fontSize: 11, fontWeight: 700, color: "#9ca3af",
+            fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)",
             letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4,
           }}>
             {tr("auth.email")}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
             <span style={{
-              fontSize: 15, fontWeight: 600, color: "#111827",
+              fontSize: 15, fontWeight: 600, color: "var(--fw-text)",
               minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               {user?.email || "—"}
@@ -154,16 +154,16 @@ export default function ChangeEmailCard({ verified }) {
                 vertical debajo de un bloque apilado no separaría nada. */}
             {!isMobile && (
               <div style={{
-                width: 1, alignSelf: "stretch", background: "#ececec",
+                width: 1, alignSelf: "stretch", background: "var(--fw-surface-3)",
                 marginTop: -14, marginBottom: -14, flexShrink: 0,
               }} />
             )}
             <button onClick={() => setPhase("asking")}
               style={{
-                fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer",
+                fontSize: 14, fontWeight: 600, color: "var(--fw-blue)", cursor: "pointer",
                 background: "none", border: "none", flexShrink: 0,
                 ...(isMobile
-                  ? { width: "100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid #ececec", textAlign: "center" }
+                  ? { width: "100%", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--fw-line)", textAlign: "center" }
                   : {}),
               }}>
               {tr("email.change")}
@@ -173,11 +173,11 @@ export default function ChangeEmailCard({ verified }) {
       </div>
 
       {info && phase === "idle" && (
-        <div style={{ fontSize: 12.5, color: "#166534", marginTop: 8 }}>{info}</div>
+        <div style={{ fontSize: 12.5, color: "var(--fw-green-text-2)", marginTop: 8 }}>{info}</div>
       )}
 
       {phase !== "idle" && (
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #f3f4f6" }}>
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--fw-line-soft)" }}>
           {error && <div style={f.error}>{error}</div>}
 
           {phase === "asking" ? (
@@ -188,7 +188,7 @@ export default function ChangeEmailCard({ verified }) {
                 value={newEmail} autoFocus
                 onChange={(e) => setNewEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && pedirCodigo()} />
-              <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 14, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginBottom: 14, lineHeight: 1.6 }}>
                 {tr("email.codeNote")}
               </div>
               <div style={{ display: "flex", gap: 10, flexDirection: isMobile ? "column-reverse" : "row" }}>
@@ -201,7 +201,7 @@ export default function ChangeEmailCard({ verified }) {
             </>
           ) : (
             <>
-              <div style={{ fontSize: 13.5, color: "#374151", marginBottom: 12, lineHeight: 1.6 }}>
+              <div style={{ fontSize: 13.5, color: "var(--fw-text-2)", marginBottom: 12, lineHeight: 1.6 }}>
                 {tr("email.sentTo")} <strong>{sentTo}</strong>. {tr("email.writeItHere")}
               </div>
               {info && (
@@ -222,7 +222,7 @@ export default function ChangeEmailCard({ verified }) {
                 </button>
               </div>
               <button onClick={() => { setPhase("asking"); setCode(""); setError(""); }}
-                style={{ background: "none", border: "none", color: "#6b7280", fontSize: 12.5, cursor: "pointer", padding: 0, marginTop: 12, textDecoration: "underline" }}>
+                style={{ background: "none", border: "none", color: "var(--fw-text-3)", fontSize: 12.5, cursor: "pointer", padding: 0, marginTop: 12, textDecoration: "underline" }}>
                 {tr("email.useAnother")}
               </button>
             </>

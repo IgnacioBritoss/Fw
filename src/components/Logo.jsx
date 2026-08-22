@@ -70,7 +70,7 @@ export default function Logo({ size = 20, light = false, wordmark = true, accent
         <span style={{
           fontWeight: 800, fontSize: size, letterSpacing: "-0.4px", lineHeight: 1,
         }}>
-          <span style={{ color: light ? "#fff" : "#111827" }}>Free</span>
+          <span style={{ color: light ? "#fff" : "var(--fw-text)" }}>Free</span>
           <span style={{ color: accent }}>wheel</span>
         </span>
       )}

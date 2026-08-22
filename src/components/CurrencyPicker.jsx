@@ -62,7 +62,7 @@ export default function CurrencyPicker({ tono = "claro", style }) {
           display: "flex", alignItems: "center", gap: 6,
           padding: "7px 10px", borderRadius: 9,
           border: `1px solid ${borde}`,
-          background: oscuro ? "rgba(255,255,255,.08)" : "#fff",
+          background: oscuro ? "rgba(255,255,255,.08)" : "var(--fw-surface)",
           color: colorTexto, cursor: "pointer",
           fontSize: 12.5, fontWeight: 700, letterSpacing: ".03em",
         }}
@@ -74,7 +74,7 @@ export default function CurrencyPicker({ tono = "claro", style }) {
       {abierto && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 30,
-          background: "#fff", border: "1px solid #ececec", borderRadius: 12,
+          background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 12,
           boxShadow: "0 8px 28px rgba(0,0,0,.12)", padding: 5, minWidth: 196,
         }}>
           {monedas.map((m) => {
@@ -87,15 +87,15 @@ export default function CurrencyPicker({ tono = "claro", style }) {
                 style={{
                   display: "flex", alignItems: "center", gap: 10, width: "100%",
                   padding: "9px 10px", borderRadius: 8, border: "none",
-                  background: elegida ? "#eff6ff" : "transparent",
-                  color: elegida ? "#0f6ce6" : "#374151",
+                  background: elegida ? "var(--fw-blue-bg)" : "transparent",
+                  color: elegida ? "var(--fw-blue)" : "var(--fw-text-2)",
                   fontSize: 13.5, fontWeight: elegida ? 700 : 500,
                   cursor: "pointer", textAlign: "left",
                 }}
               >
                 <span style={{
                   fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
-                  color: elegida ? "#0f6ce6" : "#9ca3af", width: 30, flexShrink: 0,
+                  color: elegida ? "var(--fw-blue)" : "var(--fw-text-4)", width: 30, flexShrink: 0,
                 }}>
                   {m.code}
                 </span>
@@ -104,8 +104,8 @@ export default function CurrencyPicker({ tono = "claro", style }) {
             );
           })}
           <div style={{
-            padding: "8px 10px 4px", fontSize: 11, lineHeight: 1.45, color: "#9ca3af",
-            borderTop: "1px solid #f1f1f1", marginTop: 4,
+            padding: "8px 10px 4px", fontSize: 11, lineHeight: 1.45, color: "var(--fw-text-4)",
+            borderTop: "1px solid var(--fw-line-soft)", marginTop: 4,
           }}>
             {tr("currency.note")}
           </div>

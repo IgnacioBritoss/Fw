@@ -401,7 +401,7 @@ export default function AvatarEditor({
       padding: 16,
     },
     caja: {
-      background: "#fff",
+      background: "var(--fw-surface)",
       borderRadius: 16,
       padding: 20,
       width: "100%",
@@ -420,7 +420,7 @@ export default function AvatarEditor({
       height: lado,
       margin: "0 auto",
       overflow: "hidden",
-      background: "#f3f4f6",
+      background: "var(--fw-bg)",
       borderRadius: 12,
       cursor: busy ? "default" : "grab",
       touchAction: "none",
@@ -440,10 +440,10 @@ export default function AvatarEditor({
   return (
     <div style={s.fondo} onClick={busy ? undefined : onCancel}>
       <div style={s.caja} onClick={(e) => e.stopPropagation()}>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "#111827", marginBottom: 3 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "var(--fw-text)", marginBottom: 3 }}>
           {tr("profile.frameTitle")}
         </div>
-        <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 14 }}>
+        <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 14 }}>
           {tr("profile.frameHint")}
         </div>
 
@@ -480,19 +480,19 @@ export default function AvatarEditor({
               inset: 0,
               borderRadius: "50%",
               boxShadow: `0 0 0 ${lado}px rgba(255,255,255,.72)`,
-              border: "2px solid #0f6ce6",
+              border: "2px solid var(--fw-blue)",
               pointerEvents: "none",
             }}
           />
         </div>
 
         {error && (
-          <div style={{ fontSize: 12.5, color: "#b91c1c", marginTop: 10 }}>{error}</div>
+          <div style={{ fontSize: 12.5, color: "var(--fw-red-text-2)", marginTop: 10 }}>{error}</div>
         )}
 
         {/* El zoom. `min=1` porque por debajo la foto no llegaría a tapar el círculo. */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em" }}>
             {tr("profile.frameZoom")}
           </span>
           <input
@@ -503,7 +503,7 @@ export default function AvatarEditor({
             value={zoom}
             disabled={busy || !imagen}
             onChange={(e) => cambiarZoom(e.target.value)}
-            style={{ flex: 1, accentColor: "#0f6ce6" }}
+            style={{ flex: 1, accentColor: "var(--fw-blue)" }}
           />
         </div>
 
@@ -519,18 +519,18 @@ export default function AvatarEditor({
               maxWidth: "none",
               borderRadius: "50%",
               flexShrink: 0,
-              background: "#f3f4f6",
+              background: "var(--fw-bg)",
             }}
           />
-          <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.45 }}>
+          <div style={{ fontSize: 12, color: "var(--fw-text-3)", lineHeight: 1.45 }}>
             {tr("profile.framePreview")}
           </div>
         </div>
 
         {/* Quién la va a ver. Va acá, junto a la foto, y no solo en el perfil:
             poner una foto y elegir quién la ve son la misma decisión. */}
-        <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 16, paddingTop: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 9 }}>
+        <div style={{ borderTop: "1px solid var(--fw-line-soft)", marginTop: 16, paddingTop: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 9 }}>
             {tr("profile.photoWho")}
           </div>
           <PhotoVisibilityChoice value={quienLaVe} onChange={setQuienLaVe} disabled={busy} />
@@ -541,7 +541,7 @@ export default function AvatarEditor({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            style={{ ...s.boton, background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151" }}
+            style={{ ...s.boton, background: "var(--fw-surface)", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)" }}
           >
             {tr("common.cancel")}
           </button>
@@ -549,7 +549,7 @@ export default function AvatarEditor({
             type="button"
             onClick={confirmar}
             disabled={busy || !imagen}
-            style={{ ...s.boton, background: "#0f6ce6", color: "#fff", opacity: busy || !imagen ? 0.6 : 1 }}
+            style={{ ...s.boton, background: "var(--fw-blue)", color: "#fff", opacity: busy || !imagen ? 0.6 : 1 }}
           >
             {busy ? tr("common.saving") : tr("profile.frameSave")}
           </button>

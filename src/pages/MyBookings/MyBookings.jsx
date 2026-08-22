@@ -74,28 +74,28 @@ const LINEA = "#ececec";
 const s = {
   page: { maxWidth: 900, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
-  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px", marginBottom: 6 },
-  sub: { color: "#6b7280", fontSize: 14, marginBottom: 20 },
-  tabs: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
-  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
-  tabMobile: { flex: 1, padding: "11px 8px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#0f6ce6", borderBottom: "2px solid #0f6ce6" },
-  card: { background: "#fff", borderRadius: 6, padding: 16, marginBottom: 12, display: "flex", gap: 16, border: `1px solid ${LINEA}` },
-  cardMobile: { background: "#fff", borderRadius: 6, padding: 14, marginBottom: 10, border: `1px solid ${LINEA}` },
-  carImg: { width: 100, height: 76, borderRadius: 4, background: "#f3f4f6", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
-  carImgMobile: { width: "100%", height: 140, borderRadius: 4, background: "#f3f4f6", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  titleMobile: { fontSize: 20, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
+  sub: { color: "var(--fw-text-3)", fontSize: 14, marginBottom: 20 },
+  tabs: { display: "flex", background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
+  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid var(--fw-line-soft)", background: "transparent", color: "var(--fw-text-3)", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabMobile: { flex: 1, padding: "11px 8px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: "1px solid var(--fw-line-soft)", background: "transparent", color: "var(--fw-text-3)", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabActive: { color: "var(--fw-blue)", borderBottom: "2px solid var(--fw-blue)" },
+  card: { background: "var(--fw-surface)", borderRadius: 6, padding: 16, marginBottom: 12, display: "flex", gap: 16, border: `1px solid ${LINEA}` },
+  cardMobile: { background: "var(--fw-surface)", borderRadius: 6, padding: 14, marginBottom: 10, border: `1px solid ${LINEA}` },
+  carImg: { width: 100, height: 76, borderRadius: 4, background: "var(--fw-bg)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  carImgMobile: { width: "100%", height: 140, borderRadius: 4, background: "var(--fw-bg)", overflow: "hidden", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center" },
   btnRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
-  btnAccept: { padding: "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
-  btnReject: { padding: "8px 16px", background: "#fff", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnAccept: { padding: "8px 16px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnReject: { padding: "8px 16px", background: "var(--fw-surface)", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text)", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   btnQR: { padding: "8px 16px", background: "#0a7d5a", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
-  btnPay: { padding: "8px 16px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
-  btnReady: { padding: "8px 16px", background: "#111827", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
-  empty: { textAlign: "center", padding: "36px 20px", color: "#9ca3af", fontSize: 13, background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4 },
-  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+  btnPay: { padding: "8px 16px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  btnReady: { padding: "8px 16px", background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  empty: { textAlign: "center", padding: "36px 20px", color: "var(--fw-text-4)", fontSize: 13, background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4 },
+  errorBox: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
   // El paso siguiente no es un aviso de color: es una nota al pie de la reserva,
   // separada por una línea igual que el precio en la tarjeta del auto.
-  nextStep: { borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10, fontSize: 12.5, color: "#0b55c0" },
+  nextStep: { borderTop: "1px solid var(--fw-line-soft)", paddingTop: 10, marginTop: 10, fontSize: 12.5, color: "var(--fw-blue-strong)" },
 };
 
 // Datos del auto de una reserva (tolerando las distintas formas del dato).
@@ -259,13 +259,13 @@ export default function MyBookings() {
 
     const details = (
       <>
-        <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, marginBottom: 4, color: "#111827" }}>
+        <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, marginBottom: 4, color: "var(--fw-text)" }}>
           {vehicle.brand} {vehicle.model} {vehicle.year}
         </div>
-        <div style={{ fontSize: isMobile ? 12 : 13, color: "#6b7280", marginBottom: 4 }}>
+        <div style={{ fontSize: isMobile ? 12 : 13, color: "var(--fw-text-3)", marginBottom: 4 }}>
           {format(parseISO(b.startDate), "d MMM", { locale: dateLocale })} — {format(parseISO(b.endDate), "d MMM yyyy", { locale: dateLocale })} · {days} {t(days === 1 ? "common.day" : "common.days")}
         </div>
-        <div style={{ fontSize: isMobile ? 12 : 13, color: "#374151", marginBottom: 4 }}>
+        <div style={{ fontSize: isMobile ? 12 : 13, color: "var(--fw-text-2)", marginBottom: 4 }}>
           {isOwner ? `${t("bookings.driver")}: ` : `${t("car.owner")}: `}<strong>{getPersonName(isOwner ? b.renter : b.owner)}</strong>
         </div>
         {/* La calificación de la otra persona, en el momento en que hace falta:
@@ -280,9 +280,9 @@ export default function MyBookings() {
         {/* El precio y los estados, separados del resto por una línea: es el mismo
             renglón de cierre que tiene la tarjeta del auto en la home. La palabra
             "total" estaba escrita a mano acá adentro y no se traducía. */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: "1px solid #f1f2f4", paddingTop: 10, marginTop: 10 }}>
-          <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "#111827" }}>
-            {precio(total)} <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>{t("common.total")}</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: "1px solid var(--fw-line-soft)", paddingTop: 10, marginTop: 10 }}>
+          <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "var(--fw-text)" }}>
+            {precio(total)} <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fw-text-4)" }}>{t("common.total")}</span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (
@@ -319,7 +319,7 @@ export default function MyBookings() {
           <div style={s.carImgMobile}>
             {vehicle.photos?.length > 0
               ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <div style={{ color: "#9ca3af", fontSize: 12 }}>{t("common.noPhoto")}</div>}
+              : <div style={{ color: "var(--fw-text-4)", fontSize: 12 }}>{t("common.noPhoto")}</div>}
           </div>
           {details}
         </div>
@@ -331,7 +331,7 @@ export default function MyBookings() {
         <div style={s.carImg}>
           {vehicle.photos?.length > 0
             ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <div style={{ color: "#9ca3af", fontSize: 12 }}>{t("common.noPhoto")}</div>}
+            : <div style={{ color: "var(--fw-text-4)", fontSize: 12 }}>{t("common.noPhoto")}</div>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>{details}</div>
       </div>
@@ -359,7 +359,7 @@ export default function MyBookings() {
         myRentals.length === 0 ? (
           <div style={s.empty}>
             <div style={{ marginBottom: 16 }}>{t("bookings.none")}</div>
-            <button style={{ padding: "10px 22px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 14 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
+            <button style={{ padding: "10px 22px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600, fontSize: 14 }} onClick={() => navigate("/buscar")}>{t("bookings.explore")}</button>
           </div>
         ) : myRentals.map((b) => <BookingCard key={b.id} b={b} isOwner={false} />)
       ) : (

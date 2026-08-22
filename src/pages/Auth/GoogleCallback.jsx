@@ -54,10 +54,10 @@ export default function GoogleCallback() {
   if (error) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ maxWidth:420, textAlign:"center" }}>
-        <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:12, padding:"20px 24px", color:"#b91c1c", fontSize:14, marginBottom:20 }}>
+        <div style={{ background:"var(--fw-red-bg)", border:"1.5px solid var(--fw-red-line)", borderRadius:12, padding:"20px 24px", color:"var(--fw-red-text-2)", fontSize:14, marginBottom:20 }}>
           {error}
         </div>
-        <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"#0f6ce6", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
+        <Link to="/login" style={{ display:"inline-block", padding:"12px 26px", background:"var(--fw-blue)", color:"#fff", borderRadius:10, fontSize:14, fontWeight:700, textDecoration:"none" }}>
           {t("auth.backToLogin")}
         </Link>
       </div>

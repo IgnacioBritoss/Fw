@@ -99,60 +99,60 @@ const s = {
   pageMobile: { padding: "16px" },
   badge: {
     display: "inline-block", padding: "3px 12px",
-    background: "#dbeafe", color: "#1e40af",
+    background: "var(--fw-blue-bg-2)", color: "var(--fw-blue-text)",
     borderRadius: 20, fontSize: 12, fontWeight: 600, marginRight: 8,
   },
   section: { marginTop: 24 },
-  sectionTitle: { fontSize: 15, fontWeight: 700, marginBottom: 12, color: "#111827" },
+  sectionTitle: { fontSize: 15, fontWeight: 700, marginBottom: 12, color: "var(--fw-text)" },
   specGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
   spec: {
-    background: "#f9fafb", borderRadius: 8, padding: "10px 14px",
-    fontSize: 13, color: "#374151", border: "1px solid #f3f4f6",
+    background: "var(--fw-surface-2)", borderRadius: 8, padding: "10px 14px",
+    fontSize: 13, color: "var(--fw-text-2)", border: "1px solid var(--fw-line-soft)",
   },
-  specLabel: { color: "#9ca3af", fontSize: 11, marginBottom: 2 },
-  review: { borderBottom: "1px solid #f3f4f6", paddingBottom: 14, marginBottom: 14 },
-  reviewAuthor: { fontWeight: 600, fontSize: 14, marginBottom: 2, color: "#111827" },
-  reviewText: { fontSize: 13, color: "#4b5563" },
-  stars: { color: "#f59e0b", fontSize: 13 },
+  specLabel: { color: "var(--fw-text-4)", fontSize: 11, marginBottom: 2 },
+  review: { borderBottom: "1px solid var(--fw-line-soft)", paddingBottom: 14, marginBottom: 14 },
+  reviewAuthor: { fontWeight: 600, fontSize: 14, marginBottom: 2, color: "var(--fw-text)" },
+  reviewText: { fontSize: 13, color: "var(--fw-text-2)" },
+  stars: { color: "var(--fw-amber)", fontSize: 13 },
   priceCard: {
-    background: "#fff", border: "1px solid #e5e7eb",
+    background: "var(--fw-surface)", border: "1px solid var(--fw-border)",
     borderRadius: 14, padding: 24, position: "sticky", top: 80,
   },
   priceCardMobile: {
-    background: "#fff", border: "1px solid #e5e7eb",
+    background: "var(--fw-surface)", border: "1px solid var(--fw-border)",
     borderRadius: 14, padding: 20, marginTop: 24,
   },
-  price: { fontSize: 28, fontWeight: 800, color: "#0f6ce6", marginBottom: 4 },
-  priceSub: { fontSize: 13, color: "#6b7280", marginBottom: 20 },
+  price: { fontSize: 28, fontWeight: 800, color: "var(--fw-blue)", marginBottom: 4 },
+  priceSub: { fontSize: 13, color: "var(--fw-text-3)", marginBottom: 20 },
   ownerBox: {
     display: "flex", alignItems: "center", gap: 12,
-    padding: "14px 0", borderTop: "1px solid #f3f4f6", marginTop: 14,
+    padding: "14px 0", borderTop: "1px solid var(--fw-line-soft)", marginTop: 14,
   },
-  ownerName: { fontWeight: 700, fontSize: 14, color: "#111827" },
-  ownerMeta: { fontSize: 12, color: "#6b7280" },
+  ownerName: { fontWeight: 700, fontSize: 14, color: "var(--fw-text)" },
+  ownerMeta: { fontSize: 12, color: "var(--fw-text-3)" },
   btn: {
-    width: "100%", padding: "14px", background: "#0f6ce6", color: "#fff",
+    width: "100%", padding: "14px", background: "var(--fw-blue)", color: "#fff",
     border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700,
     cursor: "pointer", marginBottom: 10,
   },
   chatBtn: {
     width: "100%", padding: "11px", background: "transparent",
-    border: "2px solid #0f6ce6", color: "#0f6ce6",
+    border: "2px solid var(--fw-blue)", color: "var(--fw-blue)",
     borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
   },
   chatBtnLoading: {
     width: "100%", padding: "11px", background: "transparent",
-    border: "2px solid #d1d5db", color: "#9ca3af",
+    border: "2px solid var(--fw-border-2)", color: "var(--fw-text-4)",
     borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "default",
   },
   row: {
     display: "flex", justifyContent: "space-between",
-    fontSize: 13, color: "#6b7280", marginBottom: 6,
+    fontSize: 13, color: "var(--fw-text-3)", marginBottom: 6,
   },
   total: {
     display: "flex", justifyContent: "space-between",
-    fontWeight: 700, fontSize: 15, color: "#111827",
-    borderTop: "1px solid #e5e7eb", paddingTop: 10, marginTop: 6,
+    fontWeight: 700, fontSize: 15, color: "var(--fw-text)",
+    borderTop: "1px solid var(--fw-border)", paddingTop: 10, marginTop: 6,
   },
   arrowBtn: {
     position: "absolute", top: "50%", transform: "translateY(-50%)",
@@ -166,7 +166,7 @@ const s = {
     height: 8, borderRadius: 4, cursor: "pointer",
     transition: "all .2s", background: "rgba(255,255,255,.5)",
   },
-  dotActive: { background: "#fff" },
+  dotActive: { background: "var(--fw-surface)" },
   thumbnail: {
     width: 88, height: 60, objectFit: "cover",
     borderRadius: 8, cursor: "pointer", flexShrink: 0, transition: "all .15s",
@@ -371,7 +371,7 @@ export default function CarDetail() {
   if (loading) return <Spinner block label={tr("common.loading")} />;
 
   if (!car) return (
-    <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
+    <div style={{ padding: 40, textAlign: "center", color: "var(--fw-text-3)" }}>
       {tr("car.notFound")}
     </div>
   );
@@ -428,7 +428,7 @@ export default function CarDetail() {
       <div style={s.priceSub}>{tr("car.perDay")}</div>
       {/* Ejemplo de 3 días, aclarado como tal: el total real depende de las
           fechas que se elijan y lo calcula el servidor al reservar. */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-text-4)", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>
         {tr("car.example3")}
       </div>
       <div style={s.row}>
@@ -462,16 +462,16 @@ export default function CarDetail() {
                 se aplica recién cuando se ingresa el código que llegó por email. */}
             {priceStep === "code" ? (
               <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)", marginBottom: 6 }}>
                   Confirmá el cambio de precio
                 </div>
-                <div style={{ fontSize: 12.5, color: "#4b5563", lineHeight: 1.5, marginBottom: 10 }}>
+                <div style={{ fontSize: 12.5, color: "var(--fw-text-2)", lineHeight: 1.5, marginBottom: 10 }}>
                   {priceInfo}
                 </div>
                 <input value={priceCode} onChange={e => setPriceCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   inputMode="numeric" placeholder="000000"
-                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 22, fontWeight: 700, letterSpacing: 8, textAlign: "center", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
-                {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
+                  style={{ width: "100%", padding: 12, borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: 22, fontWeight: 700, letterSpacing: 8, textAlign: "center", outline: "none", boxSizing: "border-box", marginBottom: 10 }} />
+                {editError && <div style={{ background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "var(--fw-red-text-2)", marginBottom: 10 }}>{editError}</div>}
                 <button style={{ ...s.btn, opacity: savingEdit || priceCode.length !== 6 ? 0.6 : 1 }}
                   onClick={handleConfirmPrice} disabled={savingEdit || priceCode.length !== 6}>
                   {savingEdit ? tr("car.confirming") : tr("car.confirmNewPrice")}
@@ -480,13 +480,13 @@ export default function CarDetail() {
               </>
             ) : (
               <>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("car.pricePerDay")}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>{tr("car.pricePerDay")}</div>
                 <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)}
                   disabled={priceStatus ? !priceStatus.canChange : false}
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 6, background: priceStatus && !priceStatus.canChange ? "#f9fafb" : "#fff" }} />
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 6, background: priceStatus && !priceStatus.canChange ? "var(--fw-surface-2)" : "var(--fw-surface)" }} />
 
                 {/* Por qué el precio está protegido, y si ahora se puede cambiar */}
-                <div style={{ fontSize: 11.5, color: "#6b7280", lineHeight: 1.5, marginBottom: 10 }}>
+                <div style={{ fontSize: 11.5, color: "var(--fw-text-3)", lineHeight: 1.5, marginBottom: 10 }}>
                   {priceStatus && priceStatus.blockedByBookings
                     ? `No se puede cambiar el precio con ${priceStatus.activeBookings} reserva${priceStatus.activeBookings === 1 ? "" : "s"} en curso.`
                     : priceStatus && priceStatus.nextAllowedChangeAt
@@ -497,10 +497,10 @@ export default function CarDetail() {
                       : tr("car.priceCodeNote")}
                 </div>
 
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4 }}>{tr("car.description")}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>{tr("car.description")}</div>
                 <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)}
-                  style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "vertical", marginBottom: 10 }} />
-                {editError && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "#b91c1c", marginBottom: 10 }}>{editError}</div>}
+                  style={{ width: "100%", height: 80, padding: "10px 12px", borderRadius: 8, border: "1.5px solid var(--fw-border)", fontSize: 14, outline: "none", boxSizing: "border-box", resize: "vertical", marginBottom: 10 }} />
+                {editError && <div style={{ background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "9px 12px", fontSize: 12.5, color: "var(--fw-red-text-2)", marginBottom: 10 }}>{editError}</div>}
                 <button style={{ ...s.btn, opacity: savingEdit ? 0.6 : 1 }} onClick={handleSaveEdit} disabled={savingEdit}>
                   {savingEdit ? tr("common.saving") : tr("car.saveChanges")}
                 </button>
@@ -512,7 +512,7 @@ export default function CarDetail() {
           <>
             <button style={s.btn} onClick={startEdit}>{tr("car.editListing")}</button>
             <button
-              style={{ width: "100%", padding: "11px", background: "transparent", border: "2px solid #fecaca", color: "#dc2626", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+              style={{ width: "100%", padding: "11px", background: "transparent", border: "2px solid var(--fw-red-line)", color: "var(--fw-red-text)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
             >
@@ -523,7 +523,7 @@ export default function CarDetail() {
       ) : (
         <>
           {car.isMock ? (
-            <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#92400e", marginBottom: 10 }}>
+            <div style={{ background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "var(--fw-amber-text)", marginBottom: 10 }}>
               Este es un auto de ejemplo para mostrar la app: no se puede reservar.
             </div>
           ) : (
@@ -563,7 +563,7 @@ export default function CarDetail() {
               días.
             */
             style={{
-              background: "#dc2626", border: "none",
+              background: "var(--fw-red)", border: "none",
               borderRadius: 8, color: "#fff", fontSize: 11, fontWeight: 600,
               cursor: "pointer", padding: "5px 12px",
             }}
@@ -583,13 +583,13 @@ export default function CarDetail() {
         <div style={{
           width: "100%", height: isMobile ? 240 : 380,
           borderRadius: isMobile ? 10 : 14, overflow: "hidden",
-          position: "relative", background: "#f3f4f6",
+          position: "relative", background: "var(--fw-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           {photos.length > 0
             ? <img src={photos[currentPhoto]} alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ color: "#9ca3af", fontSize: 14 }}>{tr("car.noPhotos")}</span>}
+            : <span style={{ color: "var(--fw-text-4)", fontSize: 14 }}>{tr("car.noPhotos")}</span>}
 
           {/* Corazón de favoritos. Va a la IZQUIERDA: arriba a la derecha está
               el contador de fotos ("2 / 4") y se pisaban entre sí. */}
@@ -624,7 +624,7 @@ export default function CarDetail() {
               <img key={i} src={p} alt="" onClick={() => setCurrentPhoto(i)}
                 style={{
                   ...s.thumbnail,
-                  border: i === currentPhoto ? "2px solid #0f6ce6" : "2px solid transparent",
+                  border: i === currentPhoto ? "2px solid var(--fw-blue)" : "2px solid transparent",
                   opacity: i === currentPhoto ? 1 : 0.6,
                 }} />
             ))}
@@ -634,10 +634,10 @@ export default function CarDetail() {
 
       <div style={{ display: isMobile ? "block" : "grid", gridTemplateColumns: "1fr 340px", gap: 32 }}>
         <div>
-          <div style={{ fontSize: isMobile ? 21 : 26, fontWeight: 800, marginBottom: 6, color: "#111827", letterSpacing: "-.5px", marginTop: isMobile ? 16 : 0 }}>
+          <div style={{ fontSize: isMobile ? 21 : 26, fontWeight: 800, marginBottom: 6, color: "var(--fw-text)", letterSpacing: "-.5px", marginTop: isMobile ? 16 : 0 }}>
             {car.brand} {car.model} {car.year}
           </div>
-          <div style={{ color: "#6b7280", fontSize: 14, marginBottom: 16 }}>
+          <div style={{ color: "var(--fw-text-3)", fontSize: 14, marginBottom: 16 }}>
             {car.location}
           </div>
 
@@ -648,11 +648,11 @@ export default function CarDetail() {
 
           <div style={s.section}>
             <div style={s.sectionTitle}>{tr("car.description")}</div>
-            <p style={{ fontSize: 14, color: "#4b5563", lineHeight: 1.7 }}>
+            <p style={{ fontSize: 14, color: "var(--fw-text-2)", lineHeight: 1.7 }}>
               {car.description || tr("car.noDescription")}
             </p>
             {car.observations && (
-              <p style={{ fontSize: 13, color: "#6b7280", marginTop: 8, fontStyle: "italic" }}>
+              <p style={{ fontSize: 13, color: "var(--fw-text-3)", marginTop: 8, fontStyle: "italic" }}>
                 {car.observations}
               </p>
             )}
@@ -706,13 +706,13 @@ export default function CarDetail() {
               {car.ratingAverage !== null && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ ...s.stars, fontSize: 15 }}>{"★".repeat(Math.round(car.ratingAverage))}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{car.ratingAverage.toFixed(1)}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fw-text)" }}>{car.ratingAverage.toFixed(1)}</span>
                 </div>
               )}
             </div>
             {reviews.length === 0
               ? (
-                <p style={{ color: "#9ca3af", fontSize: 13 }}>{tr("car.noReviews")}</p>
+                <p style={{ color: "var(--fw-text-4)", fontSize: 13 }}>{tr("car.noReviews")}</p>
               )
               : reviews.map(r => (
                 <div key={r.id} style={s.review}>
@@ -734,7 +734,7 @@ export default function CarDetail() {
                     <span style={s.stars}>{"★".repeat(r.rating)}</span>
                   </div>
                   {r.comment && <div style={s.reviewText}>{r.comment}</div>}
-                  <div style={{ fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+                  <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", marginTop: 4 }}>
                     {format(new Date(r.createdAt), "d MMM yyyy", { locale: dateLocale })}
                   </div>
                 </div>
@@ -748,7 +748,7 @@ export default function CarDetail() {
       <div style={{ textAlign: "center", marginTop: 32 }}>
         <button
           onClick={() => user ? setShowReport(true) : navigate("/login")}
-          style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
+          style={{ background: "none", border: "none", color: "var(--fw-text-4)", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
         >
           Reportar esta publicación
         </button>
@@ -777,19 +777,19 @@ export default function CarDetail() {
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
         >
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{tr("car.deleteListing")}</div>
-            <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
+            style={{ background: "var(--fw-surface)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--fw-red-bg)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)", marginBottom: 6 }}>{tr("car.deleteListing")}</div>
+            <div style={{ fontSize: 14, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 24 }}>
               {tr("car.deleteConfirm")} <strong>{car.brand} {car.model} {car.year}</strong>? {tr("car.cannotUndo")}
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setConfirmDelete(false)} disabled={deleting}
-                style={{ flex: 1, padding: "12px", background: "#fff", border: "1.5px solid #e5e7eb", color: "#374151", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                style={{ flex: 1, padding: "12px", background: "var(--fw-surface)", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
                 {tr("common.cancel")}
               </button>
               <button onClick={handleDelete} disabled={deleting}
-                style={{ flex: 1, padding: "12px", background: "#dc2626", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>
+                style={{ flex: 1, padding: "12px", background: "var(--fw-red)", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>
                 {deleting ? tr("car.deleting") : tr("car.yesDelete")}
               </button>
             </div>

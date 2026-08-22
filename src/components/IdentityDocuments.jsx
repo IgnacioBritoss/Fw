@@ -100,7 +100,7 @@ export default function IdentityDocuments({
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <StatusChip tone={state.tone}>{state.label}</StatusChip>
         {submission.createdAt && (
-          <span style={{ fontSize: 12, color: "#9ca3af" }}>
+          <span style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
             {tr("kyc.sentOn", { date: prettyDate(submission.createdAt) })}
           </span>
         )}
@@ -114,23 +114,23 @@ export default function IdentityDocuments({
               style={{ textDecoration: "none", color: "inherit" }}>
               <img src={url} alt={tr(key)} style={{
                 width: size, height: size * 0.66, objectFit: "cover",
-                borderRadius: 8, border: "1px solid #e5e7eb", display: "block", background: "#f3f4f6",
+                borderRadius: 8, border: "1px solid var(--fw-border)", display: "block", background: "var(--fw-bg)",
               }} />
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
+              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
             </a>
           ) : (
             <div key={slot}>
               <div style={{
                 width: size, height: size * 0.66, borderRadius: 8,
-                border: "1px dashed #d1d5db", background: "#f9fafb",
+                border: "1px dashed var(--fw-border-2)", background: "var(--fw-surface-2)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 textAlign: "center", padding: 6,
               }}>
-                <span style={{ fontSize: 10.5, color: "#9ca3af", lineHeight: 1.4 }}>
+                <span style={{ fontSize: 10.5, color: "var(--fw-text-4)", lineHeight: 1.4 }}>
                   {tr("kyc.photoStored")}
                 </span>
               </div>
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
+              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
             </div>
           )
         ))}
@@ -142,8 +142,8 @@ export default function IdentityDocuments({
       {hayPrivadas && onLoadPhotos && (
         <button onClick={onLoadPhotos} disabled={loadingPhotos}
           style={{
-            background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 20,
-            padding: "8px 16px", fontSize: 12.5, fontWeight: 600, color: "#374151",
+            background: "var(--fw-surface)", border: "1.5px solid var(--fw-border)", borderRadius: 20,
+            padding: "8px 16px", fontSize: 12.5, fontWeight: 600, color: "var(--fw-text-2)",
             cursor: loadingPhotos ? "default" : "pointer", marginBottom: 12,
             opacity: loadingPhotos ? 0.6 : 1,
           }}>
@@ -153,15 +153,15 @@ export default function IdentityDocuments({
 
       {scanned.length > 0 && (
         <div style={{
-          background: "#f8fafc", border: "1px solid #e5e7eb", borderLeft: "3px solid #0f6ce6",
+          background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderLeft: "3px solid var(--fw-blue)",
           borderRadius: 8, padding: "10px 12px",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-text-3)", letterSpacing: ".04em", marginBottom: 6 }}>
             {tr("kyc.readFromPhotos")}
           </div>
           {scanned.map(([label, value]) => (
-            <div key={label} style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.7 }}>
-              {label}: <strong style={{ color: "#111827" }}>{value}</strong>
+            <div key={label} style={{ fontSize: 12.5, color: "var(--fw-text-2)", lineHeight: 1.7 }}>
+              {label}: <strong style={{ color: "var(--fw-text)" }}>{value}</strong>
             </div>
           ))}
         </div>
@@ -169,14 +169,14 @@ export default function IdentityDocuments({
 
       {motivos.length > 0 && (
         <div style={{
-          background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8,
+          background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 8,
           padding: "10px 12px", marginTop: 10,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", letterSpacing: ".04em", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-amber-text)", letterSpacing: ".04em", marginBottom: 6 }}>
             {tr("kyc.reviewNotes")}
           </div>
           {motivos.map(({ code, clave }) => (
-            <div key={code} style={{ fontSize: 12.5, color: "#92400e", lineHeight: 1.6 }}>
+            <div key={code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
               · {clave ? tr(clave) : code}
             </div>
           ))}
@@ -184,7 +184,7 @@ export default function IdentityDocuments({
       )}
 
       {submission.notes && (
-        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 10, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginTop: 10, lineHeight: 1.6 }}>
           {submission.notes}
         </div>
       )}

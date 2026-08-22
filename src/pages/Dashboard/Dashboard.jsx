@@ -59,10 +59,10 @@ const s = {
   page: { maxWidth: 960, margin: "0 auto", padding: "40px 24px" },
   pageMobile: { padding: "20px 16px" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, gap: 12, flexWrap: "wrap" },
-  title: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
-  titleMobile: { fontSize: 20, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" },
-  sub: { color: "#6b7280", fontSize: 14, marginTop: 2 },
-  btn: { padding: "10px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+  title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" },
+  titleMobile: { fontSize: 20, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" },
+  sub: { color: "var(--fw-text-3)", fontSize: 14, marginTop: 2 },
+  btn: { padding: "10px 18px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
 
   /*
     LOS TRES NÚMEROS, EN UNA FRANJA.
@@ -72,35 +72,35 @@ const s = {
     celdas de una misma barra, separadas por una línea. Es exactamente el mismo
     recurso que la ficha técnica de la tarjeta del auto.
   */
-  franja: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden", marginBottom: 18 },
+  franja: { display: "flex", background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden", marginBottom: 18 },
   franjaCelda: { flex: 1, minWidth: 0, padding: "14px 16px", borderLeft: `1px solid ${LINEA}`, textAlign: "center" },
-  statNum: { fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" },
-  statLabel: { fontSize: 11, color: "#9ca3af", marginTop: 3, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" },
+  statNum: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" },
+  statLabel: { fontSize: 11, color: "var(--fw-text-4)", marginTop: 3, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" },
 
   // Las pestañas, otra franja de celdas. La activa se marca con una barra abajo.
-  tabs: { display: "flex", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
-  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: `1px solid #f1f2f4`, background: "transparent", color: "#6b7280", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
-  tabActive: { color: "#0f6ce6", borderBottom: "2px solid #0f6ce6" },
+  tabs: { display: "flex", background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4, marginBottom: 18, overflowX: "auto" },
+  tab: { padding: "12px 18px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", border: "none", borderLeft: `1px solid var(--fw-line-soft)`, background: "transparent", color: "var(--fw-text-3)", borderBottom: "2px solid transparent", whiteSpace: "nowrap" },
+  tabActive: { color: "var(--fw-blue)", borderBottom: "2px solid var(--fw-blue)" },
 
-  card: { background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 6, padding: 16, marginBottom: 12 },
+  card: { background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 6, padding: 16, marginBottom: 12 },
   // El estado de la publicación: un rectángulo con una línea, no una píldora de
   // 20px de redondeo con fondo de color.
   badge: { display: "inline-block", padding: "4px 9px", borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", border: "1px solid" },
-  active: { background: "#f0f6ff", color: "#0b55c0", borderColor: "#cfe0fb" },
-  paused: { background: "#fffbeb", color: "#92400e", borderColor: "#fde68a" },
-  linkBtn: { background: "#fff", border: `1px solid ${LINEA}`, color: "#374151", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "8px 14px" },
-  accept: { padding: "8px 18px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  reject: { padding: "8px 18px", background: "#fff", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  empty: { textAlign: "center", padding: "36px 20px", color: "#9ca3af", background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, fontSize: 13 },
-  warn: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 4, padding: "13px 16px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
-  error: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "#b91c1c", marginBottom: 16 },
+  active: { background: "var(--fw-blue-bg)", color: "var(--fw-blue-strong)", borderColor: "#cfe0fb" },
+  paused: { background: "var(--fw-amber-bg)", color: "var(--fw-amber-text)", borderColor: "var(--fw-amber-line)" },
+  linkBtn: { background: "var(--fw-surface)", border: `1px solid ${LINEA}`, color: "var(--fw-text-2)", borderRadius: 4, fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "8px 14px" },
+  accept: { padding: "8px 18px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  reject: { padding: "8px 18px", background: "var(--fw-surface)", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text)", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  empty: { textAlign: "center", padding: "36px 20px", color: "var(--fw-text-4)", background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4, fontSize: 13 },
+  warn: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 4, padding: "13px 16px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
+  error: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 4, padding: "12px 16px", fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
 
   // El historial es una lista, así que va como UNA caja con renglones separados
   // por una línea, igual que la bandeja de notificaciones.
-  lista: { background: "#fff", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden" },
+  lista: { background: "var(--fw-surface)", border: `1px solid ${LINEA}`, borderRadius: 4, overflow: "hidden" },
   fila: (primera) => ({
     display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
-    padding: "14px 16px", borderTop: primera ? "none" : "1px solid #f1f2f4", flexWrap: "wrap",
+    padding: "14px 16px", borderTop: primera ? "none" : "1px solid var(--fw-line-soft)", flexWrap: "wrap",
   }),
 };
 
@@ -218,10 +218,10 @@ export default function Dashboard() {
       {/* Sin cuenta verificada el backend rechaza publicar: se avisa antes. */}
       {!isVerified && (
         <div style={s.warn}>
-          <div style={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 13, color: "var(--fw-amber-text)", flex: 1, minWidth: 200 }}>
             {tr("dash.notVerified")}
           </div>
-          <button style={{ ...s.btn, background: "#111827" }} onClick={() => navigate("/kyc")}>
+          <button style={{ ...s.btn, background: "var(--fw-chip)" }} onClick={() => navigate("/kyc")}>
             {tr("profile.verifyNow")}
           </button>
         </div>
@@ -268,14 +268,14 @@ export default function Dashboard() {
         ) : myCars.map(car => (
           <div key={car.id} style={s.card}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ width: 74, height: 56, borderRadius: 4, overflow: "hidden", background: "#f3f4f6", flexShrink: 0 }}>
+              <div style={{ width: 74, height: 56, borderRadius: 4, overflow: "hidden", background: "var(--fw-bg)", flexShrink: 0 }}>
                 {car.photos?.length > 0
                   ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 10 }}>{tr("common.noPhoto")}</div>}
+                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 10 }}>{tr("common.noPhoto")}</div>}
               </div>
               <div style={{ flex: 1, minWidth: 160 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{car.brand} {car.model} {car.year}</div>
-                <div style={{ color: "#6b7280", fontSize: 13 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)" }}>{car.brand} {car.model} {car.year}</div>
+                <div style={{ color: "var(--fw-text-3)", fontSize: 13 }}>
                   {car.location} · {precio(priceOf(car))}{tr("common.perDay")}
                   {car.category ? ` · ${categoryLabel(tr, car.category)}` : ""}
                 </div>
@@ -288,7 +288,7 @@ export default function Dashboard() {
             <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
               {/* El panel de disponibilidad por fechas: lo que le faltaba al
                   filtro de fechas para tener datos que consultar. */}
-              <button style={{ ...s.linkBtn, ...(openAvailability === car.id ? { borderColor: "#0f6ce6", color: "#0f6ce6" } : {}) }}
+              <button style={{ ...s.linkBtn, ...(openAvailability === car.id ? { borderColor: "var(--fw-blue)", color: "var(--fw-blue)" } : {}) }}
                 onClick={() => setOpenAvailability(openAvailability === car.id ? null : car.id)}>
                 {openAvailability === car.id ? tr("common.close") : tr("dash.dateAvailability")}
               </button>
@@ -313,10 +313,10 @@ export default function Dashboard() {
           <div key={r.id} style={s.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>{personName(r.renter)}</div>
-                <div style={{ fontSize: 13, color: "#6b7280" }}>{vehicleLabel(r)} · {dateRange(r)}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)" }}>{personName(r.renter)}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-3)" }}>{vehicleLabel(r)} · {dateRange(r)}</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: "#0f6ce6" }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "var(--fw-blue)" }}>
                 {precio(r.totalPriceSnapshot || 0)}
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function Dashboard() {
               <button style={s.reject} disabled={actionLoading === r.id} onClick={() => respond(r.id, "reject")}>{tr("bookings.reject")}</button>
               <button style={s.linkBtn} onClick={() => navigate("/my-bookings")}>{tr("dash.seeInBookings")}</button>
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 10 }}>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 10 }}>
               {tr("dash.acceptNote")}
             </div>
           </div>
@@ -347,16 +347,16 @@ export default function Dashboard() {
             {ownerBookings.map((b, i) => (
               <div key={b.id} style={s.fila(i === 0)}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14.5, color: "#111827" }}>{vehicleLabel(b)}</div>
-                  <div style={{ fontSize: 12.5, color: "#6b7280" }}>
+                  <div style={{ fontWeight: 700, fontSize: 14.5, color: "var(--fw-text)" }}>{vehicleLabel(b)}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--fw-text-3)" }}>
                     {personName(b.renter)} · {dateRange(b)}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "var(--fw-text)" }}>
                     {precio(b.ownerPayoutSnapshot || b.totalPriceSnapshot || 0)}
                   </div>
-                  <div style={{ fontSize: 12, color: "#6b7280" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
+                  <div style={{ fontSize: 12, color: "var(--fw-text-3)" }}>{STATUS_KEYS[b.status] ? tr(STATUS_KEYS[b.status]) : b.status}</div>
                 </div>
               </div>
             ))}

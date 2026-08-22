@@ -81,12 +81,12 @@ function Dropdown({ label, value, options, onChange, active, celda }) {
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
         style={{ display: "flex", alignItems: "center", gap: 6, padding: "12px 16px", border: "none", background: "transparent",
           fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", userSelect: "none", width: "100%",
-          color: active ? "#0f6ce6" : "#374151" }}>
+          color: active ? "var(--fw-blue)" : "var(--fw-text-2)" }}>
         {label}{chosenLabel ? `: ${chosenLabel}` : ""} <span style={{ fontSize: 10, opacity: .7, transition: "transform .2s", transform: open ? "rotate(180deg)" : "none" }}>▾</span>
       </button>
       {open && (
         <div role="listbox" aria-label={label}
-          style={{ position: "absolute", top: "100%", left: 0, marginTop: 6, background: "#fff", borderRadius: 14, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid #f0f0f0", zIndex: 400, overflow: "hidden", padding: "6px" }}>
+          style={{ position: "absolute", top: "100%", left: 0, marginTop: 6, background: "var(--fw-surface)", borderRadius: 14, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,.14)", border: "1px solid var(--fw-line-soft)", zIndex: 400, overflow: "hidden", padding: "6px" }}>
           {options.map(o => {
             const chosen = o.value === value;
             return (
@@ -95,8 +95,8 @@ function Dropdown({ label, value, options, onChange, active, celda }) {
                  distingue del "Nafta" que dice la ficha de un auto. */
               <div key={o.value} role="option" aria-selected={chosen}
                 onClick={() => { onChange(o.value); setOpen(false); }}
-                style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "#0f6ce6" : "#374151", background: chosen ? "#eff6ff" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                onMouseEnter={e => { if (!chosen) e.currentTarget.style.background = "#f9fafb"; }}
+                style={{ padding: "9px 12px", borderRadius: 9, fontSize: 13, cursor: "pointer", fontWeight: chosen ? 700 : 500, color: chosen ? "var(--fw-blue)" : "var(--fw-text-2)", background: chosen ? "var(--fw-blue-bg)" : "transparent", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                onMouseEnter={e => { if (!chosen) e.currentTarget.style.background = "var(--fw-surface-2)"; }}
                 onMouseLeave={e => { if (!chosen) e.currentTarget.style.background = "transparent"; }}>
                 {o.label}{chosen && <span>✓</span>}
               </div>
@@ -266,7 +266,7 @@ export default function Search() {
     */
     filtros: {
       display: "flex", alignItems: "stretch", flexWrap: "wrap",
-      background: "#fff", border: "1px solid #ececec", borderRadius: 4,
+      background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 4,
       marginBottom: 18,
     },
     /*
@@ -277,12 +277,12 @@ export default function Search() {
     */
     filtroCelda: {
       display: "flex", alignItems: "center", padding: "12px 14px",
-      borderLeft: "1px solid #f1f2f4", boxSizing: "border-box", flexShrink: 0,
+      borderLeft: "1px solid var(--fw-line-soft)", boxSizing: "border-box", flexShrink: 0,
     },
     barCell: isMobile
       ? { width: "100%", marginBottom: 10, boxSizing: "border-box" }
-      : { paddingRight: 22, borderRight: "1px solid #f0f0f0", minWidth: 130 },
-    barLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: isMobile ? 5 : 3 },
+      : { paddingRight: 22, borderRight: "1px solid var(--fw-line-soft)", minWidth: 130 },
+    barLbl: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: isMobile ? 5 : 3 },
     /*
       EN EL TELÉFONO los campos se ven como campos.
 
@@ -296,15 +296,15 @@ export default function Search() {
       la flecha pasa a ser el borde derecho DE SU CAJA en vez de un signo suelto.
     */
     barInput: isMobile
-      ? { fontSize: 15, fontWeight: 600, color: "#111827", border: "1px solid #e5e7eb", borderRadius: 4, outline: "none", background: "#f9fafb", padding: "10px 12px", width: "100%", boxSizing: "border-box" }
-      : { fontSize: 14, fontWeight: 700, color: "#111827", border: "none", borderBottom: "1.5px solid #e5e7eb", outline: "none", background: "transparent", padding: "1px 0", width: 140, boxSizing: "border-box" },
+      ? { fontSize: 15, fontWeight: 600, color: "var(--fw-text)", border: "1px solid var(--fw-border)", borderRadius: 4, outline: "none", background: "var(--fw-surface-2)", padding: "10px 12px", width: "100%", boxSizing: "border-box" }
+      : { fontSize: 14, fontWeight: 700, color: "var(--fw-text)", border: "none", borderBottom: "1.5px solid var(--fw-border)", outline: "none", background: "transparent", padding: "1px 0", width: 140, boxSizing: "border-box" },
     // La misma caja para el desplegable de categoría, así los cuatro controles de
     // la barra se ven iguales entre sí.
     barSelect: isMobile
-      ? { border: "1px solid #e5e7eb", borderRadius: 4, background: "#f9fafb", padding: "10px 12px" }
+      ? { border: "1px solid var(--fw-border)", borderRadius: 4, background: "var(--fw-surface-2)", padding: "10px 12px" }
       : null,
-    card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
-    ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "#ece9e3", flexShrink: 0, overflow: "hidden", position: "relative" },
+    card: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 12 : 16, background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 16, padding: isMobile ? 12 : 14, cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s" },
+    ph: { width: isMobile ? "100%" : 150, height: isMobile ? 170 : 118, borderRadius: 12, background: "var(--fw-surface-3)", flexShrink: 0, overflow: "hidden", position: "relative" },
     /*
       LA FICHA TÉCNICA — la misma que la tarjeta del inicio.
 
@@ -318,33 +318,33 @@ export default function Search() {
       La primera celda no lleva línea a la izquierda: quedaría doble contra el
       borde de la barra.
     */
-    fichaFila: { display: "flex", border: "1px solid #ececec", borderRadius: 4, marginTop: 10, overflow: "hidden" },
-    fichaCelda: { flex: 1, fontSize: 11.5, color: "#4b5563", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid #ececec" },
+    fichaFila: { display: "flex", border: "1px solid var(--fw-line)", borderRadius: 4, marginTop: 10, overflow: "hidden" },
+    fichaCelda: { flex: 1, fontSize: 11.5, color: "var(--fw-text-2)", padding: "7px 10px", textAlign: "center", borderLeft: "1px solid var(--fw-line)" },
     // La categoría del auto. Antes esto se llamaba "verif" y era verde, así que
     // "Sedan" parecía un sello de verificación.
-    categoria: { fontSize: 11, fontWeight: 700, color: "#374151", background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 9px", letterSpacing: ".02em" },
+    categoria: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-2)", background: "var(--fw-bg)", border: "1px solid var(--fw-border)", borderRadius: 6, padding: "3px 9px", letterSpacing: ".02em" },
 
-    detail: { background: "#111827", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
-    banner: { background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "#92400e", marginBottom: 16 },
+    detail: { background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
+    banner: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "var(--fw-amber-text)", marginBottom: 16 },
   };
 
   // Tarjeta de un auto en la lista.
   const Card = ({ car }) => {
     const on = selected === car.id;
     return (
-      <div style={{ ...st.card, borderColor: on ? "#0f6ce6" : "#ececec", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
+      <div style={{ ...st.card, borderColor: on ? "var(--fw-blue)" : "var(--fw-line)", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
         onClick={() => navigate(`/cars/${car.id}`)}
         onMouseEnter={e => { setHovered(car.id); e.currentTarget.style.transform = "translateY(-2px)"; if (!on) e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,.08)"; }}
         onMouseLeave={e => { setHovered(null); e.currentTarget.style.transform = "none"; if (!on) e.currentTarget.style.boxShadow = "none"; }}>
         <div style={st.ph}>
           {car.photos?.length > 0
             ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 12 }}>{tr("common.noPhoto")}</div>}
+            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 12 }}>{tr("common.noPhoto")}</div>}
           <FavoriteButton listingId={car.id} size={28} disabled={car.isMock} />
         </div>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: "#111827", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
-          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
+          <div style={{ fontSize: 13, color: "var(--fw-text-3)", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
           {car.category && (
             <div style={{ marginTop: 10 }}>
               <span style={st.categoria}>{categoryLabel(tr, car.category)}</span>
@@ -376,7 +376,7 @@ export default function Search() {
               ? { flexDirection: "column", alignItems: "stretch" }
               : { justifyContent: "space-between", alignItems: "flex-end" }),
           }}>
-            <div><span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 13, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+            <div><span style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 13, color: "var(--fw-text-4)" }}>{tr("common.perDay")}</span></div>
             <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
               onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")}</button>
           </div>
@@ -431,7 +431,7 @@ export default function Search() {
     <div style={{ padding: isMobile ? "16px" : "24px 28px", maxWidth: 1360, margin: "0 auto" }}>
       {/* Barra de búsqueda: ubicación + fechas reales */}
       <div className="fw-compact-fields"
-        style={{ display: "flex", alignItems: "center", gap: isMobile ? 0 : 22, background: "#fff", border: "1px solid #ececec", borderRadius: 16, padding: isMobile ? "12px 14px" : "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 14, flexWrap: "wrap" }}>
+        style={{ display: "flex", alignItems: "center", gap: isMobile ? 0 : 22, background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 16, padding: isMobile ? "12px 14px" : "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,.04)", marginBottom: 14, flexWrap: "wrap" }}>
         <div className="fw-plain-field" style={st.barCell}>
           <div style={st.barLbl}>{tr("home.where")}</div>
           <input style={st.barInput} placeholder={tr("search.allCountry")} value={where} onChange={e => setWhere(e.target.value)} />
@@ -461,22 +461,22 @@ export default function Search() {
           </div>
         </div>
         <div style={{ marginLeft: "auto", textAlign: "right" }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>
             {loading ? tr("search.searching") : tr(filtered.length === 1 ? "search.resultOne" : "search.resultMany", { count: filtered.length })}
           </div>
-          <div style={{ fontSize: 12, color: "#9ca3af" }}>
+          <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
             {tr("search.inPlace", { place: where || "Argentina" })}{total > filtered.length ? ` · ${tr("search.totalCount", { count: total })}` : ""}
           </div>
         </div>
       </div>
 
       {pickup && dropoff && !datesValid && (
-        <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>
+        <div style={{ ...st.banner, background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text-2)" }}>
           {tr("search.badDates")}
         </div>
       )}
       {datesValid && (
-        <div style={{ ...st.banner, background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1e40af" }}>
+        <div style={{ ...st.banner, background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", color: "var(--fw-blue-text)" }}>
           {tr("search.onlyFree", {
             from: new Date(`${pickup}T10:00:00`).toLocaleDateString(),
             to: new Date(`${dropoff}T10:00:00`).toLocaleDateString(),
@@ -487,7 +487,7 @@ export default function Search() {
         <div style={st.banner}>{tr("search.sampleCars")}</div>
       )}
       {error && !showingMocks && (
-        <div style={{ ...st.banner, background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}>{error}</div>
+        <div style={{ ...st.banner, background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", color: "var(--fw-red-text-2)" }}>{error}</div>
       )}
 
       {/*
@@ -509,7 +509,7 @@ export default function Search() {
       <div style={st.filtros}>
         <div style={{ ...st.filtroCelda, flex: "2 1 190px", minWidth: 150, borderLeft: "none" }}>
           <input placeholder={tr("search.byBrand")} value={search} onChange={e => setSearch(e.target.value)}
-            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: "#111827" }} />
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: "var(--fw-text)" }} />
         </div>
         <Dropdown label={tr("search.sortBy")} active value={sort} celda={st.filtroCelda}
           options={SORT_OPTIONS.map(o => ({ value: o.value, label: tr(o.key) }))}
@@ -535,11 +535,11 @@ export default function Search() {
           */}
           <input type="text" inputMode="numeric" placeholder={tr("search.maxPrice")}
             value={precioTexto} onChange={e => alEscribirPrecio(e.target.value)}
-            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: precioTexto ? "#0f6ce6" : "#111827", fontWeight: precioTexto ? 700 : 400 }} />
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 13, width: "100%", color: precioTexto ? "var(--fw-blue)" : "var(--fw-text)", fontWeight: precioTexto ? 700 : 400 }} />
         </div>
         {anyFilter && (
           <button type="button" onClick={clearAll}
-            style={{ ...st.filtroCelda, padding: "12px 18px", border: "none", borderLeft: "1px solid #f1f2f4", background: "transparent", fontSize: 13, color: "#0f6ce6", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ ...st.filtroCelda, padding: "12px 18px", border: "none", borderLeft: "1px solid var(--fw-line-soft)", background: "transparent", fontSize: 13, color: "var(--fw-blue)", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
             {tr("search.clearFilters")}
           </button>
         )}
@@ -551,33 +551,33 @@ export default function Search() {
           {loading
             ? <Spinner block label={tr("common.loading")} />
             : filtered.length === 0
-              ? <div style={{ textAlign: "center", padding: 60, color: "#9ca3af" }}>
+              ? <div style={{ textAlign: "center", padding: 60, color: "var(--fw-text-4)" }}>
                   {tr("search.noneWithFilters")}
-                  {anyFilter && <div style={{ marginTop: 12 }}><button onClick={clearAll} style={{ padding: "9px 18px", borderRadius: 20, border: "1.5px solid #e5e7eb", background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{tr("search.clearFilters")}</button></div>}
+                  {anyFilter && <div style={{ marginTop: 12 }}><button onClick={clearAll} style={{ padding: "9px 18px", borderRadius: 20, border: "1.5px solid var(--fw-border)", background: "var(--fw-surface)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{tr("search.clearFilters")}</button></div>}
                 </div>
               : filtered.map(car => <Card key={car.id} car={car} />)}
         </div>
 
         {showMap && !isMobile && (
-          <div style={{ position: "sticky", top: 90, height: "calc(100vh - 240px)", borderRadius: 18, overflow: "hidden", border: "1px solid #ececec", background: "#eef0ee" }}>
+          <div style={{ position: "sticky", top: 90, height: "calc(100vh - 240px)", borderRadius: 18, overflow: "hidden", border: "1px solid var(--fw-line)", background: "var(--fw-surface-2)" }}>
             <div ref={mapRef} style={{ width: "100%", height: "100%", zIndex: 0 }} />
 
             {/* Tarjeta flotante del auto seleccionado */}
             {selectedCar && (
               <div style={{ position: "absolute", top: 16, left: 16, right: 16, zIndex: 500, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
-                <div style={{ pointerEvents: "auto", background: "#fff", borderRadius: 16, boxShadow: "0 16px 44px rgba(0,0,0,.22)", border: "1px solid #ececec", display: "flex", gap: 12, padding: 12, width: 360, maxWidth: "100%", cursor: "pointer" }}
+                <div style={{ pointerEvents: "auto", background: "var(--fw-surface)", borderRadius: 16, boxShadow: "0 16px 44px rgba(0,0,0,.22)", border: "1px solid var(--fw-line)", display: "flex", gap: 12, padding: 12, width: 360, maxWidth: "100%", cursor: "pointer" }}
                   onClick={() => navigate(`/cars/${selectedCar.id}`)}>
-                  <div style={{ width: 92, height: 74, borderRadius: 10, background: "#ece9e3", overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ width: 92, height: 74, borderRadius: 10, background: "var(--fw-surface-3)", overflow: "hidden", flexShrink: 0 }}>
                     {selectedCar.photos?.length > 0 && <img src={selectedCar.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{selectedCar.brand} {selectedCar.model}</div>
-                      <div onClick={e => { e.stopPropagation(); setSelected(null); }} style={{ color: "#9ca3af", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: "0 2px" }}>×</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{selectedCar.brand} {selectedCar.model}</div>
+                      <div onClick={e => { e.stopPropagation(); setSelected(null); }} style={{ color: "var(--fw-text-4)", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: "0 2px" }}>×</div>
                     </div>
-                    <div style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 8px" }}>{selectedCar.location}{selectedCar.rating > 0 ? ` · ${selectedCar.rating} ★` : ""}</div>
+                    <div style={{ fontSize: 12, color: "var(--fw-text-3)", margin: "2px 0 8px" }}>{selectedCar.location}{selectedCar.rating > 0 ? ` · ${selectedCar.rating} ★` : ""}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div><span style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{precio(priceOf(selectedCar))}</span><span style={{ fontSize: 12, color: "#9ca3af" }}>{tr("common.perDay")}</span></div>
+                      <div><span style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)" }}>{precio(priceOf(selectedCar))}</span><span style={{ fontSize: 12, color: "var(--fw-text-4)" }}>{tr("common.perDay")}</span></div>
                       <button style={{ ...st.detail, padding: "7px 14px", fontSize: 12 }} onClick={e => { e.stopPropagation(); navigate(`/cars/${selectedCar.id}`); }}>{tr("search.viewDetail")}</button>
                     </div>
                   </div>
@@ -586,13 +586,13 @@ export default function Search() {
             )}
 
             {/* Zoom */}
-            <div style={{ position: "absolute", top: 16, right: 16, zIndex: 500, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 12, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,.15)" }}>
-              <button onClick={() => mapInstanceRef.current?.zoomIn()} style={{ width: 40, height: 40, border: "none", borderBottom: "1px solid #f0f0f0", background: "#fff", fontSize: 18, cursor: "pointer", color: "#374151" }}>+</button>
-              <button onClick={() => mapInstanceRef.current?.zoomOut()} style={{ width: 40, height: 40, border: "none", background: "#fff", fontSize: 18, cursor: "pointer", color: "#374151" }}>−</button>
+            <div style={{ position: "absolute", top: 16, right: 16, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--fw-surface)", borderRadius: 12, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,.15)" }}>
+              <button onClick={() => mapInstanceRef.current?.zoomIn()} style={{ width: 40, height: 40, border: "none", borderBottom: "1px solid var(--fw-line-soft)", background: "var(--fw-surface)", fontSize: 18, cursor: "pointer", color: "var(--fw-text-2)" }}>+</button>
+              <button onClick={() => mapInstanceRef.current?.zoomOut()} style={{ width: 40, height: 40, border: "none", background: "var(--fw-surface)", fontSize: 18, cursor: "pointer", color: "var(--fw-text-2)" }}>−</button>
             </div>
 
             <button onClick={() => setShowMap(false)}
-              style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 500, background: "#111827", color: "#fff", border: "none", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}>
+              style={{ position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)", zIndex: 500, background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }}>
               {tr("search.asList")}
             </button>
           </div>
@@ -602,7 +602,7 @@ export default function Search() {
       {!showMap && !isMobile && (
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <button onClick={() => setShowMap(true)}
-            style={{ background: "#fff", color: "#111827", border: "1px solid #e5e7eb", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            style={{ background: "var(--fw-surface)", color: "var(--fw-text)", border: "1px solid var(--fw-border)", borderRadius: 24, padding: "11px 22px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             {tr("search.onMap")}
           </button>
         </div>

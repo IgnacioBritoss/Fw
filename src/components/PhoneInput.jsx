@@ -77,18 +77,18 @@ export default function PhoneInput({
     onChange(digits.slice(0, tope));
   };
 
-  const border = invalid ? "1.5px solid #dc2626"
+  const border = invalid ? "1.5px solid var(--fw-red)"
     : complete ? "1.5px solid #16a34a" : "1.5px solid #e5e7eb";
 
   return (
     <div style={style}>
       {label && (
-        <label htmlFor={id} style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+        <label htmlFor={id} style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 6 }}>
           {label}
         </label>
       )}
 
-      <div style={{ display: "flex", alignItems: "stretch", border, borderRadius: 8, background: "#fff", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "stretch", border, borderRadius: 8, background: "var(--fw-surface)", position: "relative" }}>
         {/*
           El selector de país. Es un <button> con una lista propia y no un
           <select> nativo porque adentro va el código ISO y el "+54" en dos
@@ -102,17 +102,17 @@ export default function PhoneInput({
           aria-label={`${tr("phone.country")}: ${nombrePais(paisActual.iso, lang)}`}
           style={{
             display: "flex", alignItems: "center", gap: 5, padding: "0 10px 0 12px",
-            background: "#f9fafb", border: "none", borderRight: "1px solid #e5e7eb",
+            background: "var(--fw-surface-2)", border: "none", borderRight: "1px solid var(--fw-border)",
             borderRadius: "7px 0 0 7px", cursor: "pointer", flexShrink: 0,
-            fontSize: 14, fontWeight: 700, color: "#374151",
+            fontSize: 14, fontWeight: 700, color: "var(--fw-text-2)",
           }}
         >
-          <span style={{ fontSize: 11, letterSpacing: ".04em", color: "#9ca3af" }}>
+          <span style={{ fontSize: 11, letterSpacing: ".04em", color: "var(--fw-text-4)" }}>
             {paisActual.iso}
           </span>
           +{paisActual.dial}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="3" style={{ color: "#9ca3af" }} aria-hidden="true">
+            strokeWidth="3" style={{ color: "var(--fw-text-4)" }} aria-hidden="true">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
@@ -120,7 +120,7 @@ export default function PhoneInput({
         {abierto && (
           <div style={{
             position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 40,
-            background: "#fff", border: "1px solid #ececec", borderRadius: 12,
+            background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 12,
             boxShadow: "0 8px 28px rgba(0,0,0,.12)", padding: 5,
             width: 260, maxHeight: 260, overflowY: "auto",
           }}>
@@ -144,19 +144,19 @@ export default function PhoneInput({
                   style={{
                     display: "flex", alignItems: "center", gap: 8, width: "100%",
                     padding: "8px 10px", borderRadius: 8, border: "none",
-                    background: elegido ? "#eff6ff" : "transparent",
-                    color: elegido ? "#0f6ce6" : "#374151",
+                    background: elegido ? "var(--fw-blue-bg)" : "transparent",
+                    color: elegido ? "var(--fw-blue)" : "var(--fw-text-2)",
                     fontSize: 13.5, fontWeight: elegido ? 700 : 500,
                     cursor: "pointer", textAlign: "left",
                   }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#9ca3af", width: 22, flexShrink: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "var(--fw-text-4)", width: 22, flexShrink: 0 }}>
                     {p.iso}
                   </span>
                   <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {nombrePais(p.iso, lang)}
                   </span>
-                  <span style={{ color: "#9ca3af", fontWeight: 600, flexShrink: 0 }}>+{p.dial}</span>
+                  <span style={{ color: "var(--fw-text-4)", fontWeight: 600, flexShrink: 0 }}>+{p.dial}</span>
                 </button>
               );
             })}
@@ -173,18 +173,18 @@ export default function PhoneInput({
           placeholder={paisActual.dial === "54" ? "9 11 3289 5416" : ""}
           style={{
             flex: 1, padding: "11px 14px", border: "none", outline: "none",
-            fontSize: 14, color: "#111827", minWidth: 0, background: "transparent",
+            fontSize: 14, color: "var(--fw-text)", minWidth: 0, background: "transparent",
             borderRadius: "0 7px 7px 0",
           }}
         />
       </div>
 
       {invalid ? (
-        <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 6, fontWeight: 600 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-red-text-2)", marginTop: 6, fontWeight: 600 }}>
           {paisActual.dial === "54" ? tr("phone.incomplete") : tr("phone.incompleteIntl")}
         </div>
       ) : (
-        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+        <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 6 }}>
           {paisActual.dial === "54" ? tr("phone.hint") : tr("phone.hintIntl")}
         </div>
       )}

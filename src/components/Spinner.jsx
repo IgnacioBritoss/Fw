@@ -18,7 +18,7 @@
 //   · block → centrado con aire, para cuando ocupa una sección entera
 // ============================================================================
 
-export default function Spinner({ size = 20, color = "#0f6ce6", label, block = false }) {
+export default function Spinner({ size = 20, color = "var(--fw-blue)", label, block = false }) {
   const anillo = (
     <span
       style={{
@@ -28,7 +28,7 @@ export default function Spinner({ size = 20, color = "#0f6ce6", label, block = f
         borderRadius: "50%",
         // El anillo completo en gris claro y un solo tramo en azul: al girar, ese
         // tramo es lo que se ve moverse.
-        border: `${Math.max(2, Math.round(size / 9))}px solid #e5e7eb`,
+        border: `${Math.max(2, Math.round(size / 9))}px solid var(--fw-border)`,
         borderTopColor: color,
         animation: "fw-spin .7s linear infinite",
         flexShrink: 0,
@@ -40,7 +40,7 @@ export default function Spinner({ size = 20, color = "#0f6ce6", label, block = f
   const contenido = label ? (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
       {anillo}
-      <span style={{ fontSize: 13.5, color: "#6b7280" }}>{label}</span>
+      <span style={{ fontSize: 13.5, color: "var(--fw-text-3)" }}>{label}</span>
     </span>
   ) : anillo;
 
@@ -60,7 +60,7 @@ export default function Spinner({ size = 20, color = "#0f6ce6", label, block = f
       }}
     >
       {anillo}
-      {label && <span style={{ fontSize: 13.5, color: "#6b7280" }}>{label}</span>}
+      {label && <span style={{ fontSize: 13.5, color: "var(--fw-text-3)" }}>{label}</span>}
     </div>
   );
 }

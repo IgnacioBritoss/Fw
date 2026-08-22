@@ -162,19 +162,19 @@ export default function Register() {
 
   // En celular los campos van a 16px: con menos, Safari en iPhone hace zoom solo
   // al tocarlos y la pantalla queda corrida a lo ancho.
-  const inputStyle = { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize: isMobile ? 16 : 14, outline:"none", color:"#111827", boxSizing:"border-box" };
+  const inputStyle = { width:"100%", padding: isMobile ? "13px 14px" : "11px 14px", borderRadius:8, border:"1.5px solid var(--fw-border)", fontSize: isMobile ? 16 : 14, outline:"none", color:"var(--fw-text)", boxSizing:"border-box" };
   // Los pares de campos (nombre/apellido, teléfono/fecha) se apilan en celular:
   // en 390px de ancho, dos columnas dejan cada campo en 170px y el selector de
   // fecha no entra, que es lo que hacía que el registro se viera amontonado.
   const twoCols = { display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:12, marginBottom:16 };
-  const labelStyle = { display:"block", fontSize:13, fontWeight:500, color:"#374151", marginBottom:6 };
-  const errorBox = { background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:8, padding:"10px 14px", color:"#b91c1c", fontSize:13, marginBottom:20 };
-  const infoBox = { background:"#eff6ff", border:"1.5px solid #bfdbfe", borderRadius:8, padding:"10px 14px", color:"#1e40af", fontSize:13, marginBottom:16 };
+  const labelStyle = { display:"block", fontSize:13, fontWeight:500, color:"var(--fw-text-2)", marginBottom:6 };
+  const errorBox = { background:"var(--fw-red-bg)", border:"1.5px solid var(--fw-red-line)", borderRadius:8, padding:"10px 14px", color:"var(--fw-red-text-2)", fontSize:13, marginBottom:20 };
+  const infoBox = { background:"var(--fw-blue-bg)", border:"1.5px solid var(--fw-blue-line)", borderRadius:8, padding:"10px 14px", color:"var(--fw-blue-text)", fontSize:13, marginBottom:16 };
 
   // ─────────────── PASO 0: DATOS DE LA CUENTA ───────────────
   if (step === 0) {
     return (
-      <div style={{ minHeight:"100vh", background:"#fff" }}>
+      <div style={{ minHeight:"100vh", background:"var(--fw-surface)" }}>
         {/*
           EL PANEL DE LA DERECHA TIENE QUE LLEGAR HASTA ABAJO.
 
@@ -190,7 +190,7 @@ export default function Register() {
           página scrolea sola, que es lo que corresponde: el scroll de una
           columna interna en una pantalla de registro no lo espera nadie.
         */}
-        <div style={{ marginRight: isMobile ? 0 : PANEL, minHeight:"100vh", display:"flex", flexDirection:"column", background:"#fff" }}>
+        <div style={{ marginRight: isMobile ? 0 : PANEL, minHeight:"100vh", display:"flex", flexDirection:"column", background:"var(--fw-surface)" }}>
           {!isMobile && (
             <div style={{ display:"flex", justifyContent:"flex-end", padding:"22px 28px 0" }}>
               <LangPicker />
@@ -206,25 +206,25 @@ export default function Register() {
             </div>
 
             <div style={{ marginBottom:28 }}>
-              <h2 style={{ fontSize:26, fontWeight:800, color:"#111827", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
-              <p style={{ fontSize:14, color:"#6b7280" }}>
+              <h2 style={{ fontSize:26, fontWeight:800, color:"var(--fw-text)", letterSpacing:"-0.5px", marginBottom:6 }}>{t("auth.createAccount")}</h2>
+              <p style={{ fontSize:14, color:"var(--fw-text-3)" }}>
                 {t("auth.haveAccount")}{" "}
-                <Link to="/login" style={{ color:"#0f6ce6", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")}</Link>
+                <Link to="/login" style={{ color:"var(--fw-blue)", fontWeight:600, textDecoration:"none" }}>{t("auth.loginLink")}</Link>
               </p>
             </div>
 
             {error && <div style={errorBox}>{error}</div>}
 
             <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
-              width:"100%", padding: isMobile ? "14px 16px" : "11px 16px", background:"#fff", border:"1.5px solid #e5e7eb",
-              borderRadius:10, fontSize: isMobile ? 15 : 14, fontWeight:600, color:"#374151", cursor:"pointer",
+              width:"100%", padding: isMobile ? "14px 16px" : "11px 16px", background:"var(--fw-surface)", border:"1.5px solid var(--fw-border)",
+              borderRadius:10, fontSize: isMobile ? 15 : 14, fontWeight:600, color:"var(--fw-text-2)", cursor:"pointer",
               display:"flex", alignItems:"center", justifyContent:"center", gap:10, marginBottom:20,
             }}>
               <GoogleIcon /> {t("auth.withGoogle")}
             </button>
 
             <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-              <div style={{ flex:1, height:1, background:"#f3f4f6" }}/><span style={{ fontSize:12, color:"#9ca3af" }}>{t("auth.orRegisterEmail")}</span><div style={{ flex:1, height:1, background:"#f3f4f6" }}/>
+              <div style={{ flex:1, height:1, background:"var(--fw-bg)" }}/><span style={{ fontSize:12, color:"var(--fw-text-4)" }}>{t("auth.orRegisterEmail")}</span><div style={{ flex:1, height:1, background:"var(--fw-bg)" }}/>
             </div>
 
             <div style={twoCols}>
@@ -269,7 +269,7 @@ export default function Register() {
                   <input type={showPassword?"text":"password"} placeholder="••••••" value={form.password}
                     onChange={e => set("password", e.target.value)} style={{ ...inputStyle, paddingRight:40 }} />
                   <button type="button" onClick={() => setShowPassword(v => !v)}
-                    style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0 }}>
+                    style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"var(--fw-text-4)", padding:0 }}>
                     {showPassword ? <EyeClosed/> : <EyeOpen/>}
                   </button>
                 </div>
@@ -280,7 +280,7 @@ export default function Register() {
                   <input type={showConfirm?"text":"password"} placeholder="••••••" value={form.confirmPassword}
                     onChange={e => set("confirmPassword", e.target.value)} style={{ ...inputStyle, paddingRight:40 }} />
                   <button type="button" onClick={() => setShowConfirm(v => !v)}
-                    style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:0 }}>
+                    style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"var(--fw-text-4)", padding:0 }}>
                     {showConfirm ? <EyeClosed/> : <EyeOpen/>}
                   </button>
                 </div>
@@ -289,21 +289,21 @@ export default function Register() {
 
             <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginBottom:24 }}>
               <input type="checkbox" id="terms" checked={form.acceptedTerms} onChange={e => set("acceptedTerms", e.target.checked)}
-                style={{ marginTop:3, width:16, height:16, accentColor:"#0f6ce6", cursor:"pointer", flexShrink:0 }} />
-              <label htmlFor="terms" style={{ fontSize:13, color:"#374151", lineHeight:1.6, cursor:"pointer" }}>
+                style={{ marginTop:3, width:16, height:16, accentColor:"var(--fw-blue)", cursor:"pointer", flexShrink:0 }} />
+              <label htmlFor="terms" style={{ fontSize:13, color:"var(--fw-text-2)", lineHeight:1.6, cursor:"pointer" }}>
                 {t("reg.termsBefore")}{" "}
-                <Link to="/terms" target="_blank" style={{ color:"#0f6ce6", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
+                <Link to="/terms" target="_blank" style={{ color:"var(--fw-blue)", fontWeight:600, textDecoration:"none" }}>{t("reg.termsLink")}</Link>
                 {" "}{t("reg.termsAfter")} *
               </label>
             </div>
 
             <button onClick={handleRequestCode} disabled={loading} style={{
-              width:"100%", padding: isMobile ? 15 : 13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10,
+              width:"100%", padding: isMobile ? 15 : 13, background:"var(--fw-blue)", color:"#fff", border:"none", borderRadius:10,
               fontSize: isMobile ? 16 : 15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1,
             }}>
               {loading ? t("auth.sendingCode") : t("common.continue")}
             </button>
-            <div style={{ fontSize:12, color:"#9ca3af", textAlign:"center", marginTop:10 }}>
+            <div style={{ fontSize:12, color:"var(--fw-text-4)", textAlign:"center", marginTop:10 }}>
               {t("auth.codeWillArrive")}
             </div>
           </div>
@@ -332,17 +332,17 @@ export default function Register() {
   // ─────────────── PASO 1: CÓDIGO DEL EMAIL → CREA LA CUENTA ───────────────
   if (step === 1) {
     return (
-      <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
+      <div style={{ minHeight:"100vh", background:"var(--fw-surface-3)", display:"flex", flexDirection:"column" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"var(--fw-surface)", borderBottom:"1px solid var(--fw-line)" }}>
           <Logo />
-          <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.verifyEyebrow")}</div>
-          <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>{t("reg.changeEmail")}</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"var(--fw-text-4)", letterSpacing:".08em" }}>{t("reg.verifyEyebrow")}</div>
+          <div style={{ fontSize:13, color:"var(--fw-blue)", fontWeight:600, cursor:"pointer" }} onClick={() => setStep(0)}>{t("reg.changeEmail")}</div>
         </div>
         <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
-          <div style={{ width:"100%", maxWidth:420, background:"#fff", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid #f0f0f0" }}>
+          <div style={{ width:"100%", maxWidth:420, background:"var(--fw-surface)", borderRadius:18, padding:32, boxShadow:"0 4px 24px rgba(0,0,0,.06)", textAlign:"center", border:"1px solid var(--fw-line-soft)" }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><rect x="2" y="4" width="20" height="16" rx="2" stroke="#0f6ce6" strokeWidth="1.8"/><path d="M2.5 6.5 12 13l9.5-6.5" stroke="#0f6ce6" strokeWidth="1.8" strokeLinecap="round"/></svg>
-            <h2 style={{ fontSize:22, fontWeight:800, color:"#111827", marginBottom:8 }}>{t("reg.confirmEmail")}</h2>
-            <p style={{ fontSize:14, color:"#6b7280", marginBottom:24, lineHeight:1.6 }}>
+            <h2 style={{ fontSize:22, fontWeight:800, color:"var(--fw-text)", marginBottom:8 }}>{t("reg.confirmEmail")}</h2>
+            <p style={{ fontSize:14, color:"var(--fw-text-3)", marginBottom:24, lineHeight:1.6 }}>
               {t("reg.codeSentTo")} <strong>{form.email}</strong>.<br/>{t("reg.codeEnterIt")}
             </p>
 
@@ -350,7 +350,7 @@ export default function Register() {
             {info && <div style={infoBox}>{info}</div>}
 
             <input
-              style={{ width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid #e5e7eb", fontSize:28, fontWeight:700, letterSpacing:12, textAlign:"center", outline:"none", color:"#111827", marginBottom:20, boxSizing:"border-box" }}
+              style={{ width:"100%", padding:"14px", borderRadius:8, border:"1.5px solid var(--fw-border)", fontSize:28, fontWeight:700, letterSpacing:12, textAlign:"center", outline:"none", color:"var(--fw-text)", marginBottom:20, boxSizing:"border-box" }}
               type="text" inputMode="numeric" maxLength={6} placeholder="000000"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
@@ -358,14 +358,14 @@ export default function Register() {
             />
 
             <button onClick={handleCreateAccount} disabled={loading}
-              style={{ width:"100%", padding:13, background:"#0f6ce6", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
+              style={{ width:"100%", padding:13, background:"var(--fw-blue)", color:"#fff", border:"none", borderRadius:10, fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", opacity:loading?0.6:1, marginBottom:12 }}>
               {loading ? t("reg.creating") : t("reg.createMyAccount")}
             </button>
 
-            <div style={{ fontSize:13, color:"#6b7280" }}>
+            <div style={{ fontSize:13, color:"var(--fw-text-3)" }}>
               {t("reg.notArrived")}{" "}
               <button onClick={handleResend} disabled={resending}
-                style={{ background:"none", border:"none", color:"#0f6ce6", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
+                style={{ background:"none", border:"none", color:"var(--fw-blue)", fontWeight:600, fontSize:13, cursor:"pointer", padding:0, opacity:resending?0.5:1 }}>
                 {resending ? t("common.sending") : t("reg.resendCode")}
               </button>
             </div>
@@ -377,15 +377,15 @@ export default function Register() {
 
   // ─────────────── PASO 2: VERIFICACIÓN DE IDENTIDAD (real) ───────────────
   return (
-    <div style={{ minHeight:"100vh", background:"#ececec", display:"flex", flexDirection:"column" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"#fff", borderBottom:"1px solid #ececec" }}>
+    <div style={{ minHeight:"100vh", background:"var(--fw-surface-3)", display:"flex", flexDirection:"column" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 32px", background:"var(--fw-surface)", borderBottom:"1px solid var(--fw-line)" }}>
         <Logo />
-        <div style={{ fontSize:12, fontWeight:700, color:"#9ca3af", letterSpacing:".08em" }}>{t("reg.accountEyebrow")}</div>
-        <div style={{ fontSize:13, color:"#0f6ce6", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{t("reg.goHome")}</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"var(--fw-text-4)", letterSpacing:".08em" }}>{t("reg.accountEyebrow")}</div>
+        <div style={{ fontSize:13, color:"var(--fw-blue)", fontWeight:600, cursor:"pointer" }} onClick={() => navigate("/")}>{t("reg.goHome")}</div>
       </div>
 
       <div style={{ flex:1, padding:"40px 24px" }}>
-        <div style={{ maxWidth:720, margin:"0 auto 24px", background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:12, padding:"14px 18px", fontSize:13.5, color:"#166534" }}>
+        <div style={{ maxWidth:720, margin:"0 auto 24px", background:"var(--fw-green-bg)", border:"1px solid var(--fw-green-line)", borderRadius:12, padding:"14px 18px", fontSize:13.5, color:"var(--fw-green-text-2)" }}>
           <strong>{t("reg.accountCreated", { name: form.firstName ? `, ${form.firstName}` : "" })}</strong> {t("reg.verifyToStart")}
         </div>
         <IdentityVerification

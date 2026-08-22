@@ -143,14 +143,14 @@ export default function Settings() {
   };
 
   const t = {
-    card: { background: "#fff", border: "1px solid #ececec", borderRadius: 18, boxShadow: "0 1px 3px rgba(0,0,0,.04)" },
-    menuItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 2, background: active ? "#111827" : "transparent", color: active ? "#fff" : "#374151", transition: "background .15s" }),
-    sectTitle: { fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" },
-    sectSub: { fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 22 },
-    fieldBox: { border: "1px solid #ececec", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
-    fieldLbl: { fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
-    fieldVal: { fontSize: 15, fontWeight: 600, color: "#111827" },
-    edit: { fontSize: 14, fontWeight: 600, color: "#0f6ce6", cursor: "pointer", background: "none", border: "none", flexShrink: 0 },
+    card: { background: "var(--fw-surface)", border: "1px solid var(--fw-line)", borderRadius: 18, boxShadow: "0 1px 3px rgba(0,0,0,.04)" },
+    menuItem: (active) => ({ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 2, background: active ? "var(--fw-chip)" : "transparent", color: active ? "#fff" : "var(--fw-text-2)", transition: "background .15s" }),
+    sectTitle: { fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" },
+    sectSub: { fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 22 },
+    fieldBox: { border: "1px solid var(--fw-line)", borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
+    fieldLbl: { fontSize: 11, fontWeight: 700, color: "var(--fw-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 },
+    fieldVal: { fontSize: 15, fontWeight: 600, color: "var(--fw-text)" },
+    edit: { fontSize: 14, fontWeight: 600, color: "var(--fw-blue)", cursor: "pointer", background: "none", border: "none", flexShrink: 0 },
     /*
       LA LÍNEA VERTICAL antes del botón de acción.
 
@@ -164,11 +164,11 @@ export default function Settings() {
       división de una celda y no como un guioncito suelto.
     */
     divisor: {
-      width: 1, alignSelf: "stretch", background: "#ececec",
+      width: 1, alignSelf: "stretch", background: "var(--fw-surface-3)",
       marginTop: -14, marginBottom: -14, flexShrink: 0,
     },
-    input: { fontSize: 15, fontWeight: 600, color: "#111827", border: "1.5px solid #0f6ce6", borderRadius: 8, padding: "6px 10px", outline: "none", width: "100%", boxSizing: "border-box" },
-    rowSwitch: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 0", borderBottom: "1px solid #f3f4f6" },
+    input: { fontSize: 15, fontWeight: 600, color: "var(--fw-text)", border: "1.5px solid var(--fw-blue)", borderRadius: 8, padding: "6px 10px", outline: "none", width: "100%", boxSizing: "border-box" },
+    rowSwitch: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 0", borderBottom: "1px solid var(--fw-line-soft)" },
   };
 
   // Campo editable "in-line": muestra un dato y, al tocar Editar, permite
@@ -190,7 +190,7 @@ export default function Settings() {
           ? <>
               <div style={t.divisor} />
               <div style={{ display: "flex", gap: 10 }}>
-                <button style={{ ...t.edit, color: "#9ca3af" }} onClick={() => { setVal(value || ""); setEditing(false); }}>{tr("common.cancel")}</button>
+                <button style={{ ...t.edit, color: "var(--fw-text-4)" }} onClick={() => { setVal(value || ""); setEditing(false); }}>{tr("common.cancel")}</button>
                 <button style={t.edit} onClick={commit} disabled={saving}>{saving ? "..." : tr("common.save")}</button>
               </div>
             </>
@@ -205,26 +205,26 @@ export default function Settings() {
   // Interruptor visual (switch) on/off reutilizable.
   const Toggle = ({ on, onChange }) => (
     <button onClick={() => onChange(!on)}
-      style={{ width: 46, height: 27, minHeight: 27, maxHeight: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "#0f6ce6" : "#d1d5db", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0, boxSizing: "border-box" }}>
-      <span style={{ position: "absolute", top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left .2s cubic-bezier(.22,1,.36,1)" }} />
+      style={{ width: 46, height: 27, minHeight: 27, maxHeight: 27, borderRadius: 20, border: "none", cursor: "pointer", background: on ? "var(--fw-blue)" : "var(--fw-surface-3)", position: "relative", flexShrink: 0, transition: "background .2s", padding: 0, boxSizing: "border-box" }}>
+      <span style={{ position: "absolute", top: 3, left: on ? 22 : 3, width: 21, height: 21, borderRadius: "50%", background: "var(--fw-surface)", boxShadow: "0 1px 3px rgba(0,0,0,.2)", transition: "left .2s cubic-bezier(.22,1,.36,1)" }} />
     </button>
   );
 
   const VerifRow = ({ title, desc, verified, onVerify, last }) => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 0", borderBottom: last ? "none" : "1px solid #f3f4f6" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 0", borderBottom: last ? "none" : "1px solid var(--fw-line-soft)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-        <div style={{ width: 42, height: 42, borderRadius: 10, background: verified ? "#f0fdf4" : "#fff7ed", border: `1px solid ${verified ? "#bbf7d0" : "#fed7aa"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 10, background: verified ? "var(--fw-green-bg)" : "var(--fw-orange-bg)", border: `1px solid ${verified ? "var(--fw-green-line)" : "var(--fw-orange-line)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <Svg d={verified ? <path d="M20 6L9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>} color={verified ? "#16a34a" : "#ea580c"} />
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</div>
-          <div style={{ fontSize: 13, color: "#9ca3af" }}>{desc}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>{title}</div>
+          <div style={{ fontSize: 13, color: "var(--fw-text-4)" }}>{desc}</div>
         </div>
       </div>
       {verified ? (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#dcfce7", color: "#166534", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>{tr("status.verified")}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--fw-green-bg)", color: "var(--fw-green-text-2)", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 20, flexShrink: 0 }}>{tr("status.verified")}</span>
       ) : (
-        <button onClick={onVerify} style={{ background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
+        <button onClick={onVerify} style={{ background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
       )}
     </div>
   );
@@ -232,8 +232,8 @@ export default function Settings() {
   const SwitchRow = ({ title, desc, on, onChange, last }) => (
     <div style={{ ...t.rowSwitch, ...(last ? { borderBottom: "none" } : {}) }}>
       <div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>{title}</div>
-        <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>{desc}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>{title}</div>
+        <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginTop: 2 }}>{desc}</div>
       </div>
       <Toggle on={on} onChange={onChange} />
     </div>
@@ -256,9 +256,9 @@ export default function Settings() {
               <span style={{ flex: 1 }}>{tr(m.label)}</span>
             </div>
           ))}
-          <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 8, paddingTop: 8 }}>
-            <div style={{ ...t.menuItem(false), color: "#dc2626" }} onClick={() => { logout(); navigate("/"); }}>
-              <Svg d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>} color="#dc2626" />
+          <div style={{ borderTop: "1px solid var(--fw-line-soft)", marginTop: 8, paddingTop: 8 }}>
+            <div style={{ ...t.menuItem(false), color: "var(--fw-red-text)" }} onClick={() => { logout(); navigate("/"); }}>
+              <Svg d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>} color="var(--fw-red-text)" />
               {tr("nav.logout")}
             </div>
           </div>
@@ -268,13 +268,13 @@ export default function Settings() {
         <div>
           {section === "cuenta" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>{tr("settings.accountTitle")}</div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>{tr("settings.accountSub")}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>{tr("settings.accountTitle")}</div>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 20 }}>{tr("settings.accountSub")}</div>
 
               {/* Info personal */}
               <div style={{ ...t.card, padding: 26, marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.personalInfo")}</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>{tr("settings.personalInfoSub")}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 }}>{tr("settings.personalInfo")}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 20 }}>{tr("settings.personalInfoSub")}</div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
                   {/* Nombre y apellido NO se editan: salen del DNI que se revisa al
                       verificar la cuenta. Si se pudieran escribir a mano, el nombre
@@ -297,20 +297,20 @@ export default function Settings() {
                   <Field label={tr("auth.birthDate")} editable={false} fieldKey="dateOfBirth"
                     value={shortDate(user?.dateOfBirth, lang)} />
                 </div>
-                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 14, lineHeight: 1.6 }}>
                   {tr("settings.fromDni")}
                 </div>
               </div>
 
               {/* Preferencias */}
               <div style={{ ...t.card, padding: 26, marginBottom: 20 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.appearance")}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 }}>{tr("settings.appearance")}</div>
                 {/* Acá había cinco interruptores: notificaciones por email, push,
                     ofertas personalizadas y 2FA, ninguno de los cuales hacía nada
                     del otro lado —solo se guardaban en el navegador—. Un
                     interruptor que se prende y no cambia nada es peor que no
                     tenerlo. Quedan los que sí funcionan. */}
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>{tr("settings.appearanceSub")}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 8 }}>{tr("settings.appearanceSub")}</div>
                 <SwitchRow title={tr("settings.darkMode")} desc={tr("settings.darkModeSub")} on={prefs.dark} onChange={v => setPref("dark", v)} last />
               </div>
 
@@ -324,8 +324,8 @@ export default function Settings() {
                 y no cambiaban nada.
               */}
               <div style={{ ...t.card, padding: 26 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.notifications")}</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>{tr("settings.notificationsSub")}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 }}>{tr("settings.notifications")}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 8 }}>{tr("settings.notificationsSub")}</div>
                 <SwitchRow
                   title={tr("settings.emailNotif")}
                   desc={tr("settings.emailNotifSub")}
@@ -334,18 +334,18 @@ export default function Settings() {
                   last
                 />
                 {avisosError && (
-                  <div style={{ fontSize: 12.5, color: "#b91c1c", marginTop: 4 }}>{avisosError}</div>
+                  <div style={{ fontSize: 12.5, color: "var(--fw-red-text-2)", marginTop: 4 }}>{avisosError}</div>
                 )}
               </div>
             </>
           ) : section === "seguridad" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>{tr("settings.securityTitle")}</div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>{tr("settings.securitySub")}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>{tr("settings.securityTitle")}</div>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 20 }}>{tr("settings.securitySub")}</div>
 
               <div style={{ ...t.card, padding: 26 }}>
-                <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 4 }}>{tr("settings.identityTitle")}</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 18 }}>{tr("settings.identitySub")}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 4 }}>{tr("settings.identityTitle")}</div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 18 }}>{tr("settings.identitySub")}</div>
 
                 {/* Estado REAL de la verificación (GET /verification/me/status).
                     Antes se leían marcas guardadas en el navegador: acá decía
@@ -377,24 +377,24 @@ export default function Settings() {
                 />
 
                 {isVerified ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
-                    <Svg d={<path d="M20 6L9 17l-5-5" />} color="#16a34a" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#166534" }}>{tr("settings.allVerified")}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "var(--fw-green-bg)", border: "1px solid var(--fw-green-line)", borderRadius: 12 }}>
+                    <Svg d={<path d="M20 6L9 17l-5-5" />} color="var(--fw-green-text)" />
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--fw-green-text-2)" }}>{tr("settings.allVerified")}</span>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, padding: "12px 14px", background: "var(--fw-orange-bg)", border: "1px solid var(--fw-orange-line)", borderRadius: 12 }}>
                     <Svg d={<><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>} color="#ea580c" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "#9a3412" }}>{tr("settings.pendingSteps")}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--fw-orange-text)" }}>{tr("settings.pendingSteps")}</span>
                   </div>
                 )}
               </div>
             </>
           ) : section === "idioma" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>
                 {tr("settings.languageTitle")}
               </div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 20 }}>
                 {tr("settings.languageSub")}
               </div>
 
@@ -410,19 +410,19 @@ export default function Settings() {
                       style={{
                         display: "flex", alignItems: "center", gap: 14, width: "100%",
                         padding: "14px 4px", background: "none", border: "none",
-                        borderBottom: i === LANGUAGES.length - 1 ? "none" : "1px solid #f3f4f6",
+                        borderBottom: i === LANGUAGES.length - 1 ? "none" : "1px solid var(--fw-line-soft)",
                         cursor: "pointer", textAlign: "left",
                       }}>
                       <span style={{
                         width: 38, height: 28, borderRadius: 6, flexShrink: 0,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
-                        background: elegido ? "#0f6ce6" : "#f3f4f6",
-                        color: elegido ? "#fff" : "#6b7280",
+                        background: elegido ? "var(--fw-blue)" : "var(--fw-bg)",
+                        color: elegido ? "#fff" : "var(--fw-text-3)",
                       }}>
                         {idioma.flagless}
                       </span>
-                      <span style={{ flex: 1, fontSize: 15, fontWeight: elegido ? 700 : 500, color: "#111827" }}>
+                      <span style={{ flex: 1, fontSize: 15, fontWeight: elegido ? 700 : 500, color: "var(--fw-text)" }}>
                         {idioma.label}
                       </span>
                       {elegido && (
@@ -434,7 +434,7 @@ export default function Settings() {
                     </button>
                   );
                 })}
-                <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 14, lineHeight: 1.6 }}>
                   {tr("settings.languageNote")}
                 </div>
               </div>
@@ -454,10 +454,10 @@ export default function Settings() {
                   gap: 14, flexWrap: "wrap",
                 }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>
                       {tr("settings.currency")}
                     </div>
-                    <div style={{ fontSize: 12.5, color: "#9ca3af", marginTop: 3, lineHeight: 1.6 }}>
+                    <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginTop: 3, lineHeight: 1.6 }}>
                       {tr("settings.currencyNote")}
                     </div>
                   </div>
@@ -467,18 +467,18 @@ export default function Settings() {
             </>
           ) : section === "reportar" ? (
             <>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-.4px" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>
                 {tr("settings.reportTitle")}
               </div>
-              <div style={{ fontSize: 14, color: "#9ca3af", marginTop: 2, marginBottom: 20 }}>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 20 }}>
                 {tr("settings.reportSub")}
               </div>
               <ReportIssueCard />
             </>
           ) : (
             <div style={{ ...t.card, padding: 40, textAlign: "center" }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 6 }}>{tr(MENU.find(m => m.key === section)?.label)}</div>
-              <div style={{ fontSize: 14, color: "#9ca3af" }}>{tr("settings.comingSoon")}</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginBottom: 6 }}>{tr(MENU.find(m => m.key === section)?.label)}</div>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)" }}>{tr("settings.comingSoon")}</div>
             </div>
           )}
         </div>

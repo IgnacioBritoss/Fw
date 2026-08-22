@@ -26,18 +26,18 @@ import { useI18n } from "../../i18n/core";
 const s = {
   page: { maxWidth: 480, margin: "0 auto", padding: "40px 24px", textAlign: "center" },
   pageMobile: { maxWidth: 480, margin: "0 auto", padding: "20px 16px", textAlign: "center" },
-  title: { fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 6 },
-  sub: { fontSize: 14, color: "#6b7280", marginBottom: 28 },
-  qrBox: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: 28, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.06)" },
-  tokenDisplay: { background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "#111827", marginBottom: 12, wordBreak: "break-all" },
-  tokenLabel: { fontSize: 12, color: "#9ca3af", marginBottom: 6 },
-  input: { width: "100%", padding: "12px 16px", border: "1.5px solid #e5e7eb", borderRadius: 10, fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 },
-  btn: { width: "100%", padding: "14px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
-  btnDisabled: { width: "100%", padding: "14px", background: "#93c5fd", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
-  successIcon: { width: 72, height: 72, borderRadius: "50%", background: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
-  errorBox: { background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 12, fontSize: 13, color: "#b91c1c", marginBottom: 16 },
-  infoBox: { background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 10, padding: 12, fontSize: 13, color: "#1e40af", marginBottom: 16 },
-  tabRow: { display: "flex", gap: 4, marginBottom: 20, background: "#f3f4f6", borderRadius: 10, padding: 4 },
+  title: { fontSize: 22, fontWeight: 800, color: "var(--fw-text)", marginBottom: 6 },
+  sub: { fontSize: 14, color: "var(--fw-text-3)", marginBottom: 28 },
+  qrBox: { background: "var(--fw-surface)", border: "1px solid var(--fw-border)", borderRadius: 16, padding: 28, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.06)" },
+  tokenDisplay: { background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "var(--fw-text)", marginBottom: 12, wordBreak: "break-all" },
+  tokenLabel: { fontSize: 12, color: "var(--fw-text-4)", marginBottom: 6 },
+  input: { width: "100%", padding: "12px 16px", border: "1.5px solid var(--fw-border)", borderRadius: 10, fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 },
+  btn: { width: "100%", padding: "14px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
+  btnDisabled: { width: "100%", padding: "14px", background: "var(--fw-blue-line)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
+  successIcon: { width: 72, height: 72, borderRadius: "50%", background: "var(--fw-blue-bg-2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
+  errorBox: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 10, padding: 12, fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
+  infoBox: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 10, padding: 12, fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
+  tabRow: { display: "flex", gap: 4, marginBottom: 20, background: "var(--fw-bg)", borderRadius: 10, padding: 4 },
   tab: { flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" },
 };
 
@@ -112,10 +112,10 @@ export default function QRFlow() {
   if (loading) return <Spinner block label={tr("common.loading")} />;
 
   if (!booking) return (
-    <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>
+    <div style={{ padding: 40, textAlign: "center", color: "var(--fw-text-3)" }}>
       {error || tr("qr.notFound")}
       <br />
-      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>{tr("nav.bookings")}</button>
+      <button onClick={() => navigate("/my-bookings")} style={{ marginTop: 16, padding: "10px 24px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>{tr("nav.bookings")}</button>
     </div>
   );
 
@@ -127,7 +127,7 @@ export default function QRFlow() {
         <div style={s.sub}>
           {tr(mode === "pickup" ? "qr.pickupDoneNote" : "qr.returnDoneNote")}
         </div>
-        <button style={{ padding: "12px 28px", background: "#0f6ce6", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
+        <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function QRFlow() {
 
       <div style={s.tabRow}>
         {[["pickup", "qr.pickup"], ["return", "qr.return"]].map(([k, l]) => (
-          <button key={k} style={{ ...s.tab, background: mode === k ? "#fff" : "transparent", color: mode === k ? "#0f6ce6" : "#6b7280", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
+          <button key={k} style={{ ...s.tab, background: mode === k ? "var(--fw-surface)" : "transparent", color: mode === k ? "var(--fw-blue)" : "var(--fw-text-3)", boxShadow: mode === k ? "0 1px 4px rgba(0,0,0,.08)" : "none" }}
             onClick={() => { setMode(k); setError(null); setTokenInput(""); }}>{tr(l)}</button>
         ))}
       </div>
@@ -154,13 +154,13 @@ export default function QRFlow() {
       {!iConfirm && (
         myToken ? (
           <div style={s.qrBox}>
-            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 12, fontWeight: 600 }}>
+            <div style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 12, fontWeight: 600 }}>
               {tr(mode === "pickup" ? "qr.myPickupQr" : "qr.myReturnQr")}
             </div>
             <QRDisplay token={myToken} />
             <div style={s.tokenLabel}>{tr("qr.code")}</div>
             <div style={s.tokenDisplay}>{myToken}</div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>
+            <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
               {tr(mode === "pickup" ? "qr.showToOwner" : "qr.showToDriver")}
             </div>
           </div>
@@ -175,10 +175,10 @@ export default function QRFlow() {
       {/* CONFIRMAR — solo para quien tiene que confirmar */}
       {iConfirm && (
         <div style={{ ...s.qrBox, textAlign: "left" }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "#111827", marginBottom: 6 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--fw-text)", marginBottom: 6 }}>
             {tr(mode === "pickup" ? "qr.confirmPickup" : "qr.confirmReturn")}
           </div>
-          <div style={{ fontSize: 12.5, color: "#6b7280", marginBottom: 12 }}>
+          <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 12 }}>
             {tr(mode === "pickup" ? "qr.enterDriverCode" : "qr.enterOwnerCode")}
           </div>
           <input style={s.input} placeholder={tr("qr.phCode")} value={tokenInput}
@@ -193,11 +193,11 @@ export default function QRFlow() {
 
       {!iConfirm && error && <div style={s.errorBox}>{error}</div>}
 
-      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#0f6ce6", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "var(--fw-blue)", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
         {tr("qr.refresh")}
       </button>
       <br />
-      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "#9ca3af", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("qr.backToBookings")}</button>
+      <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "var(--fw-text-4)", fontSize: 13, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("qr.backToBookings")}</button>
     </div>
   );
 }

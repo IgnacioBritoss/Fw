@@ -46,7 +46,7 @@ import StatusChip from "../../components/StatusChip";
 
 // Círculo verde (tilde) o naranja (signo) según algo esté verificado o pendiente.
 const StatusBadge = ({ ok, title }) => (
-  <div title={title} style={{ width: 24, height: 24, borderRadius: "50%", background: ok ? "#16a34a" : "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+  <div title={title} style={{ width: 24, height: 24, borderRadius: "50%", background: ok ? "var(--fw-green)" : "var(--fw-amber)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
     {ok
       ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
       : <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 8v5" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" /><circle cx="12" cy="16.5" r="1.2" fill="#fff" /></svg>}
@@ -304,21 +304,21 @@ export default function Profile() {
     : "—";
 
   const t = {
-    card: { background: "#fff", borderRadius: 18, border: "1px solid #ececec", marginBottom: 20 },
+    card: { background: "var(--fw-surface)", borderRadius: 18, border: "1px solid var(--fw-line)", marginBottom: 20 },
     statCol: { flex: "1 1 150px", padding: isMobile ? "18px 20px" : "24px 28px", minWidth: 0 },
-    statNum: { fontSize: isMobile ? 22 : 26, fontWeight: 800, color: "#111827" },
-    statLabel: { fontSize: 13, color: "#9ca3af", marginTop: 4 },
-    verifyItem: { display: "flex", alignItems: "center", gap: 14, background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: 12, padding: 16 },
-    iconBox: { width: 40, height: 40, borderRadius: 8, background: "#fff", border: "1px solid #e5e7eb", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-    photoBtn: { background: "#fff", border: "1px solid #d1d5db", color: "#374151", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" },
+    statNum: { fontSize: isMobile ? 22 : 26, fontWeight: 800, color: "var(--fw-text)" },
+    statLabel: { fontSize: 13, color: "var(--fw-text-4)", marginTop: 4 },
+    verifyItem: { display: "flex", alignItems: "center", gap: 14, background: "var(--fw-surface-2)", border: "1px solid var(--fw-line-soft)", borderRadius: 12, padding: 16 },
+    iconBox: { width: 40, height: 40, borderRadius: 8, background: "var(--fw-surface)", border: "1px solid var(--fw-border)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" },
+    photoBtn: { background: "var(--fw-surface)", border: "1px solid var(--fw-border-2)", color: "var(--fw-text-2)", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" },
   };
 
   // Bloque de verificaciones: una tarjeta por documento con su estado, y un
   // aviso con botón "Verificar ahora" si falta completar el DNI o la licencia.
   const verifications = () => (
     <div style={{ ...t.card, padding: isMobile ? 20 : 28, flex: 1 }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{tr("profile.identity")}</div>
-      <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>{tr("profile.identitySub")}</div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.identity")}</div>
+      <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 20 }}>{tr("profile.identitySub")}</div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
         {[
           [
@@ -351,8 +351,8 @@ export default function Profile() {
               <RowIcon color={ok ? "#16a34a" : "#9ca3af"} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{title}</div>
-              <div style={{ fontSize: 12, color: ok ? "#9ca3af" : "#ea580c", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fw-text)" }}>{title}</div>
+              <div style={{ fontSize: 12, color: ok ? "var(--fw-text-4)" : "#ea580c", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>
             </div>
             <StatusBadge ok={ok} title={ok ? tr("status.verified") : tr("profile.pending")} />
           </div>
@@ -364,11 +364,11 @@ export default function Profile() {
           aparecen, porque un DNI a la vista de cualquiera es material para
           suplantar una identidad. */}
       {lastSubmission && (
-        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid #f0f0f0" }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 3 }}>
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--fw-line-soft)" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)", marginBottom: 3 }}>
             {tr("profile.myDocs")}
           </div>
-          <div style={{ fontSize: 12.5, color: "#9ca3af", marginBottom: 12 }}>
+          <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 12 }}>
             {tr("profile.myDocsNote")}
           </div>
           <IdentityDocuments submission={lastSubmission} />
@@ -376,8 +376,8 @@ export default function Profile() {
       )}
 
       {!fullyVerified && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18, padding: "14px 16px", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12 }}>
-          <div style={{ fontSize: 13, color: "#9a3412" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 18, padding: "14px 16px", background: "var(--fw-orange-bg)", border: "1px solid var(--fw-orange-line)", borderRadius: 12 }}>
+          <div style={{ fontSize: 13, color: "var(--fw-orange-text)" }}>
             {tr("profile.blockedNote")}
             {" "}{tr("profile.missing")}: {[
               !emailVerified && tr("profile.missEmail"),
@@ -387,7 +387,7 @@ export default function Profile() {
               phoneRequired && !phoneVerified && tr("profile.missPhone"),
             ].filter(Boolean).join(", ") || tr("profile.missReview")}.
           </div>
-          <button onClick={() => navigate("/kyc")} style={{ background: "#ea580c", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
+          <button onClick={() => navigate("/kyc")} style={{ background: "var(--fw-orange)", color: "#fff", border: "none", borderRadius: 20, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>{tr("profile.verifyNow")}</button>
         </div>
       )}
     </div>
@@ -398,7 +398,7 @@ export default function Profile() {
     <div style={{ padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
       {/* Portada + cabecera */}
       <div style={{ ...t.card, overflow: "hidden" }}>
-        <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,#0b55c0 70%,#0f6ce6 100%)" }} />
+        <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,var(--fw-blue-strong) 70%,var(--fw-blue) 100%)" }} />
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, padding: isMobile ? "0 20px" : "0 32px", marginTop: isMobile ? -46 : -60, flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
             <Avatar
@@ -430,7 +430,7 @@ export default function Profile() {
               style={{
                 position: "absolute", right: 2, bottom: 2,
                 width: 34, height: 34, minHeight: 34, padding: 0,
-                borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb",
+                borderRadius: "50%", background: "var(--fw-surface)", border: "1px solid var(--fw-border)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: "0 1px 4px rgba(0,0,0,.16)",
                 cursor: photoBusy || abriendoEditor ? "default" : "pointer",
@@ -463,12 +463,12 @@ export default function Profile() {
               </button>
               {user?.profilePhotoUrl && (
                 <button type="button" disabled={photoBusy} onClick={removePhoto}
-                  style={{ ...t.photoBtn, color: "#b91c1c", opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
+                  style={{ ...t.photoBtn, color: "var(--fw-red-text-2)", opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
                   {tr("profile.removePhoto")}
                 </button>
               )}
             </div>
-            <div style={{ fontSize: 11.5, color: photoError ? "#b91c1c" : "#9ca3af", maxWidth: 320 }}>
+            <div style={{ fontSize: 11.5, color: photoError ? "var(--fw-red-text-2)" : "var(--fw-text-4)", maxWidth: 320 }}>
               {photoError || tr("profile.photoNote")}
             </div>
           </div>
@@ -476,14 +476,14 @@ export default function Profile() {
 
         <div style={{ padding: isMobile ? "16px 20px 22px" : "16px 32px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "#111827", letterSpacing: "-.5px" }}>{fullName}</span>
+            <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" }}>{fullName}</span>
             {fullyVerified
               ? <StatusChip tone="ok">{tr("status.verified")}</StatusChip>
               : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
             {/* El rango solo aparece cuando hay reseñas de verdad detrás. */}
             {ratingCount > 0 && <RankBadge count={ratingCount} average={ratingAverage} size="sm" />}
           </div>
-          <div style={{ fontSize: 14, color: "#6b7280" }}>{tr("profile.memberSince", { date: memberSince })}</div>
+          <div style={{ fontSize: 14, color: "var(--fw-text-3)" }}>{tr("profile.memberSince", { date: memberSince })}</div>
         </div>
       </div>
 
@@ -492,23 +492,23 @@ export default function Profile() {
         <div style={t.statCol}>
           {ratingAverage === null ? (
             <>
-              <div style={{ ...t.statNum, fontSize: isMobile ? 15 : 16, color: "#6b7280", fontWeight: 700 }}>
+              <div style={{ ...t.statNum, fontSize: isMobile ? 15 : 16, color: "var(--fw-text-3)", fontWeight: 700 }}>
                 {tr("profile.noRatingYet")}
               </div>
               <div style={t.statLabel}>{tr("profile.reviewsToRate")}</div>
             </>
           ) : (
             <>
-              <div style={t.statNum}>{ratingAverage.toFixed(1)} <span style={{ color: "#f59e0b" }}>★</span></div>
+              <div style={t.statNum}>{ratingAverage.toFixed(1)} <span style={{ color: "var(--fw-amber)" }}>★</span></div>
               <div style={t.statLabel}>{tr("profile.ratingAvg", { count: ratingCount })}</div>
             </>
           )}
         </div>
-        <div style={{ ...t.statCol, borderLeft: isMobile ? "none" : "1px solid #f0f0f0", borderTop: isMobile ? "1px solid #f0f0f0" : "none" }}>
+        <div style={{ ...t.statCol, borderLeft: isMobile ? "none" : "1px solid var(--fw-line-soft)", borderTop: isMobile ? "1px solid var(--fw-line-soft)" : "none" }}>
           <div style={t.statNum}>{stats ? stats.cars : <Spinner size={18} />}</div>
           <div style={t.statLabel}>{tr("profile.carsPublished")}</div>
         </div>
-        <div style={{ ...t.statCol, borderLeft: isMobile ? "none" : "1px solid #f0f0f0", borderTop: isMobile ? "1px solid #f0f0f0" : "none" }}>
+        <div style={{ ...t.statCol, borderLeft: isMobile ? "none" : "1px solid var(--fw-line-soft)", borderTop: isMobile ? "1px solid var(--fw-line-soft)" : "none" }}>
           <div style={t.statNum}>{stats ? stats.trips : <Spinner size={18} />}</div>
           <div style={t.statLabel}>{tr("profile.tripsDone")}</div>
         </div>
@@ -519,10 +519,10 @@ export default function Profile() {
       {user?.profilePhotoUrl && (
         <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{tr("profile.photoWho")}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.photoWho")}</div>
             {visibilityBusy && <Spinner size={14} />}
           </div>
-          <div style={{ fontSize: 12.5, color: "#9ca3af", marginBottom: 14 }}>{tr("profile.photoWhoSub")}</div>
+          <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("profile.photoWhoSub")}</div>
           <PhotoVisibilityChoice
             value={quienVeLaFoto}
             onChange={cambiarQuienVeLaFoto}
@@ -533,8 +533,8 @@ export default function Profile() {
 
       {/* Rango: qué medalla tiene y qué le falta para la siguiente */}
       <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{tr("profile.rank")}</div>
-        <div style={{ fontSize: 12.5, color: "#9ca3af", marginBottom: 14 }}>{tr("profile.rankSub")}</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.rank")}</div>
+        <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("profile.rankSub")}</div>
         <RankBadge count={ratingCount} average={ratingAverage} showProgress />
       </div>
 

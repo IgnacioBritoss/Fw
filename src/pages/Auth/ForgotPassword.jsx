@@ -63,7 +63,7 @@ export default function ForgotPassword() {
 
   const volver = (
     <div style={{ textAlign: "center" }}>
-      <Link to="/login" style={{ color: "#0f6ce6", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
+      <Link to="/login" style={{ color: "var(--fw-blue)", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>
         {t("auth.backToLogin")}
       </Link>
     </div>
@@ -83,8 +83,8 @@ export default function ForgotPassword() {
       >
         <div style={{
           display: "flex", gap: 12, alignItems: "flex-start",
-          background: "#eff6ff", border: "1px solid #bfdbfe",
-          borderLeft: "3px solid #0f6ce6", borderRadius: 10, padding: "14px 16px",
+          background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)",
+          borderLeft: "3px solid var(--fw-blue)", borderRadius: 10, padding: "14px 16px",
           marginBottom: 18,
         }}>
           <div style={{ flexShrink: 0, marginTop: 1 }}><MailIcon /></div>
@@ -93,10 +93,10 @@ export default function ForgotPassword() {
           </div>
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", letterSpacing: ".04em", marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-text-3)", letterSpacing: ".04em", marginBottom: 8 }}>
           {t("auth.ifYouDontSeeIt").toUpperCase()}
         </div>
-        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: "#374151", lineHeight: 1.9 }}>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: "var(--fw-text-2)", lineHeight: 1.9 }}>
           <li>{t("auth.checkSpam")}</li>
           <li>{t("auth.mayTake")}</li>
           <li>{t("auth.linkOneHour")}</li>
@@ -136,7 +136,7 @@ export default function ForgotPassword() {
         {loading ? t("common.sending") : t("auth.sendLink")}
       </button>
 
-      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 14, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 14, lineHeight: 1.6 }}>
         {t("auth.sameAnswerNote")}
       </div>
     </AuthShell>
