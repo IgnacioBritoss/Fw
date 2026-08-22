@@ -677,6 +677,7 @@ export default {
   "booking.notFound": "Listing no encontrado.",
   "booking.needVerified": "Para reservar necesitás verificar tu cuenta (teléfono, DNI y licencia).",
   "booking.createFailed": "Error al crear la reserva.",
+  "cal.goToMonth": "Ir al mes",
   "cal.pickDates": "Seleccioná las fechas",
   "cal.loadingAvail": "Cargando disponibilidad...",
   "cal.free": "Disponible",

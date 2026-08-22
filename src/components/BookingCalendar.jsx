@@ -19,10 +19,10 @@
 //
 //  Props: listingId (id de la publicación), car (datos del auto), onConfirm.
 // ============================================================================
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { addDays, addMonths, differenceInCalendarDays, format } from "date-fns";
+import { addDays, addMonths, differenceInCalendarDays, format, isSameMonth, startOfMonth } from "date-fns";
 import { getListingAvailability } from "../services/api";
 import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
@@ -50,6 +50,23 @@ const s = {
   summaryRow: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--fw-text-2)", marginBottom: 8 },
   summaryTotal: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "var(--fw-text)", borderTop: "1px solid var(--fw-border)", paddingTop: 10, marginTop: 4 },
   warn: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: "var(--fw-amber-text)", marginTop: 12 },
+  // La tira de meses. Se desliza de costado en el teléfono, donde los siete no
+  // entran de una: `overflowX` con los botones sin encoger.
+  tira: {
+    display: "flex", gap: 6, marginBottom: 12,
+    overflowX: "auto", paddingBottom: 4,
+    scrollbarWidth: "thin",
+  },
+  mes: {
+    flexShrink: 0, padding: "6px 12px", borderRadius: 999,
+    border: "1px solid var(--fw-border)", background: "var(--fw-surface)",
+    color: "var(--fw-text-2)", fontSize: 12.5, fontWeight: 600,
+    cursor: "pointer", textTransform: "capitalize", whiteSpace: "nowrap",
+  },
+  mesElegido: {
+    background: "var(--fw-blue-bg)", borderColor: "var(--fw-blue)",
+    color: "var(--fw-blue-text)",
+  },
 };
 
 // Un día como "YYYY-MM-DD" en horario local, para comparar contra la lista de
@@ -61,6 +78,47 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
   const { precio } = useCurrency();
   const [range, setRange] = useState([null, null]); // [fechaInicio, fechaFin] elegidas
   const [start, end] = range;
+  // Qué mes está a la vista, solo para marcar el botón correspondiente en la
+  // tira. Lo mueven tanto la tira como las flechas del calendario.
+  const [mesALaVista, setMesALaVista] = useState(() => startOfMonth(new Date()));
+  // Adónde saltar y cuántas veces se saltó. El contador va en la `key` del
+  // calendario: al cambiar, el calendario se vuelve a montar mirando el mes
+  // pedido. Hace falta el contador y no alcanza con la fecha porque apretar dos
+  // veces el mismo mes da la misma fecha, y entonces no pasaría nada —que es
+  // justo lo que uno espera que pase si se fue con las flechas y quiere volver.
+  const [salto, setSalto] = useState({ fecha: startOfMonth(new Date()), n: 0 });
+
+  /**
+   * ¿Entran DOS meses uno al lado del otro?
+   *
+   * Se mide el ancho real de la caja en vez de mirar si es un teléfono. El ancho
+   * de pantalla no alcanza para saberlo: el calendario vive en una columna que
+   * comparte lugar con la ficha del auto y con la barra lateral, así que una
+   * computadora con la barra abierta puede tener menos lugar acá que una tablet
+   * con la barra cerrada. Preguntando por la caja, la respuesta es siempre la
+   * correcta, y además se acomoda sola al abrir y cerrar la barra.
+   *
+   * Un mes necesita 240px. Con menos de 500 va uno solo: dos apretados dejan los
+   * números pisándose, que es como estaba y era peor que mostrar uno.
+   */
+  const cajaRef = useRef(null);
+  const [anchoCaja, setAnchoCaja] = useState(0);
+
+  useEffect(() => {
+    const caja = cajaRef.current;
+    if (!caja) return;
+    if (typeof ResizeObserver === "undefined") {
+      setAnchoCaja(caja.getBoundingClientRect().width);
+      return;
+    }
+    const observador = new ResizeObserver(([entrada]) => {
+      setAnchoCaja(entrada.contentRect.width);
+    });
+    observador.observe(caja);
+    return () => observador.disconnect();
+  }, []);
+
+  const dosMeses = anchoCaja >= 500;
   const [unavailable, setUnavailable] = useState([]); // días ocupados (YYYY-MM-DD)
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [availError, setAvailError] = useState("");
@@ -92,6 +150,33 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
   }, [listingId, tr]);
 
   const unavailableSet = useMemo(() => new Set(unavailable), [unavailable]);
+
+  /**
+   * Los meses a los que se puede saltar: el actual y los seis siguientes.
+   *
+   * Existe porque llegar al sexto mes eran cinco toques de flecha, uno atrás del
+   * otro, sin ver adónde se estaba yendo. Con la tira, cualquier mes del rango
+   * es un toque. Y además se ve de una cuánto para adelante se puede reservar,
+   * que antes había que descubrir apretando.
+   */
+  const meses = useMemo(() => {
+    const hoy = startOfMonth(new Date());
+    const locale = localeFor(lang);
+    return Array.from({ length: MESES_DE_ANTICIPACION + 1 }, (_, i) => {
+      const fecha = addMonths(hoy, i);
+      return {
+        fecha,
+        // El año solo cuando cambia: repetirlo en los siete es ruido, pero sin
+        // él, al cruzar diciembre, "enero" no dice de qué año habla.
+        etiqueta: format(fecha, fecha.getFullYear() === hoy.getFullYear() ? "LLLL" : "LLLL yyyy", { locale }),
+      };
+    });
+  }, [lang]);
+
+  const irAlMes = (fecha) => {
+    setMesALaVista(fecha);
+    setSalto((antes) => ({ fecha, n: antes.n + 1 }));
+  };
 
   // ¿Este día está ocupado?
   const isDayBlocked = (date) => unavailableSet.has(dayKey(date));
@@ -125,7 +210,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
   const canConfirm = start && end && days > 0 && !rangeHasBlockedDay;
 
   return (
-    <div style={s.wrap}>
+    <div style={s.wrap} ref={cajaRef}>
       <div style={{ ...s.title, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {tr("cal.pickDates")}
         {/* El círculo mientras se consulta la disponibilidad: un texto quieto no
@@ -145,7 +230,32 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
         </div>
       )}
 
+      {/* La tira de meses. Ver `meses`, más arriba: es lo que hace que los seis
+          meses se puedan usar de verdad y no a fuerza de flechas. */}
+      <div style={s.tira} role="group" aria-label={tr("cal.goToMonth")}>
+        {meses.map(({ fecha, etiqueta }) => {
+          const elegido = isSameMonth(fecha, mesALaVista);
+          return (
+            <button
+              key={fecha.toISOString()}
+              type="button"
+              aria-pressed={elegido}
+              onClick={() => irAlMes(fecha)}
+              style={{ ...s.mes, ...(elegido ? s.mesElegido : {}) }}
+            >
+              {etiqueta}
+            </button>
+          );
+        })}
+      </div>
+
       <DatePicker
+        // Al cambiar la `key` el calendario se vuelve a montar mirando el mes
+        // pedido. Es la manera segura de moverlo: `openToDate` solo se mira al
+        // arrancar, así que sin esto la tira no haría nada después del primero.
+        key={salto.n}
+        openToDate={salto.fecha}
+        onMonthChange={(fecha) => setMesALaVista(startOfMonth(fecha))}
         selectsRange startDate={start} endDate={end}
         onChange={(update) => setRange(update)}
         minDate={addDays(new Date(), 1)}
@@ -161,12 +271,14 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
           Con el tope puesto en los mismos 6 meses que se consultan, todo lo que
           se puede elegir tiene disponibilidad de verdad detrás. Y son seis meses
           de navegación, no dos: los dos que se ven son los que entran en
-          pantalla, y las flechas llegan hasta el final del sexto.
+          pantalla, y la tira de arriba lleva a cualquiera de los siete.
         */
         maxDate={addMonths(new Date(), MESES_DE_ANTICIPACION)}
         filterDate={(date) => !isDayBlocked(date)}
         excludeDates={excludeDates}
-        inline locale={localeFor(lang)} monthsShown={2}
+        inline locale={localeFor(lang)}
+        /* Dos meses si entran, uno si no. Ver `dosMeses`, más arriba. */
+        monthsShown={dosMeses ? 2 : 1}
       />
 
       {rangeHasBlockedDay && (

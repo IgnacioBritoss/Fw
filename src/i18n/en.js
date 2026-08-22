@@ -651,6 +651,7 @@ export default {
   "booking.notFound": "Listing not found.",
   "booking.needVerified": "To book you need to verify your account (phone, ID and licence).",
   "booking.createFailed": "Could not create the booking.",
+  "cal.goToMonth": "Go to month",
   "cal.pickDates": "Pick the dates",
   "cal.loadingAvail": "Loading availability...",
   "cal.free": "Available",
