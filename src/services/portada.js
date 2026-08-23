@@ -67,11 +67,23 @@ export function portadaDeAhora(oscuro) {
  * que es donde la foto puede respirar sin tapar ninguna letra. Así el texto se
  * lee con el contraste de siempre y la ciudad igual se ve.
  *
+ * EL VELO ERA DEMASIADO. La primera versión iba de 93% a 62% de opacidad, o sea
+ * que en el punto MÁS transparente todavía tapaba casi dos tercios de la foto.
+ * El resultado era un bloque azul con una sombra adentro: la foto estaba, se
+ * descargaba, pero no se veía. Y como no se veía, las dos fotos de día parecían
+ * la misma —"nunca cambia"—, cuando en realidad cambiaban en cada entrada.
+ *
+ * Ahora el velo se cierra más rápido del lado del texto (94% hasta el 26%, que
+ * es donde termina el subtítulo) y se abre mucho más del otro (22% al final).
+ * El contraste de las letras no cambia, porque donde están las letras el velo es
+ * más opaco que antes; lo que cambia es que del medio a la derecha la ciudad se
+ * ve de verdad, y entonces se nota cuál foto tocó.
+ *
  * En oscuro el velo es más cerrado: la pantalla entera es oscura y una foto
  * brillante en el medio saltaría a la vista más de lo que corresponde.
  */
 export function veloDePortada(oscuro) {
   return oscuro
-    ? "linear-gradient(100deg, rgba(9,32,63,.94) 0%, rgba(9,32,63,.88) 42%, rgba(11,50,100,.72) 100%)"
-    : "linear-gradient(100deg, rgba(11,85,192,.93) 0%, rgba(11,85,192,.84) 42%, rgba(15,108,230,.62) 100%)";
+    ? "linear-gradient(100deg, rgba(9,32,63,.95) 0%, rgba(9,32,63,.90) 26%, rgba(9,32,63,.62) 55%, rgba(9,32,63,.34) 100%)"
+    : "linear-gradient(100deg, rgba(11,85,192,.94) 0%, rgba(11,85,192,.86) 26%, rgba(11,85,192,.52) 55%, rgba(11,85,192,.22) 100%)";
 }
