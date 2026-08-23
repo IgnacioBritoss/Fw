@@ -19,7 +19,7 @@ import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
-import { applyDarkMode } from "../../services/theme";
+import { applyDarkMode, applyReadableFont } from "../../services/theme";
 
 /* ── Íconos SVG (sin emojis) ── */
 const I = {
@@ -83,6 +83,7 @@ export default function Settings() {
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
     if (k === "dark") applyDarkMode(v);
+    if (k === "lectura") applyReadableFont(v);
   };
 
   /*
@@ -319,7 +320,25 @@ export default function Settings() {
                     interruptor que se prende y no cambia nada es peor que no
                     tenerlo. Quedan los que sí funcionan. */}
                 <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 8 }}>{tr("settings.appearanceSub")}</div>
-                <SwitchRow title={tr("settings.darkMode")} desc={tr("settings.darkModeSub")} on={prefs.dark} onChange={v => setPref("dark", v)} last />
+                <SwitchRow title={tr("settings.darkMode")} desc={tr("settings.darkModeSub")} on={prefs.dark} onChange={v => setPref("dark", v)} />
+                {/*
+                  MODO LECTURA. Cambia cómo se lee toda la app: más aire entre
+                  letras, palabras y renglones, sin cursivas, y una tipografía de
+                  las que se leen mejor. Está pensado para quien tiene dislexia.
+
+                  Va acá y no en un rincón: es una preferencia de cómo se ve la
+                  app, igual que el modo oscuro, y esconderla en una sección de
+                  "accesibilidad" aparte la deja donde nadie la encuentra.
+                */}
+                <SwitchRow title={tr("settings.readableFont")} desc={tr("settings.readableFontSub")}
+                  on={prefs.lectura} onChange={v => setPref("lectura", v)} last />
+                {/* Se ve el efecto acá mismo, sin salir a buscar una pantalla con
+                    texto para comprobar si cambió algo. */}
+                {prefs.lectura && (
+                  <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", fontSize: 13.5, color: "var(--fw-text-2)" }}>
+                    {tr("settings.readableFontSample")}
+                  </div>
+                )}
               </div>
 
               {/*
