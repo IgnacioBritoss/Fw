@@ -8,10 +8,33 @@
 //  padre mediante onChange(). Usa Nominatim (OpenStreetMap) para convertir
 //  texto ↔ coordenadas (geocodificación) sin necesidad de una API paga.
 //
-//  Props: value (ubicación inicial), onChange (avisa la ubicación elegida).
+//  EL PUNTO Y EL CÍRCULO
+//  El punto marca dónde se ENTREGA y dónde se DEVUELVE el auto. El círculo, que
+//  es opcional, dice hasta dónde el dueño está dispuesto a acercárselo a quien
+//  alquila. La devolución siempre vuelve al punto: si el círculo valiera para las
+//  dos puntas, el auto podría terminar a veinte cuadras de donde vive el dueño y
+//  eso nadie lo aceptaría.
+//
+//  Por defecto no hay círculo: la mayoría entrega en su casa y listo. El que
+//  quiere acercarlo lo prende y elige hasta dónde.
+//
+//  Props:
+//   · value        → { lat, lng, address } inicial
+//   · onChange     → avisa la ubicación elegida
+//   · radioKm      → hasta dónde lo acerca (0 = solo en el punto)
+//   · onRadioKm    → avisa el radio elegido
 // ============================================================================
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
+
+/**
+ * Hasta dónde se puede estirar la entrega.
+ *
+ * 25km es cruzar el Gran Buenos Aires de punta a punta. Más que eso ya no es
+ * "te lo acerco": es un viaje, y conviene que lo hablen por chat en vez de
+ * dejarlo prometido en la publicación.
+ */
+const RADIO_MAXIMO_KM = 25;
 
 const s = {
   wrap: { marginBottom: 16 },
@@ -35,13 +58,20 @@ const s = {
     borderRadius: 8, padding: "10px 14px", fontSize: 13,
     color: "var(--fw-blue-text)", marginTop: 8, display: "flex",
     alignItems: "center", gap: 6 },
+  entrega: { marginTop: 12, padding: "14px 16px", borderRadius: 10,
+    border: "1px solid var(--fw-border)", background: "var(--fw-surface-2)" },
+  entregaFila: { display: "flex", alignItems: "center", gap: 10, cursor: "pointer" },
+  entregaTexto: { fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6, marginTop: 6 },
+  entregaKm: { fontSize: 13, fontWeight: 700, color: "var(--fw-blue)",
+    minWidth: 58, textAlign: "right" },
 };
 
-export default function LocationPicker({ value, onChange }) {
+export default function LocationPicker({ value, onChange, radioKm = 0, onRadioKm }) {
   const { t: tr } = useI18n();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
+  const circuloRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [query, setQuery] = useState(value?.address || "");
   const [suggestions, setSuggestions] = useState([]);
@@ -102,6 +132,40 @@ export default function LocationPicker({ value, onChange }) {
     markerRef.current = L.marker([lat, lng], { icon }).addTo(m);
     m.setView([lat, lng], 15);
   };
+
+  /**
+   * Dibuja (o borra) el círculo de entrega alrededor del punto.
+   *
+   * Se redibuja entero en vez de moverlo: es una sola figura y así no hay dos
+   * caminos que puedan quedar desincronizados —uno para crearla y otro para
+   * actualizarla—, que es de donde salen los círculos fantasma.
+   *
+   * Cuando hay círculo, el mapa se acomoda para que se vea entero: con 20km de
+   * radio y el zoom en 15 se ve un pedazo de borde y nada más, y no se entiende
+   * qué zona abarca, que es justamente lo que el círculo viene a contar.
+   */
+  const dibujarCirculo = (lat, lng, km) => {
+    const L = window.L;
+    const m = mapInstanceRef.current;
+    if (!m || !L) return;
+    if (circuloRef.current) { m.removeLayer(circuloRef.current); circuloRef.current = null; }
+    if (!km || km <= 0 || lat == null || lng == null) return;
+
+    circuloRef.current = L.circle([lat, lng], {
+      radius: km * 1000,
+      color: "#0f6ce6", weight: 2, opacity: .8,
+      fillColor: "#0f6ce6", fillOpacity: .12,
+    }).addTo(m);
+    m.fitBounds(circuloRef.current.getBounds(), { padding: [18, 18] });
+  };
+
+  // El círculo sigue al punto y al radio. Va en un efecto y no en el manejador
+  // del clic porque el radio también cambia desde el control de abajo, y las dos
+  // cosas tienen que dar el mismo dibujo.
+  useEffect(() => {
+    if (!mapLoaded || !selected) return;
+    dibujarCirculo(selected.lat, selected.lng, radioKm);
+  }, [mapLoaded, selected, radioKm]);
 
   // Reverse geocoding: dadas unas coordenadas, obtiene la dirección en texto.
   const reverseGeocode = async (lat, lng) => {
@@ -199,6 +263,56 @@ export default function LocationPicker({ value, onChange }) {
       ) : (
         <div style={s.hint}>
           {tr("loc.hint")}
+        </div>
+      )}
+
+      {/*
+        HASTA DÓNDE LO ACERCÁS.
+
+        Solo aparece con el punto ya elegido: sin punto no hay centro, y un
+        control que no se puede usar todavía es ruido.
+
+        Arranca apagado a propósito. Lo normal es entregar donde está el auto, y
+        el que quiere ofrecer más lo prende; al revés —prendido por defecto— la
+        publicación prometería algo que el dueño nunca decidió.
+      */}
+      {selected && onRadioKm && (
+        <div style={s.entrega}>
+          <label style={s.entregaFila}>
+            <input
+              type="checkbox"
+              checked={radioKm > 0}
+              onChange={(e) => onRadioKm(e.target.checked ? 5 : 0)}
+              style={{ width: 16, height: 16, accentColor: "var(--fw-blue)", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--fw-text)" }}>
+              {tr("loc.deliverTitle")}
+            </span>
+          </label>
+
+          {radioKm > 0 ? (
+            <>
+              <div style={s.entregaTexto}>{tr("loc.deliverHelp")}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
+                <input
+                  type="range" min={1} max={RADIO_MAXIMO_KM} step={1}
+                  value={radioKm}
+                  onChange={(e) => onRadioKm(Number(e.target.value))}
+                  aria-label={tr("loc.deliverRadius")}
+                  style={{ flex: 1, accentColor: "var(--fw-blue)", cursor: "pointer" }}
+                />
+                <span style={s.entregaKm}>{tr("loc.km", { n: radioKm })}</span>
+              </div>
+            </>
+          ) : (
+            // El que deja el control apagado también merece saber qué está
+            // eligiendo: sin esta línea, "no tocar nada" es una decisión a ciegas.
+            <div style={s.entregaTexto}>{tr("loc.deliverSamePlace")}</div>
+          )}
+
+          <div style={{ ...s.entregaTexto, marginTop: 10, fontWeight: 600, color: "var(--fw-text-2)" }}>
+            {tr("loc.returnAlways")}
+          </div>
         </div>
       )}
     </div>

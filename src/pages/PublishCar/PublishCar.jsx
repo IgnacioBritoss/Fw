@@ -215,6 +215,9 @@ const EMPTY_VEHICLE = {
 const EMPTY_LISTING = {
   title: "", description: "", pricePerDay: "",
   locationText: "", latitude: null, longitude: null,
+  // Hasta cuántos kilómetros el dueño lleva el auto. 0 = solo en el punto, que
+  // es lo normal y por eso es el valor de arranque.
+  deliveryRadiusKm: 0,
 };
 
 function loadDraft() {
@@ -495,6 +498,82 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
     return tr(claves[v?.code] || "ai.whyUpstream");
   };
 
+  /*
+    ─────────────────────────── REORDENAR LAS FOTOS ───────────────────────────
+
+    La primera foto es la que se ve en el buscador, en el inicio y en el globo
+    del mapa: es LA foto del auto. Hasta acá el orden era el que salía del
+    explorador de archivos al elegirlas, que no es ninguno.
+
+    SE ARRASTRA CON EL DEDO Y CON EL MOUSE. Se usan eventos de puntero y no el
+    arrastre de HTML, que solo anda con mouse: la mitad de las publicaciones se
+    cargan desde el teléfono, y ahí el arrastre de HTML no existe.
+
+    SE ACOMODA MIENTRAS ARRASTRÁS, no al soltar. Ves el orden final antes de
+    decidir, en vez de soltar a ciegas y fijarte después.
+  */
+  const arrastreRef = useRef(null);
+  const [arrastrando, setArrastrando] = useState(null);
+
+  /**
+   * Mueve una foto de una posición a otra.
+   *
+   * Las revisiones de la IA van pegadas a la POSICIÓN, no a la foto, así que hay
+   * que moverlas igual. Si no, al reordenar quedaría la marca verde sobre la
+   * foto rechazada y viceversa: la pantalla estaría mintiendo sobre cuál se
+   * revisó, que es peor que no mostrar nada.
+   */
+  const moverFoto = (desde, hasta) => {
+    if (desde == null || hasta == null || desde === hasta) return;
+    const cuantas = photos.length;
+
+    setPhotos((lista) => {
+      const copia = [...lista];
+      const [movida] = copia.splice(desde, 1);
+      copia.splice(hasta, 0, movida);
+      return copia;
+    });
+
+    setPhotoValidations((v) => {
+      const enOrden = Array.from({ length: cuantas }, (_, i) => v[i]);
+      const [movida] = enOrden.splice(desde, 1);
+      enOrden.splice(hasta, 0, movida);
+      const nuevo = {};
+      enOrden.forEach((valor, i) => { if (valor !== undefined) nuevo[i] = valor; });
+      return nuevo;
+    });
+  };
+
+  const empezarArrastre = (e, i) => {
+    // La X de borrar y el botón de reintentar no arrastran nada.
+    if (e.target.closest("button")) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    arrastreRef.current = { desde: i, x: e.clientX, y: e.clientY, movido: false };
+    setArrastrando(i);
+  };
+
+  const seguirArrastre = (e) => {
+    const a = arrastreRef.current;
+    if (!a) return;
+    // Un umbral de seis píxeles: sin esto, cualquier temblor de la mano al tocar
+    // una foto la movería de lugar sin que nadie lo haya pedido.
+    if (!a.movido && Math.hypot(e.clientX - a.x, e.clientY - a.y) < 6) return;
+    a.movido = true;
+    const debajo = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-foto]");
+    if (!debajo) return;
+    const hasta = Number(debajo.dataset.foto);
+    if (Number.isNaN(hasta) || hasta === a.desde) return;
+    moverFoto(a.desde, hasta);
+    a.desde = hasta;
+    setArrastrando(hasta);
+  };
+
+  const terminarArrastre = (e) => {
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    arrastreRef.current = null;
+    setArrastrando(null);
+  };
+
   /** Estado de una foto, en una sola palabra. */
   const estadoFoto = (i) => {
     const v = photoValidations[i];
@@ -617,6 +696,22 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
         locationText: listingForm.locationText,
         ...(listingForm.latitude && { latitude: listingForm.latitude }),
         ...(listingForm.longitude && { longitude: listingForm.longitude }),
+        /*
+          LA ZONA DE ENTREGA.
+
+          El centro del círculo es el MISMO punto de la publicación, que ya está
+          corrido a propósito unas cuadras por privacidad. Mandar acá el punto
+          exacto tiraría abajo ese cuidado: alguien podría comparar los dos y
+          sacar la dirección de la casa restando.
+
+          Los tres campos van juntos o no va ninguno: un radio sin centro no
+          quiere decir nada.
+        */
+        ...(listingForm.deliveryRadiusKm > 0 && listingForm.latitude && listingForm.longitude && {
+          deliveryLatitude: listingForm.latitude,
+          deliveryLongitude: listingForm.longitude,
+          deliveryRadiusKm: Number(listingForm.deliveryRadiusKm),
+        }),
         status: "ACTIVE",
       };
       await createListing(listingPayload);
@@ -969,11 +1064,43 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
             <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
           </div>
+          {/* Se dice que se pueden arrastrar y para qué sirve: sin esto, nadie
+              prueba a arrastrar una foto, y el orden sigue siendo el que salió
+              del explorador de archivos. */}
+          {photos.length > 1 && (
+            <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", margin: "10px 0 2px", display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 9h14M5 15h14" /><path d="m8 6-3 3 3 3" /><path d="m16 12 3 3-3 3" />
+              </svg>
+              {tr("publish.dragToOrder")}
+            </div>
+          )}
           {photos.length > 0 && (
             <div style={s.photoGrid}>
               {photos.map((p, i) => (
-                <div key={i} style={s.photoItem}>
-                  <img src={p.url} alt="" style={s.photoImg} />
+                <div
+                  key={p.url}
+                  data-foto={i}
+                  onPointerDown={(e) => empezarArrastre(e, i)}
+                  onPointerMove={seguirArrastre}
+                  onPointerUp={terminarArrastre}
+                  onPointerCancel={terminarArrastre}
+                  style={{
+                    ...s.photoItem,
+                    // `touch-action: none` para que el dedo arrastre la foto en vez
+                    // de hacer scroll de la página.
+                    touchAction: "none",
+                    cursor: arrastrando === i ? "grabbing" : "grab",
+                    opacity: arrastrando === i ? 0.55 : 1,
+                    transform: arrastrando === i ? "scale(.96)" : "none",
+                    transition: arrastrando === null ? "transform .18s, opacity .18s" : "none",
+                  }}
+                >
+                  {/* `draggable={false}`: sin esto el navegador arranca su propio
+                      arrastre de imagen y se lleva el puntero, así que el nuestro
+                      se corta a mitad de camino. */}
+                  <img src={p.url} alt="" draggable={false} style={s.photoImg} />
                   {/* El resultado de la revisión, con su motivo. Verde = sirve,
                       rojo = no sirve, ámbar = no se pudo revisar (y NO pasa sola). */}
                   {estadoFoto(i) === "loading" && (
@@ -1096,6 +1223,8 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
               setL("latitude", approxLat);
               setL("longitude", approxLng);
             }}
+            radioKm={listingForm.deliveryRadiusKm || 0}
+            onRadioKm={(km) => setL("deliveryRadiusKm", km)}
           />
           <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginTop: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>

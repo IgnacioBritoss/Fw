@@ -111,6 +111,22 @@ export default function MapCarPopup({ car, precio }) {
         {precio(priceOf(car))}
         <span style={{ fontWeight: 400, fontSize: 12, color: "var(--fw-text-3)" }}> {tr("common.perDay")}</span>
       </div>
+
+      {/* Qué significa el círculo que acaba de aparecer en el mapa. El dibujo
+          solo no lo dice: podría ser el radio de búsqueda o la zona del barrio. */}
+      {Number(car.deliveryRadiusKm) > 0 && (
+        <div style={{
+          marginTop: 6, display: "flex", alignItems: "center", gap: 6,
+          fontSize: 11.5, color: "var(--fw-blue-text)", fontWeight: 600,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+          </svg>
+          {tr("map.deliversTo", { n: Number(car.deliveryRadiusKm) })}
+        </div>
+      )}
       <div style={{
         marginTop: 8, padding: 7, background: "var(--fw-blue)", color: "#fff",
         borderRadius: 8, textAlign: "center", fontSize: 12, fontWeight: 600,

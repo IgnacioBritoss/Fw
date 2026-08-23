@@ -165,6 +165,11 @@ export default function Home() {
   const [pinAbierto, setPinAbierto] = useState(null);
   // El globo que está abierto ahora mismo. Ver la nota de `popupclose`.
   const globoRef = useRef(null);
+  // Los círculos del auto que está abierto: el de la zona aproximada y, si el
+  // dueño lo acerca, el de la entrega. Se dibujan y se borran juntos.
+  const circuloRef = useRef([]);
+  // Si está abierto el manual del mapa.
+  const [manualAbierto, setManualAbierto] = useState(false);
   const [nodoGlobo] = useState(() =>
     (typeof document === "undefined" ? null : document.createElement("div")));
 
@@ -296,10 +301,21 @@ export default function Home() {
         html: `<div style="width:14px;height:14px;background:var(--fw-blue);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer;"></div>`,
         iconAnchor: [7, 7],
       });
-      const circle = L.circle([car.lat, car.lng], {
-        radius: 600, color: "var(--fw-blue)", fillColor: "#bfdbfe",
-        fillOpacity: 0.18, weight: 1.5, interactive: false,
-      }).addTo(map);
+      /*
+        ACÁ HABÍA UN CÍRCULO DE 600 METROS DIBUJADO SIEMPRE, uno por auto.
+
+        Contaba algo cierto —que la ubicación es aproximada— pero lo contaba
+        todo el tiempo y para todos a la vez: con veinte autos en Palermo eran
+        veinte manchas azules pisadas una encima de otra, y no se entendía ni
+        dónde estaba cada auto ni de quién era cada mancha. Además ocupaba el
+        lugar visual del círculo que sí hace falta mirar, que es el de la zona
+        de entrega, y los dos juntos habrían sido imposibles de distinguir.
+
+        Ahora los dos círculos —el de la zona aproximada y el de la entrega— se
+        dibujan solo para el auto que se tocó, y se van al cerrar el globo. El
+        mapa queda limpio y cada círculo aparece cuando hay una pregunta que
+        contestar. Ver el efecto que los dibuja, más abajo.
+      */
       const marker = L.marker([car.lat, car.lng], { icon });
       // El globo NO se abre solo con bindPopup: primero se avisa cuál es el auto
       // para que React dibuje la tarjeta, y recién después se abre. Al revés,
@@ -307,7 +323,7 @@ export default function Home() {
       // equivocado.
       marker.on("click", () => setPinAbierto(car));
       marker.addTo(map);
-      markersRef.current[car.id] = { marker, circle };
+      markersRef.current[car.id] = { marker };
     });
   }, [filtered]);
 
@@ -404,6 +420,66 @@ export default function Home() {
     globoRef.current = globo;
     globo.openOn(map);
   }, [pinVisible, nodoGlobo]);
+
+  /*
+    EL CÍRCULO DE ENTREGA: aparece al TOCAR el punto, no antes.
+
+    Si todos los círculos estuvieran dibujados de entrada, un mapa con veinte
+    autos sería veinte manchas azules pisadas una encima de otra y no se
+    entendería nada: ni dónde está cada auto ni de quién es cada zona. Dibujado
+    solo para el que se tocó, el círculo contesta una pregunta concreta —"¿hasta
+    dónde me lo trae ESTE?"— y desaparece cuando se cierra el globo.
+
+    Solo para los que ofrecen acercarlo. El que entrega únicamente en su punto no
+    dibuja nada, que es lo correcto: un círculo de radio cero sería una mancha
+    diminuta que se leería como un error.
+
+    OJO: el círculo es de la ENTREGA. La devolución es siempre en el punto, y eso
+    lo dice el manual del botón de al lado, porque un círculo solo no alcanza
+    para contar que vale para una sola de las dos puntas.
+  */
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const L = window.L;
+    if (!map || !L) return;
+
+    const limpiar = () => {
+      circuloRef.current.forEach((c) => { try { map.removeLayer(c); } catch { /* ya no estaba */ } });
+      circuloRef.current = [];
+    };
+    limpiar();
+    if (!pinVisible?.lat || !pinVisible?.lng) return;
+
+    // El clic pasa de largo en los dos: si un círculo se comiera el clic, tocar
+    // un pin que cae adentro de la zona de otro auto no abriría nada.
+    const comun = { interactive: false };
+
+    // 1. La zona aproximada: dice que el punto no es la puerta de la casa.
+    circuloRef.current.push(
+      L.circle([pinVisible.lat, pinVisible.lng], {
+        ...comun, radius: 600,
+        color: "#0f6ce6", weight: 1.5, opacity: .7,
+        fillColor: "#bfdbfe", fillOpacity: .18,
+      }).addTo(map),
+    );
+
+    // 2. Y la de entrega, solo si el dueño ofrece acercarlo. Va con la línea
+    // cortada para que no se confunda con la de arriba: una marca dónde está el
+    // auto y la otra hasta dónde te lo llevan, que son dos cosas distintas y a
+    // simple vista serían dos círculos azules iguales.
+    const km = Number(pinVisible.deliveryRadiusKm) || 0;
+    if (km > 0) {
+      circuloRef.current.push(
+        L.circle([pinVisible.lat, pinVisible.lng], {
+          ...comun, radius: km * 1000,
+          color: "#0f6ce6", weight: 2, opacity: .8, dashArray: "6 6",
+          fillColor: "#0f6ce6", fillOpacity: .07,
+        }).addTo(map),
+      );
+    }
+
+    return limpiar;
+  }, [pinVisible]);
 
 
   /*
@@ -1043,6 +1119,72 @@ export default function Home() {
                   <IconoAgrandar cerrando={mapaGrande} />
                   {tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                 </button>
+              )}
+
+              {/*
+                EL MANUAL, justo abajo del de agrandar.
+
+                Lo del punto y el círculo no se adivina mirando: un círculo azul
+                alrededor de un pin podría querer decir cualquier cosa —el radio
+                de búsqueda, la zona del barrio, dónde hay más autos—. Y lo que
+                menos se adivina es que vale para UNA sola de las dos puntas: te
+                lo acercan, pero lo devolvés donde estaba. Eso hay que decirlo
+                con palabras, y tiene que estar donde pasa la cosa, no escondido
+                en una pantalla de ayuda que nadie abre.
+
+                Se abre y se cierra con el mismo botón, y no tapa el mapa: se
+                apoya debajo, corrido a la derecha.
+              */}
+              {!isMobile && (
+                <div style={{ position: "absolute", right: 12, top: 56, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setManualAbierto((v) => !v)}
+                    aria-expanded={manualAbierto}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 7,
+                      padding: "9px 13px", borderRadius: 10,
+                      background: manualAbierto ? "var(--fw-blue-bg)" : "var(--fw-surface)",
+                      color: manualAbierto ? "var(--fw-blue-text)" : "var(--fw-text-2)",
+                      border: `1px solid ${manualAbierto ? "var(--fw-blue)" : "var(--fw-border)"}`,
+                      boxShadow: "0 2px 10px rgba(0,0,0,.16)",
+                      fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M9.6 9.2a2.5 2.5 0 1 1 3.3 3.1c-.6.3-.9.8-.9 1.4v.3" />
+                      <path d="M12 17.2h.01" />
+                    </svg>
+                    {tr("map.manual")}
+                  </button>
+
+                  {manualAbierto && (
+                    <div
+                      role="note"
+                      className="fw-aviso"
+                      style={{
+                        width: 268, maxWidth: "calc(100% - 24px)",
+                        background: "var(--fw-surface)", color: "var(--fw-text)",
+                        border: "1px solid var(--fw-border)", borderRadius: 12,
+                        boxShadow: "0 12px 34px rgba(0,0,0,.22)", padding: 14,
+                      }}
+                    >
+                      <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>{tr("map.manualTitle")}</div>
+                      {[
+                        ["#e00", tr("map.manualPoint")],
+                        ["#0f6ce6", tr("map.manualCircle")],
+                        ["var(--fw-text-4)", tr("map.manualReturn")],
+                      ].map(([color, texto]) => (
+                        <div key={texto} style={{ display: "flex", gap: 9, marginBottom: 8 }}>
+                          <span style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0, marginTop: 5 }} />
+                          <span style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6 }}>{texto}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
               {/* La tarjeta del globo: vive en el árbol de React aunque se vea
                   adentro del mapa. */}

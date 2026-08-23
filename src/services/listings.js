@@ -176,6 +176,17 @@ export function normalizeListing(listing) {
     locationText: listing.locationText || listing.location || "",
     lat: listing.latitude ?? listing.lat,
     lng: listing.longitude ?? listing.lng,
+    /*
+      HASTA DÓNDE EL DUEÑO ACERCA EL AUTO, en kilómetros. 0 o vacío = solo se
+      retira en el punto.
+
+      El backend tiene además deliveryLatitude y deliveryLongitude, pero acá se
+      usan las de la publicación: al publicar se mandan las mismas, así que
+      guardar dos copias del mismo punto solo daría lugar a que se separen. Si
+      alguna vez el centro de entrega llega a ser otro, se agrega acá y el mapa
+      lo dibuja donde corresponda.
+    */
+    deliveryRadiusKm: Number(listing.deliveryRadiusKm ?? listing.delivery_radius_km ?? 0) || 0,
     category,
     categoryLabel: CATEGORY_LABELS[category] || "",
     // La clave para traducir la categoría; el label de arriba es el respaldo.
