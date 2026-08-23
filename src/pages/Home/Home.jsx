@@ -611,9 +611,26 @@ export default function Home() {
   // Tarjeta individual de un auto en la grilla (foto, datos, precio y botón).
   const CarCard = ({ car }) => (
     <div style={t.carCard} onClick={() => navigate(`/cars/${car.id}`)}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "var(--fw-surface-3)" }}>
+      {/*
+        TODAS LAS FOTOS OCUPAN EXACTAMENTE LO MISMO.
+
+        `aspect-ratio` estaba puesto desde antes, pero no alcanzaba: la foto iba
+        DENTRO del flujo con `height: 100%`, y ese 100% no se puede resolver
+        contra un alto que a su vez sale de la proporción —es circular—. El
+        navegador lo trata como `auto`, dibuja la foto a su tamaño real y la caja
+        crece para no cortarla. Con una foto vertical de 400x900, una tarjeta de
+        338px de ancho terminaba con 765px de alto en vez de 232: tres veces más
+        que la de al lado, y la grilla quedaba escalonada.
+
+        Sacando la foto del flujo (`position: absolute`), la caja no tiene nada
+        que la empuje y su alto sale solamente de la proporción. `overflow:
+        hidden` recorta lo que sobra, y `object-fit: cover` decide qué parte se
+        ve: se pierde un pedazo de las fotos muy verticales, que es lo correcto
+        —mejor recortar una foto que romper la grilla entera—.
+      */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", overflow: "hidden", background: "var(--fw-surface-3)" }}>
         {car.photos?.length > 0
-          ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <img src={car.photos[0]} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
         {/* La categoría va PEGADA a la esquina de la foto, no flotando a 12px de
             los dos bordes con forma de píldora. Apoyada en la esquina se lee como

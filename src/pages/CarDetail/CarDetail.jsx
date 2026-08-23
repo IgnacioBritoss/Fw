@@ -33,6 +33,7 @@ import { addMonths, format } from "date-fns";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import Avatar from "../../components/Avatar";
+import FlechaFoto from "../../components/FlechaFoto";
 import Aviso from "../../components/Aviso";
 import { initialsOf, nameOf } from "../../services/people";
 import { localeFor, shortDate } from "../../i18n/dates";
@@ -155,19 +156,44 @@ const s = {
     fontWeight: 700, fontSize: 15, color: "var(--fw-text)",
     borderTop: "1px solid var(--fw-border)", paddingTop: 10, marginTop: 6,
   },
+  /*
+    LAS FLECHAS DE PASAR FOTOS.
+
+    Tenían dos cosas mal. Una: el fondo era un blanco escrito a mano, así que en
+    modo oscuro quedaba un botón blanco brillante encima de una foto, sobre una
+    pantalla oscura; era lo que más saltaba a la vista de toda la pantalla siendo
+    un control secundario. Ahora sale de la paleta y se adapta.
+
+    La otra: la flecha era el CARÁCTER "‹", una comilla angular. No es una
+    flecha: no tiene punta, su grosor y su altura dependen de la tipografía del
+    sistema, y no queda centrada en el redondel porque los caracteres traen su
+    propio espacio arriba y abajo. Ahora es la misma flecha dibujada que usa el
+    globo del mapa, así las dos se ven igual en toda la app.
+  */
   arrowBtn: {
     position: "absolute", top: "50%", transform: "translateY(-50%)",
     width: 44, height: 44, borderRadius: "50%",
-    background: "rgba(255,255,255,.92)", border: "none", cursor: "pointer",
-    fontSize: 22, fontWeight: 700, display: "flex",
-    alignItems: "center", justifyContent: "center",
+    background: "var(--fw-vidrio)", color: "var(--fw-vidrio-texto)",
+    border: "none", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: 0,
     boxShadow: "0 2px 10px rgba(0,0,0,.15)",
   },
+  /*
+    Los puntitos de abajo, que dicen en qué foto vas.
+
+    El activo era `var(--fw-surface)`: en modo claro eso es blanco y se veía, pero
+    en oscuro es el gris de las tarjetas, así que quedaba una barrita gris oscura
+    encima de una foto y no se distinguía de las inactivas. Los puntitos están
+    apoyados sobre una FOTO, no sobre una superficie de la app: ahí lo que se lee
+    es el blanco, en los dos modos. La sombra los despega de las fotos claras.
+  */
   dot: {
     height: 8, borderRadius: 4, cursor: "pointer",
-    transition: "all .2s", background: "rgba(255,255,255,.5)",
+    transition: "all .2s", background: "rgba(255,255,255,.45)",
+    boxShadow: "0 1px 3px rgba(0,0,0,.35)",
   },
-  dotActive: { background: "var(--fw-surface)" },
+  dotActive: { background: "#fff" },
   thumbnail: {
     width: 88, height: 60, objectFit: "cover",
     borderRadius: 8, cursor: "pointer", flexShrink: 0, transition: "all .15s",
@@ -515,8 +541,12 @@ export default function CarDetail() {
         ) : (
           <>
             <button style={s.btn} onClick={startEdit}>{tr("car.editListing")}</button>
+            {/* Rojo lleno y letra blanca. Con el fondo transparente y el borde
+                rosa claro, en oscuro quedaba una letra roja apagada sobre el gris
+                de la tarjeta: se leía mal justo en el botón que borra la
+                publicación, que es el que más claro tiene que quedar. */}
             <button
-              style={{ width: "100%", padding: "11px", background: "transparent", border: "2px solid var(--fw-red-line)", color: "var(--fw-red-text)", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+              style={{ width: "100%", padding: "12px", background: "var(--fw-red)", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
             >
@@ -603,12 +633,12 @@ export default function CarDetail() {
             <>
               <button
                 style={{ ...s.arrowBtn, left: isMobile ? 8 : 16, width: isMobile ? 36 : 44, height: isMobile ? 36 : 44 }}
-                onClick={prevPhoto}
-              >‹</button>
+                onClick={prevPhoto} aria-label={tr("car.prevPhoto")}
+              ><FlechaFoto hacia="izq" size={isMobile ? 15 : 18} /></button>
               <button
                 style={{ ...s.arrowBtn, right: isMobile ? 8 : 16, width: isMobile ? 36 : 44, height: isMobile ? 36 : 44 }}
-                onClick={nextPhoto}
-              >›</button>
+                onClick={nextPhoto} aria-label={tr("car.nextPhoto")}
+              ><FlechaFoto hacia="der" size={isMobile ? 15 : 18} /></button>
               <div style={{ position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
                 {photos.map((_, i) => (
                   <div key={i} onClick={() => setCurrentPhoto(i)}

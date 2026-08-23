@@ -91,9 +91,13 @@ export default function Favorites() {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
           {visible.map(car => (
             <div key={car.id} style={t.card} onClick={() => navigate(`/cars/${car.id}`)}>
-              <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", background: "var(--fw-surface-3)" }}>
+              {/* La foto va fuera del flujo para que no estire la caja: con una
+                  foto vertical, el `height: 100%` de adentro no se puede resolver
+                  contra un alto que sale de la proporción, y la caja crecía hasta
+                  el tamaño real de la foto. Ver el comentario largo en Home. */}
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16/11", overflow: "hidden", background: "var(--fw-surface-3)" }}>
                 {car.photos?.length > 0
-                  ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={car.photos[0]} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                   : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 13 }}>{tr("common.noPhoto")}</div>}
                 <FavoriteButton listingId={car.id} />
                 {car.status !== "ACTIVE" && (

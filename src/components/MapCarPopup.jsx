@@ -21,21 +21,14 @@ import { useNavigate } from "react-router-dom";
 import FavoriteButton from "./FavoriteButton";
 import { priceOf } from "../services/listings";
 import { useI18n } from "../i18n/core";
+import FlechaFoto from "./FlechaFoto";
 
 const ALTO_FOTO = 132;
-
-/** La flecha de pasar fotos. Dibujada, para que se vea igual en todos lados. */
-const Flecha = ({ hacia }) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d={hacia === "izq" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
-  </svg>
-);
 
 const botonFlecha = (lado) => ({
   position: "absolute", top: "50%", [lado]: 6, transform: "translateY(-50%)",
   width: 26, height: 26, minHeight: 26, borderRadius: "50%",
-  border: "none", padding: 0, background: "rgba(255,255,255,.92)", color: "var(--fw-text-2)",
+  border: "none", padding: 0, background: "var(--fw-vidrio)", color: "var(--fw-vidrio-texto)",
   display: "flex", alignItems: "center", justifyContent: "center",
   boxShadow: "0 1px 5px rgba(0,0,0,.25)", cursor: "pointer", zIndex: 3,
 });
@@ -88,9 +81,9 @@ export default function MapCarPopup({ car, precio }) {
         {varias && (
           <>
             <button type="button" onClick={pasar(-1)} style={botonFlecha("left")}
-              aria-label={tr("car.prevPhoto")}><Flecha hacia="izq" /></button>
+              aria-label={tr("car.prevPhoto")}><FlechaFoto hacia="izq" /></button>
             <button type="button" onClick={pasar(1)} style={botonFlecha("right")}
-              aria-label={tr("car.nextPhoto")}><Flecha hacia="der" /></button>
+              aria-label={tr("car.nextPhoto")}><FlechaFoto hacia="der" /></button>
             {/* Los puntitos: dicen cuántas fotos hay sin ocupar lugar. */}
             <div style={{
               position: "absolute", left: 0, right: 0, bottom: 7,
