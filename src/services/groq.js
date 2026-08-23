@@ -157,6 +157,9 @@ export async function groqVision(imageDataUrl) {
     isVehicle: null,
     code: failure?.code || (notConfigured(failure) ? "not_configured" : "upstream_error"),
     reason: failure?.message || null,
+    // El texto crudo del proveedor. Es lo único que dice qué pasó de verdad, y
+    // sin él "no se pudo revisar" no le sirve a nadie para arreglar nada.
+    detail: failure?.payload?.detail || failure?.detail || null,
   };
 }
 
