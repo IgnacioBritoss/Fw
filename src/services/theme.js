@@ -250,8 +250,84 @@ function ponerEstilos() {
     /* Los campos del navegador (calendario nativo, selects) heredan el color
        del sistema: sin esto quedan blancos en medio de la pantalla oscura. */
     html.fw-dark { color-scheme: dark; }
+
+    ${reglasDeLectura()}
   `;
   document.head.appendChild(el);
+}
+
+/*
+  ─────────────────────────── MODO LECTURA ───────────────────────────────────
+
+  Una opción de Apariencia que cambia cómo se lee TODA la app. Está pensada
+  para quien tiene dislexia, pero no solo: también sirve para leer cansado, en
+  el colectivo, o con una pantalla chica.
+
+  QUÉ CAMBIA Y POR QUÉ. Se suele creer que esto es "poner una tipografía para
+  dislexia" y listo. No es así: los estudios sobre esas tipografías dan
+  resultados mezclados, y lo que sí muestra mejoras de forma consistente es la
+  FORMA DEL TEXTO —cuánto aire hay entre letras, entre palabras y entre
+  renglones—. Así que acá se hacen las dos cosas, y el peso está puesto en la
+  segunda:
+
+   · Más espacio entre letras y entre palabras. Es lo que evita que dos
+     palabras cortas se lean como una sola.
+   · Más alto de renglón. Al saltar de línea, el ojo tiene que encontrar el
+     principio del renglón siguiente; apretados, se saltea o repite líneas.
+   · Nada de cursiva. La cursiva deforma las letras y es de lo que más cuesta.
+   · Un poco más de cuerpo, sin agrandar los botones ni romper el diseño.
+
+  LA TIPOGRAFÍA. Va una lista, no una sola: primero las diseñadas para esto
+  (OpenDyslexic, Lexend, Atkinson Hyperlegible), que se usan solo si la persona
+  las tiene instaladas, y si no cae en Verdana y Tahoma, que están en casi toda
+  computadora y son de las más legibles que vienen de fábrica. No se descarga
+  ningún archivo: una fuente de afuera agrega peso, tarda, y deja el texto sin
+  dibujar hasta que llega. Esta opción tiene que estar puesta al instante.
+
+  DÓNDE NO SE APLICA. En los números que se leen de a uno —el código de seis
+  dígitos, la patente—, donde el espaciado extra los separa tanto que dejan de
+  verse como un número. Ahí se respeta lo que ya tenían.
+*/
+function reglasDeLectura() {
+  return `
+    html.fw-lectura, html.fw-lectura body {
+      font-family: "OpenDyslexic", "Lexend", "Atkinson Hyperlegible",
+        Verdana, Tahoma, "Trebuchet MS", system-ui, sans-serif;
+    }
+    /* Va sobre todo lo que hereda la tipografía, incluidos los campos y los
+       botones, que en el navegador NO heredan por su cuenta. */
+    html.fw-lectura *:not(svg):not(svg *) {
+      font-family: inherit !important;
+      letter-spacing: .035em;
+      word-spacing: .12em;
+      line-height: 1.75;
+    }
+    /* La cursiva es de lo que más cuesta: se pasa a redonda. Se distingue
+       igual, porque en la app siempre va acompañada de un color o un tamaño
+       distinto. */
+    html.fw-lectura i, html.fw-lectura em,
+    html.fw-lectura [style*="italic"] {
+      font-style: normal !important;
+    }
+    /* Un poco más grande, pero solo el texto: el 6% no mueve ninguna caja de
+       lugar y se nota al leer. */
+    html.fw-lectura body { font-size: 106%; }
+    /* Los números que se leen de a un dígito quedan como estaban: separados
+       más de la cuenta dejan de verse como un número. */
+    html.fw-lectura input[inputmode="numeric"],
+    html.fw-lectura input[type="number"] {
+      letter-spacing: normal;
+      word-spacing: normal;
+    }
+  `;
+}
+
+/** Prende o apaga el modo lectura. */
+export function applyReadableFont(on) {
+  ponerEstilos();
+  const root = document.documentElement;
+  if (on) root.classList.add("fw-lectura");
+  else root.classList.remove("fw-lectura");
 }
 
 /** Prende o apaga el modo oscuro. */
@@ -267,12 +343,16 @@ export function applyDarkMode(on) {
   window.setTimeout(() => root.classList.remove("fw-cambiando"), 300);
 }
 
-/** Lee la preferencia guardada y la aplica, al arrancar la app. */
+/** Lee las preferencias guardadas y las aplica, al arrancar la app. */
 export function initTheme() {
-  let dark = false;
-  try { dark = !!(JSON.parse(localStorage.getItem("fw_prefs") || "{}").dark); } catch { dark = false; }
+  let prefs = {};
+  try { prefs = JSON.parse(localStorage.getItem("fw_prefs") || "{}"); } catch { prefs = {}; }
   ponerEstilos();
   // Sin el fundido: al arrancar no hay nada de qué venir, y la transición haría
   // que la primera pintada se vea cambiar de color.
-  if (dark) document.documentElement.classList.add("fw-dark");
+  if (prefs.dark) document.documentElement.classList.add("fw-dark");
+  // El modo lectura también se aplica acá, antes del primer dibujo. Prendiéndolo
+  // después, quien lo necesita ve un instante la pantalla como NO puede leerla,
+  // y encima el texto salta de lugar al reacomodarse.
+  if (prefs.lectura) document.documentElement.classList.add("fw-lectura");
 }
