@@ -27,20 +27,30 @@ import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
 import { MARCAS, modelosDe } from "../../data/sugerencias";
 
-// Colores predefinidos que se ofrecen como "chips" al elegir el color del auto.
+/**
+ * Los colores que se ofrecen de entrada, al elegir el color del auto.
+ *
+ * SON SEIS Y NO DOCE. Eran doce, y entre ellos Marino (que al lado de Azul nadie
+ * distingue), Bordo, Beige, Naranja y Amarillo. Poner doce redondeles obliga a
+ * mirarlos todos aunque el auto sea blanco, que es el caso de casi la mitad de
+ * los autos que andan dando vueltas.
+ *
+ * Estos seis cubren la enorme mayoría del parque argentino, y los raros no se
+ * pierden: el botón de al lado abre el selector del sistema y se elige el tono
+ * exacto, que es mejor que una lista larga de aproximaciones —un naranja de
+ * fábrica no es "el" naranja de un redondel—.
+ *
+ * Los tonos son los de un auto de verdad, no colores de paleta: el blanco tira a
+ * hueso, el negro no es negro puro y el gris no es el gris del medio, porque
+ * ninguna carrocería lo es.
+ */
 const PRESET_COLORS = [
-  { name: "Blanco", hex: "#F5F5F5" },
-  { name: "Negro", hex: "#1a1a1a" },
-  { name: "Gris", hex: "#808080" },
-  { name: "Plata", hex: "#C0C0C0" },
-  { name: "Rojo", hex: "#CC2222" },
-  { name: "Azul", hex: "#1B4FA0" },
-  { name: "Marino", hex: "#0a1f5c" },
-  { name: "Verde", hex: "#2D7A2D" },
-  { name: "Naranja", hex: "#E87722" },
-  { name: "Bordo", hex: "#6B2737" },
-  { name: "Beige", hex: "#D4B896" },
-  { name: "Amarillo", hex: "#EAC300" },
+  { name: "Blanco", hex: "#F2F2EF" },
+  { name: "Negro", hex: "#1B1B1D" },
+  { name: "Gris", hex: "#77797C" },
+  { name: "Plata", hex: "#C4C6C8" },
+  { name: "Rojo", hex: "#B92B27" },
+  { name: "Azul", hex: "#1D3F8C" },
 ];
 
 const s = {
@@ -98,8 +108,38 @@ function validateArgentinePlate(plate) {
 // Revisa las specs numéricas y devuelve avisos si algún valor está fuera de un
 // rango razonable (ej: 20 puertas). Evita datos absurdos, sobre todo los que
 // completa la IA. No bloquea: solo advierte.
+/**
+ * Hasta qué año se acepta un auto.
+ *
+ * Se calcula, no se escribe. Estaba puesto a mano en el `max` del campo y decía
+ * 2025: para cuando llegó 2026 ya estaba viejo, y nadie se iba a acordar de
+ * subirlo cada primero de enero. Un número escrito a mano en un campo de fecha
+ * siempre termina así.
+ */
+const ANIO_MAXIMO = new Date().getFullYear();
+
+/**
+ * Y desde cuándo. 1950 no es un capricho: más atrás son autos de colección, que
+ * no es lo que se alquila acá, y el backend igual corta en 1900.
+ */
+const ANIO_MINIMO = 1950;
+
 function getSpecWarnings(form) {
   const checks = [
+    /*
+      EL AÑO VA PRIMERO, Y ES LA RAZÓN POR LA QUE ESTA LISTA CAMBIÓ.
+
+      El campo tenía `min` y `max` de HTML, que no frenan nada: son una sugerencia
+      para las flechitas y para la validación nativa del navegador, que acá no
+      corre porque el formulario no se envía con submit. Se podía escribir 3000 y
+      pasaba los cuatro pasos sin que nadie dijera nada.
+
+      Recién al confirmar, el backend contestaba "year must not be greater than
+      2100" —en inglés, con la app en castellano— después de haber cargado las
+      fotos, el título, la descripción, el precio y la ubicación. Todo ese trabajo
+      para enterarse de algo que se sabía en el primer campo del primer paso.
+    */
+    ["year", ANIO_MINIMO, ANIO_MAXIMO, "publish.year"],
     ["doors", 2, 7, "spec.doors"],
     ["seats", 2, 9, "spec.seats"],
     ["horsePower", 40, 1500, "spec.powerHp"],
@@ -248,6 +288,7 @@ export default function PublishCar() {
   }, [listingForm.locationText]);
 
   const specWarnings = getSpecWarnings(vehicleForm);
+  const anioFueraDeRango = specWarnings.some((w) => w.label === "publish.year");
 
   // IA #1 — Autocompletar specs: le pide al modelo las especificaciones técnicas
   // del auto (marca/modelo/año) y rellena el formulario. Cachea el resultado en
@@ -308,30 +349,69 @@ Si no sabés un dato, usá null.`;
     setPricingSuggestion(null);
     setError("");
     const location = listingForm.locationText || "Argentina";
-    const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
+    // La categoría entra en la clave: un mismo modelo cargado como SUV o como
+    // hatchback no vale lo mismo, y sin esto la respuesta vieja seguía pegada.
+    const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.category}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
     let data;
     const cached = localStorage.getItem(cacheKey);
     if (cached) { try { data = JSON.parse(cached); } catch { data = null; } }
     if (!data) {
       try {
-        const prompt = `Sos un experto en el mercado de alquiler de autos entre particulares en Argentina en 2025.
-Los precios de alquiler diario en Argentina rondan entre $30.000 y $150.000 ARS por día dependiendo del vehículo.
-Un auto compacto cuesta alrededor de $35.000-$50.000 ARS/día. Un SUV o pickup $60.000-$100.000 ARS/día. Autos premium $100.000-$150.000 ARS/día.
+        /*
+          POR QUÉ ESTE TEXTO CAMBIÓ ENTERO
 
-Recomendá un precio por día en ARS para: ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}, transmisión ${vehicleForm.transmission}, combustible ${vehicleForm.fuel}, ubicado en ${location}.
+          El anterior le pasaba al modelo las bandas ya hechas: "un compacto
+          cuesta $35.000-$50.000, un SUV $60.000-$100.000, un premium
+          $100.000-$150.000". Con eso no queda nada que estimar: el modelo lee la
+          banda que le corresponde al auto y devuelve el número del medio. Por eso
+          daba SIEMPRE el mismo precio —era el precio que le habíamos dictado
+          nosotros— y por eso dos autos muy distintos del mismo segmento salían
+          idénticos. No estaba tasando: estaba copiando.
 
-Devolvé SOLO un JSON válido sin texto adicional:
+          Ahora no se le da ningún precio. Se le pide que primero estime cuánto
+          vale el auto usado, que es algo que sí puede razonar y que cambia con
+          cada marca, modelo y año, y recién después que saque el alquiler diario
+          como un porcentaje de ese valor. Así dos autos distintos dan números
+          distintos porque parten de valores distintos, y la justificación puede
+          decir de dónde salió el número en vez de repetir una frase hecha.
+
+          El año sale del reloj: el anterior decía "en 2025" escrito a mano, y un
+          año escrito a mano en un texto que habla de precios envejece mal.
+        */
+        const prompt = `Sos tasador de alquiler de autos entre particulares en Argentina. Estamos en ${ANIO_MAXIMO}.
+
+Auto: ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}
+Segmento: ${vehicleForm.category || "sin especificar"}
+Caja: ${vehicleForm.transmission} · Combustible: ${vehicleForm.fuel} · Asientos: ${vehicleForm.seats}
+Ubicación: ${location}
+
+Hacé esto en dos pasos, sin mostrarme el razonamiento:
+1. Estimá cuánto vale HOY ese auto usado en el mercado argentino, en pesos.
+2. El alquiler diario entre particulares ronda entre el 0,15% y el 0,30% de ese
+   valor: más cerca del 0,30% en autos baratos y muy buscados, más cerca del
+   0,15% en autos caros.
+
+Ajustá por: la ubicación (en CABA y zonas turísticas se paga más que en el
+interior), la antigüedad (arriba de diez años baja bastante), la caja automática
+(se paga más) y el segmento (una SUV o una pickup se pagan más que un hatchback).
+
+Devolvé SOLO un JSON válido, sin texto alrededor:
 {
-  "precio_min": número entero en ARS,
-  "precio_max": número entero en ARS,
-  "precio_recomendado": número entero en ARS,
-  "justificacion": "texto breve de 1-2 oraciones"
+  "valor_estimado": entero en ARS, lo que estimaste en el paso 1,
+  "precio_min": entero en ARS por día,
+  "precio_max": entero en ARS por día,
+  "precio_recomendado": entero en ARS por día,
+  "justificacion": "una o dos oraciones que digan el valor estimado del auto y por qué ese precio"
 }
 
-Importante: los números deben ser valores reales en pesos argentinos, no en dólares ni en valores menores a 10000.`;
+Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos por DÍA, no en dólares.`;
         const response = await groqChat([{ role: "user", content: prompt }], 0);
         data = extractJSON(response);
-        if (!data.precio_recomendado || data.precio_recomendado < 5000) throw new Error(tr("publish.errBadPrice"));
+        // Un techo además del piso: un modelo que se confunde de moneda o que
+        // devuelve el valor del auto en vez del alquiler manda un número enorme,
+        // y eso quedaba cargado en el precio por día sin que nada lo frenara.
+        const p = Number(data.precio_recomendado);
+        if (!p || p < 5000 || p > 2000000) throw new Error(tr("publish.errBadPrice"));
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
         setError(tr("publish.errPriceAi"));
@@ -385,6 +465,26 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  /**
+   * Por qué NO se pudo revisar una foto, en una frase.
+   *
+   * El cartel decía "Sin revisar" y nada más. Con eso, la única forma de saber si
+   * faltaba la clave en el servidor, si se había acabado la cuota o si la IA
+   * había contestado cualquier cosa era abrir la consola del navegador y leer la
+   * respuesta cruda. Y como no se sabía el motivo, tampoco se sabía si tenía
+   * sentido apretar "Reintentar": con la clave sin cargar, reintentar diez veces
+   * da diez veces lo mismo.
+   */
+  const porQueNoSeRevisó = (i) => {
+    const v = photoValidations[i];
+    const claves = {
+      not_configured: "ai.whyNotConfigured",
+      rate_limited: "ai.whyRateLimited",
+      unreadable: "ai.whyUnreadable",
+    };
+    return tr(claves[v?.code] || "ai.whyUpstream");
   };
 
   /** Estado de una foto, en una sola palabra. */
@@ -684,7 +784,21 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             </div>
             <div style={s.field}>
               <label style={s.label}>{tr("publish.year")} *</label>
-              <input style={s.input} type="number" min="2000" max="2025" value={vehicleForm.year} onChange={(e) => setV("year", e.target.value)} />
+              <input
+                style={{ ...s.input, ...(anioFueraDeRango ? { borderColor: "var(--fw-red)" } : {}) }}
+                type="number" min={ANIO_MINIMO} max={ANIO_MAXIMO}
+                value={vehicleForm.year} onChange={(e) => setV("year", e.target.value)} />
+              {/* El aviso va acá abajo y no en el bloque de especificaciones, que
+                  está mucho más abajo en la pantalla: el error tiene que estar
+                  donde está el campo que lo causa, si no hay que ir a buscarlo. */}
+              {anioFueraDeRango && (
+                <div style={{ fontSize: 12, color: "var(--fw-red-text)", marginTop: 5 }}>
+                  {tr("publish.outOfRange", {
+                    label: tr("publish.year"), value: vehicleForm.year,
+                    min: ANIO_MINIMO, max: ANIO_MAXIMO,
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -739,10 +853,10 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                   </button>
                 );
               })}
-              <button type="button" title="Otro color" onClick={() => document.getElementById("fw-color-picker").click()}
+              <button type="button" title={tr("publish.otherColorTitle")} onClick={() => document.getElementById("fw-color-picker").click()}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
                 <div style={{ width: 30, height: 30, borderRadius: "50%", background: vehicleForm.color?.startsWith("#") ? vehicleForm.color : "conic-gradient(red,yellow,lime,cyan,blue,magenta,red)", border: vehicleForm.color?.startsWith("#") ? "3px solid var(--fw-blue)" : "2px solid var(--fw-border-2)", boxShadow: vehicleForm.color?.startsWith("#") ? "0 0 0 2px #bfdbfe" : "none", transition: "all .15s" }} />
-                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "var(--fw-blue)" : "var(--fw-text-3)", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>Otro</span>
+                <span style={{ fontSize: 10, color: vehicleForm.color?.startsWith("#") ? "var(--fw-blue)" : "var(--fw-text-3)", fontWeight: vehicleForm.color?.startsWith("#") ? 700 : 400 }}>{tr("publish.otherColor")}</span>
               </button>
               <input id="fw-color-picker" type="color" style={{ display: "none" }}
                 value={vehicleForm.color?.startsWith("#") ? vehicleForm.color : "#ffffff"}
@@ -751,7 +865,7 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
             {vehicleForm.color && (
               <div style={{ marginTop: 8, fontSize: 12, color: "var(--fw-text-3)", display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 14, height: 14, borderRadius: "50%", background: colorHex, border: "1px solid var(--fw-border-2)", flexShrink: 0 }} />
-                <span>Color: <strong style={{ color: "var(--fw-text)" }}>{vehicleForm.color}</strong></span>
+                <span>{tr("publish.colorPicked")}: <strong style={{ color: "var(--fw-text)" }}>{vehicleForm.color}</strong></span>
               </div>
             )}
           </div>
@@ -884,6 +998,11 @@ Importante: los números deben ser valores reales en pesos argentinos, no en dó
                     <div style={{ position: "absolute", inset: 0, border: "2px solid #f59e0b", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div style={{ margin: 6, background: "var(--fw-amber)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start", pointerEvents: "none" }}>
                         {tr("publish.unreviewed")}
+                      </div>
+                      {/* El motivo, arriba del botón: es lo que dice si vale la
+                          pena reintentar o si hay que ir a arreglar el servidor. */}
+                      <div style={{ marginTop: "auto", background: "rgba(180,83,9,.9)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "4px 6px", textAlign: "center", fontWeight: 600, pointerEvents: "none" }}>
+                        {porQueNoSeRevisó(i)}
                       </div>
                       <button
                         onClick={(ev) => { ev.stopPropagation(); revisarFoto(photos[i].url, i); }}

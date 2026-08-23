@@ -247,16 +247,26 @@ function Asistente() {
 
       setMessages((prev) => [...prev, { role: "assistant", text: responseText }]);
     } catch (err) {
-      const isRateLimit = err.message?.includes("429") || err.message?.toLowerCase().includes("rate");
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: isRateLimit
-            ? tr("chat.rateLimit")
-            : tr("chat.connectError"),
-        },
-      ]);
+      /*
+        WILI DICE QUÉ PASÓ, NO "no me pude conectar".
+
+        Antes cualquier fallo que no fuera exceso de pedidos salía como un
+        genérico "no me pude conectar". Eso es justo lo que hizo difícil darse
+        cuenta la vez que la IA se cayó de verdad: el servidor estaba contestando
+        con todas las letras que le faltaba la clave, y acá se tiraba a la basura
+        para escribir una frase que no dice nada y que además apunta al lado
+        equivocado —parece un problema de internet de la persona—.
+
+        El servicio manda un `code` en cada error; lo único que hay que hacer es
+        no perderlo.
+      */
+      const porCodigo = {
+        not_configured: "ai.whyNotConfigured",
+        rate_limited: "chat.rateLimit",
+      };
+      const esPorCuota = err.message?.includes("429") || err.message?.toLowerCase().includes("rate");
+      const clave = porCodigo[err?.code] || (esPorCuota ? "chat.rateLimit" : "chat.connectError");
+      setMessages((prev) => [...prev, { role: "assistant", text: tr(clave) }]);
     } finally {
       setLoading(false);
       requestAnimationFrame(() => {
