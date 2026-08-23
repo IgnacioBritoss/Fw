@@ -500,6 +500,27 @@ export async function deleteListing(id) {
   return apiFetch(`/listings/${id}`, { method: "DELETE" });
 }
 
+/**
+ * Guarda el orden de las fotos de una publicación, para todo el mundo.
+ *
+ * Se manda la lista de URLs en el orden nuevo y el backend le pone a cada foto
+ * el número de posición que le toca. Va la lista entera y no "moví la 3 a la 1"
+ * porque el que mira puede haber reordenado varias veces antes de guardar, y
+ * porque una lista completa deja el resultado igual sin importar cuántas veces
+ * se reintente.
+ *
+ * OJO: esta ruta es nueva. Mientras el backend desplegado no la tenga, contesta
+ * 404 (o 405), y quien llama TIENE que volver atrás lo que mostró en pantalla:
+ * dejar las fotos dadas vuelta y no avisar sería la peor versión de las dos,
+ * porque el dueño se va convencido de que el orden quedó guardado.
+ */
+export async function reorderListingPhotos(id, urls) {
+  return apiFetch(`/listings/${id}/photos`, {
+    method: "PATCH",
+    body: JSON.stringify({ photos: urls }),
+  });
+}
+
 // ── MEDIA ──────────────────────────────────────────────────────
 // Registra en el backend una foto/archivo ya subido (p. ej. a Cloudinary).
 export async function createMediaAsset(data) {

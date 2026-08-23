@@ -15,7 +15,7 @@
 //   · El desglose de precios usaba "3 días" fijos aunque el usuario no hubiera
 //     elegido ninguna fecha.
 // ============================================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReportModal from "../../components/ReportModal";
 import { useParams, useNavigate } from "react-router-dom";
 import { mockCars } from "../../data/mockData";
@@ -25,7 +25,9 @@ import {
   getListingById, getListingAvailability, startConversation,
   updateListing, deleteListing, getListingReviews,
   getPriceChangeStatus, requestPriceChange, confirmPriceChange, cancelPriceChange,
+  reorderListingPhotos,
 } from "../../services/api";
+import { useOrdenArrastrando, moverEnLista, indiceTrasMover } from "../../hooks/useOrdenArrastrando";
 import FavoriteButton from "../../components/FavoriteButton";
 import OccupiedDates from "../../components/OccupiedDates";
 import { normalizeListing, transmissionLabel, fuelLabel } from "../../services/listings";
@@ -197,6 +199,18 @@ const s = {
   thumbnail: {
     width: 88, height: 60, objectFit: "cover",
     borderRadius: 8, cursor: "pointer", flexShrink: 0, transition: "all .15s",
+    display: "block",
+  },
+  ordenAviso: {
+    fontSize: 12.5, color: "var(--fw-text-3)", margin: "12px 0 0",
+    display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+  },
+  ordenEstado: { display: "inline-flex", alignItems: "center", gap: 5, marginLeft: 4 },
+  portadaTag: {
+    position: "absolute", left: 4, bottom: 4,
+    background: "var(--fw-blue)", color: "#fff",
+    borderRadius: 20, padding: "2px 7px", fontSize: 9.5, fontWeight: 700,
+    letterSpacing: ".02em", pointerEvents: "none",
   },
 };
 
@@ -232,6 +246,15 @@ export default function CarDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [unavailableDates, setUnavailableDates] = useState([]);
   const [editError, setEditError] = useState("");
+  // Reordenar las fotos: "idle" | "guardando" | "guardado".
+  const [estadoOrden, setEstadoOrden] = useState("idle");
+  // El orden que está guardado en el servidor. Se llena en el primer movimiento
+  // de una tanda y sirve para volver atrás si el guardado falla.
+  const ordenPrevio = useRef(null);
+  // Las fotos como están AHORA en pantalla. Va por ref y no por el estado porque
+  // quien lo lee es el `soltar` del arrastre, y ahí hace falta la lista de este
+  // instante, no la del render en el que se armó el manejador.
+  const fotosRef = useRef([]);
 
   // ¿El id corresponde a un auto de ejemplo? En ese caso no se le pregunta nada
   // al backend: no existe ahí, y preguntarle solo generaba errores 404 en la
@@ -398,6 +421,76 @@ export default function CarDetail() {
     }
   };
 
+  /*
+    ─────────── REORDENAR LAS FOTOS DE UNA PUBLICACIÓN YA CREADA ───────────
+
+    La primera foto es la portada: es la que se ve en el buscador, en el inicio,
+    en el globo del mapa y en "Mis autos". Hasta acá solo se podía elegir al
+    publicar, y quedaba clavada: la única forma de cambiar la portada era borrar
+    el aviso y cargarlo de nuevo.
+
+    Ahora, en modo edición, la fila de miniaturas se agarra y se acomoda. La que
+    quede primera pasa a ser la portada, y el orden se guarda para todos, no solo
+    para el que lo movió: al soltar se manda la lista entera al servidor.
+
+    SE GUARDA AL SOLTAR, no con un botón. Un botón "Guardar orden" aparte del que
+    ya guarda precio y descripción es una segunda cosa que se puede olvidar de
+    apretar, y el resultado de olvidarse es creer que quedó ordenado.
+  */
+  const moverFoto = (desde, hasta) => {
+    const lista = fotosRef.current;
+    if (desde === hasta || !lista[desde] || !lista[hasta]) return;
+    if (ordenPrevio.current === null) ordenPrevio.current = lista;
+    // El orden se lleva en la ref además de en el estado: un arrastre dispara
+    // varios movimientos seguidos y React puede no haber vuelto a dibujar entre
+    // uno y otro. Leyendo del estado, el segundo movimiento partiría del orden
+    // viejo y desharía el primero.
+    const nuevas = moverEnLista(lista, desde, hasta);
+    fotosRef.current = nuevas;
+    setCar((c) => ({ ...c, photos: nuevas }));
+    // La foto grande sigue siendo la misma foto: se la sigue por su posición
+    // nueva en vez de dejar el índice quieto apuntando a otra.
+    setCurrentPhoto((p) => indiceTrasMover(p, desde, hasta));
+  };
+
+  const guardarOrdenDeFotos = async () => {
+    const previo = ordenPrevio.current;
+    const ahora = fotosRef.current;
+    ordenPrevio.current = null;
+    // Soltó donde estaba: no hay orden nuevo que guardar.
+    if (!previo || previo.join("|") === ahora.join("|")) return;
+
+    setEstadoOrden("guardando");
+    try {
+      await reorderListingPhotos(id, ahora);
+      setEstadoOrden("guardado");
+    } catch (err) {
+      // No se pudo guardar: se DESHACE lo que se ve. Dejar las fotos dadas
+      // vuelta en pantalla sería mentirle al dueño, que se iría convencido de
+      // que cambió la portada cuando en el aviso que ven los demás sigue igual.
+      setCar((c) => ({ ...c, photos: previo }));
+      fotosRef.current = previo;
+      setCurrentPhoto(0);
+      setEstadoOrden("idle");
+      // 404/405 = el servidor todavía no tiene esta ruta. Es un caso distinto de
+      // "falló": no hay nada que reintentar, así que se dice eso y no otra cosa.
+      setAviso(err?.status === 404 || err?.status === 405
+        ? tr("car.orderUnsupported")
+        : (err?.message || tr("car.orderFailed")));
+    }
+  };
+
+  const ordenFotos = useOrdenArrastrando(moverFoto, guardarOrdenDeFotos);
+
+  // "Orden guardado" es un acuse de recibo, no un estado: se muestra un momento
+  // y se va solo. Si se quedara fijo, en la próxima visita seguiría ahí diciendo
+  // que se guardó algo que se guardó ayer.
+  useEffect(() => {
+    if (estadoOrden !== "guardado") return undefined;
+    const reloj = setTimeout(() => setEstadoOrden("idle"), 2600);
+    return () => clearTimeout(reloj);
+  }, [estadoOrden]);
+
   if (loading) return <Spinner block label={tr("common.loading")} />;
 
   if (!car) return (
@@ -410,9 +503,17 @@ export default function CarDetail() {
   // ejemplo escritos a mano, iguales para todos los autos.
   const reviews = listingReviews;
   const photos = car.photos || [];
+  fotosRef.current = photos;
   // ¿El que mira es el dueño? El backend ya lo informa (isOwner) para no depender
   // de comparar ids que pueden venir vacíos.
   const isOwner = car.isOwnerFlag === true || (!!user?.id && user.id === car.ownerId);
+
+  // Las fotos se acomodan solo en modo edición, y solo el dueño. Fuera de ahí la
+  // fila sigue siendo lo que era —miniaturas para mirar—: si arrastrara siempre,
+  // cualquier toque que se corra un poco movería la portada del aviso sin que la
+  // persona se haya propuesto cambiar nada. Los autos de ejemplo no existen en el
+  // servidor, así que no hay orden que guardarles.
+  const puedeReordenar = isOwner && editing && !car.isMock && photos.length > 1;
 
   // Navegación circular de la galería (anterior / siguiente foto).
   const prevPhoto = () =>
@@ -653,16 +754,53 @@ export default function CarDetail() {
         </div>
 
         {photos.length > 1 && (
-          <div style={{ display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 4 }}>
-            {photos.map((p, i) => (
-              <img key={i} src={p} alt="" onClick={() => setCurrentPhoto(i)}
-                style={{
-                  ...s.thumbnail,
-                  border: i === currentPhoto ? "2px solid var(--fw-blue)" : "2px solid transparent",
-                  opacity: i === currentPhoto ? 1 : 0.6,
-                }} />
-            ))}
-          </div>
+          <>
+            {/* En modo edición la fila se acomoda arrastrando. El cartelito lo
+                dice: sin él, nadie descubre que las miniaturas se mueven. */}
+            {puedeReordenar && (
+              <div style={s.ordenAviso}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 9h14M5 15h14" /><path d="m8 6-3 3 3 3" /><path d="m16 12 3 3-3 3" />
+                </svg>
+                <span>{tr("car.dragToOrder")}</span>
+                {estadoOrden === "guardando" && (
+                  <span style={s.ordenEstado}><Spinner size={11} /> {tr("car.savingOrder")}</span>
+                )}
+                {estadoOrden === "guardado" && (
+                  <span style={{ ...s.ordenEstado, color: "var(--fw-green)" }}>✓ {tr("car.orderSaved")}</span>
+                )}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginTop: 10, overflowX: "auto", paddingBottom: 4 }}>
+              {photos.map((p, i) => (
+                <div
+                  key={p}
+                  {...(puedeReordenar ? ordenFotos.props(i) : {})}
+                  // Un arrastre termina en un clic para el navegador. Sin esta
+                  // guarda, acomodar una foto también la elegía como la grande.
+                  onClick={() => { if (!ordenFotos.fueArrastre()) setCurrentPhoto(i); }}
+                  style={{
+                    position: "relative", flexShrink: 0, lineHeight: 0,
+                    ...(puedeReordenar ? ordenFotos.estilo(i) : { cursor: "pointer" }),
+                  }}
+                >
+                  <img src={p} alt="" draggable={false}
+                    style={{
+                      ...s.thumbnail,
+                      border: i === currentPhoto ? "2px solid var(--fw-blue)" : "2px solid transparent",
+                      opacity: i === currentPhoto ? 1 : 0.6,
+                    }} />
+                  {/* La primera es la portada: la que ven los demás en el
+                      buscador y en el mapa. Se dice acá para que mover una foto
+                      al principio sea una decisión y no una casualidad. */}
+                  {puedeReordenar && i === 0 && (
+                    <span style={s.portadaTag}>{tr("car.coverPhoto")}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
