@@ -63,6 +63,15 @@ const s = {
   cardMobile: { background: "var(--fw-surface)", borderRadius: 14, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,.05)", marginBottom: 16, border: "1px solid var(--fw-line-soft)" },
   sectionTitle: { fontSize: 13, fontWeight: 700, color: "var(--fw-text-4)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--fw-line-soft)" },
   field: { marginBottom: 16 },
+  sugerenciaFila: {
+    marginTop: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+  },
+  sugerenciaTexto: { fontSize: 12, color: "var(--fw-text-3)" },
+  sugerenciaBoton: {
+    padding: "3px 10px", borderRadius: 20, fontSize: 11.5, fontWeight: 700,
+    background: "var(--fw-blue-bg-2)", color: "var(--fw-blue-text)",
+    border: "1px solid var(--fw-blue-line, transparent)", cursor: "pointer",
+  },
   label: { display: "block", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 6 },
   input: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, outline: "none", color: "var(--fw-text)", boxSizing: "border-box", background: "var(--fw-surface)" },
   select: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, background: "var(--fw-surface)", color: "var(--fw-text)" },
@@ -417,16 +426,69 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
         // tiene que devolver un objeto y nada más. Sin esto, los que razonan
         // antes de contestar escribían el razonamiento primero y no se podía
         // interpretar nada.
-        const response = await groqChat([{ role: "user", content: prompt }], 0, { json: true });
-        data = extractJSON(response);
+        /*
+          SE PREGUNTA DOS VECES ANTES DE DARSE POR VENCIDO.
+
+          El primer pedido se caía por cosas de un momento —el modelo tardó de
+          más, el proveedor devolvió un 502— y el botón contestaba "no se pudo
+          obtener la sugerencia" como si fuera algo definitivo. Apretarlo de
+          nuevo funcionaba, o sea que el reintento lo estaba haciendo la persona
+          a mano sin saber que servía. Ahora lo hace el botón.
+
+          El segundo intento va SIN pedir JSON obligatorio: si lo que falló fue
+          justamente que el modelo no acepta ese formato, repetirlo igual da lo
+          mismo. El texto se recorta con extractJSON, que para eso está.
+        */
+        let ultimoFallo = null;
+        for (const conJson of [true, false]) {
+          try {
+            const response = await groqChat([{ role: "user", content: prompt }], 0, { json: conJson });
+            data = extractJSON(response);
+            break;
+          } catch (fallo) {
+            ultimoFallo = fallo;
+            data = null;
+          }
+        }
+        if (!data) throw ultimoFallo || new Error(tr("publish.errPriceAi"));
+
+        /*
+          Si falta el recomendado pero están los extremos, se usa el punto medio
+          en vez de tirar toda la respuesta a la basura. El modelo hizo el
+          trabajo; lo único que se saltó fue un campo.
+        */
+        let p = Number(data.precio_recomendado);
+        if (!p && data.precio_min && data.precio_max) {
+          p = Math.round((Number(data.precio_min) + Number(data.precio_max)) / 2);
+          data = { ...data, precio_recomendado: p };
+        }
         // Un techo además del piso: un modelo que se confunde de moneda o que
         // devuelve el valor del auto en vez del alquiler manda un número enorme,
         // y eso quedaba cargado en el precio por día sin que nada lo frenara.
-        const p = Number(data.precio_recomendado);
-        if (!p || p < 5000 || p > 2000000) throw new Error(tr("publish.errBadPrice"));
+        if (!p || p < 5000 || p > 2000000) {
+          const err = new Error(tr("publish.errBadPrice"));
+          err.precioRaro = true;
+          throw err;
+        }
         localStorage.setItem(cacheKey, JSON.stringify(data));
-      } catch {
-        setError(tr("publish.errPriceAi"));
+      } catch (fallo) {
+        /*
+          QUÉ PASÓ, NO "NO SE PUDO".
+
+          Antes el catch se comía el error y mostraba siempre la misma frase. Con
+          eso no había forma de distinguir "falta la clave en el servidor" de "se
+          acabó la cuota" de "el modelo contestó cualquier cosa", y tampoco de
+          saber si tenía sentido reintentar. Es el mismo arreglo que ya se le
+          había hecho a la revisión de las fotos.
+
+          `detail` lo manda el servicio de IA con el texto crudo del proveedor.
+          No lleva la clave ni datos de nadie, y es lo único que dice de verdad
+          qué pasó.
+        */
+        const motivo = fallo?.precioRaro
+          ? tr("publish.errPriceOutOfRange")
+          : porQueFalloLaIa(fallo);
+        setError(`${tr("publish.errPriceAi")} ${motivo}`);
         setPricingLoading(false);
         return;
       }
@@ -456,11 +518,11 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           ? { state: "ok", detected: res.detected, reason: res.reason }
           : res?.isVehicle === false
             ? { state: "invalid", detected: res.detected, reason: res.reason }
-            : { state: "unknown", code: res?.code, reason: res?.reason },
+            : { state: "unknown", code: res?.code, reason: res?.reason, detail: res?.detail },
       })))
       .catch(err => setPhotoValidations(v => ({
         ...v,
-        [photoIdx]: { state: "unknown", reason: err?.message },
+        [photoIdx]: { state: "unknown", reason: err?.message, detail: err?.payload?.detail },
       })));
   };
 
@@ -489,14 +551,29 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
    * sentido apretar "Reintentar": con la clave sin cargar, reintentar diez veces
    * da diez veces lo mismo.
    */
+  const CLAVES_DE_FALLO = {
+    not_configured: "ai.whyNotConfigured",
+    rate_limited: "ai.whyRateLimited",
+    unreadable: "ai.whyUnreadable",
+  };
+
   const porQueNoSeRevisó = (i) => {
     const v = photoValidations[i];
-    const claves = {
-      not_configured: "ai.whyNotConfigured",
-      rate_limited: "ai.whyRateLimited",
-      unreadable: "ai.whyUnreadable",
-    };
-    return tr(claves[v?.code] || "ai.whyUpstream");
+    return `${tr(CLAVES_DE_FALLO[v?.code] || "ai.whyUpstream")}${v?.detail ? ` (${v.detail})` : ""}`;
+  };
+
+  /**
+   * Por qué falló una llamada a la IA, en una frase, con el detalle del servidor.
+   *
+   * El detalle es el texto crudo que devolvió el proveedor. Sin él, "La IA no
+   * contestó" es un callejón sin salida: no se sabe si es la clave, la cuota, el
+   * modelo o la foto, así que no se sabe qué arreglar ni si vale la pena
+   * reintentar. Con él, el mensaje dice qué pasó de verdad.
+   */
+  const porQueFalloLaIa = (err) => {
+    const base = tr(CLAVES_DE_FALLO[err?.code] || "ai.whyUpstream");
+    const detalle = err?.payload?.detail || (err?.status === 0 ? err?.message : "");
+    return detalle ? `${base} (${detalle})` : base;
   };
 
   /*
@@ -593,6 +670,12 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
       if (!listingForm.description) { setError(tr("publish.errDescription")); return false; }
       if (!listingForm.pricePerDay) { setError(tr("publish.errPrice")); return false; }
       if (!listingForm.locationText) { setError(tr("publish.errLocation")); return false; }
+      // El punto en el mapa es obligatorio para el servidor. Antes se dejaba
+      // seguir sin él y el aviso reventaba recién al final, después de haber
+      // subido todas las fotos, con un error del servidor en inglés.
+      if (listingForm.latitude == null || listingForm.longitude == null) {
+        setError(tr("publish.errLocationPin")); return false;
+      }
     }
     setError(""); return true;
   };
@@ -657,25 +740,41 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
         title: listingForm.title || `${vehicleForm.brand} ${vehicleForm.model} ${vehicleForm.year}`,
         description: listingForm.description,
         pricePerDay: Number(listingForm.pricePerDay),
-        locationText: listingForm.locationText,
-        ...(listingForm.latitude && { latitude: listingForm.latitude }),
-        ...(listingForm.longitude && { longitude: listingForm.longitude }),
         /*
-          LA ZONA DE ENTREGA.
+          LA UBICACIÓN VA ENTERA Y SIEMPRE.
 
-          El centro del círculo es el MISMO punto de la publicación, que ya está
-          corrido a propósito unas cuadras por privacidad. Mandar acá el punto
-          exacto tiraría abajo ese cuidado: alguien podría comparar los dos y
-          sacar la dirección de la casa restando.
+          El backend pide los tres juntos —el texto y la coordenada— y son
+          obligatorios: sin coordenada la publicación no entra en ninguna
+          búsqueda por zona, o sea que entra al catálogo para no salir nunca.
 
-          Los tres campos van juntos o no va ninguno: un radio sin centro no
-          quiere decir nada.
+          Antes se mandaban con `...(listingForm.latitude && {...})`, que además
+          de dejarlos afuera cuando faltaban tenía un agujero: la latitud 0 es
+          falsa para JavaScript, así que un punto sobre el ecuador se mandaba sin
+          coordenada. Ahora el paso 3 no deja seguir sin punto elegido y acá van
+          siempre.
         */
-        ...(listingForm.deliveryRadiusKm > 0 && listingForm.latitude && listingForm.longitude && {
-          deliveryLatitude: listingForm.latitude,
-          deliveryLongitude: listingForm.longitude,
-          deliveryRadiusKm: Number(listingForm.deliveryRadiusKm),
-        }),
+        locationText: listingForm.locationText,
+        latitude: listingForm.latitude,
+        longitude: listingForm.longitude,
+        /*
+          HASTA DÓNDE LO ACERCA, EN METROS.
+
+          Va un solo número y no un centro aparte: el círculo se dibuja alrededor
+          del punto de la publicación, que ya está corrido unas cuadras por
+          privacidad. Mandar un centro propio sería mandar dos veces el mismo
+          punto y darle a alguien la chance de compararlos y sacar la dirección
+          exacta restando.
+
+          EN METROS, ENTEROS. Es lo que pide el backend, y por eso este formulario
+          reventaba con "property deliveryRadiusKm should not exist": se estaban
+          mandando tres campos (deliveryLatitude, deliveryLongitude,
+          deliveryRadiusKm) que el servidor no conoce, y como rechaza todo lo que
+          no espera, no se podía publicar ningún auto con radio de entrega.
+
+          El control sigue mostrando kilómetros porque es como habla la gente; la
+          conversión se hace acá, en el único lugar donde se le habla al servidor.
+        */
+        deliveryRadiusM: Math.round(Number(listingForm.deliveryRadiusKm || 0) * 1000),
         status: "ACTIVE",
       };
       await createListing(listingPayload);
@@ -695,6 +794,22 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
       setLoading(false);
     }
   };
+
+  /**
+   * El título que se propone, armado con lo que ya se cargó del auto.
+   *
+   * Estaba escrito a mano en castellano dentro del JSX ("en excelente estado"),
+   * así que con la app en inglés o en chino el gris del campo salía igual en
+   * castellano. Ahora sale del diccionario como todo lo demás.
+   *
+   * Vacío mientras no haya marca y modelo: "  en excelente estado" no le sugiere
+   * nada a nadie.
+   */
+  const autoEnPalabras = [vehicleForm.brand, vehicleForm.model, vehicleForm.year]
+    .map((p) => String(p || "").trim()).filter(Boolean).join(" ");
+  const tituloSugerido = vehicleForm.brand && vehicleForm.model
+    ? tr("publish.titleSuggestion", { car: autoEnPalabras })
+    : "";
 
   const cardStyle = isMobile ? s.cardMobile : s.card;
   const colorHex = vehicleForm.color?.startsWith("#")
@@ -1153,10 +1268,41 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           <div style={s.sectionTitle}>{tr("publish.listingData")}</div>
           <div style={s.field}>
             <label style={s.label}>{tr("publish.adTitle")} *</label>
+            {/*
+              EL TÍTULO SUGERIDO SE PUEDE ACEPTAR, NO SOLO MIRAR.
+
+              Estaba escrito en gris adentro del campo, como toda sugerencia que
+              nadie puede usar: para ponerlo había que copiarlo a mano letra por
+              letra mirando el gris que desaparece apenas empezás a escribir. Con
+              Tab se escribe solo, como en cualquier autocompletado.
+
+              Tab solo se intercepta cuando el campo está VACÍO. Con algo escrito,
+              Tab tiene que hacer lo de siempre —pasar al campo siguiente—: quien
+              ya puso su título está terminando de cargar el formulario, no
+              pidiendo que se lo reemplacen.
+
+              Y además hay un botón, porque en el teléfono no hay tecla Tab y la
+              mitad de las publicaciones se cargan desde ahí.
+            */}
             <input style={s.input}
-              placeholder={`${vehicleForm.brand} ${vehicleForm.model} en excelente estado`}
+              placeholder={tituloSugerido}
               value={listingForm.title}
-              onChange={(e) => setL("title", e.target.value)} />
+              onChange={(e) => setL("title", e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Tab" || e.shiftKey) return;
+                if (listingForm.title || !tituloSugerido) return;
+                e.preventDefault();
+                setL("title", tituloSugerido);
+              }} />
+            {!listingForm.title && tituloSugerido && (
+              <div style={s.sugerenciaFila}>
+                <span style={s.sugerenciaTexto}>{tr("publish.tabToUse")}</span>
+                <button type="button" style={s.sugerenciaBoton}
+                  onClick={() => setL("title", tituloSugerido)}>
+                  {tr("publish.useSuggestion")}
+                </button>
+              </div>
+            )}
           </div>
           <div style={s.field}>
             <label style={s.label}>{tr("car.description")} *</label>

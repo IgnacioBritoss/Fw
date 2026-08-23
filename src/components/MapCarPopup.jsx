@@ -124,7 +124,9 @@ export default function MapCarPopup({ car, precio }) {
             <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />
             <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
           </svg>
-          {tr("map.deliversTo", { n: Number(car.deliveryRadiusKm) })}
+          {/* Redondeado: el radio se guarda en metros, y "entrega hasta 7.5 km"
+              da una precisión que el número no tiene. */}
+          {tr("map.deliversTo", { n: Math.round(Number(car.deliveryRadiusKm)) })}
         </div>
       )}
       <div style={{

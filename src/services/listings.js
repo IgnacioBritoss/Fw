@@ -177,16 +177,22 @@ export function normalizeListing(listing) {
     lat: listing.latitude ?? listing.lat,
     lng: listing.longitude ?? listing.lng,
     /*
-      HASTA DÓNDE EL DUEÑO ACERCA EL AUTO, en kilómetros. 0 o vacío = solo se
-      retira en el punto.
+      HASTA DÓNDE EL DUEÑO ACERCA EL AUTO. 0 o vacío = solo se retira en el punto.
 
-      El backend tiene además deliveryLatitude y deliveryLongitude, pero acá se
-      usan las de la publicación: al publicar se mandan las mismas, así que
-      guardar dos copias del mismo punto solo daría lugar a que se separen. Si
-      alguna vez el centro de entrega llega a ser otro, se agrega acá y el mapa
-      lo dibuja donde corresponda.
+      El servidor lo guarda en METROS (deliveryRadiusM) y las pantallas lo
+      muestran en kilómetros, así que la división va acá: es el lugar donde la
+      respuesta del servidor se convierte en lo que dibuja la app, y así el resto
+      del código no tiene que acordarse de en qué unidad viene cada cosa.
+
+      No hay centro aparte: el círculo va alrededor del punto de la publicación
+      (lat/lng de arriba), que es el mismo que el servidor guarda y devuelve.
+
+      `deliveryRadiusKm` a secas es el respaldo para los autos de ejemplo, que se
+      escriben a mano en kilómetros y nunca pasan por el servidor.
     */
-    deliveryRadiusKm: Number(listing.deliveryRadiusKm ?? listing.delivery_radius_km ?? 0) || 0,
+    deliveryRadiusKm: listing.deliveryRadiusM != null
+      ? Number(listing.deliveryRadiusM) / 1000
+      : Number(listing.deliveryRadiusKm ?? listing.delivery_radius_km ?? 0) || 0,
     category,
     categoryLabel: CATEGORY_LABELS[category] || "",
     // La clave para traducir la categoría; el label de arriba es el respaldo.
