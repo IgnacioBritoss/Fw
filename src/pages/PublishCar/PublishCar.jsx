@@ -321,7 +321,11 @@ export default function PublishCar() {
   "sensor_estacionamiento": "Sí" o "No"
 }
 Si no sabés un dato, usá null.`;
-        const response = await groqChat([{ role: "user", content: prompt }], 0);
+        // `json: true`: la respuesta se LEE, no se muestra, así que el modelo
+        // tiene que devolver un objeto y nada más. Sin esto, los que razonan
+        // antes de contestar escribían el razonamiento primero y no se podía
+        // interpretar nada.
+        const response = await groqChat([{ role: "user", content: prompt }], 0, { json: true });
         data = extractJSON(response);
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
@@ -405,7 +409,11 @@ Devolvé SOLO un JSON válido, sin texto alrededor:
 }
 
 Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos por DÍA, no en dólares.`;
-        const response = await groqChat([{ role: "user", content: prompt }], 0);
+        // `json: true`: la respuesta se LEE, no se muestra, así que el modelo
+        // tiene que devolver un objeto y nada más. Sin esto, los que razonan
+        // antes de contestar escribían el razonamiento primero y no se podía
+        // interpretar nada.
+        const response = await groqChat([{ role: "user", content: prompt }], 0, { json: true });
         data = extractJSON(response);
         // Un techo además del piso: un modelo que se confunde de moneda o que
         // devuelve el valor del auto en vez del alquiler manda un número enorme,

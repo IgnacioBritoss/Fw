@@ -600,11 +600,24 @@ async function conServicioDeIa(llamar) {
 // La clave de la IA vive únicamente en el servidor: el navegador le pide al
 // backend y el backend habla con el proveedor. Antes el front llamaba a la API
 // de IA directo con la clave incluida en el bundle, a la vista de cualquiera.
-export async function aiChat(messages, temperature) {
+/**
+ * `json: true` obliga al modelo a contestar un objeto JSON y nada más.
+ *
+ * Lo usan las dos llamadas cuya respuesta no se muestra sino que se LEE: las
+ * especificaciones del auto y el precio sugerido. Sin eso, los modelos que
+ * razonan antes de contestar escriben el razonamiento primero y del otro lado no
+ * se podía interpretar nada. El chat de Wili no lo usa: ahí la respuesta es
+ * texto para leer, y obligarlo a JSON sería absurdo.
+ */
+export async function aiChat(messages, temperature, { json } = {}) {
   return conServicioDeIa((base) => apiFetch("/ai/chat", {
     base,
     method: "POST",
-    body: JSON.stringify({ messages, ...(temperature !== undefined ? { temperature } : {}) }),
+    body: JSON.stringify({
+      messages,
+      ...(temperature !== undefined ? { temperature } : {}),
+      ...(json ? { json: true } : {}),
+    }),
   }));
 }
 export async function aiVision(imageDataUrl) {
