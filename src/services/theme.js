@@ -81,6 +81,22 @@ const CLARO = `
   --fw-orange-text: #9a3412;
   --fw-orange-bg: #fff7ed;
   --fw-orange-line: #fed7aa;
+  /*
+    EL REDONDEL QUE VA ENCIMA DE UNA FOTO: las flechas de pasar fotos.
+
+    Es el único caso donde el fondo no es una superficie de la app sino una foto
+    cualquiera, y por eso necesita su propio color en vez de reusar --fw-surface:
+    tiene que ser translúcido para que se note que está apoyado encima, y a la
+    vez bastante opaco para que la flecha se lea sobre cualquier foto.
+
+    Estaba escrito a mano como rgba(255,255,255,.92) en los dos lugares que lo
+    usan. En modo oscuro eso era un botón blanco brillante sobre una tarjeta
+    oscura: lo primero que te saltaba a la vista de toda la pantalla, cuando es
+    un control secundario.
+  */
+  --fw-vidrio: rgba(255,255,255,.92);
+  --fw-vidrio-2: rgba(255,255,255,1);
+  --fw-vidrio-texto: #374151;
   --fw-sombra: rgba(0,0,0,.08);
   --fw-sombra-fuerte: rgba(0,0,0,.18);
 `;
@@ -133,6 +149,11 @@ const OSCURO = `
   --fw-orange-text: #e0864a;
   --fw-orange-bg: #38230f;
   --fw-orange-line: #5c3a1e;
+  /* El redondel de encima de las fotos, en oscuro: el mismo gris de las
+     superficies pero translúcido, así se apoya sobre la foto sin encandilar. */
+  --fw-vidrio: rgba(22,27,34,.86);
+  --fw-vidrio-2: rgba(28,33,40,.96);
+  --fw-vidrio-texto: #e6edf3;
   /* En oscuro una sombra negra no se ve: lo que separa una tarjeta del fondo es
      que la tarjeta sea más clara, más un contorno. La sombra queda casi
      apagada para que no ensucie. */
