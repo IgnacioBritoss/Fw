@@ -28,6 +28,21 @@ export const PORTADAS = {
 };
 
 const CLAVE_TURNO = "fw_portada";
+const CLAVE_ULTIMO = "fw_portada_ts";
+
+/**
+ * Cuánto tiene que pasar entre dos avances para que cuenten como dos entradas.
+ *
+ * Existe porque una misma entrada puede avisar dos veces: el camino de Google
+ * guarda la sesión en dos pasos —primero el token, después los datos de la
+ * persona— y los dos son "ya hay sesión". Avanzando en los dos, el turno subiría
+ * de a dos; y con dos fotos por juego, subir de a dos es quedarse en la misma.
+ * O sea que el intento de arreglarlo lo dejaba igual de roto.
+ *
+ * Cuatro segundos: más que lo que tarda un login en resolverse, y muchísimo
+ * menos que lo que tarda alguien en salir y volver a entrar.
+ */
+const ESPERA_ENTRE_ENTRADAS_MS = 4000;
 
 /**
  * Avanza el turno. Se llama UNA vez por entrada, desde el login.
@@ -37,8 +52,13 @@ const CLAVE_TURNO = "fw_portada";
  */
 export function siguientePortada() {
   try {
-    const ahora = Number(localStorage.getItem(CLAVE_TURNO) || 0);
-    localStorage.setItem(CLAVE_TURNO, String((ahora + 1) % 1000));
+    const ahora = Date.now();
+    const ultimo = Number(localStorage.getItem(CLAVE_ULTIMO) || 0);
+    if (ahora - ultimo < ESPERA_ENTRE_ENTRADAS_MS) return;
+
+    const turno = Number(localStorage.getItem(CLAVE_TURNO) || 0);
+    localStorage.setItem(CLAVE_TURNO, String((turno + 1) % 1000));
+    localStorage.setItem(CLAVE_ULTIMO, String(ahora));
   } catch {
     // Navegador con el almacenamiento bloqueado: se queda siempre en la primera.
   }

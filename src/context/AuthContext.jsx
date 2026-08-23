@@ -117,10 +117,19 @@ export function AuthProvider({ children }) {
       accessToken: data.accessToken,
       onboardingToken: null,
     });
-    // Cada entrada cambia la foto del bloque principal de la home. Va acá y no
-    // en la pantalla de login porque este es el ÚNICO lugar por el que pasa
-    // toda sesión que arranca de verdad: con contraseña, con Google, o al
-    // terminar de crear la cuenta.
+    /*
+      Cada entrada cambia la foto del bloque principal de la home.
+
+      ACÁ DECÍA QUE ESTE ERA EL ÚNICO CAMINO POR EL QUE PASA TODA SESIÓN. NO ES
+      CIERTO, y por eso la foto "nunca cambiaba": entrar con Google no pasa por
+      esta función, tiene la suya (loginWithGoogleToken), así que a quien entra
+      con Google el turno no le avanzaba nunca y siempre le tocaba la misma foto.
+
+      El comentario viejo era peor que no tener comentario: afirmaba justo lo que
+      había que revisar, así que cada vez que se miraba parecía que estaba bien.
+      Ahora se llama desde los dos lados, y services/portada se defiende de que lo
+      llamen dos veces seguidas en una misma entrada.
+    */
     siguientePortada();
     return { success: true, pending: null };
   }, [saveUser, tr]);
@@ -167,6 +176,9 @@ export function AuthProvider({ children }) {
       saveUser({ accessToken: token });
       const fresh = await getMe();
       saveUser({ ...fresh, name: displayNameOf(fresh), accessToken: token, onboardingToken: null });
+      // La otra puerta de entrada. Ver la nota en applyAuthResponse: faltaba
+      // acá, y por eso a quien entra con Google la foto no le cambiaba nunca.
+      siguientePortada();
       return { success: true, pending: null };
     } catch (err) {
       logout();
