@@ -35,17 +35,55 @@ import { aiChat as apiAiChat, aiDocument as apiAiDocument, aiTranscribe as apiAi
 // Envía una conversación al modelo de texto y devuelve la respuesta como string.
 // - messages: lista de mensajes con roles (system/user/assistant).
 // - temperature: qué tan "creativa" es la respuesta (0 = precisa, 1 = variada).
-export async function groqChat(messages, temperature = 0.7) {
-  const data = await apiAiChat(messages, temperature);
+export async function groqChat(messages, temperature = 0.7, opciones) {
+  const data = await apiAiChat(messages, temperature, opciones);
   return data?.content ?? "";
 }
 
-// La IA a veces devuelve texto extra alrededor del JSON pedido. Esta función
-// recorta desde la primera "{" hasta la última "}" y lo convierte en objeto.
+/**
+ * Saca el objeto JSON de una respuesta que puede venir con cosas alrededor.
+ *
+ * POR QUÉ NO ALCANZABA CON "DE LA PRIMERA LLAVE A LA ÚLTIMA". Los modelos nuevos
+ * razonan antes de contestar y escriben ese razonamiento en la respuesta. Como
+ * ahí adentro también aparecen llaves —el modelo se pone a hablar del JSON que
+ * va a escribir—, el recorte se llevaba el razonamiento y el JSON pegados y no
+ * parseaba nada. Eso es lo que se veía como "no se pudo obtener la sugerencia de
+ * precio" y como la foto que quedaba "sin revisar".
+ *
+ * Ahora se tira el razonamiento primero y después se busca el PRIMER objeto
+ * COMPLETO contando llaves, sin contar las que están dentro de un texto entre
+ * comillas. El servidor hace exactamente lo mismo (lib/groq.js de freewheel-ia);
+ * está en los dos lados porque los dos reciben texto de un modelo.
+ */
 export function extractJSON(text) {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("AI response is not valid JSON");
-  return JSON.parse(match[0]);
+  const limpio = String(text || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, "")
+    .replace(/<think>[\s\S]*$/i, "")
+    .replace(/```(?:json)?/gi, "");
+
+  const probar = (t) => { try { return JSON.parse(t); } catch { return null; } };
+
+  const directo = probar(limpio.trim());
+  if (directo && typeof directo === "object") return directo;
+
+  for (let ini = limpio.indexOf("{"); ini !== -1; ini = limpio.indexOf("{", ini + 1)) {
+    let nivel = 0, enTexto = false, escapado = false;
+    for (let i = ini; i < limpio.length; i++) {
+      const c = limpio[i];
+      if (escapado) { escapado = false; continue; }
+      if (c === "\\") { escapado = true; continue; }
+      if (c === '"') { enTexto = !enTexto; continue; }
+      if (enTexto) continue;
+      if (c === "{") nivel++;
+      else if (c === "}" && --nivel === 0) {
+        const encontrado = probar(limpio.slice(ini, i + 1));
+        if (encontrado && typeof encontrado === "object") return encontrado;
+        break;
+      }
+    }
+  }
+  throw new Error("AI response is not valid JSON");
 }
 
 /**
