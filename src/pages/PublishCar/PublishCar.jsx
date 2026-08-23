@@ -17,6 +17,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useOrdenArrastrando, moverEnLista } from "../../hooks/useOrdenArrastrando";
 import LocationPicker from "../../components/LocationPicker";
 import { createVehicle, createListing, createMediaAsset } from "../../services/api";
 import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
@@ -505,15 +506,11 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
     del mapa: es LA foto del auto. Hasta acá el orden era el que salía del
     explorador de archivos al elegirlas, que no es ninguno.
 
-    SE ARRASTRA CON EL DEDO Y CON EL MOUSE. Se usan eventos de puntero y no el
-    arrastre de HTML, que solo anda con mouse: la mitad de las publicaciones se
-    cargan desde el teléfono, y ahí el arrastre de HTML no existe.
-
-    SE ACOMODA MIENTRAS ARRASTRÁS, no al soltar. Ves el orden final antes de
-    decidir, en vez de soltar a ciegas y fijarte después.
+    El cómo se arrastra (puntero, umbral, qué hay debajo del dedo) vive en
+    hooks/useOrdenArrastrando, porque la misma fila de fotos se reordena también
+    desde la publicación ya creada. Estaba escrito acá y copiado allá; dos copias
+    de algo tan fino se van separando sin que nadie lo note.
   */
-  const arrastreRef = useRef(null);
-  const [arrastrando, setArrastrando] = useState(null);
 
   /**
    * Mueve una foto de una posición a otra.
@@ -527,52 +524,19 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
     if (desde == null || hasta == null || desde === hasta) return;
     const cuantas = photos.length;
 
-    setPhotos((lista) => {
-      const copia = [...lista];
-      const [movida] = copia.splice(desde, 1);
-      copia.splice(hasta, 0, movida);
-      return copia;
-    });
+    setPhotos((lista) => moverEnLista(lista, desde, hasta));
 
     setPhotoValidations((v) => {
-      const enOrden = Array.from({ length: cuantas }, (_, i) => v[i]);
-      const [movida] = enOrden.splice(desde, 1);
-      enOrden.splice(hasta, 0, movida);
+      const enOrden = moverEnLista(
+        Array.from({ length: cuantas }, (_, i) => v[i]), desde, hasta,
+      );
       const nuevo = {};
       enOrden.forEach((valor, i) => { if (valor !== undefined) nuevo[i] = valor; });
       return nuevo;
     });
   };
 
-  const empezarArrastre = (e, i) => {
-    // La X de borrar y el botón de reintentar no arrastran nada.
-    if (e.target.closest("button")) return;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    arrastreRef.current = { desde: i, x: e.clientX, y: e.clientY, movido: false };
-    setArrastrando(i);
-  };
-
-  const seguirArrastre = (e) => {
-    const a = arrastreRef.current;
-    if (!a) return;
-    // Un umbral de seis píxeles: sin esto, cualquier temblor de la mano al tocar
-    // una foto la movería de lugar sin que nadie lo haya pedido.
-    if (!a.movido && Math.hypot(e.clientX - a.x, e.clientY - a.y) < 6) return;
-    a.movido = true;
-    const debajo = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-foto]");
-    if (!debajo) return;
-    const hasta = Number(debajo.dataset.foto);
-    if (Number.isNaN(hasta) || hasta === a.desde) return;
-    moverFoto(a.desde, hasta);
-    a.desde = hasta;
-    setArrastrando(hasta);
-  };
-
-  const terminarArrastre = (e) => {
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
-    arrastreRef.current = null;
-    setArrastrando(null);
-  };
+  const orden = useOrdenArrastrando(moverFoto);
 
   /** Estado de una foto, en una sola palabra. */
   const estadoFoto = (i) => {
@@ -1081,21 +1045,8 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
               {photos.map((p, i) => (
                 <div
                   key={p.url}
-                  data-foto={i}
-                  onPointerDown={(e) => empezarArrastre(e, i)}
-                  onPointerMove={seguirArrastre}
-                  onPointerUp={terminarArrastre}
-                  onPointerCancel={terminarArrastre}
-                  style={{
-                    ...s.photoItem,
-                    // `touch-action: none` para que el dedo arrastre la foto en vez
-                    // de hacer scroll de la página.
-                    touchAction: "none",
-                    cursor: arrastrando === i ? "grabbing" : "grab",
-                    opacity: arrastrando === i ? 0.55 : 1,
-                    transform: arrastrando === i ? "scale(.96)" : "none",
-                    transition: arrastrando === null ? "transform .18s, opacity .18s" : "none",
-                  }}
+                  {...orden.props(i)}
+                  style={{ ...s.photoItem, ...orden.estilo(i) }}
                 >
                   {/* `draggable={false}`: sin esto el navegador arranca su propio
                       arrastre de imagen y se lleva el puntero, así que el nuestro
