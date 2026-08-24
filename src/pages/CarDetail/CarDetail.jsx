@@ -663,6 +663,7 @@ export default function CarDetail() {
             </div>
           ) : (
             <button
+              data-fw-accion
               style={s.btn}
               onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
             >

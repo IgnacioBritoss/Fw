@@ -251,9 +251,56 @@ function ponerEstilos() {
        del sistema: sin esto quedan blancos en medio de la pantalla oscura. */
     html.fw-dark { color-scheme: dark; }
 
+    ${reglasDeBotones()}
+
     ${reglasDeLectura()}
   `;
   document.head.appendChild(el);
+}
+
+/*
+  ──────────────────────── LOS BOTONES SE HUNDEN ─────────────────────────────
+
+  Al apretar, el botón baja un poco y se achica un pelo. Suena a adorno y no lo
+  es: es la única señal de que el toque llegó. Sin eso, entre que apretás
+  "Publicar" y que la pantalla cambia hay un momento en blanco donde no pasa
+  nada visible, y la reacción normal es apretar de nuevo pensando que no
+  anduvo. En un botón que cobra o que publica, apretar dos veces no es gratis.
+
+  DOS INTENSIDADES. Todos los botones bajan un poco; los importantes —publicar,
+  pagar, reservar, confirmar, el siguiente del formulario— bajan más y se les
+  achica la sombra, que es lo que hace que se vea hundido de verdad y no
+  simplemente corrido. Esos llevan `data-fw-accion`.
+
+  :active dura lo que dura el dedo apretado, así que no hay nada que apagar
+  después ni ningún estado que limpiar.
+
+  QUIEN PIDIÓ QUE NO SE MUEVA NADA, NO SE MUEVE. `prefers-reduced-motion` es la
+  preferencia del sistema de quien se marea con las animaciones. Ahí el botón se
+  sigue oscureciendo al apretarlo —la señal no se pierde— pero no se mueve.
+*/
+function reglasDeBotones() {
+  return `
+    button:not(:disabled) {
+      transition: transform .06s ease, box-shadow .12s ease, filter .12s ease;
+    }
+    button:not(:disabled):active {
+      transform: translateY(1px) scale(.99);
+    }
+    /* Los que hacen algo importante: bajan más y pierden la sombra, que es lo
+       que da la sensación de que se hunden contra la pantalla. */
+    button[data-fw-accion]:not(:disabled):active {
+      transform: translateY(2px) scale(.985);
+      box-shadow: none;
+      filter: brightness(.95);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      button:not(:disabled):active,
+      button[data-fw-accion]:not(:disabled):active {
+        transform: none;
+      }
+    }
+  `;
 }
 
 /*
@@ -263,12 +310,23 @@ function ponerEstilos() {
   para quien tiene dislexia, pero no solo: también sirve para leer cansado, en
   el colectivo, o con una pantalla chica.
 
-  QUÉ CAMBIA Y POR QUÉ. Se suele creer que esto es "poner una tipografía para
-  dislexia" y listo. No es así: los estudios sobre esas tipografías dan
-  resultados mezclados, y lo que sí muestra mejoras de forma consistente es la
-  FORMA DEL TEXTO —cuánto aire hay entre letras, entre palabras y entre
-  renglones—. Así que acá se hacen las dos cosas, y el peso está puesto en la
-  segunda:
+  LA TIPOGRAFÍA VIENE CON LA APP. Es OpenDyslexic, hecha justamente para esto:
+  las letras tienen la base más pesada que la parte de arriba, así que "pesan"
+  hacia abajo y cuesta mucho más confundir una b con una d o una p con una q, que
+  es de lo que más se da vuelta al leer. Además cada letra tiene una forma propia
+  en vez de ser la misma figura espejada.
+
+  VA EMPAQUETADA, NO PEDIDA PRESTADA. La primera versión de esto ponía
+  "OpenDyslexic" al principio de una lista de tipografías, confiando en que la
+  persona la tuviera instalada. Casi nadie la tiene, así que en la práctica no se
+  usaba nunca: se caía en Verdana y la opción no hacía lo que su nombre decía. El
+  archivo ahora viaja con la app (public/fuentes) y se declara con @font-face, así
+  que se ve igual en cualquier máquina. Se baja SOLO cuando alguien prende el
+  modo: quien no lo usa no paga esos kilobytes.
+
+  Y ADEMÁS LA FORMA DEL TEXTO. La tipografía sola no alcanza: lo que también
+  muestra mejoras es cuánto aire hay entre letras, entre palabras y entre
+  renglones. Las dos cosas van juntas:
 
    · Más espacio entre letras y entre palabras. Es lo que evita que dos
      palabras cortas se lean como una sola.
@@ -277,28 +335,70 @@ function ponerEstilos() {
    · Nada de cursiva. La cursiva deforma las letras y es de lo que más cuesta.
    · Un poco más de cuerpo, sin agrandar los botones ni romper el diseño.
 
-  LA TIPOGRAFÍA. Va una lista, no una sola: primero las diseñadas para esto
-  (OpenDyslexic, Lexend, Atkinson Hyperlegible), que se usan solo si la persona
-  las tiene instaladas, y si no cae en Verdana y Tahoma, que están en casi toda
-  computadora y son de las más legibles que vienen de fábrica. No se descarga
-  ningún archivo: una fuente de afuera agrega peso, tarda, y deja el texto sin
-  dibujar hasta que llega. Esta opción tiene que estar puesta al instante.
+  DETRÁS DE OPENDYSLEXIC HAY UNA LISTA DE RESPALDO, por si el archivo tarda o no
+  llega: Comic Sans, Verdana y Tahoma. No es un chiste: las tres están en casi
+  toda computadora y son de las que mejor se leen de las que vienen de fábrica,
+  porque tienen letras anchas, bien separadas y sin adornos.
+
+  `font-display: swap` es la diferencia entre que el texto se vea enseguida con
+  el respaldo y se cambie solo cuando llega la tipografía, o que la pantalla
+  quede en blanco esperando.
 
   DÓNDE NO SE APLICA. En los números que se leen de a uno —el código de seis
-  dígitos, la patente—, donde el espaciado extra los separa tanto que dejan de
-  verse como un número. Ahí se respeta lo que ya tenían.
+  dígitos, el año—, donde el espaciado extra los separa tanto que dejan de verse
+  como un número. Ahí se respeta lo que ya tenían.
 */
 function reglasDeLectura() {
   return `
-    html.fw-lectura, html.fw-lectura body {
-      font-family: "OpenDyslexic", "Lexend", "Atkinson Hyperlegible",
-        Verdana, Tahoma, "Trebuchet MS", system-ui, sans-serif;
+    /* La tipografía vive en public/fuentes y se sirve desde la raíz del sitio.
+       El navegador la baja recién cuando una regla que la usa le toca a algún
+       texto de verdad, o sea solo si el modo está prendido. */
+    @font-face {
+      font-family: "OpenDyslexic";
+      src: url("/fuentes/opendyslexic-400.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
     }
-    /* Va sobre todo lo que hereda la tipografía, incluidos los campos y los
-       botones, que en el navegador NO heredan por su cuenta. */
+    /* El negrita va aparte: sin este archivo el navegador engorda el normal por
+       su cuenta, y ese engordado artificial borra justamente las bases pesadas
+       que hacen que la letra se distinga. */
+    @font-face {
+      font-family: "OpenDyslexic";
+      src: url("/fuentes/opendyslexic-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    html.fw-lectura, html.fw-lectura body {
+      font-family: "OpenDyslexic", "Comic Sans MS", Verdana, Tahoma,
+        "Trebuchet MS", system-ui, sans-serif;
+    }
+    /*
+      Los campos y los botones NO heredan la tipografía por su cuenta: el
+      navegador les pone la suya. Se les pide que hereden, y nada más.
+
+      SIN "!important", Y ES A PROPÓSITO. La primera versión ponía
+      "font-family: inherit !important" sobre TODO, y eso le ganaba hasta a los
+      estilos escritos a mano en cada componente. O sea que pisaba las tres
+      tipografías que están puestas porque sí hacen falta: el monoespaciado del
+      código de verificación y del token del QR —que se leen carácter por
+      carácter y se alinean en columna— y la serif del cartel de la landing.
+      Justamente el código, que es lo que más importa leer bien, terminaba en la
+      tipografía equivocada.
+    */
+    html.fw-lectura input,
+    html.fw-lectura button,
+    html.fw-lectura select,
+    html.fw-lectura textarea,
+    html.fw-lectura optgroup {
+      font-family: inherit;
+    }
     html.fw-lectura *:not(svg):not(svg *) {
-      font-family: inherit !important;
-      letter-spacing: .035em;
+      /* Poco, porque OpenDyslexic ya viene separada de fábrica: sumándole mucho
+         más, el texto se estira y empieza a salirse de los botones. */
+      letter-spacing: .02em;
       word-spacing: .12em;
       line-height: 1.75;
     }

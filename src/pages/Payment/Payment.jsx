@@ -253,7 +253,7 @@ export default function Payment() {
         {tr("payment.demoNote")}
       </div>
 
-      <button style={paying ? s.payBtnDisabled : s.payBtn} disabled={paying} onClick={handlePay}>
+      <button data-fw-accion style={paying ? s.payBtnDisabled : s.payBtn} disabled={paying} onClick={handlePay}>
         {paying ? tr("payment.processing") : `${tr("bookings.pay")} ${money(total)}`}
       </button>
       <button style={s.failBtn} disabled={paying} onClick={handleFail}>{tr("payment.simulateReject")}</button>
