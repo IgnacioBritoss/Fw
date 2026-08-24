@@ -10,11 +10,31 @@
 //  seguro, seña y depósito), así que acá se muestra ese detalle y no una cuenta
 //  hecha en el navegador.
 //
-//  Qué se arregló acá: se llamaba a rutas que ya no existen
-//  (mock-intent / mock-confirm sin tramos), así que el pago fallaba con un 404 y
-//  la reserva se quedaba sin pagar para siempre. Con la reserva sin pagar, el
-//  dueño nunca podía marcar el auto listo para retiro: el circuito entre los dos
-//  usuarios quedaba cortado ahí.
+//  ─────────────────────────────────────────────────────────────────────────
+//  LOS TRES TRAMOS SE PAGAN DE A UNO, Y EN ESTE ORDEN.
+//
+//  Esta pantalla decía que el pago estaba partido en tres, dibujaba los tres
+//  renglones... y abajo tenía UN botón que decía "Pagar $TOTAL" y los cobraba a
+//  los tres juntos en una sola llamada. O sea: el alquiler se contaba en etapas
+//  y se cobraba de una. La seña no señaba nada, porque en el mismo clic se iba
+//  el alquiler entero.
+//
+//  Ahora cada tramo es su propio paso. El botón cobra SOLO el que sigue y
+//  después la pantalla se vuelve a leer del servidor:
+//
+//    1. Seña      → confirma la reserva. La reserva pasa a "Seña paga".
+//    2. Saldo     → el resto del alquiler. Recién acá queda "Pago completo",
+//                   que es lo único que habilita el retiro del auto.
+//    3. Depósito  → no es un gasto: se AUTORIZA y queda retenido hasta que se
+//                   devuelve el auto.
+//
+//  El orden no es un gusto de esta pantalla: el backend rechaza el saldo si la
+//  seña no está paga ("Pay the deposit (seña) before the balance"). Lo que
+//  cambió acá es que la interfaz ahora hace lo mismo que dice.
+//
+//  QUÉ TRAMO ESTÁ CUBIERTO se lee de `records`, la lista de cobros que devuelve
+//  el servidor, y no de una cuenta local: si alguien pagó la seña desde otro
+//  dispositivo, esta pantalla lo ve al recargar.
 // ============================================================================
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -51,7 +71,14 @@ const s = {
   secureNote: { display: "flex", alignItems: "center", gap: 6, justifyContent: "center", fontSize: 12, color: "var(--fw-text-4)", marginTop: 16 },
   error: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
   info: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
-  step: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, padding: "9px 12px", borderRadius: 8, marginBottom: 8 },
+  step: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, padding: "9px 12px", borderRadius: 8, marginBottom: 8 },
+  // El numerito del paso. Redondo y con borde, como una viñeta numerada: dice
+  // "esto es una secuencia" antes de que nadie lea una palabra.
+  paso: {
+    width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+    border: "1px solid", display: "flex", alignItems: "center",
+    justifyContent: "center", fontSize: 11, fontWeight: 800,
+  },
 };
 
 // Fila "etiqueta ─ valor" reutilizable del resumen.
@@ -109,17 +136,24 @@ export default function Payment() {
   useEffect(() => { load(); }, [load]);
 
   /**
-   * Paga la reserva completa: seña + saldo + depósito retenido.
-   * El backend solo lo permite con el proveedor de pagos en modo simulación
-   * (el que se usa para la demo); con el proveedor real el cobro lo confirma
-   * la pasarela.
+   * Paga UN tramo: el que sigue, y nada más.
+   *
+   * Antes esta función llamaba a mockConfirmPayment(bookingId) SIN decir cuál,
+   * y el backend entiende eso como "cobrame los tres": seña, saldo y depósito
+   * en una sola vuelta. Pasarle el tramo es lo que hace que el pago sea por
+   * partes de verdad.
+   *
+   * El backend solo permite esta simulación con el proveedor de pagos en modo
+   * demo; con el proveedor real el cobro lo confirma la pasarela.
    */
-  const handlePay = async () => {
+  const handlePay = async (kind) => {
+    if (!kind) return;
     setPaying(true);
     setError(null);
     try {
-      const result = await mockConfirmPayment(bookingId);
-      setPayment(result);
+      await mockConfirmPayment(bookingId, kind);
+      // Se relee todo del servidor en vez de creerle a la respuesta: el estado
+      // de la reserva cambia junto con el cobro y hay tramos que dependen de él.
       await load();
     } catch (err) {
       setError(err.message || tr("payment.failed"));
@@ -128,13 +162,16 @@ export default function Payment() {
     }
   };
 
-  // Botón de demo para ver la pantalla de pago rechazado.
-  const handleFail = async () => {
+  // Botón de demo para ver la pantalla de pago rechazado. Rechaza el tramo que
+  // está en juego, no siempre la seña: rechazar la seña cuando ya está paga y
+  // lo que se está pagando es el saldo mostraba un error que no era el de nadie.
+  const handleFail = async (kind) => {
+    if (!kind) return;
     setPaying(true);
     setError(null);
     try {
-      const result = await mockFailPayment(bookingId, "SENA");
-      setPayment(result);
+      await mockFailPayment(bookingId, kind);
+      await load();
     } catch (err) {
       setError(err.message || tr("payment.simFailed"));
     } finally {
@@ -160,8 +197,59 @@ export default function Payment() {
   const commission = payment?.commission ?? booking?.platformFeeSnapshot;
   const insurance = payment?.insurance ?? booking?.insuranceSnapshot;
   const paymentStatus = payment?.paymentStatus ?? booking?.paymentStatus;
-  const isPaid = paymentStatus === "FULLY_PAID";
   const hasFailed = paymentStatus === "FAILED";
+
+  /*
+    QUÉ TRAMO YA ESTÁ CUBIERTO.
+
+    `records` es la lista de cobros de la reserva que devuelve el servidor: uno
+    por tramo, con su estado. Es la fuente de verdad —si la seña se pagó desde
+    otro dispositivo, acá se ve— y además distingue el depósito, que no se
+    "cobra" sino que se AUTORIZA y por eso queda en otro estado.
+
+    Cuando no vienen registros (una reserva vieja, o el pedido de estado falló y
+    solo quedan los montos guardados en la reserva) se cae al estado general:
+    ahí "pago completo" quiere decir que se pagó todo junto, que es como
+    funcionaba antes. Sin esa salida, una reserva ya paga volvería a pedir el
+    depósito.
+  */
+  const CUBIERTO = ["PAID", "CAPTURED", "AUTHORIZED", "SUCCEEDED"];
+  const registros = Array.isArray(payment?.records) ? payment.records : [];
+  const registroDe = (kind) => registros
+    .filter(r => r.kind === kind)
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0] || null;
+
+  const estaCubierto = (kind) => {
+    if (registros.length === 0) {
+      if (paymentStatus === "FULLY_PAID") return true;
+      return kind === "SENA" && paymentStatus === "DEPOSIT_PAID";
+    }
+    const r = registroDe(kind);
+    if (r && CUBIERTO.includes(r.status)) return true;
+    // Red de seguridad: el estado general nunca puede decir menos que los
+    // registros. Si la reserva figura paga, la seña y el saldo están.
+    if (kind === "SENA") return paymentStatus === "DEPOSIT_PAID" || paymentStatus === "FULLY_PAID";
+    if (kind === "BALANCE") return paymentStatus === "FULLY_PAID";
+    return false;
+  };
+
+  // Los tres tramos, en el orden en que se pagan. Se saltea el que no tiene
+  // monto: una reserva sin depósito no tiene por qué mostrar un paso vacío.
+  const tramos = [
+    { kind: "SENA", label: "payment.sena", monto: sena },
+    { kind: "BALANCE", label: "payment.balance", monto: balance },
+    { kind: "DEPOSIT_HOLD", label: "payment.guarantee", monto: deposit },
+  ]
+    .filter(t => t.monto != null)
+    .map(t => ({
+      ...t,
+      hecho: estaCubierto(t.kind),
+      rechazado: registroDe(t.kind)?.status === "FAILED",
+    }));
+
+  // El que sigue: el primero sin cubrir. Es el único que se puede pagar.
+  const tramoActual = tramos.find(t => !t.hecho) || null;
+  const isPaid = tramos.length > 0 && tramoActual === null;
 
   // La reserva se paga recién cuando el dueño la aceptó.
   if (booking && booking.status !== "ACCEPTED" && !isPaid) {
@@ -229,21 +317,43 @@ export default function Payment() {
         <div style={s.totalRow}><span>Total</span><span style={{ color: "var(--fw-blue)" }}>{money(total)}</span></div>
       </div>
 
-      {/* Los tres tramos del pago, con lo que ya está cubierto */}
+      {/*
+        LOS TRES TRAMOS, CON EL TURNO MARCADO.
+
+        Cada renglón dice en qué está: pagado (verde con tilde), EL QUE SIGUE
+        (azul, resaltado, el único que el botón de abajo va a cobrar) o todavía
+        no le toca (gris apagado). Antes los tres se veían iguales hasta que se
+        pagaba todo junto y los tres se ponían verdes a la vez, así que el
+        renglón no informaba nada: era una lista de lo que decía la factura.
+      */}
       <div style={s.card}>
-        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--fw-text)" }}>{tr("payment.howToPay")}</div>
-        {[
-          ["payment.sena", sena, paymentStatus === "DEPOSIT_PAID" || isPaid],
-          ["payment.balance", balance, isPaid],
-          ["payment.guarantee", deposit, isPaid],
-        ].map(([label, amount, done]) => (
-          <div key={label} style={{ ...s.step, background: done ? "var(--fw-green-bg)" : "var(--fw-surface-2)", border: `1px solid ${done ? "var(--fw-green-line)" : "var(--fw-line-soft)"}` }}>
-            <span style={{ color: done ? "var(--fw-green-text-2)" : "var(--fw-text-2)" }}>{tr(label)}</span>
-            <strong style={{ color: done ? "var(--fw-green-text-2)" : "var(--fw-text)" }}>
-              {amount != null ? money(amount) : "—"}{done ? " ✓" : ""}
-            </strong>
-          </div>
-        ))}
+        <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: "var(--fw-text)" }}>{tr("payment.howToPay")}</div>
+        <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 14 }}>
+          {tr("payment.orderNote")}
+        </div>
+        {tramos.map((t, i) => {
+          const esElTurno = tramoActual?.kind === t.kind;
+          const fondo = t.hecho ? "var(--fw-green-bg)" : esElTurno ? "var(--fw-blue-bg)" : "var(--fw-surface-2)";
+          const linea = t.hecho ? "var(--fw-green-line)" : esElTurno ? "var(--fw-blue-line)" : "var(--fw-line-soft)";
+          const tinta = t.hecho ? "var(--fw-green-text-2)" : esElTurno ? "var(--fw-blue-text)" : "var(--fw-text-4)";
+          return (
+            <div key={t.kind} style={{ ...s.step, background: fondo, border: `1px solid ${linea}` }}>
+              <span style={{ color: tinta, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                {/* El número del paso: dice que hay un orden, sin escribirlo. */}
+                <span style={{ ...s.paso, borderColor: linea, color: tinta }}>{i + 1}</span>
+                <span style={{ minWidth: 0 }}>
+                  {tr(t.label)}
+                  {esElTurno && <strong style={{ display: "block", fontSize: 11.5 }}>{tr("payment.stepNow")}</strong>}
+                  {!t.hecho && !esElTurno && <span style={{ display: "block", fontSize: 11.5 }}>{tr("payment.stepLater")}</span>}
+                  {t.rechazado && <span style={{ display: "block", fontSize: 11.5, color: "var(--fw-red-text-2)" }}>{tr("payment.stepRejected")}</span>}
+                </span>
+              </span>
+              <strong style={{ color: tinta, flexShrink: 0 }}>
+                {money(t.monto)}{t.hecho ? " ✓" : ""}
+              </strong>
+            </div>
+          );
+        })}
         <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 10 }}>
           {tr("payment.depositNote")}
         </div>
@@ -253,10 +363,22 @@ export default function Payment() {
         {tr("payment.demoNote")}
       </div>
 
-      <button data-fw-accion style={paying ? s.payBtnDisabled : s.payBtn} disabled={paying} onClick={handlePay}>
-        {paying ? tr("payment.processing") : `${tr("bookings.pay")} ${money(total)}`}
+      {/*
+        UN BOTÓN, UN TRAMO. Dice cuál está por pagar y cuánto, no el total: el
+        total es lo que va a costar el alquiler entero, no lo que se debita al
+        apretar. El depósito se AUTORIZA, no se cobra, y por eso tiene su propio
+        verbo: decir "Pagar el depósito" sería mentir sobre a dónde va la plata.
+      */}
+      <button data-fw-accion
+        style={paying || !tramoActual ? s.payBtnDisabled : s.payBtn}
+        disabled={paying || !tramoActual}
+        onClick={() => handlePay(tramoActual?.kind)}>
+        {paying ? tr("payment.processing") : tramoActual
+          ? `${tr(tramoActual.kind === "DEPOSIT_HOLD" ? "payment.holdIt" : "bookings.pay")} ${tr(tramoActual.label)} · ${money(tramoActual.monto)}`
+          : tr("payment.nothingDue")}
       </button>
-      <button style={s.failBtn} disabled={paying} onClick={handleFail}>{tr("payment.simulateReject")}</button>
+      <button style={s.failBtn} disabled={paying || !tramoActual}
+        onClick={() => handleFail(tramoActual?.kind)}>{tr("payment.simulateReject")}</button>
       <div style={s.secureNote}>{tr("payment.serverAmounts")}</div>
     </div>
   );

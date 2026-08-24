@@ -159,7 +159,12 @@ export function AuthProvider({ children }) {
     try {
       return applyAuthResponse(await registerComplete(form));
     } catch (err) {
-      return { success: false, error: err.message || tr("auth.errRegister") };
+      // El `code` viaja hasta la pantalla porque dice QUÉ DATO está repetido
+      // (EMAIL_ALREADY_REGISTERED, PHONE_ALREADY_REGISTERED, DNI…, CUIL…). Sin
+      // él, este error aparece en el paso del código del mail —que es donde se
+      // llama— y la persona lee "ya hay una cuenta con ese teléfono" en una
+      // pantalla donde no hay ningún teléfono para corregir.
+      return { success: false, error: err.message || tr("auth.errRegister"), code: err.code };
     }
   }, [applyAuthResponse, tr]);
 
