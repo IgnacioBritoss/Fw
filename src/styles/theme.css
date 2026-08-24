@@ -129,24 +129,71 @@ body {
 .react-datepicker__day--disabled {
   color: var(--fw-text-4) !important;
 }
+/*
+  EL DÍA "PRESELECCIONADO" NO ES UN DÍA ELEGIDO, Y NO TENÍA QUE PINTARSE.
+
+  La librería marca siempre un día con la clase --keyboard-selected: es dónde
+  caería el cursor si alguien navegara con las flechas del teclado. No lo eligió
+  nadie. Acá no había ninguna regla para esa clase, así que se quedaba con el
+  color que trae la librería de fábrica —un celeste #bad9f1— y encima nuestro
+  color de texto, que en modo oscuro es casi blanco.
+
+  Resultado: al abrir el calendario aparecía un día cualquiera con un recuadro
+  celeste y el número adentro ilegible, sin que nadie lo hubiera tocado. Y al
+  elegir una fecha el recuadro se quedaba trabado en otro día, así que parecía
+  que había dos elegidos o que el color se había ido a cualquier parte.
+
+  Ahora ese día se ve como todos los demás. Quien navegue con el teclado lo
+  sigue viendo, pero por el foco (más abajo), que es lo que corresponde: se ve
+  cuando se está usando el teclado y no cuando no.
+*/
+.react-datepicker__day--keyboard-selected:not(.react-datepicker__day--selected):not(.react-datepicker__day--in-range):not(.react-datepicker__day--in-selecting-range) {
+  background: transparent !important;
+  color: var(--fw-text) !important;
+}
+/* El rango a medio armar: los días del medio, apenas teñidos. La letra sale del
+   token de texto y no del azul vivo: el azul vivo sobre el fondo azul oscuro del
+   modo nocturno da 2.7:1, o sea no se lee. */
+.react-datepicker__day--in-selecting-range {
+  background: var(--primary-bg) !important;
+  color: var(--fw-blue-text) !important;
+}
+/*
+  LA FECHA ELEGIDA SE VE ELEGIDA DESDE EL PRIMER CLIC.
+
+  Con una sola fecha puesta, la librería todavía no la considera un rango: no le
+  pone --selected ni --range-start, le pone --selecting-range-start. Como esa
+  clase no estaba acá, el día recién tocado se pintaba con el tono flojo del
+  rango a medio armar, o sea que tocabas una fecha y no pasaba nada visible.
+
+  El extremo que ancla el rango va lleno, igual que cuando el rango está
+  terminado. Esta regla va DESPUÉS de la de arriba a propósito: las dos clases
+  caen sobre el mismo día y gana la última.
+*/
 .react-datepicker__day--selected,
 .react-datepicker__day--in-range,
 .react-datepicker__day--range-start,
-.react-datepicker__day--range-end {
+.react-datepicker__day--range-end,
+.react-datepicker__day--selecting-range-start,
+.react-datepicker__day--selecting-range-end {
   background: var(--primary) !important;
   color: #fff !important;
 }
-.react-datepicker__day--in-selecting-range {
-  background: var(--primary-bg) !important;
-  color: var(--primary) !important;
-}
 .react-datepicker__day:hover {
   background: var(--primary-bg) !important;
-  color: var(--primary) !important;
+  color: var(--fw-blue-text) !important;
 }
 .react-datepicker__day--disabled:hover {
   background: transparent !important;
   color: var(--fw-text-4) !important;
+}
+/* El foco del teclado, que es lo único que de verdad tiene que marcar dónde
+   está parado el cursor. Sin fondo propio: un contorno encima de cualquier
+   color de día. */
+.react-datepicker__day:focus-visible {
+  outline: 2px solid var(--fw-blue) !important;
+  outline-offset: 1px;
+  border-radius: 6px;
 }
 
 /*

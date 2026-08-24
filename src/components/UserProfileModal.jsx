@@ -17,11 +17,11 @@ import { useEffect, useState } from "react";
 import { monthYear, shortDate } from "../i18n/dates";
 import { getPublicProfile, getUserReviews } from "../services/api";
 import { useI18n } from "../i18n/core";
-import UserReputation from "./UserReputation";
+import PanelDeReputacion from "./PanelDeReputacion";
 import StatusChip from "./StatusChip";
-import RankBadge from "./RankBadge";
 import Avatar from "./Avatar";
 import { initialsOf } from "../services/people";
+import { atributo, esBueno } from "../services/atributos";
 import Spinner from "./Spinner";
 
 export default function UserProfileModal({ userId, onClose }) {
@@ -92,13 +92,17 @@ export default function UserProfileModal({ userId, onClose }) {
                 <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginTop: 2 }}>
                   {tr("profile.memberSince", { date: monthYear(profile.createdAt, lang) })}
                 </div>
+                {/*
+                  ACÁ YA NO VA EL RANGO.
+
+                  Estaba como una etiquetita al lado del "verificado", y el rango
+                  volvía a aparecer abajo, adentro de la planilla, en grande. Dos
+                  veces la misma medalla en un cuadro de 440px de ancho: la de
+                  arriba no agregaba nada y le sacaba lugar al nombre.
+                */}
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 7, flexWrap: "wrap" }}>
                   {profile.verified && (
                     <StatusChip tone="verified">{tr("profile.identityVerified")}</StatusChip>
-                  )}
-                  {/* El rango sale de las reseñas reales: sin reseñas no se muestra. */}
-                  {ratingCount > 0 && (
-                    <RankBadge count={ratingCount} average={profile.ratingAverage} size="sm" />
                   )}
                 </div>
                 {/*
@@ -116,16 +120,26 @@ export default function UserProfileModal({ userId, onClose }) {
               </div>
             </div>
 
-            {/* Las dos reputaciones: como conductor y como dueño */}
-            <div style={{
-              background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)",
-              borderLeft: "3px solid var(--fw-blue)", borderRadius: 10, padding: "12px 14px", marginBottom: 18,
-            }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-text)", marginBottom: 8 }}>
-                {tr("profile.ratings")}
-              </div>
-              <UserReputation userId={userId} role="both" />
-            </div>
+            {/*
+              LA PLANILLA COMPLETA.
+
+              Acá había un renglón con los dos promedios y nada más. El rango
+              estaba arriba en una etiquetita, las características no existían y
+              los alquileres terminados tampoco: para saber si confiar había que
+              bajar y leer las reseñas una por una.
+
+              Es exactamente el mismo cuadro que se ve desde la publicación del
+              auto y en el apartado de rango del perfil propio. Que sea EL MISMO
+              importa: si lo que ve el otro fuera distinto de lo que uno ve de sí
+              mismo, nadie sabría qué está mostrando.
+            */}
+            <PanelDeReputacion
+              userId={userId}
+              reviews={reviews}
+              ratingCount={ratingCount}
+              ratingAverage={profile.ratingAverage}
+              style={{ marginBottom: 18 }}
+            />
 
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--fw-text)", marginBottom: 10 }}>
               {tr("profile.reviewsReceived", { count: reviews.length })}
@@ -153,6 +167,24 @@ export default function UserProfileModal({ userId, onClose }) {
                     {" · "}
                     {shortDate(review.createdAt, lang)}
                   </div>
+                  {/* Las características que eligió quien escribió. Van antes
+                      del texto porque muchas reseñas no tienen texto: elegir
+                      casillas es un clic y escribir un párrafo no lo hace nadie.
+                      Sin ellas, esas reseñas eran una fecha y unas estrellas. */}
+                  {Array.isArray(review.tags) && review.tags.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
+                      {review.tags.filter(atributo).map(code => (
+                        <span key={code} style={{
+                          fontSize: 11, lineHeight: 1.5, padding: "2px 8px", borderRadius: 999,
+                          background: esBueno(code) ? "var(--fw-green-bg)" : "var(--fw-red-bg)",
+                          color: esBueno(code) ? "var(--fw-green-text-2)" : "var(--fw-red-text-2)",
+                          border: `1px solid ${esBueno(code) ? "var(--fw-green-line)" : "var(--fw-red-line)"}`,
+                        }}>
+                          {tr(`attr.${code}`)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {review.comment && (
                     <div style={{ fontSize: 13, color: "var(--fw-text-2)", marginTop: 6, lineHeight: 1.6 }}>
                       {review.comment}

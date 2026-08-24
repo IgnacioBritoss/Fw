@@ -33,10 +33,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
-import { getMyIdentity, getMyListings, getMyBookings, updateMe } from "../../services/api";
+import { getMyIdentity, getMyListings, getMyBookings, getUserReviews, updateMe } from "../../services/api";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import IdentityDocuments from "../../components/IdentityDocuments";
-import RankBadge from "../../components/RankBadge";
+import EscudoDeRango from "../../components/EscudoDeRango";
+import PanelDeReputacion from "../../components/PanelDeReputacion";
+import { rankOf } from "../../services/rank";
 import Avatar from "../../components/Avatar";
 import AvatarEditor from "../../components/AvatarEditor";
 import PhotoVisibilityChoice from "../../components/PhotoVisibilityChoice";
@@ -137,6 +139,23 @@ export default function Profile() {
     });
     return () => { active = false; };
   }, []);
+
+  /*
+    LAS RESEÑAS QUE RECIBÍ.
+
+    Son el respaldo para contar características cuando el servidor todavía no
+    devuelve el conteo hecho. Si falla, la planilla muestra igual todo lo demás:
+    no se rompe una pantalla entera por una sección.
+  */
+  const [misReseñas, setMisReseñas] = useState([]);
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    let active = true;
+    getUserReviews(user.id)
+      .then(list => { if (active) setMisReseñas(Array.isArray(list) ? list : []); })
+      .catch(() => { /* sin reseñas: la planilla no muestra características */ });
+    return () => { active = false; };
+  }, [user?.id]);
 
   // Todo se deriva directamente del usuario: lo que se edita en Ajustes se ve acá al instante
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -480,8 +499,34 @@ export default function Profile() {
             {fullyVerified
               ? <StatusChip tone="verified">{tr("status.verified")}</StatusChip>
               : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
-            {/* El rango solo aparece cuando hay reseñas de verdad detrás. */}
-            {ratingCount > 0 && <RankBadge count={ratingCount} average={ratingAverage} size="sm" />}
+            {/*
+              LA MEDALLA VA ARRIBA, AL LADO DEL NOMBRE.
+
+              Es el escudo solo, sin la cajita: al lado de un nombre de 28px una
+              etiqueta con borde y fondo compite con él, y lo que se tiene que
+              leer primero es el nombre. La medalla acompaña; el rango escrito,
+              la escalera y todo lo demás están en la planilla de más abajo, que
+              es el lugar donde alguien va a MIRAR su reputación y no a
+              cruzársela.
+
+              Solo aparece cuando hay reseñas de verdad detrás: sin reseñas no
+              hay rango, y un escudo vacío al lado del nombre sería prometer algo
+              que todavía no pasó.
+            */}
+            {ratingCount > 0 && (() => {
+              const tier = rankOf(ratingCount, ratingAverage);
+              return (
+                <span title={tr(`rank.${tier.key}`)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <EscudoDeRango metal={tier.metal} color={tier.color} size={isMobile ? 18 : 21} />
+                  <span style={{
+                    fontSize: 11, fontWeight: 800, letterSpacing: ".055em",
+                    textTransform: "uppercase", color: tier.color, whiteSpace: "nowrap",
+                  }}>
+                    {tr(`rank.${tier.key}`)}
+                  </span>
+                </span>
+              );
+            })()}
           </div>
           <div style={{ fontSize: 14, color: "var(--fw-text-3)" }}>{tr("profile.memberSince", { date: memberSince })}</div>
         </div>
@@ -531,11 +576,29 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Rango: qué medalla tiene y qué le falta para la siguiente */}
+      {/*
+        RANGO: LA MISMA PLANILLA QUE VE TODO EL MUNDO.
+
+        Acá había una etiqueta con la medalla y un renglón con lo que faltaba
+        para el rango siguiente. El problema no era que estuviera mal, era que
+        NO ERA LO QUE VE EL OTRO: la ficha que se abre desde el chat o desde una
+        publicación muestra alquileres terminados, atención, puntualidad y las
+        características que le pusieron. Uno miraba su perfil, veía una medalla,
+        y no tenía idea de qué estaba mostrando de sí mismo.
+
+        Ahora es el mismo cuadro, con `propio` prendido: lo único que se agrega
+        es cuánto falta para el rango siguiente, que a un tercero no le importa.
+      */}
       <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.rank")}</div>
         <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("profile.rankSub")}</div>
-        <RankBadge count={ratingCount} average={ratingAverage} showProgress />
+        <PanelDeReputacion
+          userId={user?.id}
+          reviews={misReseñas}
+          ratingCount={ratingCount}
+          ratingAverage={ratingAverage}
+          propio
+        />
       </div>
 
       {/* Verificaciones */}
