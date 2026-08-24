@@ -94,7 +94,7 @@ export default function UserProfileModal({ userId, onClose }) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 7, flexWrap: "wrap" }}>
                   {profile.verified && (
-                    <StatusChip tone="ok">{tr("profile.identityVerified")}</StatusChip>
+                    <StatusChip tone="verified">{tr("profile.identityVerified")}</StatusChip>
                   )}
                   {/* El rango sale de las reseñas reales: sin reseñas no se muestra. */}
                   {ratingCount > 0 && (

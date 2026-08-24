@@ -297,7 +297,10 @@ export default function MyBookings() {
           <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: "var(--fw-text)" }}>
             {precio(total)} <span style={{ fontSize: 12, fontWeight: 600, color: "var(--fw-text-4)" }}>{t("common.total")}</span>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {/* Aire entre estado y estado. Antes eran dos cajitas y 6px alcanzaban
+              para separarlas; ahora cada estado termina en su propia línea, y
+              con 6px las dos líneas se leían como una sola cortada al medio. */}
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             {b.paymentStatus && b.paymentStatus !== "UNPAID" && (
               <StatusChip tone={paid ? "ok" : "neutral"}>
                 {PAYMENT_LABELS[b.paymentStatus] ? t(PAYMENT_LABELS[b.paymentStatus]) : b.paymentStatus}

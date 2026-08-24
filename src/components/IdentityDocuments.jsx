@@ -43,7 +43,7 @@ const PHOTOS = [
 
 /** Cómo se muestra cada estado, con el color que le corresponde. */
 const STATUS = {
-  VERIFIED: { key: "kyc.approved", tone: "ok" },
+  VERIFIED: { key: "kyc.approved", tone: "verified" },
   REJECTED: { key: "kyc.rejected", tone: "danger" },
   ID_SUBMITTED: { key: "kyc.waitingReview", tone: "warn" },
 };
