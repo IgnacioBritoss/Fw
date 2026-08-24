@@ -19,6 +19,11 @@ export const mockCars = [
     brand: "Toyota", model: "Corolla", year: 2021,
     category: "Sedan", price_per_day: 8500,
     location: "Palermo, CABA", lat: -34.5885, lng: -58.4315,
+    // Hasta dónde el dueño lo acerca. Los tres autos de ejemplo tienen valores
+    // distintos —y uno no ofrece entrega— para que en el mapa se vea la
+    // diferencia: con todos en cero, los círculos salían todos iguales y
+    // parecía que la función estaba rota.
+    deliveryRadiusKm: 5,
     description: "Auto en excelente estado, muy económico. Nunca tuve incidentes. Ideal para viajes largos o uso diario en la ciudad.",
     photos: [
       "https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=800&auto=format&fit=crop&q=60",
@@ -35,6 +40,7 @@ export const mockCars = [
     brand: "Volkswagen", model: "T-Cross", year: 2022,
     category: "SUV", price_per_day: 12000,
     location: "Belgrano, CABA", lat: -34.5621, lng: -58.4567,
+    deliveryRadiusKm: 12,
     description: "SUV familiar, espacioso y cómodo para viajes largos. Acepta mascotas. Equipado con GPS y cámara de reversa.",
     photos: [
       "https://images.unsplash.com/photo-1655286203099-916c6f36da48?w=800&auto=format&fit=crop&q=60",
@@ -51,6 +57,8 @@ export const mockCars = [
     brand: "Fiat", model: "500", year: 2020,
     category: "Sedan", price_per_day: 6000,
     location: "San Isidro, GBA Norte", lat: -34.4731, lng: -58.5270,
+    // Este NO ofrece entrega: se retira en el punto y listo.
+    deliveryRadiusKm: 0,
     description: "Clásico y estilizado, perfecto para moverse por la ciudad. Económico y muy fácil de estacionar.",
     photos: [
       "https://images.unsplash.com/photo-1536667842290-7602f6a43a2b?w=800&auto=format&fit=crop&q=60",

@@ -10,7 +10,7 @@
 // ============================================================================
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aNumero, esPrecioCreible, precioUsable, PORCION_POR_DIA } from "./precio.js";
+import { aNumero, esPrecioCreible, precioUsable, PISO_RENTABLE, PORCION_POR_DIA } from "./precio.js";
 
 // ── Leer el número ─────────────────────────────────────────────────────────
 //
@@ -124,6 +124,54 @@ test("si puso el valor del auto en el campo del alquiler, también", () => {
   const r = precioUsable({ valor_estimado: 12_000_000, precio_recomendado: 12_000_000 });
   assert.equal(r.origen, "valor");
   assert.equal(r.precio_recomendado, 26400);
+});
+
+// ── El piso de lo que vale la pena ─────────────────────────────────────────
+//
+//  Un auto viejo da un alquiler correcto y a la vez inaceptable: nadie presta
+//  su auto por cinco mil pesos. Mostrar ese número al lado de la foto del auto
+//  propio se lee como una opinión sobre el auto, no como un dato.
+
+test("abajo del piso no se devuelve ningún precio", () => {
+  const r = precioUsable({
+    valor_estimado: 2_200_000, precio_min: 3500, precio_max: 6200,
+    precio_recomendado: 5000, justificacion: "El Meriva 2012 vale $2.200.000.",
+  });
+  assert.equal(r.origen, "bajoElPiso");
+  assert.equal(r.precio_recomendado, null);
+});
+
+test("y tampoco ninguno de los otros números que pueden molestar", () => {
+  // Ni el rango, ni lo que sale el auto, ni la justificación que los repite.
+  // Si alguno se colara, la pantalla volvería a mostrar justo lo que se quiso
+  // sacar.
+  const r = precioUsable({
+    valor_estimado: 2_200_000, precio_min: 3500, precio_max: 6200,
+    precio_recomendado: 5000, justificacion: "vale $2.200.000, alquiler de $5.000",
+  });
+  assert.equal(r.precio_min, null);
+  assert.equal(r.precio_max, null);
+  assert.equal(r.valor_estimado, null);
+  assert.equal(r.justificacion, null);
+});
+
+test("justo en el piso sí se sugiere", () => {
+  const r = precioUsable({ valor_estimado: 12_000_000, precio_recomendado: PISO_RENTABLE });
+  assert.equal(r.precio_recomendado, PISO_RENTABLE);
+  assert.equal(r.origen, "ia");
+});
+
+test("un peso abajo del piso, no", () => {
+  const r = precioUsable({ valor_estimado: 12_000_000, precio_recomendado: PISO_RENTABLE - 1 });
+  assert.equal(r.origen, "bajoElPiso");
+});
+
+test("el piso también corre para el precio calculado por nosotros", () => {
+  // Un auto barato: el 0,22% de 2,2 millones da menos del piso. No alcanza con
+  // frenar lo que dice el modelo; hay que frenar también nuestra propia cuenta.
+  const r = precioUsable({ valor_estimado: 2_200_000, precio_recomendado: 4 });
+  assert.equal(r.origen, "bajoElPiso");
+  assert.equal(r.precio_recomendado, null);
 });
 
 test("sin nada usable, avisa en vez de inventar", () => {

@@ -1030,6 +1030,8 @@ export default {
   "publish.errLocationPin": "请在地图上标出地点：没有它，该车辆信息不会出现在任何区域搜索结果中。",
   "publish.errPriceOutOfRange": "AI 返回的价格明显不合理。",
   "publish.priceFromValue": "模型的数量级判断有误，因此价格是根据它估算的车辆价值推算出来的。发布前请核对。",
+  "publish.priceYouDecide": "这个价格由你来定",
+  "publish.priceBelowFloor": "考虑到车龄，自动估算的结果低于通常划算的水平，所以我们不给出建议价格。请你自己定，想想你的时间和车辆损耗值多少。作为参考，大多数租金从每天 $25.000 左右起。",
   "publish.errMaxPhotos": "最多可以上传 6 张照片。",
   "publish.errBrandModel": "请填好品牌、型号和年份。",
   "publish.errCategory": "请选择车辆类型（搜索按这个筛选）。",

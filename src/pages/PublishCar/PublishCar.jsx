@@ -475,6 +475,8 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
       }
     }
     setPricingSuggestion(data);
+    // Abajo del piso no se carga nada: el campo queda vacío y lo pone el dueño.
+    // Ver PISO_RENTABLE en services/precio.js.
     if (data.precio_recomendado) setL("pricePerDay", String(data.precio_recomendado));
     setPricingLoading(false);
   };
@@ -1304,7 +1306,29 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                 {pricingLoading ? <Spinner size={11} label={tr("publish.analyzing")} /> : tr("publish.suggestAi")}
               </button>
             </div>
-            {pricingSuggestion && (
+            {/*
+              CUANDO LA SUGERENCIA QUEDA MUY ABAJO NO SE MUESTRA NINGÚN NÚMERO.
+
+              La cuenta puede estar perfecta y el resultado igual no servir: un
+              auto de muchos años da un alquiler que nadie aceptaría a cambio de
+              prestar su auto. Poner ese número al lado de la foto se lee como
+              una opinión sobre el auto y no como un dato.
+
+              Así que acá no va ni el precio, ni el rango, ni lo que sale el auto
+              —son justo los números que molestan—: va una explicación de por qué
+              no se propone nada, y el campo queda vacío para que lo llene el
+              dueño, que es el que sabe cuánto vale su tiempo.
+            */}
+            {pricingSuggestion?.origen === "bajoElPiso" ? (
+              <div style={{ ...s.aiBox, background: "var(--fw-amber-bg)", borderColor: "var(--fw-amber-line)" }}>
+                <div style={{ ...s.aiBoxTitle, color: "var(--fw-amber-text)" }}>
+                  {tr("publish.priceYouDecide")}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--fw-text-2)", lineHeight: 1.6 }}>
+                  {tr("publish.priceBelowFloor")}
+                </div>
+              </div>
+            ) : pricingSuggestion && (
               <div style={s.aiBox}>
                 <div style={s.aiBoxTitle}>{tr("publish.priceSuggestion")}</div>
                 <div style={s.aiBoxRow}>

@@ -1026,6 +1026,8 @@ export default {
   "publish.errLocationPin": "Marque o ponto no mapa: sem ele o anúncio não aparece em nenhuma busca por zona.",
   "publish.errPriceOutOfRange": "A IA devolveu um preço fora do razoável.",
   "publish.priceFromValue": "O modelo errou a escala, então o preço foi calculado a partir do valor que estimou para o carro. Revise antes de publicar.",
+  "publish.priceYouDecide": "Este preço você define",
+  "publish.priceBelowFloor": "Pelos anos do carro, a sugestão automática fica abaixo do que costuma valer a pena, então preferimos não propor um número. Defina você, pensando em quanto vale o seu tempo e o uso do carro. Como referência, a maioria dos aluguéis começa perto de $25.000 por dia.",
   "publish.errMaxPhotos": "Você pode enviar até 6 fotos.",
   "publish.errBrandModel": "Preencha marca, modelo e ano.",
   "publish.errCategory": "Escolha a categoria do veículo (é o que a busca usa para filtrar).",

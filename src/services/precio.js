@@ -33,6 +33,21 @@
 export const PISO_POR_DIA = 3_000;
 export const TECHO_POR_DIA = 3_000_000;
 
+/**
+ * Abajo de esto no se sugiere ningún precio.
+ *
+ * No es que la cuenta esté mal: un auto viejo puede dar $5.000 por día y la
+ * estimación es correcta. El problema es otro. Nadie entrega su auto, con el
+ * riesgo que eso tiene, por esa plata; y ver ese número al lado de la foto del
+ * auto propio se siente como una opinión sobre el auto, no como un dato.
+ *
+ * Así que abajo de este piso la app no propone nada: deja el campo vacío y
+ * explica, sin números que duelan, que por los años del auto la sugerencia
+ * automática no sirve y que el precio lo ponga el dueño. Sugerir algo que nadie
+ * va a aceptar no ayuda a publicar; ofende y encima no sirve.
+ */
+export const PISO_RENTABLE = 25_000;
+
 /** Cuánto puede valer un auto usado en pesos. La banda es ancha a propósito. */
 export const PISO_DEL_AUTO = 500_000;
 export const TECHO_DEL_AUTO = 1_000_000_000;
@@ -112,6 +127,11 @@ export function esPrecioCreible(precio, valorDelAuto = null) {
  *   · "valor"     → no servía, y se calculó a partir del valor del auto. Es lo
  *                   que salva el caso del modelo que contesta en dólares o que
  *                   pone el valor del auto en el campo del alquiler.
+ *   · "bajoElPiso" → la cuenta dio bien pero da menos de lo que nadie aceptaría.
+ *                   Ahí `precio_recomendado` viene en null A PROPÓSITO y NO se
+ *                   devuelve ningún número: ni el precio, ni el rango, ni lo que
+ *                   sale el auto. La pantalla explica la situación con palabras.
+ *                   Ver PISO_RENTABLE.
  *
  * Lanza solo si no quedó ningún camino.
  */
@@ -132,6 +152,28 @@ export function precioUsable(respuesta) {
 
   for (const [origen, precio] of candidatos) {
     if (precio !== null && esPrecioCreible(precio, valorCreible)) {
+      /*
+        LA CUENTA DIO BIEN Y EL NÚMERO NO SIRVE.
+
+        Un auto de veinte años puede dar $5.000 por día, y la estimación está
+        correcta. Pero nadie deja su auto en manos de un desconocido por esa
+        plata, y ese número al lado de la foto del auto propio no se lee como un
+        dato: se lee como una opinión sobre el auto.
+
+        Así que no se devuelve NADA. Ni el precio, ni el rango, ni lo que sale el
+        auto: son justo los números que molestan. Solo la marca de que quedó por
+        debajo del piso, y la pantalla lo cuenta con palabras.
+      */
+      if (Math.round(precio) < PISO_RENTABLE) {
+        return {
+          justificacion: null,
+          valor_estimado: null,
+          precio_min: null,
+          precio_max: null,
+          precio_recomendado: null,
+          origen: "bajoElPiso",
+        };
+      }
       return {
         ...datos,
         valor_estimado: valorCreible ?? datos.valor_estimado,

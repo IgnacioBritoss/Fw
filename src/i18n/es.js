@@ -1053,6 +1053,8 @@ export default {
   "publish.errLocationPin": "Marcá el punto en el mapa: sin él la publicación no aparece en ninguna búsqueda por zona.",
   "publish.errPriceOutOfRange": "La IA devolvió un precio fuera de lo razonable.",
   "publish.priceFromValue": "El modelo se equivocó de escala, así que el precio se calculó a partir del valor que estimó para el auto. Revisalo antes de publicar.",
+  "publish.priceYouDecide": "Este precio lo ponés vos",
+  "publish.priceBelowFloor": "Por los años del auto, la sugerencia automática queda por debajo de lo que suele convenir, así que preferimos no proponerte un número. Ponelo vos, pensando en cuánto vale tu tiempo y el uso del auto. Como referencia, la mayoría de los alquileres arrancan cerca de los $25.000 por día.",
   "publish.errMaxPhotos": "Podés subir hasta 6 fotos.",
   "publish.errBrandModel": "Completá marca, modelo y año.",
   "publish.errCategory": "Elegí la categoría del vehículo (es lo que usa el buscador para filtrarlo).",

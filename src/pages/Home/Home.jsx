@@ -453,29 +453,62 @@ export default function Home() {
     // El clic pasa de largo en los dos: si un círculo se comiera el clic, tocar
     // un pin que cae adentro de la zona de otro auto no abriría nada.
     const comun = { interactive: false };
+    const centro = [pinVisible.lat, pinVisible.lng];
 
-    // 1. La zona aproximada: dice que el punto no es la puerta de la casa.
+    /*
+      1. LA ZONA APROXIMADA: dice que el punto no es la puerta de la casa.
+
+      Va en GRIS y no en azul. Antes las dos circunferencias eran del mismo azul
+      de la marca, así que a simple vista parecían la misma cosa dibujada dos
+      veces y no se entendía cuál era cuál. Ahora la gris dice "por acá está el
+      auto" y la azul dice "hasta acá te lo llevan", que son dos ideas distintas
+      y merecen dos colores distintos.
+    */
     circuloRef.current.push(
-      L.circle([pinVisible.lat, pinVisible.lng], {
+      L.circle(centro, {
         ...comun, radius: 600,
-        color: "#0f6ce6", weight: 1.5, opacity: .7,
-        fillColor: "#bfdbfe", fillOpacity: .18,
+        color: "#64748b", weight: 1.5, opacity: .75, dashArray: "2 4",
+        fillColor: "#94a3b8", fillOpacity: .16,
       }).addTo(map),
     );
 
-    // 2. Y la de entrega, solo si el dueño ofrece acercarlo. Va con la línea
-    // cortada para que no se confunda con la de arriba: una marca dónde está el
-    // auto y la otra hasta dónde te lo llevan, que son dos cosas distintas y a
-    // simple vista serían dos círculos azules iguales.
+    // 2. Y la de entrega, solo si el dueño ofrece acercarlo.
     const km = Number(pinVisible.deliveryRadiusKm) || 0;
     if (km > 0) {
-      circuloRef.current.push(
-        L.circle([pinVisible.lat, pinVisible.lng], {
-          ...comun, radius: km * 1000,
-          color: "#0f6ce6", weight: 2, opacity: .8, dashArray: "6 6",
-          fillColor: "#0f6ce6", fillOpacity: .07,
-        }).addTo(map),
+      const entrega = L.circle(centro, {
+        ...comun, radius: km * 1000,
+        color: "#0f6ce6", weight: 2.5, opacity: .9, dashArray: "8 6",
+        fillColor: "#0f6ce6", fillOpacity: .08,
+      }).addTo(map);
+      circuloRef.current.push(entrega);
+
+      /*
+        SI NO ENTRA EN PANTALLA, NO SE VE QUE ES DISTINTA.
+
+        Una zona de 12 km al zoom de la ciudad se sale del mapa por los cuatro
+        costados: queda un fondo celeste sin borde a la vista, y lo único que se
+        distingue es la circunferencia chica, que es igual para todos los autos.
+        De ahí venía el "son todas iguales teniendo distintos parámetros".
+
+        Se acomoda la vista SOLO si hace falta —si el círculo no entra—, y sin
+        acercar más de lo que ya estaba: mover el mapa cuando ya se veía bien es
+        marearlo a uno por nada.
+      */
+      const zona = entrega.getBounds?.();
+      const vista = map.getBounds?.();
+      const entraEntera = Boolean(
+        zona && vista && typeof vista.contains === "function" && vista.contains(zona),
       );
+      if (zona && !entraEntera && typeof map.fitBounds === "function") {
+        // `maxZoom` con el zoom actual es para que solo se ALEJE: encuadrar
+        // puede acercar de más y dejar al auto solo en la pantalla. Si el mapa no
+        // sabe decir su zoom, se encuadra sin tope, que es lo de menos.
+        const zoomActual = typeof map.getZoom === "function" ? map.getZoom() : undefined;
+        map.fitBounds(zona, {
+          padding: [48, 48], animate: true,
+          ...(zoomActual !== undefined ? { maxZoom: zoomActual } : {}),
+        });
+      }
     }
 
     return limpiar;
