@@ -67,6 +67,20 @@ function ageFrom(dateString) {
   return age;
 }
 
+/*
+  Los avisos de "ese dato ya está en otra cuenta" que se corrigen en el paso 0.
+
+  Son los cuatro datos de identidad que el backend exige únicos. Vienen como
+  códigos y no como texto justamente para poder decidir con ellos sin leer el
+  mensaje, que está escrito para la persona y cambia con el idioma.
+*/
+const DATOS_DEL_PASO_0 = [
+  "EMAIL_ALREADY_REGISTERED",
+  "PHONE_ALREADY_REGISTERED",
+  "DNI_ALREADY_REGISTERED",
+  "CUIL_ALREADY_REGISTERED",
+];
+
 // Fecha máxima elegible: hoy menos 18 años (para el selector del navegador).
 function maxBirthDate() {
   const d = new Date();
@@ -147,7 +161,26 @@ export default function Register() {
       acceptedTerms: form.acceptedTerms,
     });
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) {
+      setError(result.error);
+      /*
+        UN DATO REPETIDO SE ARREGLA EN EL PASO ANTERIOR, ASÍ QUE ALLÁ SE VUELVE.
+
+        El backend ahora no deja que dos cuentas compartan email, teléfono, DNI
+        o CUIL, y avisa con un `code` que dice cuál de los cuatro está tomado.
+        Ese aviso llega acá, en la pantalla del código del mail, donde lo único
+        que hay para escribir son seis dígitos: la persona leía "ya hay una
+        cuenta con ese teléfono" sin ningún teléfono a la vista y sin forma de
+        cambiarlo salvo recargar y empezar de nuevo.
+
+        El teléfono además pasó a ser único —antes dos cuentas podían tener el
+        mismo número— así que este caso dejó de ser raro. Volviendo al paso 0 el
+        error queda arriba del formulario que sí se puede corregir, con todo lo
+        demás ya escrito.
+      */
+      if (DATOS_DEL_PASO_0.includes(result.code)) setStep(0);
+      return;
+    }
     setStep(2);
   };
 

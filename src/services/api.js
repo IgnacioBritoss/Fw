@@ -857,6 +857,41 @@ export async function markConversationRead(id) {
 // aprobar/rechazar publicaciones y cambiar estado/rol de los usuarios.
 export async function adminGetListings() { return apiFetch("/admin/listings"); }
 export async function adminGetUsers() { return apiFetch("/admin/users"); }
+
+/**
+ * Qué puede hacer ESTE backend con las cuentas.
+ *
+ * Devuelve { hardDeleteAccounts, hardDeleteDisabledReason }. Sirve para una
+ * sola cosa: saber si el botón de BORRAR DEFINITIVAMENTE tiene que existir.
+ *
+ * POR QUÉ SE PREGUNTA Y NO SE ADIVINA. La tentación es escribir "si esto es
+ * producción, escondelo". Está mal por los dos lados: un backend de
+ * demostración puede tener el borrado prendido a propósito, y el front no
+ * tiene forma de saber contra qué servidor está hablando (VITE_API_URL lo
+ * cambia sin recompilar). El que sabe es el servidor; se le pregunta.
+ */
+export async function adminGetSettings() { return apiFetch("/admin/settings"); }
+
+/**
+ * Borra una cuenta DE VERDAD, y todo lo suyo: autos, publicaciones, reservas,
+ * chats, reseñas, documentos y los archivos en Cloudinary.
+ *
+ * NO ES LO MISMO QUE SUSPENDERLA, y la diferencia no es de intensidad: es qué
+ * pasa con el email. Una cuenta suspendida sigue existiendo, así que su email,
+ * su teléfono y su documento QUEDAN TOMADOS y esa persona no puede volver a
+ * registrarse con ellos. Una cuenta borrada deja de existir y esos datos quedan
+ * LIBRES: al día siguiente se registra de nuevo con el mismo DNI.
+ *
+ * Por eso el castigo es suspender, no borrar. Borrar existe para reciclar las
+ * cuentas de prueba, y el backend lo tiene apagado en producción (403 con
+ * code ACCOUNT_HARD_DELETE_DISABLED).
+ *
+ * Devuelve { deleted, user, freed: { email, phone }, removed: { listings,
+ * vehicles, bookings, mediaFiles, mediaFilesFailed } }.
+ */
+export async function adminDeleteUser(id) {
+  return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
+}
 export async function adminUpdateListingStatus(id, status) {
   return apiFetch(`/admin/listings/${id}/status`, {
     method: "PATCH",

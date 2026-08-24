@@ -82,11 +82,35 @@ export default function CompleteProfile() {
     const result = await completeProfile(dateOfBirth);
     if (!result.success) { setLoading(false); setError(result.error); return; }
 
-    // Con la sesión ya completa se puede guardar el teléfono (es opcional: si
-    // falla, no bloquea el ingreso).
+    /*
+      Con la sesión ya completa se puede guardar el teléfono.
+
+      SIGUE SIENDO OPCIONAL: si el servidor no está o algo falla, no tiene
+      sentido dejar a alguien afuera de la app por un número que además podía
+      no cargar. Eso no cambió.
+
+      LO QUE SÍ CAMBIÓ: el backend ahora exige que el teléfono sea único —antes
+      dos cuentas podían tener el mismo número— y contesta 409 diciendo que ya
+      está en otra cuenta. Ese caso NO es "algo falló": es un dato que hay que
+      corregir, y el único que lo puede corregir es quien está mirando esta
+      pantalla. Escondido adentro de un catch vacío, la persona entraba creyendo
+      que cargó el teléfono, y después no podía verificarse ni publicar sin que
+      nada en ninguna pantalla le dijera por qué.
+    */
     const fullPhone = normalizePhone(buscarPais(phoneCountry).dial, phone);
     if (fullPhone) {
-      try { await updateMe({ phone: fullPhone }); } catch { /* opcional */ }
+      try {
+        await updateMe({ phone: fullPhone });
+      } catch (err) {
+        if (err?.code === "PHONE_ALREADY_REGISTERED" || err?.status === 409) {
+          setPhoneTouched(true);
+          setError(err.message || t("complete.errPhoneTaken"));
+          setLoading(false);
+          await refreshUser();
+          return;
+        }
+        /* cualquier otra falla: el teléfono se puede cargar después */
+      }
     }
     await refreshUser();
     setLoading(false);

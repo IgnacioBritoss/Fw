@@ -14,11 +14,13 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
+  adminGetSettings, adminDeleteUser,
   getAdminReports, resolveReport,
   adminGetVerifications, adminGetVerificationDocuments,
   adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
+import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
 import Avatar from "../../components/Avatar";
@@ -46,7 +48,29 @@ const s = {
   btnDelete: { padding: "8px 18px", background: "var(--fw-red)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnSuspend: { padding: "8px 18px", background: "var(--fw-amber)", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnRestore: { padding: "8px 18px", background: "#059669", color: "#fff", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  /*
+    BORRAR DEFINITIVAMENTE NO PUEDE PARECERSE A SUSPENDER.
+
+    Suspender y borrar son dos cosas distintas —una deja el email tomado y la
+    otra lo libera— y en una fila de botones del mismo tamaño y color se eligen
+    por descuido. Este va aparte: fondo transparente, borde rojo y letra roja.
+    Se ve que es de la familia de lo peligroso pero NO es el botón que la mano
+    aprieta sola, que es el lleno.
+  */
+  btnBorrar: {
+    padding: "8px 18px", background: "transparent", color: "var(--fw-red-text-2)",
+    border: "1px solid var(--fw-red)", borderRadius: 8, fontSize: 13,
+    fontWeight: 700, cursor: "pointer",
+  },
   btnRow: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
+  // El cuadro que explica la diferencia entre las dos acciones. Va arriba de la
+  // lista, no adentro de cada fila: es una regla del panel, no de una cuenta.
+  ayuda: {
+    background: "var(--fw-surface-2)", border: "1px solid var(--fw-line)",
+    borderLeft: "3px solid var(--fw-blue)", borderRadius: 8,
+    padding: "12px 14px", marginBottom: 16, fontSize: 12.5,
+    color: "var(--fw-text-2)", lineHeight: 1.65,
+  },
   alertOk: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-green-line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
   alertErr: { background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--fw-red-text-2)", marginBottom: 16 },
   empty: { textAlign: "center", padding: "40px 0", color: "var(--fw-text-4)" },
@@ -100,6 +124,18 @@ export default function Admin() {
   const [cargandoDocs, setCargandoDocs] = useState(null);
   const [probed, setProbed] = useState(null);
   const [probing, setProbing] = useState(false);
+  /*
+    ¿ESTE backend deja borrar cuentas de verdad?
+
+    Arranca en `null` —"todavía no sé"— y no en `false`. Con `false` el botón
+    aparecería de golpe medio segundo después de abrir la pestaña, que es
+    exactamente cuando la mano ya está yendo a hacer clic en otra cosa.
+    Mientras es `null` no se muestra nada.
+  */
+  const [ajustes, setAjustes] = useState(null);
+  // La cuenta que se está por borrar definitivamente (pide escribir el email).
+  const [borrando, setBorrando] = useState(null);
+  const [borrandoAhora, setBorrandoAhora] = useState(false);
 
   // Portón de seguridad: si no es admin, no muestra el panel.
   if (!user || user.role !== "ADMIN") {
@@ -148,6 +184,13 @@ export default function Admin() {
         .then(data => setUsers(data || []))
         .catch(() => showAlert(tr("admin.errUsers"), "err"))
         .finally(() => setLoadingUsers(false));
+      // Si el servidor no deja borrar cuentas, el botón ni se dibuja. Un backend
+      // viejo que no conozca esta ruta se trata como "no deja": esconder un
+      // botón de más nunca rompe nada, mostrarlo de más termina en un 403 con
+      // la persona convencida de que borró una cuenta.
+      adminGetSettings()
+        .then(data => setAjustes(data || { hardDeleteAccounts: false }))
+        .catch(() => setAjustes({ hardDeleteAccounts: false }));
     }
     if (tab === "reports") {
       setLoadingReports(true);
@@ -240,26 +283,94 @@ export default function Admin() {
       showAlert(tr("admin.listingRestored", { label }));
     } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
-  const doSuspendUser = async (id, name) => {
+  /*
+    CAMBIAR EL ESTADO DE UNA CUENTA (suspender / dar de baja / reactivar).
+
+    Las tres son la MISMA llamada con distinto valor, así que son una sola
+    función. Lo que cambia es lo que hay que contar después:
+
+     · Al sacar una cuenta de circulación, el backend además LE DA DE BAJA LAS
+       PUBLICACIONES y dice cuántas. Antes se suspendía a alguien y sus autos
+       seguían apareciendo en el buscador y se podían reservar: quien reservaba
+       no tenía cómo enterarse de que del otro lado no había nadie.
+     · Al reactivarla, esas publicaciones NO vuelven, y no es un olvido: un
+       aviso dado de baja por la suspensión no se distingue de uno que el dueño
+       borró por su cuenta. Hay que decirlo, porque si no el admin la reactiva
+       creyendo que deja todo como estaba.
+  */
+  const doSetUserStatus = async (id, name, status) => {
     try {
-      await adminUpdateUserStatus(id, "SUSPENDED");
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "SUSPENDED" } : u));
-      showAlert(tr("admin.userSuspended", { name }));
+      const res = await adminUpdateUserStatus(id, status);
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status } : u));
+      // La lista de publicaciones que está en memoria quedó vieja: las de esta
+      // cuenta acaban de darse de baja. Se vuelve a pedir al entrar a la pestaña.
+      if (status !== "ACTIVE") setListings([]);
+
+      const bajas = Number(res?.listingsTakenDown) || 0;
+      if (status === "ACTIVE") {
+        showAlert(tr("admin.userReactivated", { name }));
+      } else {
+        const base = status === "SUSPENDED"
+          ? tr("admin.userSuspended", { name })
+          : tr("admin.userDeactivated", { name });
+        showAlert(bajas > 0 ? `${base} ${tr("admin.listingsTakenDown", { n: bajas })}` : base);
+      }
     } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
-  const doDeleteUser = async (id, name) => {
+
+  /*
+    BORRAR LA CUENTA DE VERDAD.
+
+    No pasa por el modal de confirmación común: acá hay que ESCRIBIR el email de
+    la cuenta. Es la misma protección que usa GitHub para borrar un repositorio,
+    y por el mismo motivo: esto no se deshace y además se lleva puestas las
+    reservas y los pagos de OTRAS personas que alquilaron con esa cuenta.
+  */
+  const doHardDeleteUser = async () => {
+    const cuenta = borrando;
+    if (!cuenta) return;
+    setBorrandoAhora(true);
     try {
-      await adminUpdateUserStatus(id, "DELETED");
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "DELETED" } : u));
-      showAlert(tr("admin.userDeleted", { name }));
-    } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
+      const res = await adminDeleteUser(cuenta.id);
+      setUsers(prev => prev.filter(u => u.id !== cuenta.id));
+      setListings([]);
+      setBorrando(null);
+
+      const q = res?.removed || {};
+      const email = res?.freed?.email || cuenta.email;
+      let msg = tr("admin.userHardDeleted", {
+        listings: Number(q.listings) || 0,
+        vehicles: Number(q.vehicles) || 0,
+        files: Number(q.mediaFiles) || 0,
+        email,
+      });
+      // Cloudinary caído o sin credenciales: la cuenta se borró igual y no hay
+      // nada que reintentar desde acá. Se dice, pero como nota al pie: si se
+      // mostrara como error, parecería que el borrado no se hizo.
+      const fallaron = Number(q.mediaFilesFailed) || 0;
+      if (fallaron > 0) msg += ` ${tr("admin.mediaFailed", { n: fallaron })}`;
+      showAlert(msg);
+    } catch (err) {
+      // El backend tiene el borrado apagado (producción). Se esconde el botón
+      // para que no vuelva a pasar y se explica qué hacer en su lugar.
+      if (err.code === "ACCOUNT_HARD_DELETE_DISABLED") {
+        setAjustes({ hardDeleteAccounts: false });
+        setBorrando(null);
+        showAlert(tr("admin.hardDeleteOff"), "err");
+      } else {
+        showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err");
+      }
+    } finally {
+      setBorrandoAhora(false);
+    }
   };
 
   // Abren el modal de confirmación (en vez de alert nativo). Guardan la acción
   // a ejecutar; recién se corre cuando el usuario confirma en el modal.
   const handleDeleteListing = (id, label) => setConfirmModal({ title: tr("car.deleteListing"), msg: tr("admin.confirmDeleteListing", { label }), confirmLabel: tr("common.delete"), action: () => doDeleteListing(id, label) });
-  const handleSuspendUser = (id, name) => setConfirmModal({ title: tr("admin.suspendUser"), msg: tr("admin.confirmSuspend", { name }), confirmLabel: tr("admin.suspend"), action: () => doSuspendUser(id, name) });
-  const handleDeleteUser = (id, name) => setConfirmModal({ title: tr("admin.deleteUser"), msg: tr("admin.confirmDeleteUser", { name }), confirmLabel: tr("common.delete"), action: () => doDeleteUser(id, name) });
+  const handleSuspendUser = (id, name) => setConfirmModal({ title: tr("admin.suspendUser"), msg: tr("admin.confirmSuspend", { name }), confirmLabel: tr("admin.suspend"), action: () => doSetUserStatus(id, name, "SUSPENDED") });
+  const handleDeactivateUser = (id, name) => setConfirmModal({ title: tr("admin.deactivateUser"), msg: tr("admin.confirmDeactivate", { name }), confirmLabel: tr("admin.deactivate"), action: () => doSetUserStatus(id, name, "DELETED") });
+  const handleReactivateUser = (id, name) => setConfirmModal({ title: tr("admin.reactivateUser"), msg: tr("admin.confirmReactivate", { name }), confirmLabel: tr("admin.reactivate"), action: () => doSetUserStatus(id, name, "ACTIVE") });
 
   // Ejecuta la acción guardada en el modal y lo cierra.
   const runConfirm = async () => { const m = confirmModal; setConfirmModal(null); if (m?.action) await m.action(); };
@@ -333,7 +444,23 @@ export default function Admin() {
         })
       )}
 
-      {/* USUARIOS */}
+      {/* USUARIOS
+          Arriba de la lista va la regla del panel: suspender y eliminar NO son
+          la misma acción con más o menos fuerza. La que castiga es suspender,
+          porque deja el email tomado; eliminar lo libera y esa persona se
+          registra de nuevo mañana con el mismo documento. Sin esto escrito, los
+          dos botones se eligen por cuál está más a mano. */}
+      {tab === "users" && !loadingUsers && users.length > 0 && (
+        <div style={s.ayuda}>
+          <div style={{ fontWeight: 700, color: "var(--fw-text)", marginBottom: 4 }}>
+            {tr("admin.accountsHelpTitle")}
+          </div>
+          {tr("admin.accountsHelp")}
+          {ajustes && !ajustes.hardDeleteAccounts && (
+            <div style={{ marginTop: 6, color: "var(--fw-text-3)" }}>{tr("admin.hardDeleteOff")}</div>
+          )}
+        </div>
+      )}
       {tab === "users" && (
         loadingUsers ? <Spinner block label={tr("common.loading")} />
         : users.length === 0 ? <div style={s.empty}>{tr("admin.noUsers")}</div>
@@ -359,7 +486,17 @@ export default function Admin() {
                 <div><strong>ID:</strong> {u.id}</div>
                 <div><strong>{tr("auth.phone")}:</strong> {u.phone || "—"}</div>
                 <div><strong>{tr("admin.registered")}:</strong> {shortDate(u.createdAt, lang)}</div>
-                {u.id !== user.id && u.status !== "DELETED" && (
+                {/*
+                  LA PROPIA FILA NO TIENE BOTONES.
+
+                  El backend contesta 400 a las tres acciones sobre uno mismo, y
+                  tiene razón: un admin que se suspende o se saca el rol se queda
+                  afuera del panel y no hay forma de volver a entrar desde la
+                  API. Mejor que no exista el botón a que exista y explote.
+                */}
+                {u.id === user.id ? (
+                  <div style={{ marginTop: 8, color: "var(--fw-text-4)" }}>{tr("admin.selfRow")}</div>
+                ) : (
                   <div style={{ ...s.btnRow, marginTop: 8 }}>
                     {u.status !== "SUSPENDED" && (
                       <button style={s.btnSuspend}
@@ -367,10 +504,25 @@ export default function Admin() {
                         {tr("admin.suspend")}
                       </button>
                     )}
-                    <button style={s.btnDelete}
-                      onClick={e => { e.stopPropagation(); handleDeleteUser(u.id, `${u.firstName} ${u.lastName}`); }}>
-                      {tr("common.delete")}
-                    </button>
+                    {u.status !== "DELETED" && (
+                      <button style={s.btnDelete}
+                        onClick={e => { e.stopPropagation(); handleDeactivateUser(u.id, `${u.firstName} ${u.lastName}`); }}>
+                        {tr("admin.deactivate")}
+                      </button>
+                    )}
+                    {u.status !== "ACTIVE" && (
+                      <button style={s.btnRestore}
+                        onClick={e => { e.stopPropagation(); handleReactivateUser(u.id, `${u.firstName} ${u.lastName}`); }}>
+                        {tr("admin.reactivate")}
+                      </button>
+                    )}
+                    {/* Solo si el servidor dice que este backend lo permite. */}
+                    {ajustes?.hardDeleteAccounts && (
+                      <button style={s.btnBorrar}
+                        onClick={e => { e.stopPropagation(); setBorrando(u); }}>
+                        {tr("admin.hardDelete")}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -634,6 +786,26 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/*
+        BORRAR DEFINITIVAMENTE: hay que escribir el email de la cuenta.
+
+        El modal de arriba se contesta con un clic, y para esto no alcanza. Esto
+        no se deshace, libera el email —o sea que la persona expulsada se puede
+        volver a registrar— y borra reservas y pagos en los que hay OTRA persona
+        del otro lado. Escribir el email son tres segundos y garantizan que
+        quien lo hace sabe a qué cuenta le está apuntando.
+      */}
+      <ConfirmarEscribiendo
+        abierto={Boolean(borrando)}
+        titulo={tr("admin.hardDeleteTitle", { name: `${borrando?.firstName || ""} ${borrando?.lastName || ""}`.trim() })}
+        cuerpo={tr("admin.hardDeleteBody")}
+        frase={borrando?.email || ""}
+        textoBoton={tr("admin.hardDelete")}
+        trabajando={borrandoAhora}
+        onConfirmar={doHardDeleteUser}
+        onCerrar={() => setBorrando(null)}
+      />
     </div>
   );
 }
