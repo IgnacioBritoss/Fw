@@ -1027,6 +1027,8 @@ export default {
   "publish.errLocationPin": "Mark the spot on the map: without it the listing will not show up in any area search.",
   "publish.errPriceOutOfRange": "The AI returned a price outside any reasonable range.",
   "publish.priceFromValue": "The model got the scale wrong, so the price was worked out from the car value it estimated. Check it before publishing.",
+  "publish.priceYouDecide": "You set this price",
+  "publish.priceBelowFloor": "Given the age of the car, the automatic suggestion lands below what usually makes sense, so we would rather not propose a number. Set it yourself, thinking about what your time and the wear on the car are worth. As a reference, most rentals start around $25,000 a day.",
   "publish.errMaxPhotos": "You can upload up to 6 photos.",
   "publish.errBrandModel": "Fill in brand, model and year.",
   "publish.errCategory": "Pick the vehicle category (it is what the search uses to filter it).",

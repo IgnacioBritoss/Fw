@@ -1026,6 +1026,8 @@ export default {
   "publish.errLocationPin": "Segna il punto sulla mappa: senza di esso l'annuncio non compare in nessuna ricerca per zona.",
   "publish.errPriceOutOfRange": "L'IA ha restituito un prezzo fuori da ogni valore ragionevole.",
   "publish.priceFromValue": "Il modello ha sbagliato la scala, quindi il prezzo è stato calcolato dal valore che ha stimato per l'auto. Controllalo prima di pubblicare.",
+  "publish.priceYouDecide": "Questo prezzo lo decidi tu",
+  "publish.priceBelowFloor": "Vista l'età dell'auto, il suggerimento automatico resta sotto a quello che di solito conviene, quindi preferiamo non proporti un numero. Mettilo tu, pensando a quanto vale il tuo tempo e l'uso dell'auto. Come riferimento, la maggior parte dei noleggi parte intorno ai $25.000 al giorno.",
   "publish.errMaxPhotos": "Puoi caricare fino a 6 foto.",
   "publish.errBrandModel": "Inserisci marca, modello e anno.",
   "publish.errCategory": "Scegli la categoria del veicolo (è quella che usa la ricerca per filtrarlo).",
