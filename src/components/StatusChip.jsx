@@ -26,19 +26,32 @@
 //    · title → texto al pasar el mouse (opcional)
 // ============================================================================
 
+/*
+  TODO SALE DE LA PALETA, NADA ESCRITO A MANO.
+
+  Antes cuatro de estos seis tenían el color puesto acá adentro: un verde oscuro
+  sobre un fondo casi blanco (#f6fdf9), un rojo sobre #fff6f6. Escrito así, el
+  chip NO SE ENTERA de que la app cambió a modo oscuro: el fondo pálido se queda
+  pálido, y lo que se ve al lado del nombre es una etiqueta blanca encima de una
+  pantalla negra. Es lo que pasaba con VERIFICADO en el perfil.
+
+  Con las variables, el chip pide un papel —"el verde de fondo"— y el modo se
+  encarga de qué color es ese papel en cada caso. Un chip nuevo sale bien en los
+  dos modos sin que nadie se acuerde de revisarlo.
+*/
 const TONES = {
   // ok: algo terminó bien y no requiere nada (pago completo, verificado)
-  ok: { bar: "#16a34a", text: "#15803d", bg: "#f6fdf9" },
+  ok: { bar: "var(--fw-green)", text: "var(--fw-green-text-2)", bg: "var(--fw-green-bg)" },
   // info: un hecho, sin urgencia (completada, aceptada)
-  info: { bar: "#0f6ce6", text: "#0b55c0", bg: "var(--fw-blue-bg)" },
+  info: { bar: "var(--fw-blue)", text: "var(--fw-blue-text)", bg: "var(--fw-blue-bg)" },
   // warn: falta que alguien haga algo (pendiente, lista para retiro)
-  warn: { bar: "#f59e0b", text: "#b45309", bg: "var(--fw-amber-bg)" },
+  warn: { bar: "var(--fw-amber)", text: "var(--fw-amber-text)", bg: "var(--fw-amber-bg)" },
   // danger: algo salió mal (rechazada, en disputa, pago fallido)
-  danger: { bar: "#dc2626", text: "#b91c1c", bg: "#fff6f6" },
+  danger: { bar: "var(--fw-red)", text: "var(--fw-red-text-2)", bg: "var(--fw-red-bg)" },
   // neutral: pasó y ya no importa (cancelada, sin pagar)
-  neutral: { bar: "#9ca3af", text: "#4b5563", bg: "var(--fw-surface-2)" },
+  neutral: { bar: "var(--fw-text-4)", text: "var(--fw-text-2)", bg: "var(--fw-surface-2)" },
   // live: está pasando ahora mismo (en curso). Lleva el punto lleno.
-  live: { bar: "#0d9488", text: "#0f766e", bg: "#f4fdfc", pulse: true },
+  live: { bar: "var(--fw-teal)", text: "var(--fw-teal-text)", bg: "var(--fw-teal-bg)", pulse: true },
 };
 
 export default function StatusChip({ tone = "neutral", children, title, style }) {
