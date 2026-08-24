@@ -17,6 +17,7 @@
 // ============================================================================
 import { useState, useEffect, useRef } from "react";
 import ReportModal from "../../components/ReportModal";
+import UserProfileModal from "../../components/UserProfileModal";
 import { useParams, useNavigate } from "react-router-dom";
 import { mockCars } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
@@ -134,6 +135,27 @@ const s = {
   },
   ownerName: { fontWeight: 700, fontSize: 14, color: "var(--fw-text)" },
   ownerMeta: { fontSize: 12, color: "var(--fw-text-3)" },
+  /*
+    "CONOCÉ MÁS": EL DUEÑO SE PUEDE TOCAR.
+
+    Acá decía "Miembro de Freewheel" y era una frase muerta: no dice nada de
+    ESTA persona —lo es todo el mundo— y no invitaba a hacer nada. La ficha de
+    la persona existía desde el chat, pero desde la publicación no había forma
+    de llegar, que es justo donde alguien está por decidir si le deja el auto a
+    ese, o si se sube al de ese.
+
+    Se ve como un enlace y no como un botón lleno: el botón de esta columna es
+    "Reservar ahora" y no puede competir con él. La flechita es lo que dice que
+    hay algo del otro lado; sin ella, un texto azul al lado de un nombre pasa
+    por decoración.
+  */
+  ownerLink: {
+    display: "inline-flex", alignItems: "center", gap: 4,
+    background: "none", border: "none", padding: 0, cursor: "pointer",
+    fontFamily: "inherit", fontSize: 12, fontWeight: 700,
+    color: "var(--fw-blue-text)", textDecoration: "underline",
+    textUnderlineOffset: 2, marginTop: 1,
+  },
   btn: {
     width: "100%", padding: "14px", background: "var(--fw-blue)", color: "#fff",
     border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700,
@@ -231,6 +253,8 @@ export default function CarDetail() {
   const [aviso, setAviso] = useState("");
   const [showReport, setShowReport] = useState(false);
   const [showReportUser, setShowReportUser] = useState(false);
+  // La ficha del dueño, la misma que se abre desde el chat.
+  const [verDueño, setVerDueño] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(0);
   const [editing, setEditing] = useState(false);
   const [editPrice, setEditPrice] = useState("");
@@ -682,9 +706,21 @@ export default function CarDetail() {
 
       <div style={s.ownerBox}>
         <Avatar src={car.ownerPhotoUrl} initials={car.ownerInitials} size={44} alt={car.ownerName} />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={s.ownerName}>{car.ownerName}</div>
-          <div style={s.ownerMeta}>{tr("car.memberOf")}</div>
+          {/* Sin id de dueño (los autos de ejemplo) no hay ficha que abrir, así
+              que se deja la frase de siempre en vez de un enlace que no lleva
+              a ninguna parte. */}
+          {car.ownerId ? (
+            <button type="button" style={s.ownerLink} onClick={() => setVerDueño(true)}>
+              {tr("car.knowMore")}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : (
+            <div style={s.ownerMeta}>{tr("car.memberOf")}</div>
+          )}
         </div>
         {!isOwner && (
           <button
@@ -942,6 +978,13 @@ export default function CarDetail() {
           targetType="user"
           onClose={() => setShowReportUser(false)}
         />
+      )}
+
+      {/* La ficha del dueño. Es el MISMO componente que abre el chat: la
+          reputación de alguien no puede verse distinta según por dónde se
+          llegue a ella. */}
+      {verDueño && car.ownerId && (
+        <UserProfileModal userId={car.ownerId} onClose={() => setVerDueño(false)} />
       )}
 
       {confirmDelete && (

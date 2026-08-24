@@ -34,64 +34,19 @@
 //  un rango alto. Y el rango nunca baja de "bronce" mientras haya al menos una
 //  reseña: no se castiga a alguien por tener pocas.
 // ============================================================================
-import { useId } from "react";
 import { useI18n } from "../i18n/core";
 import { rankOf, nextRank } from "../services/rank";
+import EscudoDeRango from "./EscudoDeRango";
 
-// El contorno: hombros rectos, laterales que se cierran y base en punta.
-const ESCUDO = "M10 1.2 18.4 3.5V11.5C18.4 16.5 15 20.5 10 22.8 5 20.5 1.6 16.5 1.6 11.5V3.5L10 1.2Z";
-// La mitad izquierda, la cara que "recibe la luz": recorre el mismo borde solo
-// del lado izquierdo y cierra por el eje central.
-const CARA = "M10 1.2 1.6 3.5V11.5C1.6 16.5 5 20.5 10 22.8Z";
+/*
+  EL DIBUJO DEL ESCUDO SE MUDÓ A EscudoDeRango.jsx.
 
-function Shield({ metal, color, size = 22 }) {
-  // El identificador del recorte tiene que ser único: puede haber varios escudos
-  // de platino en la misma pantalla (una lista de personas), y con el id repetido
-  // todos usarían el recorte del primero.
-  const idDestello = useId();
-  const alto = Math.round(size * 1.2);
-
-  // Sin metal (todavía sin reseñas): el escudo va hueco, contorneado, y con un
-  // signo de pregunta adentro. Vacío del todo se leía como un dibujo a medio
-  // hacer; el "?" dice que el rango está por verse.
-  if (!metal) {
-    return (
-      <svg width={size} height={alto} viewBox="0 0 20 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-        <path d={ESCUDO} stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
-        {/* La línea de base va puesta a mano (y=15.6) en vez de centrar con
-            dominant-baseline: esa propiedad la interpretan distinto los
-            navegadores y en Safari el signo queda corrido hacia arriba. */}
-        <text x="10" y="15.6" textAnchor="middle" fontSize="12" fontWeight="700"
-          fontFamily="inherit" fill={color}>?</text>
-      </svg>
-    );
-  }
-
-  return (
-    <svg width={size} height={alto} viewBox="0 0 20 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      {/* La cara oscura: el escudo entero. */}
-      <path d={ESCUDO} fill={metal.dark} />
-      {/* La cara clara, encima, solo la mitad izquierda. */}
-      <path d={CARA} fill={metal.light} />
-      {/* El borde, un tono más profundo que las dos caras. */}
-      <path d={ESCUDO} stroke={metal.rim} strokeWidth="1" strokeLinejoin="round" />
-
-      {/* El destello del platino: una franja clara en diagonal, como el reflejo
-          sobre metal pulido. Va recortada con la forma del escudo. */}
-      {metal.shine && (
-        <>
-          <defs>
-            <clipPath id={idDestello}><path d={ESCUDO} /></clipPath>
-          </defs>
-          <g clipPath={`url(#${idDestello})`}>
-            <path d="M13.5 -2 20 4 8 24 1.5 18Z" fill="#ffffff" opacity="0.5" />
-            <path d="M18.5 1 21 3.4 10.5 24 8 21.6Z" fill="#ffffff" opacity="0.35" />
-          </g>
-        </>
-      )}
-    </svg>
-  );
-}
+  Estaba escrito acá adentro, y la planilla de reputación necesita la medalla
+  SIN la cajita con borde y fondo que dibuja este componente: ahí el nombre del
+  rango es el título del cuadro, no una etiqueta pegada al costado. Copiar el
+  dibujo hubiera dejado dos escudos que se pueden desincronizar el día que se
+  toque uno.
+*/
 
 /**
  * Props:
@@ -121,7 +76,7 @@ export default function RankBadge({ count = 0, average = null, size = "md", show
         ...style,
       }}
     >
-      <Shield metal={tier.metal} color={tier.color} size={small ? 15 : 22} />
+      <EscudoDeRango metal={tier.metal} color={tier.color} size={small ? 15 : 22} />
       <div style={{ minWidth: 0 }}>
         <div
           style={{

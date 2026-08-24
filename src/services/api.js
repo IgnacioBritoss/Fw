@@ -678,10 +678,24 @@ export async function getPublicProfile(userId) {
 export async function getMyPendingReviews() {
   return apiFetch("/reviews/me/pending");
 }
-export async function createReview(bookingId, { rating, comment }) {
+/**
+ * Deja la reseña de una reserva terminada.
+ *
+ * `tags` son las CARACTERÍSTICAS elegidas (RESPONDE_RAPIDO, AUTO_SUCIO…), que
+ * es lo que después se puede contar en el perfil: "contesta rápido, 18 veces".
+ * Van solo si hay alguna; el campo es opcional del lado del servidor, y mandar
+ * una lista vacía a un backend que todavía no lo conozca sería pedirle que
+ * valide un campo que no tiene.
+ */
+export async function createReview(bookingId, { rating, comment, tags }) {
+  const elegidas = Array.isArray(tags) ? tags.filter(Boolean) : [];
   return apiFetch(`/bookings/${bookingId}/reviews`, {
     method: "POST",
-    body: JSON.stringify({ rating, ...(comment ? { comment } : {}) }),
+    body: JSON.stringify({
+      rating,
+      ...(comment ? { comment } : {}),
+      ...(elegidas.length ? { tags: elegidas } : {}),
+    }),
   });
 }
 
