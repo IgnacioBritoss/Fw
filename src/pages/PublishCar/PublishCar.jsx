@@ -23,6 +23,7 @@ import { createVehicle, createListing, createMediaAsset } from "../../services/a
 import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
+import { precioUsable } from "../../services/precio";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
@@ -63,15 +64,6 @@ const s = {
   cardMobile: { background: "var(--fw-surface)", borderRadius: 14, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,.05)", marginBottom: 16, border: "1px solid var(--fw-line-soft)" },
   sectionTitle: { fontSize: 13, fontWeight: 700, color: "var(--fw-text-4)", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--fw-line-soft)" },
   field: { marginBottom: 16 },
-  sugerenciaFila: {
-    marginTop: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
-  },
-  sugerenciaTexto: { fontSize: 12, color: "var(--fw-text-3)" },
-  sugerenciaBoton: {
-    padding: "3px 10px", borderRadius: 20, fontSize: 11.5, fontWeight: 700,
-    background: "var(--fw-blue-bg-2)", color: "var(--fw-blue-text)",
-    border: "1px solid var(--fw-blue-line, transparent)", cursor: "pointer",
-  },
   label: { display: "block", fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 6 },
   input: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, outline: "none", color: "var(--fw-text)", boxSizing: "border-box", background: "var(--fw-surface)" },
   select: { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid var(--fw-border)", fontSize: 14, background: "var(--fw-surface)", color: "var(--fw-text)" },
@@ -414,14 +406,20 @@ interior), la antigüedad (arriba de diez años baja bastante), la caja automát
 
 Devolvé SOLO un JSON válido, sin texto alrededor:
 {
-  "valor_estimado": entero en ARS, lo que estimaste en el paso 1,
-  "precio_min": entero en ARS por día,
-  "precio_max": entero en ARS por día,
-  "precio_recomendado": entero en ARS por día,
+  "valor_estimado": lo que estimaste en el paso 1,
+  "precio_min": el alquiler más barato por día,
+  "precio_max": el alquiler más caro por día,
+  "precio_recomendado": el alquiler por día que recomendás,
   "justificacion": "una o dos oraciones que digan el valor estimado del auto y por qué ese precio"
 }
 
-Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos por DÍA, no en dólares.`;
+REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
+- Todos en PESOS ARGENTINOS. Nunca en dólares.
+- Números pelados, sin comillas, sin signo $, sin puntos ni comas de miles.
+  Doce millones se escribe 12000000, no "12.000.000" ni "$12M".
+- Los tres precios son por DÍA y son distintos entre sí. Un alquiler por día es
+  un número de cuatro, cinco o seis cifras; el valor del auto es mucho más
+  grande. Si te da parecido a "valor_estimado", te equivocaste de paso.`;
         // `json: true`: la respuesta se LEE, no se muestra, así que el modelo
         // tiene que devolver un objeto y nada más. Sin esto, los que razonan
         // antes de contestar escribían el razonamiento primero y no se podía
@@ -452,24 +450,7 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
         }
         if (!data) throw ultimoFallo || new Error(tr("publish.errPriceAi"));
 
-        /*
-          Si falta el recomendado pero están los extremos, se usa el punto medio
-          en vez de tirar toda la respuesta a la basura. El modelo hizo el
-          trabajo; lo único que se saltó fue un campo.
-        */
-        let p = Number(data.precio_recomendado);
-        if (!p && data.precio_min && data.precio_max) {
-          p = Math.round((Number(data.precio_min) + Number(data.precio_max)) / 2);
-          data = { ...data, precio_recomendado: p };
-        }
-        // Un techo además del piso: un modelo que se confunde de moneda o que
-        // devuelve el valor del auto en vez del alquiler manda un número enorme,
-        // y eso quedaba cargado en el precio por día sin que nada lo frenara.
-        if (!p || p < 5000 || p > 2000000) {
-          const err = new Error(tr("publish.errBadPrice"));
-          err.precioRaro = true;
-          throw err;
-        }
+        data = precioUsable(data);
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch (fallo) {
         /*
@@ -1122,7 +1103,7 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           </div>
 
           <div style={s.btnRow}>
-            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+            <button data-fw-accion style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -1257,7 +1238,7 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           )}
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
-            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+            <button data-fw-accion style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -1280,9 +1261,6 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
               Tab tiene que hacer lo de siempre —pasar al campo siguiente—: quien
               ya puso su título está terminando de cargar el formulario, no
               pidiendo que se lo reemplacen.
-
-              Y además hay un botón, porque en el teléfono no hay tecla Tab y la
-              mitad de las publicaciones se cargan desde ahí.
             */}
             <input style={s.input}
               placeholder={tituloSugerido}
@@ -1294,15 +1272,6 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
                 e.preventDefault();
                 setL("title", tituloSugerido);
               }} />
-            {!listingForm.title && tituloSugerido && (
-              <div style={s.sugerenciaFila}>
-                <span style={s.sugerenciaTexto}>{tr("publish.tabToUse")}</span>
-                <button type="button" style={s.sugerenciaBoton}
-                  onClick={() => setL("title", tituloSugerido)}>
-                  {tr("publish.useSuggestion")}
-                </button>
-              </div>
-            )}
           </div>
           <div style={s.field}>
             <label style={s.label}>{tr("car.description")} *</label>
@@ -1347,6 +1316,15 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
                   <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
+                {/* Cuando el número no salió tal cual del modelo sino que hubo
+                    que calcularlo, se dice. Presentar un número corregido como
+                    si lo hubiera dicho la IA es hacerlo pasar por más firme de
+                    lo que es. */}
+                {pricingSuggestion.origen === "valor" && (
+                  <div style={{ ...s.aiBoxNote, color: "var(--fw-amber-text)" }}>
+                    {tr("publish.priceFromValue")}
+                  </div>
+                )}
                 <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
               </div>
             )}
@@ -1356,7 +1334,7 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           </div>
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
-            <button style={s.btn} onClick={next}>{tr("common.next")}</button>
+            <button data-fw-accion style={s.btn} onClick={next}>{tr("common.next")}</button>
           </div>
         </div>
       )}
@@ -1399,7 +1377,7 @@ Los tres precios tienen que ser distintos entre sí y estar en pesos argentinos 
           </div>
           <div style={s.btnRow}>
             <button style={s.btnBack} onClick={() => setStep((s) => s - 1)}>{tr("common.back")}</button>
-            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
+            <button data-fw-accion style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} onClick={handlePublish} disabled={loading}>
               {loading ? <Spinner size={14} color="#fff" label={tr("publish.publishing")} /> : tr("publish.publishNow")}
             </button>
           </div>
