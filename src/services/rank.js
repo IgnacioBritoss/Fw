@@ -25,15 +25,15 @@ export const TIERS = [
     metal: { light: "#dce7f5", dark: "#9db4d2", rim: "#7d95b6", shine: true },
   },
   {
-    key: "gold", minCount: 15, minAverage: 4.5, color: "#b7791f", bg: "var(--fw-amber-bg)",
+    key: "gold", minCount: 15, minAverage: 4.5, color: "var(--fw-oro)", bg: "var(--fw-oro-bg)",
     metal: { light: "#e8bd48", dark: "#c1901a", rim: "#9a7210" },
   },
   {
-    key: "silver", minCount: 5, minAverage: 4.0, color: "#64748b", bg: "var(--fw-surface-2)",
+    key: "silver", minCount: 5, minAverage: 4.0, color: "var(--fw-plata)", bg: "var(--fw-plata-bg)",
     metal: { light: "#b4bfcb", dark: "#8b97a5", rim: "#6d7986" },
   },
   {
-    key: "bronze", minCount: 1, minAverage: 0, color: "#9a6234", bg: "#fdfaf7",
+    key: "bronze", minCount: 1, minAverage: 0, color: "var(--fw-bronce)", bg: "var(--fw-bronce-bg)",
     metal: { light: "#c98a52", dark: "#a05f2b", rim: "#7d4a20" },
   },
 ];

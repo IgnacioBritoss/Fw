@@ -81,6 +81,19 @@ const CLARO = `
   --fw-orange-text: #9a3412;
   --fw-orange-bg: #fff7ed;
   --fw-orange-line: #fed7aa;
+  /* Verde azulado: el estado "está pasando ahora" (una reserva en curso). */
+  --fw-teal: #0d9488;
+  --fw-teal-text: #0f766e;
+  --fw-teal-bg: #f0fdfa;
+  /* Los metales de los rangos. Estaban escritos a mano adentro de rank.js, así
+     que en modo oscuro quedaban como manchas claras: un fondo casi blanco no
+     deja de ser blanco porque la pantalla sea negra. */
+  --fw-bronce: #9a6234;
+  --fw-bronce-bg: #fdfaf7;
+  --fw-oro: #b7791f;
+  --fw-oro-bg: #fffbeb;
+  --fw-plata: #64748b;
+  --fw-plata-bg: #f8fafc;
   /*
     EL REDONDEL QUE VA ENCIMA DE UNA FOTO: las flechas de pasar fotos.
 
@@ -149,6 +162,18 @@ const OSCURO = `
   --fw-orange-text: #e0864a;
   --fw-orange-bg: #38230f;
   --fw-orange-line: #5c3a1e;
+  --fw-teal: #2aa198;
+  --fw-teal-text: #56d4c8;
+  --fw-teal-bg: #10312e;
+  /* En oscuro los metales se aclaran para que se lean, y el fondo se apaga.
+     Un escudo de bronce sobre un fondo casi blanco era lo que se veía como una
+     etiqueta blanca al lado del nombre. */
+  --fw-bronce: #d3a06a;
+  --fw-bronce-bg: #33251a;
+  --fw-oro: #e3b341;
+  --fw-oro-bg: #37290f;
+  --fw-plata: #a8b3c1;
+  --fw-plata-bg: #262c34;
   /* El redondel de encima de las fotos, en oscuro: el mismo gris de las
      superficies pero translúcido, así se apoya sobre la foto sin encandilar. */
   --fw-vidrio: rgba(22,27,34,.86);
@@ -186,6 +211,7 @@ function ponerEstilos() {
   el.textContent = `
     :root { ${CLARO} }
     html.fw-dark { ${OSCURO} }
+    ${reglasDeDaltonismo()}
 
     html, body { background: var(--fw-bg); }
 
@@ -256,6 +282,99 @@ function ponerEstilos() {
     ${reglasDeLectura()}
   `;
   document.head.appendChild(el);
+}
+
+/*
+  ───────────────────── COLORES PARA DALTONISMO ──────────────────────────────
+
+  Una opción de Apariencia que cambia los colores con los que la app dice si algo
+  salió bien o mal.
+
+  QUÉ PROBLEMA RESUELVE. La forma más común de daltonismo es la que confunde el
+  rojo con el verde, y le pasa a cerca de uno de cada doce varones. Justo esos dos
+  son los que esta app usa para lo más importante: verde "verificado", rojo
+  "rechazado", verde "pagado", rojo "cancelada". Para esa persona son el mismo
+  color, y la pantalla deja de decirle lo que le está diciendo a todos los demás.
+
+  QUÉ COLORES SE USAN. Los de la paleta de Okabe e Ito, que está pensada
+  justamente para eso: son ocho colores elegidos para que se distingan entre sí
+  con cualquiera de los tres tipos de daltonismo. Los dos que importan acá:
+
+    · el verde pasa a un VERDE AZULADO (#009E73), que se corre hacia el azul;
+    · el rojo pasa a un NARANJA ROJIZO (#D55E00), que se corre hacia el amarillo.
+
+  Separados así, uno tira para un lado del espectro y el otro para el otro, y se
+  siguen distinguiendo cuando la diferencia rojo/verde no existe.
+
+  POR QUÉ NO ES UN FILTRO SOBRE LA PÁGINA. Lo que se suele hacer —poner
+  `filter: url(...)` sobre todo el documento— tiene un costo que no se ve venir:
+  un elemento con filtro pasa a ser el marco de referencia de todo lo que tenga
+  adentro, así que la barra lateral, el botón del asistente y los modales, que
+  están fijos en la pantalla, dejan de estarlo y se van con el scroll. Cambiar
+  los colores en la paleta no rompe nada y además da un resultado mejor: se eligen
+  los colores a propósito en vez de deformar los que había.
+
+  LO QUE ESTO NO ARREGLA, y es igual de importante: el color nunca puede ser lo
+  ÚNICO que diga algo. Por eso los estados de la app van con su texto al lado
+  ("VERIFICADO", "CANCELADA"), y las dos circunferencias del mapa se distinguen
+  además por la línea cortada. Esta opción mejora lo que ya se distingue sin
+  color; no lo reemplaza.
+*/
+function reglasDeDaltonismo() {
+  // Va DESPUÉS de la paleta oscura en la hoja: con la misma especificidad, gana
+  // el que está más abajo, y así funciona con el modo oscuro prendido.
+  const CAMBIOS_CLARO = `
+    --fw-green: #009E73;
+    --fw-green-text: #007A59;
+    --fw-green-text-2: #006147;
+    --fw-green-bg: #eafaf5;
+    --fw-green-line: #9ee0cd;
+    --fw-red: #D55E00;
+    --fw-red-text: #D55E00;
+    --fw-red-text-2: #A34700;
+    --fw-red-bg: #fdf1e8;
+    --fw-red-line: #f5c9a6;
+    /* El ámbar se corre al amarillo puro de la paleta, para que no se confunda
+       con el naranja rojizo que ahora significa "algo salió mal". */
+    --fw-amber: #E69F00;
+    --fw-amber-text: #8a6000;
+    --fw-amber-bg: #fdf8e7;
+    --fw-amber-line: #f0dca0;
+    --fw-orange: #CC79A7;
+    --fw-orange-text: #8f4f74;
+    --fw-orange-bg: #fbf0f6;
+    --fw-orange-line: #e7c0d5;
+    --fw-teal: #56B4E9;
+    --fw-teal-text: #21769f;
+    --fw-teal-bg: #edf7fd;
+  `;
+  const CAMBIOS_OSCURO = `
+    --fw-green: #009E73;
+    --fw-green-text: #45d3ac;
+    --fw-green-text-2: #6ee0c0;
+    --fw-green-bg: #0d2f27;
+    --fw-green-line: #1d5b4a;
+    --fw-red: #D55E00;
+    --fw-red-text: #f59052;
+    --fw-red-text-2: #f59052;
+    --fw-red-bg: #37200f;
+    --fw-red-line: #5e3818;
+    --fw-amber: #E69F00;
+    --fw-amber-text: #f0c04d;
+    --fw-amber-bg: #362a0d;
+    --fw-amber-line: #5c4a1a;
+    --fw-orange: #CC79A7;
+    --fw-orange-text: #e3a3c5;
+    --fw-orange-bg: #33202a;
+    --fw-orange-line: #5c3a4c;
+    --fw-teal: #56B4E9;
+    --fw-teal-text: #8ccdf2;
+    --fw-teal-bg: #102a38;
+  `;
+  return `
+    html.fw-daltonico { ${CAMBIOS_CLARO} }
+    html.fw-dark.fw-daltonico { ${CAMBIOS_OSCURO} }
+  `;
 }
 
 /*
@@ -422,6 +541,14 @@ function reglasDeLectura() {
   `;
 }
 
+/** Prende o apaga los colores para daltonismo. */
+export function applyColorBlindMode(on) {
+  ponerEstilos();
+  const root = document.documentElement;
+  if (on) root.classList.add("fw-daltonico");
+  else root.classList.remove("fw-daltonico");
+}
+
 /** Prende o apaga el modo lectura. */
 export function applyReadableFont(on) {
   ponerEstilos();
@@ -455,4 +582,5 @@ export function initTheme() {
   // después, quien lo necesita ve un instante la pantalla como NO puede leerla,
   // y encima el texto salta de lugar al reacomodarse.
   if (prefs.lectura) document.documentElement.classList.add("fw-lectura");
+  if (prefs.daltonico) document.documentElement.classList.add("fw-daltonico");
 }

@@ -19,7 +19,8 @@ import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
-import { applyDarkMode, applyReadableFont } from "../../services/theme";
+import { applyColorBlindMode, applyDarkMode, applyReadableFont } from "../../services/theme";
+import StatusChip from "../../components/StatusChip";
 
 /* ── Íconos SVG (sin emojis) ── */
 const I = {
@@ -84,6 +85,7 @@ export default function Settings() {
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
     if (k === "dark") applyDarkMode(v);
     if (k === "lectura") applyReadableFont(v);
+    if (k === "daltonico") applyColorBlindMode(v);
   };
 
   /*
@@ -331,12 +333,30 @@ export default function Settings() {
                   "accesibilidad" aparte la deja donde nadie la encuentra.
                 */}
                 <SwitchRow title={tr("settings.readableFont")} desc={tr("settings.readableFontSub")}
-                  on={prefs.lectura} onChange={v => setPref("lectura", v)} last />
+                  on={prefs.lectura} onChange={v => setPref("lectura", v)} />
                 {/* Se ve el efecto acá mismo, sin salir a buscar una pantalla con
                     texto para comprobar si cambió algo. */}
                 {prefs.lectura && (
                   <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 10, background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", fontSize: 13.5, color: "var(--fw-text-2)" }}>
                     {tr("settings.readableFontSample")}
+                  </div>
+                )}
+                {/*
+                  COLORES PARA DALTONISMO. El verde y el rojo con los que la app
+                  dice "salió bien" y "salió mal" son justo los dos que confunde
+                  la forma más común de daltonismo, que le toca a uno de cada doce
+                  varones. Prendiéndolo, el verde se corre al azul y el rojo al
+                  naranja, que sí se distinguen.
+                */}
+                <SwitchRow title={tr("settings.colorBlind")} desc={tr("settings.colorBlindSub")}
+                  on={prefs.daltonico} onChange={v => setPref("daltonico", v)} last />
+                {/* Los dos estados que más importan, uno al lado del otro: es la
+                    forma de ver si el cambio sirve sin salir de esta pantalla. */}
+                {prefs.daltonico && (
+                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <StatusChip tone="ok">{tr("status.verified")}</StatusChip>
+                    <StatusChip tone="danger">{tr("settings.colorBlindSampleBad")}</StatusChip>
+                    <StatusChip tone="warn">{tr("profile.pending")}</StatusChip>
                   </div>
                 )}
               </div>

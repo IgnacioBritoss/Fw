@@ -943,8 +943,12 @@ export default function Home() {
                       locale={localeFor(lang)}
                     />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10 }}>
+                      {/* Un botón rojo y no un link subrayado: borrar lo que la
+                          persona acaba de elegir es una acción, y las acciones
+                          se ven como botones. Subrayado y gris parecía una nota
+                          al pie, justo al lado del botón azul que sí se ve. */}
                       <button type="button" onClick={() => { setPickup(""); setDropoff(""); }}
-                        style={{ background: "none", border: "none", color: "var(--fw-text-3)", fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                        style={{ background: "var(--fw-red)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                         {tr("home.clearDates")}
                       </button>
                       <button type="button" onClick={() => setCalendario(false)}

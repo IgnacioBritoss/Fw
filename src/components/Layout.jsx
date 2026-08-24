@@ -23,6 +23,7 @@ import CarIcon from "./CarIcon";
 import Avatar from "./Avatar";
 import { useAsistente } from "../context/AssistantContext";
 import { useI18n } from "../i18n/core";
+import RobotIcon from "./RobotIcon";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
 // sistema y desentona con el resto de la interfaz.
@@ -142,15 +143,7 @@ const BotonMenu = ({ abierto, onToggle, etiqueta, oculto }) => (
  * antenita arriba, dos ojos y la boca. Con orejas, cuello o tornillos, a ese
  * tamaño se convierte en una mancha.
  */
-const RobotIcon = ({ size = 18, color = "#374151" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2v3" />
-    <rect x="3.5" y="7" width="17" height="13" rx="4" />
-    <path d="M9 12.5v1.5M15 12.5v1.5" />
-    <path d="M9.5 17h5" />
-  </svg>
-);
+// El dibujo vive en components/RobotIcon.jsx: lo comparten esta barra y el chat.
 
 // Ícono de mensajes (burbuja de chat) — profesional, sin emoji.
 // Los grises van escritos como número y no como variable: terminan en un

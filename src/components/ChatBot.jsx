@@ -14,6 +14,7 @@ import { useAsistente } from "../context/AssistantContext";
 import { useAuth } from "../context/AuthContext";
 import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import { useI18n } from "../i18n/core";
+import RobotIcon from "./RobotIcon";
 
 // "System prompt": instrucciones ocultas que definen la personalidad y los
 // límites del asistente. Se envían antes de cada conversación con la IA.
@@ -333,26 +334,10 @@ function Asistente() {
             justifyContent: "center",
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="15" stroke="#fff" strokeWidth="2" />
-            <circle cx="18" cy="18" r="5" fill="#fff" />
-            <circle cx="18" cy="18" r="2" fill="#0f6ce6" />
-            {[0, 60, 120, 180, 240, 300].map((a, i) => {
-              const r = (a * Math.PI) / 180;
-              return (
-                <line
-                  key={i}
-                  x1={18 + 6 * Math.cos(r)}
-                  y1={18 + 6 * Math.sin(r)}
-                  x2={18 + 13 * Math.cos(r)}
-                  y2={18 + 13 * Math.sin(r)}
-                  stroke="#fff"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              );
-            })}
-          </svg>
+          {/* La misma cara que el botón de la barra. Antes acá había una
+              rueda de auto: el mismo asistente con dos dibujos distintos según
+              desde dónde lo miraras. */}
+          <RobotIcon size={20} color="#fff" />
         </div>
 
         <div>
@@ -495,13 +480,22 @@ function Asistente() {
         <button
           key={sg}
           onClick={() => send(tr(sg))}
+          /*
+            LETRA OSCURA SOBRE FONDO CLARO, NO AZUL SOBRE AZUL.
+
+            Eran de color `--fw-blue` sobre `--fw-blue-bg`: en claro ya costaba,
+            y en oscuro ese fondo pasa a ser azul oscuro y la letra azul encima
+            queda ilegible. Ahora el fondo es una superficie de la app y la letra
+            el texto de siempre, con el azul reservado para el borde, que es
+            donde alcanza para decir "esto se puede tocar".
+          */
           style={{
-            padding: "5px 12px",
+            padding: "6px 12px",
             borderRadius: 20,
-            border: "1.5px solid #dbeafe",
-            background: "var(--fw-blue-bg)",
-            color: "var(--fw-blue)",
-            fontSize: 11,
+            border: "1.5px solid var(--fw-blue-line)",
+            background: "var(--fw-surface-2)",
+            color: "var(--fw-text-2)",
+            fontSize: 11.5,
             cursor: "pointer",
             fontWeight: 600,
           }}
