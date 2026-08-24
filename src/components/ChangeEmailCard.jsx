@@ -40,7 +40,7 @@ function TildeVerificado({ titulo }) {
   return (
     <span title={titulo} style={{ display: "inline-flex", flexShrink: 0, alignItems: "center" }}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" role="img" aria-label={titulo}>
-        <path d="M20 6L9 17l-5-5" stroke="#0f6ce6" strokeWidth="3"
+        <path d="M20 6L9 17l-5-5" stroke="var(--fw-blue-text)" strokeWidth="3"
           strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
@@ -142,7 +142,7 @@ export default function ChangeEmailCard({ verified }) {
             {verified && (
               isMobile
                 ? <TildeVerificado titulo={tr("status.verified")} />
-                : <StatusChip tone="ok" style={{ flexShrink: 0 }}>{tr("status.verified")}</StatusChip>
+                : <StatusChip tone="verified" style={{ flexShrink: 0 }}>{tr("status.verified")}</StatusChip>
             )}
           </div>
         </div>

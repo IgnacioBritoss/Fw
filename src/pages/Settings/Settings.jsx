@@ -351,10 +351,14 @@ export default function Settings() {
                 <SwitchRow title={tr("settings.colorBlind")} desc={tr("settings.colorBlindSub")}
                   on={prefs.daltonico} onChange={v => setPref("daltonico", v)} last />
                 {/* Los dos estados que más importan, uno al lado del otro: es la
-                    forma de ver si el cambio sirve sin salir de esta pantalla. */}
+                    forma de ver si el cambio sirve sin salir de esta pantalla.
+                    La muestra decía "Verificado", pero ese estado ahora es azul
+                    —es la marca de confianza— y con un azul acá arriba la
+                    muestra no probaba nada: la promesa es cambiar el VERDE y el
+                    ROJO, así que la muestra tiene que ser verde y roja. */}
                 {prefs.daltonico && (
-                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                    <StatusChip tone="ok">{tr("status.verified")}</StatusChip>
+                  <div style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+                    <StatusChip tone="ok">{tr("status.COMPLETED")}</StatusChip>
                     <StatusChip tone="danger">{tr("settings.colorBlindSampleBad")}</StatusChip>
                     <StatusChip tone="warn">{tr("profile.pending")}</StatusChip>
                   </div>

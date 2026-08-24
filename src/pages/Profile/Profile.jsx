@@ -478,7 +478,7 @@ export default function Profile() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
             <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" }}>{fullName}</span>
             {fullyVerified
-              ? <StatusChip tone="ok">{tr("status.verified")}</StatusChip>
+              ? <StatusChip tone="verified">{tr("status.verified")}</StatusChip>
               : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
             {/* El rango solo aparece cuando hay reseñas de verdad detrás. */}
             {ratingCount > 0 && <RankBadge count={ratingCount} average={ratingAverage} size="sm" />}
