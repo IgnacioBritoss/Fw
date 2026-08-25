@@ -194,6 +194,8 @@ export default function Profile() {
     para lo que se usa.
   */
   const original = useRef(null);
+  // La URL de la original ya subida en esta visita, para no subirla dos veces.
+  const originalSubida = useRef(null);
   const [abriendoEditor, setAbriendoEditor] = useState(false);
 
   const pickPhoto = (event) => {
@@ -206,6 +208,8 @@ export default function Profile() {
     if (file.size > 6 * 1024 * 1024) { setPhotoError(tr("profile.photoTooBig")); return; }
     setPhotoError("");
     original.current = file;
+    // Foto nueva: la original que se hubiera subido antes ya no corresponde.
+    originalSubida.current = null;
     setPorEncuadrar(file);
   };
 
@@ -218,7 +222,18 @@ export default function Profile() {
     if (!user?.profilePhotoUrl) { fileRef.current?.click(); return; }
     setAbriendoEditor(true);
     try {
-      const respuesta = await fetch(user.profilePhotoUrl, { mode: "cors" });
+      /*
+        SE REENCUADRA SOBRE LA FOTO ENTERA, NO SOBRE EL RECORTE.
+
+        Acá se bajaba `profilePhotoUrl`, que es el RECORTE. O sea que cada vez
+        que alguien volvía a encuadrar, recortaba sobre lo ya recortado: la foto
+        se iba achicando de a poco y lo que quedaba afuera no existía más en
+        ninguna parte, así que no se podía volver atrás. Alcanzaba con entrar,
+        acercar un poco y guardar, tres veces, para arruinar la foto sin
+        posibilidad de deshacerlo.
+      */
+      const fuente = user.profilePhotoOriginalUrl || user.profilePhotoUrl;
+      const respuesta = await fetch(fuente, { mode: "cors" });
       if (!respuesta.ok) throw new Error("no se pudo bajar la foto");
       const blob = await respuesta.blob();
       if (!blob.type.startsWith("image/")) throw new Error("no es una imagen");
@@ -243,7 +258,40 @@ export default function Profile() {
     setPhotoError("");
     try {
       const url = await uploadImageToCloudinary(recorte);
-      await updateMe({ profilePhotoUrl: url, profilePhotoVisibility: quienLaVe });
+
+      /*
+        SE GUARDA TAMBIÉN LA FOTO ENTERA, NO SOLO EL RECORTE.
+
+        Es lo que hace que volver a encuadrar no destruya nada: el recorte es lo
+        que se muestra en toda la app, y la original es sobre la que se vuelve a
+        trabajar. Sin ella, cada reencuadre partía de lo ya recortado y la foto
+        se iba achicando sin vuelta atrás.
+
+        Solo se sube cuando la persona ELIGIÓ una foto en esta visita
+        (`porEncuadrar` salió del selector de archivos, no de bajar la publicada).
+        Si está reencuadrando una que ya estaba, la original ya está guardada y
+        volver a subirla sería un archivo más en el storage por nada.
+
+        Si la subida de la original falla, NO se pierde el recorte: se guarda
+        igual y lo único que se pierde es poder deshacer el zoom más adelante.
+        Al revés —cortar todo porque falló la copia de respaldo— sería peor.
+      */
+      let urlOriginal = originalSubida.current;
+      if (original.current && !urlOriginal) {
+        try {
+          urlOriginal = await uploadImageToCloudinary(original.current);
+          // Se recuerda para no volver a subir el MISMO archivo si la persona
+          // reencuadra dos veces seguidas sin salir de la pantalla: serían dos
+          // copias idénticas en el storage por nada.
+          originalSubida.current = urlOriginal;
+        } catch { /* sin original: el recorte se guarda igual */ }
+      }
+
+      await updateMe({
+        profilePhotoUrl: url,
+        profilePhotoVisibility: quienLaVe,
+        ...(urlOriginal ? { profilePhotoOriginalUrl: urlOriginal } : {}),
+      });
       await refreshUser();
       setPorEncuadrar(null);
     } catch (err) {
@@ -292,10 +340,13 @@ export default function Profile() {
     setPhotoError("");
     setPhotoBusy(true);
     try {
-      await updateMe({ profilePhotoUrl: null });
+      // Las dos: si quedara guardada la original, el lápiz abriría el editor con
+      // una foto que la persona ya quitó, y guardar volvería a publicarla.
+      await updateMe({ profilePhotoUrl: null, profilePhotoOriginalUrl: null });
       // Sin foto no hay original que reencuadrar: si quedara, el lápiz abriría
       // el editor con una foto que ya no está publicada.
       original.current = null;
+      originalSubida.current = null;
       await refreshUser();
     } catch (err) {
       setPhotoError(err?.message || tr("profile.photoFailed"));
