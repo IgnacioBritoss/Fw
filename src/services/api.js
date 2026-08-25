@@ -267,7 +267,7 @@ export async function getMe() { return apiFetch("/users/me"); }
  */
 const CAMPOS_EDITABLES = [
   "firstName", "lastName", "phone",
-  "profilePhotoUrl", "profilePhotoVisibility",
+  "profilePhotoUrl", "profilePhotoOriginalUrl", "profilePhotoVisibility",
   "dni", "cuil", "address",
   // Si querés recibir avisos por mail (reservas, pagos, mensajes sin leer).
   "emailNotifications",
@@ -275,7 +275,8 @@ const CAMPOS_EDITABLES = [
 
 // Los que un backend anterior puede no conocer todavía.
 const CAMPOS_NUEVOS = [
-  "profilePhotoVisibility", "dni", "cuil", "address", "emailNotifications",
+  "profilePhotoVisibility", "profilePhotoOriginalUrl",
+  "dni", "cuil", "address", "emailNotifications",
 ];
 
 // Los que ya rebotaron en esta sesión por no existir en el backend.
