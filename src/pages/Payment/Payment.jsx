@@ -42,6 +42,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getBookingById, getBookingPaymentStatus, mockConfirmPayment, mockFailPayment,
 } from "../../services/api";
+import { tramosDelPago } from "../../services/pago";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
 import { longDate } from "../../i18n/dates";
@@ -57,14 +58,24 @@ const s = {
   payBtn: { width: "100%", padding: "15px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   payBtnDisabled: { width: "100%", padding: "15px", background: "var(--fw-blue-line)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
   /*
-    El botón de forzar el rechazo: rojo lleno, letra blanca, SIEMPRE.
+    FORZAR EL RECHAZO ES UNA HERRAMIENTA DE DEMOSTRACIÓN, NO UNA OPCIÓN.
 
-    Era transparente con el borde rosa. Dos problemas: al lado del botón azul
-    lleno de arriba parecía deshabilitado, y "transparent" toma el fondo de
-    atrás, así que en modo oscuro quedaba letra roja sobre gris oscuro, que se
-    lee mal. Con el fondo escrito acá el botón se ve igual en los dos modos.
+    Estuvo primero transparente con borde rosa (parecía deshabilitado) y después
+    rojo lleno a todo el ancho. Rojo lleno tampoco estaba bien: ahí abajo, del
+    mismo tamaño que el botón de pagar, se leía como si fuera la otra mitad de
+    una decisión. Nadie quiere "pagar" o "que le rechacen el pago": lo segundo
+    existe nada más que para poder mostrar cómo se ve la pantalla cuando falla.
+
+    Ahora es un renglón chico y centrado, del color de un texto secundario, con
+    el rojo puesto solo al pasar el mouse. Está para quien lo va a buscar y no le
+    compite al botón de verdad.
   */
-  failBtn: { width: "100%", padding: "12px", background: "var(--fw-red)", border: "none", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" },
+  failBtn: {
+    display: "block", margin: "0 auto", background: "none", border: "none",
+    color: "var(--fw-text-4)", fontFamily: "inherit", fontSize: 12,
+    cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2,
+    padding: "6px 10px",
+  },
   successBox: { textAlign: "center", padding: "48px 0" },
   successIcon: { width: 72, height: 72, borderRadius: "50%", background: "var(--fw-blue-bg-2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
   failIcon: { width: 72, height: 72, borderRadius: "50%", background: "var(--fw-red-bg)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
@@ -202,50 +213,17 @@ export default function Payment() {
   /*
     QUÉ TRAMO YA ESTÁ CUBIERTO.
 
-    `records` es la lista de cobros de la reserva que devuelve el servidor: uno
-    por tramo, con su estado. Es la fuente de verdad —si la seña se pagó desde
-    otro dispositivo, acá se ve— y además distingue el depósito, que no se
-    "cobra" sino que se AUTORIZA y por eso queda en otro estado.
-
-    Cuando no vienen registros (una reserva vieja, o el pedido de estado falló y
-    solo quedan los montos guardados en la reserva) se cae al estado general:
-    ahí "pago completo" quiere decir que se pagó todo junto, que es como
-    funcionaba antes. Sin esa salida, una reserva ya paga volvería a pedir el
-    depósito.
+    La regla vive en services/pago.js y no acá, porque "Mis reservas" necesita
+    la misma respuesta y no tiene los mismos datos a mano: esta pantalla pide el
+    estado al servidor y recibe `records` —la lista de cobros, uno por tramo, que
+    es el dato exacto—, y la otra solo tiene los montos guardados en la reserva.
+    Escrita dos veces, las dos pantallas se contradecían.
   */
-  const CUBIERTO = ["PAID", "CAPTURED", "AUTHORIZED", "SUCCEEDED"];
-  const registros = Array.isArray(payment?.records) ? payment.records : [];
-  const registroDe = (kind) => registros
-    .filter(r => r.kind === kind)
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0] || null;
-
-  const estaCubierto = (kind) => {
-    if (registros.length === 0) {
-      if (paymentStatus === "FULLY_PAID") return true;
-      return kind === "SENA" && paymentStatus === "DEPOSIT_PAID";
-    }
-    const r = registroDe(kind);
-    if (r && CUBIERTO.includes(r.status)) return true;
-    // Red de seguridad: el estado general nunca puede decir menos que los
-    // registros. Si la reserva figura paga, la seña y el saldo están.
-    if (kind === "SENA") return paymentStatus === "DEPOSIT_PAID" || paymentStatus === "FULLY_PAID";
-    if (kind === "BALANCE") return paymentStatus === "FULLY_PAID";
-    return false;
-  };
-
-  // Los tres tramos, en el orden en que se pagan. Se saltea el que no tiene
-  // monto: una reserva sin depósito no tiene por qué mostrar un paso vacío.
-  const tramos = [
-    { kind: "SENA", label: "payment.sena", monto: sena },
-    { kind: "BALANCE", label: "payment.balance", monto: balance },
-    { kind: "DEPOSIT_HOLD", label: "payment.guarantee", monto: deposit },
-  ]
-    .filter(t => t.monto != null)
-    .map(t => ({
-      ...t,
-      hecho: estaCubierto(t.kind),
-      rechazado: registroDe(t.kind)?.status === "FAILED",
-    }));
+  const tramos = tramosDelPago({
+    paymentStatus, sena, balance, deposit,
+    records: payment?.records,
+    depositPaymentIntentId: booking?.depositPaymentIntentId,
+  });
 
   // El que sigue: el primero sin cubrir. Es el único que se puede pagar.
   const tramoActual = tramos.find(t => !t.hecho) || null;
@@ -377,9 +355,13 @@ export default function Payment() {
           ? `${tr(tramoActual.kind === "DEPOSIT_HOLD" ? "payment.holdIt" : "bookings.pay")} ${tr(tramoActual.label)} · ${money(tramoActual.monto)}`
           : tr("payment.nothingDue")}
       </button>
-      <button style={s.failBtn} disabled={paying || !tramoActual}
-        onClick={() => handleFail(tramoActual?.kind)}>{tr("payment.simulateReject")}</button>
       <div style={s.secureNote}>{tr("payment.serverAmounts")}</div>
+      {/* Abajo de todo y chiquito: es para probar la pantalla de pago rechazado,
+          no una alternativa a pagar. Ver `failBtn`, más arriba. */}
+      <button style={s.failBtn} disabled={paying || !tramoActual}
+        onMouseEnter={e => { e.currentTarget.style.color = "var(--fw-red-text-2)"; }}
+        onMouseLeave={e => { e.currentTarget.style.color = "var(--fw-text-4)"; }}
+        onClick={() => handleFail(tramoActual?.kind)}>{tr("payment.simulateReject")}</button>
     </div>
   );
 }

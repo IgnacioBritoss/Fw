@@ -1269,4 +1269,12 @@ export default {
   "rank.claim.silver": "Experienced, with good ratings",
   "rank.claim.gold": "Among the best rated on the site",
   "rank.claim.platinum": "One of the best on Freewheel",
+  "payment.step.SENA": "Pay the deposit",
+  "payment.step.BALANCE": "Pay the balance",
+  "payment.step.DEPOSIT_HOLD": "Authorise the hold",
+  "step.pay.SENA": "Pay the deposit to confirm the booking.",
+  "step.pay.BALANCE": "The deposit is paid. The balance is still due.",
+  "step.pay.DEPOSIT_HOLD": "The rental is paid. The security hold still needs authorising.",
+  "profile.myReviewsEmpty": "You have not received any reviews yet. They are written by the people you rent with, once the booking ends.",
+  "net.notActive": "This account is suspended or deactivated, so it cannot sign in. If you think this is a mistake, get in touch.",
 };

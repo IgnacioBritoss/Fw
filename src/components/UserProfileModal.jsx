@@ -14,14 +14,14 @@
 //  el backend (GET /users/:id devuelve únicamente el perfil público).
 // ============================================================================
 import { useEffect, useState } from "react";
-import { monthYear, shortDate } from "../i18n/dates";
+import { monthYear } from "../i18n/dates";
 import { getPublicProfile, getUserReviews } from "../services/api";
 import { useI18n } from "../i18n/core";
 import PanelDeReputacion from "./PanelDeReputacion";
+import ListaDeReseñas from "./ListaDeReseñas";
 import StatusChip from "./StatusChip";
 import Avatar from "./Avatar";
 import { initialsOf } from "../services/people";
-import { atributo, esBueno } from "../services/atributos";
 import Spinner from "./Spinner";
 
 export default function UserProfileModal({ userId, onClose }) {
@@ -145,54 +145,7 @@ export default function UserProfileModal({ userId, onClose }) {
               {tr("profile.reviewsReceived", { count: reviews.length })}
             </div>
 
-            {reviews.length === 0 ? (
-              <p style={{ fontSize: 12.5, color: "var(--fw-text-4)", margin: 0, lineHeight: 1.6 }}>
-                {tr("profile.noReviewsYet")}
-              </p>
-            ) : (
-              reviews.map(review => (
-                <div key={review.id} style={{ borderBottom: "1px solid var(--fw-line-soft)", paddingBottom: 12, marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)" }}>
-                      {nameOf(review.author)}
-                    </span>
-                    <span style={{ color: "var(--fw-amber)", fontSize: 12.5 }}>
-                      {"★".repeat(review.rating)}
-                    </span>
-                  </div>
-                  {/* Aclara desde qué lado se escribió: no es lo mismo que te
-                      califique el dueño de un auto que alguien que alquiló el tuyo. */}
-                  <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 2 }}>
-                    {review.listingId ? tr("profile.asOwner") : tr("profile.asDriver")}
-                    {" · "}
-                    {shortDate(review.createdAt, lang)}
-                  </div>
-                  {/* Las características que eligió quien escribió. Van antes
-                      del texto porque muchas reseñas no tienen texto: elegir
-                      casillas es un clic y escribir un párrafo no lo hace nadie.
-                      Sin ellas, esas reseñas eran una fecha y unas estrellas. */}
-                  {Array.isArray(review.tags) && review.tags.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
-                      {review.tags.filter(atributo).map(code => (
-                        <span key={code} style={{
-                          fontSize: 11, lineHeight: 1.5, padding: "2px 8px", borderRadius: 999,
-                          background: esBueno(code) ? "var(--fw-green-bg)" : "var(--fw-red-bg)",
-                          color: esBueno(code) ? "var(--fw-green-text-2)" : "var(--fw-red-text-2)",
-                          border: `1px solid ${esBueno(code) ? "var(--fw-green-line)" : "var(--fw-red-line)"}`,
-                        }}>
-                          {tr(`attr.${code}`)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {review.comment && (
-                    <div style={{ fontSize: 13, color: "var(--fw-text-2)", marginTop: 6, lineHeight: 1.6 }}>
-                      {review.comment}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
+            <ListaDeReseñas reviews={reviews} />
           </div>
         )}
       </div>

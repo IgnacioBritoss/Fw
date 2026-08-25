@@ -1268,4 +1268,12 @@ export default {
   "rank.claim.silver": "Com experiência e boas avaliações",
   "rank.claim.gold": "Entre os mais bem avaliados do site",
   "rank.claim.platinum": "Um dos melhores do Freewheel",
+  "payment.step.SENA": "Pagar o sinal",
+  "payment.step.BALANCE": "Pagar o saldo",
+  "payment.step.DEPOSIT_HOLD": "Reter a caução",
+  "step.pay.SENA": "Pague o sinal para confirmar a reserva.",
+  "step.pay.BALANCE": "O sinal está pago. Falta o saldo do aluguel.",
+  "step.pay.DEPOSIT_HOLD": "O aluguel está pago. Falta autorizar a caução.",
+  "profile.myReviewsEmpty": "Você ainda não recebeu avaliações. Elas são escritas pelas pessoas com quem você aluga, quando a reserva termina.",
+  "net.notActive": "Esta conta está suspensa ou desativada, então não pode entrar. Se você acha que é um erro, fale com a gente.",
 };
