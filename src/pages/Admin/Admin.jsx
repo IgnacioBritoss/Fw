@@ -457,7 +457,32 @@ export default function Admin() {
           </div>
           {tr("admin.accountsHelp")}
           {ajustes && !ajustes.hardDeleteAccounts && (
-            <div style={{ marginTop: 6, color: "var(--fw-text-3)" }}>{tr("admin.hardDeleteOff")}</div>
+            <div style={{ marginTop: 6, color: "var(--fw-text-3)" }}>
+              {tr("admin.hardDeleteOff")}
+              {/*
+                Y EL MOTIVO QUE DA EL SERVIDOR, TAL CUAL.
+
+                Sin esto, un botón que no aparece es un misterio: la frase de
+                arriba dice QUÉ pasa pero no POR QUÉ este servidor lo tiene
+                apagado, y desde el panel no hay forma de averiguarlo. El
+                servidor manda `hardDeleteDisabledReason` justamente para eso y
+                se estaba tirando a la basura.
+
+                Va en tipografía monoespaciada y más chica porque es un mensaje
+                técnico, para quien administra: nombra la variable de entorno que
+                hay que tocar. No es una explicación para el usuario final.
+              */}
+              {ajustes.hardDeleteDisabledReason && (
+                <div style={{
+                  marginTop: 6, padding: "8px 10px", borderRadius: 6,
+                  background: "var(--fw-surface-3)", color: "var(--fw-text-2)",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontSize: 11.5, lineHeight: 1.6, whiteSpace: "pre-wrap",
+                }}>
+                  {ajustes.hardDeleteDisabledReason}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
