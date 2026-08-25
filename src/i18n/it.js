@@ -1268,4 +1268,12 @@ export default {
   "rank.claim.silver": "Con esperienza e buone valutazioni",
   "rank.claim.gold": "Tra i meglio valutati del sito",
   "rank.claim.platinum": "Uno dei migliori di Freewheel",
+  "payment.step.SENA": "Pagare la caparra",
+  "payment.step.BALANCE": "Pagare il saldo",
+  "payment.step.DEPOSIT_HOLD": "Bloccare il deposito",
+  "step.pay.SENA": "Paga la caparra per confermare la prenotazione.",
+  "step.pay.BALANCE": "La caparra è pagata. Manca il saldo del noleggio.",
+  "step.pay.DEPOSIT_HOLD": "Il noleggio è pagato. Manca autorizzare il deposito.",
+  "profile.myReviewsEmpty": "Non hai ancora ricevuto recensioni. Le scrivono le persone con cui noleggi, quando la prenotazione finisce.",
+  "net.notActive": "Questo account è sospeso o disattivato, quindi non può accedere. Se pensi che sia un errore, scrivici.",
 };

@@ -137,7 +137,24 @@ async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
     // cualquier pantalla pueda ofrecer el botón sin repetir la comprobación.
     const noVerificada = res.status === 403 && payload?.code === "ACCOUNT_NOT_VERIFIED";
 
-    const err = new Error(noVerificada ? tSync("net.notVerified") : message);
+    /*
+      LA CUENTA SUSPENDIDA O DADA DE BAJA.
+
+      El servidor contesta "Account is not active", y eso es lo que se leía tal
+      cual: en inglés, en una app en castellano, y sin decir por qué la cuenta no
+      entra ni qué se puede hacer. Quien lo veía no tenía forma de saber si se
+      equivocó de contraseña, si el servidor estaba caído o si lo echaron.
+
+      Se reconoce por el `code` y no por la frase: el texto del servidor cambia
+      el día que alguien lo reescribe, el código no.
+    */
+    const noActiva = res.status === 401 && payload?.code === "ACCOUNT_NOT_ACTIVE";
+
+    const err = new Error(
+      noVerificada ? tSync("net.notVerified")
+        : noActiva ? tSync("net.notActive")
+          : message,
+    );
     err.status = res.status;
     err.code = payload?.code;                  // ej: ACCOUNT_NOT_VERIFIED
     err.needsVerification = noVerificada;

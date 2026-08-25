@@ -31,6 +31,7 @@ import {
 } from "../../services/api";
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
+import { tramoPendienteDeReserva } from "../../services/pago";
 import StatusChip from "../../components/StatusChip";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import { useI18n } from "../../i18n/core";
@@ -120,12 +121,17 @@ function getPersonName(person) {
  * quede trabada porque ninguno sabe cuál es el paso siguiente.
  */
 function nextStepFor(booking, isOwner) {
-  const paid = booking.paymentStatus === "FULLY_PAID";
+  /*
+    Con el pago partido en tres, "pagá la reserva" ya no alcanza: quien tiene la
+    seña paga y le falta el saldo necesita leer ESO, no una frase que le hace
+    creer que no pagó nada. El paso pendiente decide la frase.
+  */
+  const pendiente = tramoPendienteDeReserva(booking);
   switch (booking.status) {
     case "REQUESTED":
       return isOwner ? "step.ownerDecide" : "step.waitOwner";
     case "ACCEPTED":
-      if (!paid) return isOwner ? "step.waitPay" : "step.payNow";
+      if (pendiente) return isOwner ? "step.waitPay" : `step.pay.${pendiente.kind}`;
       return isOwner ? "step.markReady" : "step.paidWaitOwner";
     case "READY_FOR_PICKUP":
       return isOwner ? "step.ownerScanPickup" : "step.renterShowPickup";
@@ -214,13 +220,27 @@ export default function MyBookings() {
     const total = b.totalPriceSnapshot || (days * Number(vehicle.pricePerDay));
     const paid = b.paymentStatus === "FULLY_PAID";
 
+    /*
+      QUÉ TRAMO DEL PAGO FALTA.
+
+      Antes acá se preguntaba solamente si la reserva estaba en "pago completo".
+      Eso dejaba un agujero: el pago completo llega con el SALDO, no con el
+      depósito. Quien pagaba la seña y el saldo y se iba de la pantalla de pago
+      antes de autorizar el depósito se quedaba sin botón, y NO HABÍA FORMA DE
+      VOLVER: la reserva se quedaba sin garantía para siempre.
+
+      La regla la decide services/pago.js, la misma que usa la pantalla de pago.
+    */
+    const pendiente = tramoPendienteDeReserva(b);
+
     const canCancel = ["REQUESTED", "ACCEPTED", "READY_FOR_PICKUP"].includes(b.status);
     // El backend ya dijo qué reservas se pueden reseñar y cuáles no.
     const reviewInfo = reviewable.find(r => r.bookingId === b.id);
     const canReview = Boolean(reviewInfo) && !reviewInfo.alreadyReviewed;
     const canAcceptOwner = isOwner && b.status === "REQUESTED";
-    // El pago lo hace el conductor una vez aceptada la reserva.
-    const canPayRenter = !isOwner && b.status === "ACCEPTED" && !paid;
+    // El pago lo hace el conductor una vez aceptada la reserva, y sigue
+    // disponible mientras quede algún tramo sin cubrir.
+    const canPayRenter = !isOwner && b.status === "ACCEPTED" && Boolean(pendiente);
     // El dueño marca el auto listo recién cuando está todo pago.
     const canMarkReady = isOwner && b.status === "ACCEPTED" && paid;
     // El QR aparece en los momentos en que hace falta: retiro y devolución.
@@ -239,7 +259,14 @@ export default function MyBookings() {
             </button>
           </>
         )}
-        {canPayRenter && <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>{t("bookings.pay")}</button>}
+        {/* El botón dice QUÉ tramo sigue, no "Pagar" a secas. Con tres tramos,
+            "Pagar" en una reserva que ya tiene la seña paga hace dudar de si se
+            va a cobrar todo otra vez. */}
+        {canPayRenter && (
+          <button style={s.btnPay} onClick={() => navigate(`/payment/${b.id}`)}>
+            {t(`payment.step.${pendiente.kind}`)}
+          </button>
+        )}
         {canMarkReady && (
           <button style={s.btnReady} disabled={!!actionLoading} onClick={() => handleReady(b.id)}>
             {actionLoading === `${b.id}-ready` ? "..." : t("bookings.markReady")}

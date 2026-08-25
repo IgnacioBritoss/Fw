@@ -1272,4 +1272,12 @@ export default {
   "rank.claim.silver": "经验丰富，评价良好",
   "rank.claim.gold": "站内评价最高的用户之一",
   "rank.claim.platinum": "Freewheel 最出色的用户之一",
+  "payment.step.SENA": "支付订金",
+  "payment.step.BALANCE": "支付余款",
+  "payment.step.DEPOSIT_HOLD": "冻结押金",
+  "step.pay.SENA": "支付订金以确认预订。",
+  "step.pay.BALANCE": "订金已付，还差租金余款。",
+  "step.pay.DEPOSIT_HOLD": "租金已付清，还需授权冻结押金。",
+  "profile.myReviewsEmpty": "你还没有收到评价。评价由与你交易的人在预订结束后填写。",
+  "net.notActive": "该账户已被停用或注销，无法登录。如果你认为这是错误，请联系我们。",
 };

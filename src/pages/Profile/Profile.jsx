@@ -38,6 +38,7 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import IdentityDocuments from "../../components/IdentityDocuments";
 import EscudoDeRango from "../../components/EscudoDeRango";
 import PanelDeReputacion from "../../components/PanelDeReputacion";
+import ListaDeReseñas from "../../components/ListaDeReseñas";
 import { rankOf } from "../../services/rank";
 import Avatar from "../../components/Avatar";
 import AvatarEditor from "../../components/AvatarEditor";
@@ -148,6 +149,7 @@ export default function Profile() {
     no se rompe una pantalla entera por una sección.
   */
   const [misReseñas, setMisReseñas] = useState([]);
+  const [verReseñas, setVerReseñas] = useState(false);
   useEffect(() => {
     if (!user?.id) return undefined;
     let active = true;
@@ -599,6 +601,46 @@ export default function Profile() {
           ratingAverage={ratingAverage}
           propio
         />
+
+        {/*
+          LAS RESEÑAS PROPIAS, PARA PODER LEERLAS.
+
+          Este dibujo existía en un solo lugar: el modal que se abre desde el
+          chat. O sea que uno podía leer las reseñas de CUALQUIERA menos las
+          propias. Para saber qué le habían escrito había que entrar a un chat,
+          abrir la ficha del otro, y no servía: ahí están las de esa persona.
+
+          Van plegadas y no abiertas de entrada. La planilla de arriba ya
+          contesta "cómo vengo"; esto es para cuando alguien quiere ver QUIÉN
+          dijo QUÉ, que es otra pregunta y no la de todos los días. Con veinte
+          reseñas abiertas, el perfil se convierte en una pantalla de scroll.
+        */}
+        {misReseñas.length > 0 && (
+          <div style={{ marginTop: 14, borderTop: "1px solid var(--fw-line-soft)", paddingTop: 14 }}>
+            <button
+              type="button"
+              onClick={() => setVerReseñas(v => !v)}
+              aria-expanded={verReseñas}
+              style={{
+                display: "flex", alignItems: "center", gap: 7, width: "100%",
+                background: "none", border: "none", padding: 0, cursor: "pointer",
+                fontFamily: "inherit", fontSize: 13.5, fontWeight: 700,
+                color: "var(--fw-text)", textAlign: "left",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                style={{ flexShrink: 0, transform: verReseñas ? "rotate(90deg)" : "none", transition: "transform .15s" }}>
+                <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {tr("profile.reviewsReceived", { count: misReseñas.length })}
+            </button>
+            {verReseñas && (
+              <div style={{ marginTop: 12 }}>
+                <ListaDeReseñas reviews={misReseñas} vacio={tr("profile.myReviewsEmpty")} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Verificaciones */}
