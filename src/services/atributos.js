@@ -69,6 +69,41 @@ export const ATRIBUTOS = [
   { code: "DEVOLVIO_SUCIO", bueno: false, sobre: "conductor" },
 ];
 
+/**
+ * LAS MISMAS CARACTERÍSTICAS, PERO AGRUPADAS DE A PARES OPUESTOS.
+ *
+ * Es la lista de arriba mirada por el otro lado: en vez de dieciséis casillas
+ * sueltas, ocho ASPECTOS con dos respuestas posibles cada uno. "Puntualidad" es
+ * un aspecto; "Puntual" e "Impuntual" son las dos formas de contestarlo.
+ *
+ * POR QUÉ HACÍA FALTA. El formulario mostraba las buenas en una lista y las
+ * malas en otra, cada una por su cuenta, así que se podía marcar "el auto estaba
+ * limpio" Y "el auto estaba sucio" en la misma reseña. Eso no es una reseña
+ * severa, es un dato roto: después el perfil cuenta las dos y no dice nada.
+ * Agrupadas de a pares, elegir una apaga la contraria y la contradicción
+ * directamente no se puede escribir.
+ *
+ * Y de paso ordena la pantalla: cinco o seis renglones con dos opciones se leen;
+ * quince casillas mezcladas se contestan a desgano.
+ *
+ *  · `key`   → para el título del aspecto (`aspect.<key>` en el diccionario) y
+ *              para saber qué renglón está contestado. No se guarda en la base:
+ *              lo que se guarda sigue siendo el código de la característica.
+ *  · `sobre` → mismo criterio que arriba: a quién se le puede preguntar esto.
+ */
+export const PARES = [
+  { key: "atencion", bueno: "RESPONDE_RAPIDO", malo: "RESPONDE_TARDE", sobre: "ambos" },
+  { key: "trato", bueno: "TRATO_AMABLE", malo: "TRATO_AGRESIVO", sobre: "ambos" },
+  { key: "puntualidad", bueno: "PUNTUAL", malo: "IMPUNTUAL", sobre: "ambos" },
+
+  { key: "fidelidad", bueno: "AUTO_COMO_LA_FOTO", malo: "AUTO_DISTINTO", sobre: "dueño" },
+  { key: "limpieza", bueno: "AUTO_LIMPIO", malo: "AUTO_SUCIO", sobre: "dueño" },
+  { key: "cobros", bueno: "SIN_COBROS_EXTRA", malo: "COBROS_INESPERADOS", sobre: "dueño" },
+
+  { key: "cuidado", bueno: "CUIDO_EL_AUTO", malo: "MALTRATO_EL_AUTO", sobre: "conductor" },
+  { key: "devolucion", bueno: "DEVOLVIO_LIMPIO", malo: "DEVOLVIO_SUCIO", sobre: "conductor" },
+];
+
 /** Solo los códigos, que es lo que valida el servidor. */
 export const CODIGOS = ATRIBUTOS.map(a => a.code);
 
@@ -84,13 +119,17 @@ export const atributo = (code) => PORCODIGO.get(code) || null;
 export const esBueno = (code) => PORCODIGO.get(code)?.bueno === true;
 
 /**
- * Las que se le pueden poner a alguien según el papel que cumplió.
+ * Los ASPECTOS que se le pueden preguntar a alguien según el papel que cumplió.
  *
  * `papel` es el de QUIEN RECIBE la reseña: "dueño" cuando se está puntuando al
  * dueño del auto, "conductor" cuando se puntúa a quien lo alquiló.
+ *
+ * Da como mucho seis renglones (tres comunes + tres del papel), y como cada
+ * renglón deja elegir UNA sola respuesta, una reseña nunca puede pasarse del
+ * tope de características que acepta el servidor.
  */
-export function atributosPara(papel) {
-  return ATRIBUTOS.filter(a => a.sobre === "ambos" || a.sobre === papel);
+export function paresPara(papel) {
+  return PARES.filter(p => p.sobre === "ambos" || p.sobre === papel);
 }
 
 /**
@@ -115,6 +154,7 @@ export function contarAtributos(reviews = []) {
     .sort((a, b) => b.n - a.n);
 
   return {
+    todas,
     buenas: todas.filter(x => x.bueno),
     malas: todas.filter(x => !x.bueno),
     total: todas.reduce((suma, x) => suma + x.n, 0),
@@ -123,23 +163,35 @@ export function contarAtributos(reviews = []) {
 
 /**
  * Cómo le fue a alguien en un aspecto concreto, comparando la característica
- * buena con su contraria.
+ * buena con su contraria, Y SOBRE CUÁNTAS MENCIONES.
  *
- * Devuelve "bien" | "regular" | "mal" | null (null = todavía no hay con qué
- * decirlo, que NO es lo mismo que "mal" y por eso no se inventa).
+ * Devuelve `{ nivel, bien, mal, total }`, donde `nivel` es
+ * "bien" | "regular" | "mal" | null. El null es "todavía no lo mencionó nadie",
+ * que NO es lo mismo que "mal" y por eso no se inventa.
  *
- * El umbral es 70% para "bien" y 40% para "regular". No es un número redondo por
- * gusto: con 2 de 3 (66%) alguien no "brinda buena atención", y con menos de la
- * mitad tampoco es un caso dudoso.
+ * ── POR QUÉ ALCANZA CON UNA SOLA MENCIÓN ───────────────────────────────────
+ * Antes hacían falta dos: con una, esto devolvía null. El resultado era un
+ * perfil que se contradecía a la vista —"Puntualidad: Sin datos" y tres
+ * centímetros más abajo, en la misma tarjeta, "Puntual · 1"—. Quien lo lee no
+ * concluye "el umbral estadístico no se alcanzó": concluye que la pantalla está
+ * rota, y con razón, porque el dato estaba ahí.
+ *
+ * El umbral existía para no proclamar "buena atención" por un solo comentario.
+ * Eso se arregla mostrando SOBRE QUÉ se dice, no escondiendo el dato: por eso se
+ * devuelve `total`, y la tarjeta escribe "Buena · 1 de 1" al lado. Un dato chico
+ * dicho con su tamaño es honesto; un dato chico borrado es un agujero.
+ *
+ * Los cortes siguen siendo 70% para "bien" y 40% para "regular": con 2 de 3
+ * (66%) alguien no "brinda buena atención", y con menos de la mitad tampoco es
+ * un caso dudoso.
  */
-export function comoLeFue(cuenta, codeBueno, codeMalo) {
+export function resumenDe(cuenta, codeBueno, codeMalo) {
   const suma = (code) => cuenta.find(x => x.code === code)?.n || 0;
   const bien = suma(codeBueno);
   const mal = suma(codeMalo);
   const total = bien + mal;
-  if (total < 2) return null;
+  if (total === 0) return { nivel: null, bien, mal, total };
   const proporcion = bien / total;
-  if (proporcion >= 0.7) return "bien";
-  if (proporcion >= 0.4) return "regular";
-  return "mal";
+  const nivel = proporcion >= 0.7 ? "bien" : proporcion >= 0.4 ? "regular" : "mal";
+  return { nivel, bien, mal, total };
 }

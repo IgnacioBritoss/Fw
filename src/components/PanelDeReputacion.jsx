@@ -22,14 +22,26 @@
 //     dice nada si no se ve contra qué: "Oro" es una palabra hasta que se ve que
 //     arriba hay uno más y abajo hay dos.
 //  3. TRES NÚMEROS. Alquileres terminados, atención y puntualidad. Son los tres
-//     que contestan "¿este me va a dejar a pie?".
+//     que contestan "¿este me va a dejar a pie?". Cada uno dice SOBRE CUÁNTO
+//     está dicho (ver más abajo: es lo que estaba mal).
 //  4. LAS DOS CALIFICACIONES, separadas. Alguien puede cuidar muy bien los autos
 //     que alquila y a la vez tener un auto que no está a la altura de lo que
 //     promete. Mezclarlas en un promedio único esconde justo lo que se quiere
 //     saber.
-//  5. LO QUE MÁS DESTACAN: las características contadas. Es la parte que antes
-//     no existía y la que convierte veinte reseñas en algo que se lee en cinco
+//  5. LO QUE MÁS DESTACAN: las características contadas, ordenadas y con una
+//     barra proporcional. Convierte veinte reseñas en algo que se lee en cinco
 //     segundos.
+//
+//  ── POR QUÉ LAS CARACTERÍSTICAS YA NO SON ETIQUETAS DE COLORES ────────────
+//  Eran quince cápsulas verdes y rojas amontonadas, todas del mismo tamaño, con
+//  un numerito adentro. Con eso no se puede comparar: "contesta rápido 8" y
+//  "llegó tarde 1" ocupaban lo mismo y gritaban igual, así que el ojo veía una
+//  mancha de colores y había que leer los números uno por uno para entender algo.
+//
+//  Ahora es una lista ordenada con una barra proporcional. Lo más mencionado
+//  está arriba y es lo más largo, y una queja aislada se ve chiquita al lado de
+//  un elogio repetido, que es exactamente lo que significa. Se entiende sin leer
+//  ningún número, y el número igual está.
 //
 //  ── LO QUE ESTE CUADRO NO HACE ────────────────────────────────────────────
 //  No inventa nada. Sin reseñas no hay rango, sin características no aparece la
@@ -50,30 +62,39 @@ import { useEffect, useMemo, useState } from "react";
 import { getUserReputation } from "../services/api";
 import { useI18n } from "../i18n/core";
 import { rankOf, nextRank, TIERS } from "../services/rank";
-import { contarAtributos, comoLeFue, esBueno } from "../services/atributos";
+import { contarAtributos, resumenDe, esBueno } from "../services/atributos";
 import EscudoDeRango from "./EscudoDeRango";
+
+/** El color de un nivel. El null es "todavía no se sabe", que no es malo. */
+const TINTA = {
+  bien: { texto: "var(--fw-green-text-2)", barra: "var(--fw-green)" },
+  regular: { texto: "var(--fw-amber-text)", barra: "var(--fw-amber)" },
+  mal: { texto: "var(--fw-red-text-2)", barra: "var(--fw-red)" },
+};
+const SIN_NIVEL = { texto: "var(--fw-text-4)", barra: "var(--fw-border-2)" };
 
 /** Estrellas llenas según el promedio, más el número al lado. */
 function Estrellas({ average, count, etiqueta, sinNada }) {
-  if (!count) {
-    return (
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, marginBottom: 4 }}>
-        <span style={{ color: "var(--fw-text-3)" }}>{etiqueta}</span>
-        <span style={{ color: "var(--fw-text-4)" }}>{sinNada}</span>
-      </div>
-    );
-  }
-  const llenas = Math.round(average);
+  const llenas = count ? Math.round(average) : 0;
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", fontSize: 12.5, marginBottom: 4 }}>
+    <div style={{
+      display: "flex", justifyContent: "space-between", gap: 10,
+      alignItems: "center", fontSize: 12.5, padding: "3px 0",
+    }}>
       <span style={{ color: "var(--fw-text-3)" }}>{etiqueta}</span>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-        <span style={{ color: "var(--fw-amber)", letterSpacing: 1, fontSize: 13 }}>
-          {"★".repeat(llenas)}<span style={{ color: "var(--fw-border)" }}>{"★".repeat(5 - llenas)}</span>
+      {!count ? (
+        <span style={{ color: "var(--fw-text-4)" }}>{sinNada}</span>
+      ) : (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ color: "var(--fw-amber)", letterSpacing: 1, fontSize: 13 }}>
+            {"★".repeat(llenas)}<span style={{ color: "var(--fw-border-2)" }}>{"★".repeat(5 - llenas)}</span>
+          </span>
+          <strong style={{ color: "var(--fw-text)", fontVariantNumeric: "tabular-nums" }}>
+            {average.toFixed(1)}
+          </strong>
+          <span style={{ color: "var(--fw-text-4)" }}>({count})</span>
         </span>
-        <strong style={{ color: "var(--fw-text)" }}>{average.toFixed(1)}</strong>
-        <span style={{ color: "var(--fw-text-4)" }}>({count})</span>
-      </span>
+      )}
     </div>
   );
 }
@@ -81,26 +102,115 @@ function Estrellas({ average, count, etiqueta, sinNada }) {
 /**
  * Una de las tres columnas de números.
  *
- * `estado` es "bien" | "regular" | "mal" | null. El null NO se dibuja como algo
- * malo: es "todavía no hay con qué decirlo", y pintar eso de rojo sería acusar a
- * alguien por ser nuevo.
+ * `resumen` es lo que devuelve `resumenDe`: el nivel más SOBRE CUÁNTAS
+ * menciones está dicho. Los dos se muestran juntos y a propósito.
+ *
+ * ── EL ERROR QUE ARREGLA ──────────────────────────────────────────────────
+ * Esta columna decía "Sin datos" mientras, tres centímetros más abajo y en la
+ * misma tarjeta, se leía "Puntual · 1". El dato estaba, pero se escondía hasta
+ * que hubiera dos menciones para no proclamar "buena puntualidad" por un solo
+ * comentario. La precaución era razonable; esconder el dato, no: quien lo lee no
+ * deduce que faltaba una mención, deduce que la pantalla miente.
+ *
+ * La forma correcta de no exagerar no es tapar el dato: es decir sobre cuánto
+ * está dicho. "Buena · 1 de 1" no exagera nada y no se contradice con nada.
+ *
+ * El null (nadie lo mencionó todavía) NO se dibuja como algo malo: pintar de
+ * rojo a alguien por ser nuevo sería acusarlo de algo que no hizo.
  */
-function Columna({ valor, etiqueta, estado }) {
-  const tinta = estado === "bien" ? "var(--fw-green-text-2)"
-    : estado === "mal" ? "var(--fw-red-text-2)"
-      : estado === "regular" ? "var(--fw-amber-text)"
-        : "var(--fw-text-3)";
+function Columna({ etiqueta, valor, resumen, detalle, primera }) {
+  /*
+    Tres casos, tres colores, y hay que distinguirlos:
+     · hay veredicto        → el color del nivel
+     · hay muestra vacía    → gris apagado, porque dice "todavía nada"
+     · no es un veredicto   → tinta normal: los alquileres terminados son un
+       número, no una nota, y ponerlo en gris lo haría parecer un dato flojo.
+  */
+  const tinta = resumen
+    ? (resumen.nivel ? TINTA[resumen.nivel] : SIN_NIVEL)
+    : { texto: "var(--fw-text)" };
+  const proporcion = resumen && resumen.total > 0 ? resumen.bien / resumen.total : 0;
   return (
-    <div style={{ flex: "1 1 0", minWidth: 96, padding: "0 10px", textAlign: "center" }}>
-      <div style={{ fontSize: 15, fontWeight: 800, color: tinta, lineHeight: 1.3, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+    <div style={{
+      flex: "1 1 0", minWidth: 92, padding: "0 12px",
+      borderLeft: primera ? "none" : "1px solid var(--fw-line-soft)",
+    }}>
+      {/* Dos renglones de alto fijo: "Alquileres terminados" ocupa dos y
+          "Atención" uno, y sin esto los tres números quedaban a distinta
+          altura, que es lo primero que hace ver desprolija una planilla. */}
+      <div style={{
+        fontSize: 9.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase",
+        color: "var(--fw-text-4)", lineHeight: 1.3, marginBottom: 4, minHeight: 25,
+      }}>
+        {etiqueta}
+      </div>
+      <div style={{ fontSize: 15.5, fontWeight: 800, color: tinta.texto, lineHeight: 1.25 }}>
         {valor}
-        {estado === "bien" && (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-            <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+      </div>
+      {/* Debajo del valor: sobre qué está dicho. Alto fijo para que las tres
+          columnas queden alineadas aunque una no tenga barra. */}
+      <div style={{ minHeight: 24, marginTop: 5 }}>
+        {resumen && resumen.total > 0 && (
+          <>
+            <div style={{ height: 3, borderRadius: 2, background: "var(--fw-surface-3)", overflow: "hidden" }}>
+              <div style={{
+                width: `${Math.round(proporcion * 100)}%`, height: "100%",
+                borderRadius: 2, background: tinta.barra,
+              }} />
+            </div>
+            <div style={{ fontSize: 10.5, color: "var(--fw-text-4)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>
+              {detalle}
+            </div>
+          </>
+        )}
+        {!resumen && detalle && (
+          <div style={{ fontSize: 10.5, color: "var(--fw-text-4)", lineHeight: 1.4 }}>{detalle}</div>
         )}
       </div>
-      <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 3, lineHeight: 1.4 }}>{etiqueta}</div>
+    </div>
+  );
+}
+
+/**
+ * Una característica del resumen: el nombre, cuántas veces la marcaron y una
+ * barra proporcional a la más mencionada de todas.
+ *
+ * El piso del 8% no es decoración: sin él, una característica mencionada una vez
+ * al lado de otra mencionada veinte queda con una barra de cero píxeles, o sea
+ * invisible, y "aparece pero casi no pasó" se convierte en "no aparece".
+ */
+function Barra({ nombre, n, bueno, max }) {
+  const ancho = Math.max(8, Math.round((n / max) * 100));
+  return (
+    <div style={{ marginBottom: 9 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 13, height: 13, flexShrink: 0, borderRadius: 999, alignSelf: "center",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: bueno ? "var(--fw-green)" : "var(--fw-red)",
+            color: "#fff", fontSize: 8.5, fontWeight: 900, lineHeight: 1,
+          }}
+        >
+          {bueno ? "✓" : "×"}
+        </span>
+        <span style={{
+          flex: 1, minWidth: 0, fontSize: 12, color: "var(--fw-text-2)",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
+          {nombre}
+        </span>
+        <strong style={{ fontSize: 12, color: "var(--fw-text-3)", fontVariantNumeric: "tabular-nums" }}>
+          {n}
+        </strong>
+      </div>
+      <div style={{ height: 4, borderRadius: 2, background: "var(--fw-surface-3)", overflow: "hidden" }}>
+        <div style={{
+          width: `${ancho}%`, height: "100%", borderRadius: 2,
+          background: bueno ? "var(--fw-green)" : "var(--fw-red)",
+        }} />
+      </div>
     </div>
   );
 }
@@ -132,25 +242,19 @@ export default function PanelDeReputacion({
     traen sus características adentro. Así que si no viene el conteo hecho, se
     cuenta con lo que hay.
   */
-  const cuenta = useMemo(() => {
+  const contadas = useMemo(() => {
     const delServidor = reputacion?.tagCounts;
     if (delServidor && Object.keys(delServidor).length > 0) {
-      const todas = Object.entries(delServidor)
+      return Object.entries(delServidor)
         .map(([code, n]) => ({ code, n: Number(n) || 0, bueno: esBueno(code) }))
         .filter(x => x.n > 0)
         .sort((a, b) => b.n - a.n);
-      return {
-        buenas: todas.filter(x => x.bueno),
-        malas: todas.filter(x => !x.bueno),
-        todas,
-      };
     }
-    const contado = contarAtributos(Array.isArray(reviews) ? reviews : []);
-    return { ...contado, todas: [...contado.buenas, ...contado.malas] };
+    return contarAtributos(Array.isArray(reviews) ? reviews : []).todas;
   }, [reputacion, reviews]);
 
-  const atencion = comoLeFue(cuenta.todas, "RESPONDE_RAPIDO", "RESPONDE_TARDE");
-  const puntualidad = comoLeFue(cuenta.todas, "PUNTUAL", "IMPUNTUAL");
+  const atencion = resumenDe(contadas, "RESPONDE_RAPIDO", "RESPONDE_TARDE");
+  const puntualidad = resumenDe(contadas, "PUNTUAL", "IMPUNTUAL");
 
   /*
     ALQUILERES TERMINADOS vs. RESEÑAS RECIBIDAS.
@@ -162,14 +266,31 @@ export default function PanelDeReputacion({
     RESEÑAS. Lo que no se hace es poner el número de reseñas abajo de la palabra
     "alquileres".
   */
-  const terminados = reputacion?.completed
-    ? (Number(reputacion.completed.asOwner) || 0) + (Number(reputacion.completed.asDriver) || 0)
-    : null;
+  const comoDueño = Number(reputacion?.completed?.asOwner) || 0;
+  const comoConductor = Number(reputacion?.completed?.asDriver) || 0;
+  const terminados = reputacion?.completed ? comoDueño + comoConductor : null;
 
   // La escalera va de menor a mayor, al revés que TIERS (que está ordenado de
   // mayor a menor porque así se busca el rango).
   const escalones = [...TIERS].reverse();
   const alcanzado = escalones.findIndex(t => t.key === tier.key);
+
+  // Las más mencionadas primero, buenas y malas mezcladas por cantidad: lo que
+  // más le pasó a la gente con esta persona es lo que va arriba, sea del signo
+  // que sea. Ordenar por signo sería elegir por el lector qué es lo importante.
+  const destacadas = [...contadas].sort((a, b) => b.n - a.n).slice(0, 6);
+  /*
+    Contra qué se miden las barras: contra la característica más mencionada, con
+    un piso de 2.
+
+    El piso es por el perfil recién empezado. Con tres reseñas todas las
+    características van una vez, así que la más mencionada vale 1 y TODAS las
+    barras salen llenas: seis barras al tope, que se leen como "diez puntos en
+    todo" cuando lo que pasó es que nadie repitió nada. Con el piso en 2 se
+    quedan a la mitad, que es exactamente lo que significa: está mencionado, y
+    todavía no hay nada que se destaque por encima del resto.
+  */
+  const maximo = Math.max(2, ...destacadas.map(x => x.n));
 
   return (
     <div style={{
@@ -190,14 +311,22 @@ export default function PanelDeReputacion({
         </div>
       </div>
 
-      {/* 2 · La escalera. Un rango solo no dice nada si no se ve contra qué. */}
+      {/*
+        2 · La escalera. Un rango solo no dice nada si no se ve contra qué.
+
+        TODO LO GANADO VA DEL COLOR DEL RANGO ACTUAL, y todos los escalones
+        miden lo mismo. Antes cada escalón se pintaba de SU propio metal y el
+        actual se agrandaba a lo alto: al subir de rango quedaba un tramo bronce
+        y otro plata, como si fueran dos cosas distintas, y uno más gordo que el
+        resto, que se leía como un desperfecto. Lo que se quiere mostrar es una
+        sola cosa —hasta dónde llegó, y de qué metal es hoy—, así que se dibuja
+        como una sola cosa.
+      */}
       <div style={{ display: "flex", gap: 4, marginBottom: 14 }} aria-hidden="true">
         {escalones.map((escalon, i) => (
           <div key={escalon.key} style={{
             flex: 1, height: 7, borderRadius: 3,
-            background: i <= alcanzado && alcanzado >= 0 ? escalon.color : "var(--fw-surface-3)",
-            // El escalón actual, más alto: se ve dónde está parado sin leer.
-            transform: i === alcanzado ? "scaleY(1.6)" : "none",
+            background: alcanzado >= 0 && i <= alcanzado ? tier.color : "var(--fw-surface-3)",
           }} />
         ))}
       </div>
@@ -209,29 +338,33 @@ export default function PanelDeReputacion({
 
       {/* 3 · Los tres números */}
       <div style={{
-        display: "flex", flexWrap: "wrap", rowGap: 12,
+        display: "flex", flexWrap: "wrap", rowGap: 14,
         borderTop: "1px solid var(--fw-line-soft)", borderBottom: "1px solid var(--fw-line-soft)",
-        padding: "12px 0", marginBottom: 12,
+        padding: "13px 0", marginBottom: 13,
       }}>
         <Columna
-          valor={terminados !== null ? terminados : ratingCount}
+          primera
           etiqueta={terminados !== null ? tr("rep.rentalsDone") : tr("rep.reviewsGot")}
+          valor={terminados !== null ? terminados : ratingCount}
+          detalle={terminados ? tr("rep.doneSplit", { owner: comoDueño, driver: comoConductor }) : null}
         />
         <Columna
-          valor={atencion ? tr(`rep.level.${atencion}`) : tr("rep.noData")}
           etiqueta={tr("rep.attention")}
-          estado={atencion}
+          valor={atencion.nivel ? tr(`rep.level.${atencion.nivel}`) : tr("rep.noData")}
+          resumen={atencion}
+          detalle={tr("rep.basis", { good: atencion.bien, total: atencion.total })}
         />
         <Columna
-          valor={puntualidad ? tr(`rep.level.${puntualidad}`) : tr("rep.noData")}
           etiqueta={tr("rep.punctuality")}
-          estado={puntualidad}
+          valor={puntualidad.nivel ? tr(`rep.level.${puntualidad.nivel}`) : tr("rep.noData")}
+          resumen={puntualidad}
+          detalle={tr("rep.basis", { good: puntualidad.bien, total: puntualidad.total })}
         />
       </div>
 
       {/* 4 · Las dos calificaciones, separadas */}
       {reputacion && (
-        <div style={{ marginBottom: cuenta.todas.length ? 12 : 0 }}>
+        <div style={{ marginBottom: destacadas.length ? 13 : 0 }}>
           <Estrellas {...reputacion.asOwner} etiqueta={tr("profile.asOwnerShort")} sinNada={tr("profile.noReviewsShort")} />
           <Estrellas {...reputacion.asDriver} etiqueta={tr("profile.asDriver")} sinNada={tr("profile.noReviewsShort")} />
         </div>
@@ -239,27 +372,26 @@ export default function PanelDeReputacion({
 
       {/* 5 · Lo que más destacan. Sin características todavía, la sección no
              aparece: un título sobre una lista vacía es peor que nada. */}
-      {cuenta.todas.length > 0 && (
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--fw-text-4)", marginBottom: 7 }}>
+      {destacadas.length > 0 && (
+        // La raya de arriba solo cuando hay algo entre medio que separar: sin
+        // las dos calificaciones, esta sección queda pegada a la franja de
+        // números, que ya trae la suya, y quedaban dos rayas juntas con un
+        // hueco vacío en el medio.
+        <div style={reputacion
+          ? { borderTop: "1px solid var(--fw-line-soft)", paddingTop: 13 }
+          : undefined}
+        >
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--fw-text-4)" }}>
             {tr("rep.whatTheySay")}
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {/* Las buenas primero y las malas después, pero LAS MALAS ESTÁN. Un
-                resumen que solo muestra elogios no es un resumen, es un cartel. */}
-            {[...cuenta.buenas, ...cuenta.malas].slice(0, 8).map(({ code, n, bueno }) => (
-              <span key={code} style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                fontSize: 11.5, lineHeight: 1.5, padding: "3px 9px", borderRadius: 999,
-                background: bueno ? "var(--fw-green-bg)" : "var(--fw-red-bg)",
-                color: bueno ? "var(--fw-green-text-2)" : "var(--fw-red-text-2)",
-                border: `1px solid ${bueno ? "var(--fw-green-line)" : "var(--fw-red-line)"}`,
-              }}>
-                {tr(`attr.${code}`)}
-                <strong>{n}</strong>
-              </span>
-            ))}
+          {/* Qué es el número de la derecha. Sin esto, "3" puede leerse como una
+              nota del uno al cinco, que es justo lo que no es. */}
+          <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 9 }}>
+            {tr("rep.whatTheySayHint")}
           </div>
+          {destacadas.map(({ code, n, bueno }) => (
+            <Barra key={code} nombre={tr(`attr.${code}`)} n={n} bueno={bueno} max={maximo} />
+          ))}
         </div>
       )}
     </div>
