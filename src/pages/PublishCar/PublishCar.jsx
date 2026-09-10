@@ -13,7 +13,7 @@
 //  que un mismo auto apareciera duplicado o siguiera visible después de borrarlo.
 //  La única fuente de verdad es el backend.
 // ============================================================================
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -24,6 +24,7 @@ import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../s
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { precioUsable } from "../../services/precio";
+import { fotosDeOtroAuto } from "../../services/mismoAuto";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
@@ -163,6 +164,51 @@ const normalizeLoc = (s) => (s || "").toLowerCase().trim().replace(/\s+/g, " ");
 // Nombres de los pasos y traducciones de las opciones a los códigos del backend.
 // Claves: los pasos se traducen al dibujarse.
 const STEPS = ["publish.step.vehicle", "publish.step.photos", "publish.step.listing", "publish.step.confirm"];
+
+/*
+  ─────────────────────────── CUÁNTAS FOTOS, Y CUÁNDO ───────────────────────────
+
+  ANTES HACÍAN FALTA CUATRO Y ERA UN PROBLEMA. Cada foto que se sube dispara una
+  revisión con IA, y cuatro seguidas es más de lo que aguanta la cuota: las
+  últimas volvían con "no se pudo revisar", la persona reintentaba, y cada
+  reintento gastaba otra llamada. O sea que el mínimo alto no mejoraba las
+  publicaciones: las trababa.
+
+  Ahora el mínimo son DOS —el frente y algo más, que es lo que de verdad hace
+  falta para reconocer un auto— y de ahí para arriba son OPCIONALES. Quien quiera
+  mostrar el interior y el baúl los sube; quien no, publica igual.
+
+  LA ESPERA ENTRE TANDAS. Después de la primera tanda, subir más fotos queda
+  bloqueado un minuto y medio, con la cuenta regresiva a la vista. No es una
+  penitencia: es que si se suben igual, la revisión se cae por cuota y la persona
+  gasta las fotos al pedo sin saber por qué. Vale más decir "esperá 1:23" que
+  aceptar la foto y devolver un error que no explica nada.
+*/
+const MIN_FOTOS = 2;
+const MAX_FOTOS = 6;
+const ESPERA_ENTRE_TANDAS_MS = 90_000;
+
+/** Cuánto vale una sugerencia de precio guardada. Son pesos argentinos: a los
+ *  dos meses el número no está viejo, está mal. */
+const VIDA_DEL_PRECIO_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * El texto crudo que devolvió el proveedor de IA, a la consola del navegador.
+ *
+ * Antes iba a la pantalla, pegado al motivo y entre paréntesis. La intención era
+ * buena —sin él, "no se pudo revisar" es un callejón sin salida— pero lo que
+ * terminaba arriba de la foto era algo como "rate_limit_exceeded: Limit 7000,
+ * Used 6998" en inglés y en la jerga de Groq. Quien está publicando su auto no
+ * tiene nada que hacer con eso: lee un error del que no es culpable, escrito en
+ * un idioma que no pidió.
+ *
+ * Así que el detalle sigue estando, pero donde corresponde: en la consola, que
+ * es donde se busca el error de un proveedor. En pantalla queda la frase corta,
+ * que es la que dice si conviene reintentar o no.
+ */
+const anotarDetalle = (detalle) => {
+  if (detalle) console.warn("[freewheel] la IA no pudo:", detalle);
+};
 // Caja, combustible y tracción: el formulario guarda el CÓDIGO del backend y la
 // lista muestra el texto traducido. Antes guardaba la palabra en castellano y la
 // convertía al enviar, así que la lista quedaba en castellano en los cinco
@@ -257,6 +303,16 @@ export default function PublishCar() {
   // mano que son del auto. Sin esto no se puede avanzar.
   const [photosConfirmed, setPhotosConfirmed] = useState(false);
   const [photoValidations, setPhotoValidations] = useState({});
+  /*
+    Hasta cuándo está bloqueada la subida (un instante en milisegundos), y el
+    reloj que redibuja la cuenta regresiva.
+
+    El reloj corre SOLO mientras hay algo que esperar: un intervalo eterno que
+    redibuja la pantalla una vez por segundo durante todo el formulario es
+    trabajo puro al pedo.
+  */
+  const [esperaHasta, setEsperaHasta] = useState(0);
+  const [ahora, setAhora] = useState(() => Date.now());
   const [uploadHover, setUploadHover] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
 
@@ -291,6 +347,17 @@ export default function PublishCar() {
     }
     prevLocationRef.current = curr;
   }, [listingForm.locationText]);
+
+  // La cuenta regresiva de la espera entre tandas. Se apaga sola al llegar a cero.
+  useEffect(() => {
+    if (!esperaHasta || esperaHasta <= Date.now()) return undefined;
+    const reloj = setInterval(() => setAhora(Date.now()), 1000);
+    return () => clearInterval(reloj);
+  }, [esperaHasta]);
+
+  const segundosDeEspera = Math.max(0, Math.ceil((esperaHasta - ahora) / 1000));
+  const enEspera = segundosDeEspera > 0;
+  const relojDeEspera = `${Math.floor(segundosDeEspera / 60)}:${String(segundosDeEspera % 60).padStart(2, "0")}`;
 
   const specWarnings = getSpecWarnings(vehicleForm);
   const anioFueraDeRango = specWarnings.some((w) => w.label === "publish.year");
@@ -353,17 +420,38 @@ Si no sabés un dato, usá null.`;
 
   // IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
   // acorde al auto y a la ubicación, y lo carga en el formulario. También cachea.
-  const fetchPricing = async () => {
+  const fetchPricing = async (forzar = false) => {
     setPricingLoading(true);
     setPricingSuggestion(null);
     setError("");
     const location = listingForm.locationText || "Argentina";
-    // La categoría entra en la clave: un mismo modelo cargado como SUV o como
-    // hatchback no vale lo mismo, y sin esto la respuesta vieja seguía pegada.
-    const cacheKey = `fw_price_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.category}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
+    /*
+      LA CLAVE DE LA MEMORIA LLEVA VERSIÓN, Y LO GUARDADO VENCE.
+
+      La categoría entra en la clave porque un mismo modelo cargado como SUV o
+      como hatchback no vale lo mismo. Lo que faltaba eran las otras dos cosas:
+
+       · La VERSIÓN. Cada vez que se arregla cómo se lee la respuesta del modelo
+         —y se arregló varias veces— lo que quedó guardado con la lógica vieja
+         sigue ahí, mal, para siempre. Un número que se corrigió en el código y
+         no cambia en la pantalla es el peor de los dos mundos.
+       · El VENCIMIENTO. Es un precio en pesos argentinos: a los dos meses no
+         está viejo, está mal.
+
+      Y `forzar` es el botón "pedir otra": saltea todo esto y pregunta de nuevo.
+    */
+    const cacheKey = `fw_price_v2_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.category}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
     let data;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) { try { data = JSON.parse(cached); } catch { data = null; } }
+    if (!forzar) {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const guardado = JSON.parse(cached);
+          const vigente = Date.now() - (guardado?.ts || 0) < VIDA_DEL_PRECIO_MS;
+          data = vigente ? guardado.data : null;
+        } catch { data = null; }
+      }
+    }
     if (!data) {
       try {
         /*
@@ -451,7 +539,9 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         if (!data) throw ultimoFallo || new Error(tr("publish.errPriceAi"));
 
         data = precioUsable(data);
-        localStorage.setItem(cacheKey, JSON.stringify(data));
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+        } catch { /* sin lugar para guardar: la sugerencia sirve igual */ }
       } catch (fallo) {
         /*
           QUÉ PASÓ, NO "NO SE PUDO".
@@ -495,24 +585,51 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
   const revisarFoto = (dataUrl, photoIdx) => {
     setPhotoValidations(v => ({ ...v, [photoIdx]: "loading" }));
     groqVision(dataUrl)
+      .then(res => {
+        if (res?.isVehicle !== true && res?.isVehicle !== false) anotarDetalle(res?.detail);
+        return res;
+      })
       .then(res => setPhotoValidations(v => ({
         ...v,
         [photoIdx]: res?.isVehicle === true
-          ? { state: "ok", detected: res.detected, reason: res.reason }
+          // `rasgos` viaja pegado a la foto: es con lo que después se comprueba
+          // que todas las fotos sean del MISMO auto (services/mismoAuto.js).
+          ? { state: "ok", detected: res.detected, reason: res.reason, rasgos: res.rasgos }
           : res?.isVehicle === false
             ? { state: "invalid", detected: res.detected, reason: res.reason }
             : { state: "unknown", code: res?.code, reason: res?.reason, detail: res?.detail },
       })))
-      .catch(err => setPhotoValidations(v => ({
-        ...v,
-        [photoIdx]: { state: "unknown", reason: err?.message, detail: err?.payload?.detail },
-      })));
+      .catch(err => {
+        anotarDetalle(err?.payload?.detail || err?.message);
+        setPhotoValidations(v => ({
+          ...v,
+          [photoIdx]: { state: "unknown", reason: err?.message, detail: err?.payload?.detail },
+        }));
+      });
   };
 
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
-    if (photos.length + files.length > 6) { setError(tr("publish.errMaxPhotos")); return; }
+    // El input queda listo para volver a elegir el MISMO archivo. Sin esto, si
+    // se sube una foto, se borra y se elige la misma otra vez, el navegador no
+    // dispara nada porque el valor del campo no cambió.
+    e.target.value = "";
+    if (!files.length) return;
+    if (enEspera) return;
+    if (photos.length + files.length > MAX_FOTOS) { setError(tr("publish.errMaxPhotos", { max: MAX_FOTOS })); return; }
     const startIdx = photos.length;
+
+    /*
+      La espera se arma en cuanto salen las revisiones de esta tanda, no cuando
+      terminan: lo que hay que espaciar son las LLAMADAS a la IA, y las de esta
+      tanda ya salieron. Y solo desde la segunda foto: las dos obligatorias
+      tienen que poder subirse de una, que es justamente lo que se pidió.
+    */
+    if (startIdx + files.length >= MIN_FOTOS) {
+      setEsperaHasta(Date.now() + ESPERA_ENTRE_TANDAS_MS);
+      setAhora(Date.now());
+    }
+
     files.forEach((file, fileIdx) => {
       const photoIdx = startIdx + fileIdx;
       const reader = new FileReader();
@@ -523,6 +640,28 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
       reader.readAsDataURL(file);
     });
   };
+
+  /*
+    ¿HAY FOTOS DE OTRO AUTO?
+
+    Solo entran las que la IA aprobó: una foto rechazada o sin revisar no tiene
+    descripción con la que comparar, y meterla acá sería inventar un desacuerdo
+    con un dato que no existe.
+
+    El caso que esto tapa lo encontró una prueba a mano: dos fotos de un Clio
+    blanco y una tercera de un Corolla Cross. Las tres eran autos reales, así que
+    las tres pasaban, y el aviso quedaba con las fotos de dos autos distintos.
+  */
+  const otroAuto = useMemo(() => {
+    const aprobadas = {};
+    photos.forEach((_, i) => {
+      if (photoValidations[i]?.state === "ok") aprobadas[i] = photoValidations[i];
+    });
+    return fotosDeOtroAuto(aprobadas);
+  }, [photos, photoValidations]);
+
+  const esDeOtroAuto = (i) => otroAuto.indices.includes(i);
+  const lleno = photos.length >= MAX_FOTOS;
 
   /**
    * Por qué NO se pudo revisar una foto, en una frase.
@@ -540,23 +679,14 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
     unreadable: "ai.whyUnreadable",
   };
 
-  const porQueNoSeRevisó = (i) => {
-    const v = photoValidations[i];
-    return `${tr(CLAVES_DE_FALLO[v?.code] || "ai.whyUpstream")}${v?.detail ? ` (${v.detail})` : ""}`;
-  };
+  // El detalle crudo no se muestra: va a la consola (ver anotarDetalle).
+  const porQueNoSeRevisó = (i) =>
+    tr(CLAVES_DE_FALLO[photoValidations[i]?.code] || "ai.whyUpstream");
 
-  /**
-   * Por qué falló una llamada a la IA, en una frase, con el detalle del servidor.
-   *
-   * El detalle es el texto crudo que devolvió el proveedor. Sin él, "La IA no
-   * contestó" es un callejón sin salida: no se sabe si es la clave, la cuota, el
-   * modelo o la foto, así que no se sabe qué arreglar ni si vale la pena
-   * reintentar. Con él, el mensaje dice qué pasó de verdad.
-   */
+  /** Por qué falló una llamada a la IA, en una frase. Mismo criterio de arriba. */
   const porQueFalloLaIa = (err) => {
-    const base = tr(CLAVES_DE_FALLO[err?.code] || "ai.whyUpstream");
-    const detalle = err?.payload?.detail || (err?.status === 0 ? err?.message : "");
-    return detalle ? `${base} (${detalle})` : base;
+    anotarDetalle(err?.payload?.detail || (err?.status === 0 ? err?.message : ""));
+    return tr(CLAVES_DE_FALLO[err?.code] || "ai.whyUpstream");
   };
 
   /*
@@ -632,12 +762,25 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
       if (specWarnings.length > 0) { setError(tr("publish.errSpecRange")); return false; }
     }
     if (step === 1) {
-      if (photos.length < 4) { setError(tr("publish.errMinPhotos")); return false; }
+      if (photos.length < MIN_FOTOS) { setError(tr("publish.errMinPhotos", { min: MIN_FOTOS })); return false; }
       if (photos.some((_, i) => estadoFoto(i) === "loading")) {
         setError(tr("publish.errWaitReview")); return false;
       }
       if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
         setError(tr("publish.errBadPhotos")); return false;
+      }
+      /*
+        FOTOS DE OTRO AUTO: NO SE PASA, Y NO HAY CASILLA PARA HACERSE CARGO.
+
+        Es a propósito que acá no haya una salida como la de "no se pudo
+        revisar". Aquella existe porque el servicio de IA se puede caer y no
+        sería justo trabar una publicación por eso. Esto es al revés: la IA
+        funcionó, contestó, y lo que dijo es que las fotos no son del mismo auto.
+        Dejar una casilla para seguir igual sería volver al agujero de antes, que
+        es exactamente lo que se está tapando. Se saca la foto que sobra.
+      */
+      if (otroAuto.indices.length > 0) {
+        setError(tr("publish.errOtherCar")); return false;
       }
       // Las que no se pudieron revisar tampoco pasan solas: hace falta que la
       // persona se haga cargo marcando la casilla. Antes pasaban sin que nada lo
@@ -1115,16 +1258,47 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         <div style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.photos")}</div>
           <p style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 16, lineHeight: 1.6 }}>
-            {tr("publish.photosHint")}
+            {tr("publish.photosHint", { min: MIN_FOTOS, max: MAX_FOTOS })}
           </p>
-          <div style={{ ...s.uploadArea, ...(uploadHover ? { borderColor: "var(--fw-blue)", background: "var(--fw-blue-bg)" } : {}) }}
+          {/*
+            EL RECUADRO PARA SUBIR, QUE SE APAGA DURANTE LA ESPERA.
+
+            Apagado no quiere decir mudo: dice cuánto falta y por qué. Un botón
+            que no responde y no explica nada se lee como una pantalla colgada, y
+            la persona toca diez veces.
+          */}
+          <div style={{
+            ...s.uploadArea,
+            ...(uploadHover && !enEspera && !lleno ? { borderColor: "var(--fw-blue)", background: "var(--fw-blue-bg)" } : {}),
+            ...(enEspera || lleno ? { opacity: 0.75, cursor: "default" } : {}),
+          }}
             onMouseEnter={() => setUploadHover(true)}
             onMouseLeave={() => setUploadHover(false)}
-            onClick={() => document.getElementById("car-photos").click()}>
-            <input id="car-photos" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>{tr("publish.clickToUpload")}</div>
-            <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>JPG, PNG — entre 4 y 6 fotos ({photos.length}/6)</div>
+            onClick={() => { if (!enEspera && !lleno) document.getElementById("car-photos").click(); }}>
+            <input id="car-photos" type="file" accept="image/*" multiple disabled={enEspera || lleno} style={{ display: "none" }} onChange={handlePhotos} />
+            {enEspera ? (
+              <>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--fw-amber-text)", lineHeight: 1.2, fontVariantNumeric: "tabular-nums" }}>
+                  {relojDeEspera}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", margin: "6px 0 4px" }}>
+                  {tr("publish.waitToUpload")}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)", maxWidth: 380, margin: "0 auto", lineHeight: 1.5 }}>
+                  {tr("publish.waitWhy")}
+                </div>
+              </>
+            ) : (
+              <>
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto 8px", display: "block" }}><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.2a2 2 0 0 0 1.7-.95l.6-1A2 2 0 0 1 10.7 3h2.6a2 2 0 0 1 1.7 1.05l.6 1A2 2 0 0 0 17.3 6h1.2A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-9z" stroke="#6b7280" strokeWidth="1.6"/><circle cx="12" cy="13" r="3.5" stroke="#6b7280" strokeWidth="1.6"/></svg>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--fw-text-2)", marginBottom: 4 }}>
+                  {lleno ? tr("publish.photosFull", { max: MAX_FOTOS }) : tr("publish.clickToUpload")}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
+                  {tr("publish.photoCounter", { count: photos.length, min: MIN_FOTOS, max: MAX_FOTOS })}
+                </div>
+              </>
+            )}
           </div>
           {/* Se dice que se pueden arrastrar y para qué sirve: sin esto, nadie
               prueba a arrastrar una foto, y el orden sigue siendo el que salió
@@ -1158,13 +1332,32 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                       <span style={{ fontSize: 10, color: "#fff" }}>{tr("publish.reviewing")}</span>
                     </div>
                   )}
-                  {estadoFoto(i) === "ok" && (
+                  {estadoFoto(i) === "ok" && !esDeOtroAuto(i) && (
                     <div style={{ position: "absolute", inset: 0, border: "2px solid #16a34a", borderRadius: 10, display: "flex", alignItems: "flex-start", pointerEvents: "none" }}>
                       <div style={{ margin: 6, background: "var(--fw-green)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                         {photoValidations[i]?.detected
                           ? `${tr("publish.verified")}: ${photoValidations[i].detected}`
                           : tr("publish.photoOk")}
+                      </div>
+                    </div>
+                  )}
+                  {/* Es un auto de verdad, pero NO el mismo que las demás. Se
+                      marca en rojo como una foto que no sirve, porque para este
+                      aviso no sirve, y se dice qué se vio acá y qué en las otras:
+                      "otro auto" a secas obliga a adivinar cuál sacar. */}
+                  {esDeOtroAuto(i) && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(220,38,38,.18)", border: "2px solid var(--fw-red)", borderRadius: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", pointerEvents: "none" }}>
+                      <div style={{ margin: 6, background: "var(--fw-red)", borderRadius: 20, padding: "3px 9px", fontSize: 10, color: "#fff", fontWeight: 700, alignSelf: "flex-start" }}>
+                        {tr("publish.otherCar")}
+                      </div>
+                      <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
+                        {otroAuto.principal != null && photoValidations[otroAuto.principal]?.detected && photoValidations[i]?.detected
+                          ? tr("publish.otherCarSeen", {
+                            aca: photoValidations[i].detected,
+                            resto: photoValidations[otroAuto.principal].detected,
+                          })
+                          : tr("publish.otherCarShort")}
                       </div>
                     </div>
                   )}
@@ -1195,7 +1388,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                       </button>
                     </div>
                   )}
-                  {i === 0 && estadoFoto(i) === "ok" && (
+                  {i === 0 && estadoFoto(i) === "ok" && !esDeOtroAuto(i) && (
                     <div style={{ position: "absolute", bottom: 6, left: 6, background: "var(--fw-blue)", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{tr("publish.main")}</div>
                   )}
                   <button style={s.photoRemove} onClick={() => removePhoto(i)}>×</button>
@@ -1203,22 +1396,31 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
               ))}
             </div>
           )}
-          {photos.length < 4 && photos.length > 0 && (
+          {photos.length > 0 && photos.length < MIN_FOTOS && (
             <div style={{ marginTop: 10, fontSize: 12, color: "var(--fw-amber-text)", background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 8, padding: "8px 12px" }}>
-              Necesitás {4 - photos.length} foto{4 - photos.length !== 1 ? "s" : ""} más para continuar.
+              {tr("publish.needMorePhotos", { min: MIN_FOTOS })}
             </div>
           )}
 
+          {/*
+            Acá NO va otro cartel diciendo que hay fotos de otro auto. Ya lo dice
+            la foto misma, en rojo y con qué se vio en cada una, y lo cuenta el
+            renglón de abajo; y al tocar "Siguiente" aparece arriba con la
+            explicación completa. Tres veces el mismo texto en una pantalla no
+            avisa más fuerte: hace que se deje de leer.
+          */}
+
           {/* Cuenta de cómo viene la revisión, para no tener que mirar foto por foto. */}
           {photos.length > 0 && (() => {
-            const verificadas = photos.filter((_, i) => estadoFoto(i) === "ok").length;
+            const verificadas = photos.filter((_, i) => estadoFoto(i) === "ok" && !esDeOtroAuto(i)).length;
             const noValidas = photos.filter((_, i) => estadoFoto(i) === "invalid").length;
             const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
             return (
               <div style={{ marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, color: "var(--fw-text-2)" }}>
-                <span style={{ color: "var(--fw-green-text-2)", fontWeight: 600 }}>{verificadas} verificada{verificadas !== 1 ? "s" : ""}</span>
-                {noValidas > 0 && <span style={{ color: "var(--fw-red-text-2)", fontWeight: 600 }}>{noValidas} no válida{noValidas !== 1 ? "s" : ""}</span>}
-                {sinRevisar > 0 && <span style={{ color: "var(--fw-amber-text)", fontWeight: 600 }}>{sinRevisar} sin revisar</span>}
+                <span style={{ color: "var(--fw-green-text-2)", fontWeight: 600 }}>{tr("publish.countChecked", { count: verificadas })}</span>
+                {noValidas > 0 && <span style={{ color: "var(--fw-red-text-2)", fontWeight: 600 }}>{tr("publish.countInvalid", { count: noValidas })}</span>}
+                {otroAuto.indices.length > 0 && <span style={{ color: "var(--fw-red-text-2)", fontWeight: 600 }}>{tr("publish.countOtherCar", { count: otroAuto.indices.length })}</span>}
+                {sinRevisar > 0 && <span style={{ color: "var(--fw-amber-text)", fontWeight: 600 }}>{tr("publish.countUnreviewed", { count: sinRevisar })}</span>}
               </div>
             );
           })()}
@@ -1232,9 +1434,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                 onChange={(e) => setPhotosConfirmed(e.target.checked)}
                 style={{ width: 17, height: 17, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
               <span style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
-                No pudimos revisar todas las fotos automáticamente. Confirmo que son
-                del auto que estoy publicando. Si no lo son, la publicación se puede
-                pausar y la cuenta suspender.
+                {tr("publish.confirmUnreviewed")}
               </span>
             </label>
           )}
@@ -1302,7 +1502,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <label style={{ ...s.label, marginBottom: 0 }}>{tr("publish.priceArs")} *</label>
               <button style={{ padding: "6px 14px", background: pricingLoading ? "var(--fw-surface-3)" : "var(--fw-chip)", color: pricingLoading ? "var(--fw-text-4)" : "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: pricingLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
-                onClick={fetchPricing} disabled={pricingLoading}>
+                onClick={() => fetchPricing()} disabled={pricingLoading}>
                 {pricingLoading ? <Spinner size={11} label={tr("publish.analyzing")} /> : tr("publish.suggestAi")}
               </button>
             </div>
@@ -1340,6 +1540,16 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                   <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
+                {/* El rango que dio el modelo no servía (no contenía el precio,
+                    o el máximo era el valor del auto) y se armó alrededor del
+                    recomendado. Se dice, por lo mismo de siempre: un número
+                    nuestro presentado como del tasador se lee más firme de lo
+                    que es. */}
+                {pricingSuggestion.banda === "calculada" && pricingSuggestion.origen !== "valor" && (
+                  <div style={{ ...s.aiBoxNote, color: "var(--fw-amber-text)" }}>
+                    {tr("publish.priceBandCalc")}
+                  </div>
+                )}
                 {/* Cuando el número no salió tal cual del modelo sino que hubo
                     que calcularlo, se dice. Presentar un número corregido como
                     si lo hubiera dicho la IA es hacerlo pasar por más firme de
@@ -1349,7 +1559,27 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                     {tr("publish.priceFromValue")}
                   </div>
                 )}
-                <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 6 }}>{tr("publish.priceAutoNote")}</div>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 11, color: "var(--fw-text-4)" }}>{tr("publish.priceAutoNote")}</span>
+                  {/*
+                    PEDIR OTRA.
+
+                    La sugerencia se guarda en el navegador para no gastar una
+                    llamada por cada vez que se abre el formulario. El costado
+                    malo es que una respuesta floja se quedaba pegada para
+                    siempre: se volvía a apretar "Sugerir" y salía exactamente la
+                    misma, sin ninguna forma de saber que estaba viniendo de la
+                    memoria y no del modelo. Esto la saltea y pregunta de nuevo.
+                  */}
+                  <button
+                    type="button"
+                    onClick={() => fetchPricing(true)}
+                    disabled={pricingLoading}
+                    style={{ background: "none", border: "none", padding: 0, fontFamily: "inherit", fontSize: 11.5, fontWeight: 600, color: "var(--fw-blue)", cursor: pricingLoading ? "not-allowed" : "pointer", textDecoration: "underline" }}
+                  >
+                    {tr("publish.priceAskAgain")}
+                  </button>
+                </div>
               </div>
             )}
             <input style={s.input} type="number" placeholder="45000"
