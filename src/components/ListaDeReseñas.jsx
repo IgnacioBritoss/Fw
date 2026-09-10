@@ -18,14 +18,17 @@
 //   · El comentario, si lo hay.
 //
 //  ── POR QUÉ LAS CARACTERÍSTICAS SE DIBUJAN ASÍ ────────────────────────────
-//  Eran cápsulas de fondo verde o rojo, una al lado de la otra. Cuatro de esas
-//  en una reseña tapaban el comentario: el color más fuerte de la tarjeta se lo
-//  llevaba lo accesorio, y lo que la persona se tomó el trabajo de escribir
-//  quedaba abajo en gris. Ahora el fondo es neutro y el signo lo lleva un punto
-//  chiquito con ✓ o ×: se sigue viendo de un vistazo de qué lado está cada una,
-//  sin que la tarjeta parezca un semáforo.
+//  El peso lo lleva el REDONDEL con el ✓ o la ×, en color pleno, y la cápsula
+//  que lo rodea es apenas un tinte del mismo color con el texto a tono. Así el
+//  signo se ve de un vistazo sin que cuatro rectángulos saturados le ganen la
+//  atención al comentario, que es lo único que la persona se tomó el trabajo de
+//  escribir.
 //
-//  Es el mismo punto que usan el formulario de reseña y la planilla de
+//  Las dos versiones anteriores fallaban por los dos extremos: primero fueron
+//  cápsulas verdes y rojas a fondo pleno —la tarjeta parecía un semáforo—, y
+//  después una caja gris con borde, que no se leía como nada.
+//
+//  Es el mismo redondel que usan el formulario de reseña y la planilla de
 //  reputación. Que sea el mismo en los tres lados es lo que hace que se lea como
 //  una sola aplicación y no como tres pantallas parecidas.
 //
@@ -53,18 +56,19 @@ const marca = (code, texto) => {
   const bueno = esBueno(code);
   return (
     <span key={code} style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      fontSize: 11.5, lineHeight: 1.5, padding: "3px 9px",
-      borderRadius: 7, background: "var(--fw-surface-2)",
-      border: "1px solid var(--fw-line-soft)", color: "var(--fw-text-2)",
+      display: "inline-flex", alignItems: "center", gap: 6,
+      fontSize: 12, lineHeight: 1.5, fontWeight: 600,
+      padding: "4px 11px 4px 5px", borderRadius: 999,
+      background: bueno ? "var(--fw-green-bg)" : "var(--fw-red-bg)",
+      color: bueno ? "var(--fw-green-text-2)" : "var(--fw-red-text-2)",
     }}>
       <span
         aria-hidden="true"
         style={{
-          width: 12, height: 12, flexShrink: 0, borderRadius: 999,
+          width: 17, height: 17, flexShrink: 0, borderRadius: 999,
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           background: bueno ? "var(--fw-green)" : "var(--fw-red)",
-          color: "#fff", fontSize: 8, fontWeight: 900, lineHeight: 1,
+          color: "#fff", fontSize: 10, fontWeight: 900, lineHeight: 1,
         }}
       >
         {bueno ? "✓" : "×"}

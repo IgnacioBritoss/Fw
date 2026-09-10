@@ -462,14 +462,46 @@ textarea[readonly],
 input:disabled,
 textarea:disabled,
 select:disabled {
-  caret-color: transparent;
   cursor: default;
 }
 
-/* Los textos comunes de la página tampoco tienen que mostrar cursor de texto
-   cuando se los toca: no son campos, son etiquetas y títulos. */
-label,
-button {
+/* ============================================================================
+   NINGÚN TEXTO QUE NO SE ESCRIBE MUESTRA CURSOR
+   ----------------------------------------------------------------------------
+   Acá antes se apagaba el cursor en las etiquetas y los botones, uno por uno. No
+   alcanzaba: al tocar un párrafo, un título o el texto de una reseña también
+   aparecía la rayita parpadeando, como si eso se pudiera editar.
+
+   De dónde sale: algunas computadoras tienen encendida la "navegación con
+   cursor" del navegador (la tecla F7 en Chrome y Edge), que pone un cursor de
+   texto en CUALQUIER texto de la página para poder moverse con las flechas. Es
+   una función de accesibilidad y no se puede apagar desde acá, pero sí se puede
+   dejar de dibujar la rayita.
+
+   Por eso ahora la regla va al revés: apagado para todo —`caret-color` se
+   hereda, así que ponerlo en la raíz alcanza— y encendido SOLO donde de verdad
+   se escribe. Lo que se saca es la rayita: seleccionar, copiar y moverse con el
+   teclado siguen funcionando igual.
+   ========================================================================== */
+:root {
+  caret-color: transparent;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+[contenteditable=""] {
+  caret-color: auto;
+}
+
+/* Y los campos que no aceptan nada escrito vuelven a quedar sin cursor, que es
+   de donde venía todo esto. */
+input[readonly],
+textarea[readonly],
+input:disabled,
+textarea:disabled,
+select:disabled {
   caret-color: transparent;
 }
 
