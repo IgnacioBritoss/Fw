@@ -15,7 +15,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  normalizar, rasgosDeTexto, rasgosDeRevision, desacuerdos, fotosDeOtroAuto,
+  normalizar, rasgosDeTexto, rasgosDeRevision, rasgosDeclarados, desacuerdos,
+  fotosDeOtroAuto,
 } from "./mismoAuto.js";
 
 // Una revisión como la que devuelve el servidor viejo: solo la frase corta.
@@ -125,9 +126,11 @@ test("una foto que no se pudo describir no acusa a nadie", () => {
 
 test("con una sola foto no hay contra que comparar", () => {
   assert.deepEqual(fotosDeOtroAuto({ 0: rasgos("suv", "rojo", "Jeep Renegade") }), {
-    indices: [], referencia: null, principal: null,
+    indices: [], porFormulario: [], referencia: null, principal: null,
   });
-  assert.deepEqual(fotosDeOtroAuto({}), { indices: [], referencia: null, principal: null });
+  assert.deepEqual(fotosDeOtroAuto({}), {
+    indices: [], porFormulario: [], referencia: null, principal: null,
+  });
 });
 
 test("el grupo mas grande es el de referencia, aunque llegue segundo", () => {
@@ -160,4 +163,101 @@ test("los rasgos del grupo se completan entre las fotos que lo forman", () => {
   });
   assert.deepEqual(indices, [2]);
   assert.equal(referencia.modelo, "clio");
+});
+
+// ── Contra lo que la persona declaro en el formulario ──────────────────────
+//
+//  Es la comparacion mas confiable de todas: no la dedujo un modelo mirando una
+//  foto, la escribio quien publica. Y es la unica que resuelve el caso de dos
+//  fotos, una de cada auto, donde entre ellas no hay forma de saber cual sobra.
+
+const FORMULARIO = { brand: "Renault", model: "Clio", color: "Blanco", category: "HATCHBACK" };
+
+test("el formulario se lee tal como lo guarda la pantalla de publicar", () => {
+  assert.deepEqual(rasgosDeclarados(FORMULARIO), {
+    tipo: "hatchback", color: "blanco", marca: "renault", modelo: "clio",
+  });
+});
+
+test("el color 'Otro' guarda un codigo de color y no se toma por un dato", () => {
+  assert.equal(rasgosDeclarados({ ...FORMULARIO, color: "#8B5CF6" }).color, null);
+});
+
+test("'Electrico' no es una carroceria y no se compara con nada", () => {
+  // Un Tesla Model 3 es un sedan y un Kona electrico es una SUV.
+  assert.equal(rasgosDeclarados({ ...FORMULARIO, category: "ELECTRIC" }).tipo, null);
+});
+
+test("una marca que no esta en la lista se cree igual: la escribio una persona", () => {
+  assert.equal(rasgosDeclarados({ ...FORMULARIO, brand: "Great Wall" }).marca, "great");
+});
+
+test("VW y Volkswagen son la misma marca", () => {
+  assert.equal(rasgosDeclarados({ ...FORMULARIO, brand: "VW" }).marca, "volkswagen");
+  assert.equal(rasgosDeTexto("Volkswagen Gol blanco").marca, "volkswagen");
+});
+
+test("la foto que no es el auto del formulario se marca, aunque sea la unica", () => {
+  const { indices, porFormulario } = fotosDeOtroAuto(
+    { 0: rasgos("SUV", "gris", "Toyota Corolla Cross") },
+    rasgosDeclarados(FORMULARIO),
+  );
+  assert.deepEqual(indices, [0]);
+  assert.deepEqual(porFormulario, [0]);
+});
+
+test("con una foto de cada auto, la que sobra es la que no es la del formulario", () => {
+  // Sin el formulario esto era un empate y mandaba la foto principal. Con el
+  // formulario no hay que adivinar: se sabe cual de las dos es el auto.
+  const { indices, porFormulario } = fotosDeOtroAuto(
+    {
+      0: rasgos("SUV", "gris", "Toyota Corolla Cross"),
+      1: rasgos("hatchback", "blanco", "Renault Clio"),
+    },
+    rasgosDeclarados(FORMULARIO),
+  );
+  assert.deepEqual(indices, [0]);
+  assert.deepEqual(porFormulario, [0]);
+});
+
+test("la foto que SI es la del formulario no se marca", () => {
+  const { indices } = fotosDeOtroAuto(
+    {
+      0: rasgos("hatchback", "blanco", "Renault Clio"),
+      1: rasgos("hatchback", "blanco", "Renault Clio Mio"),
+    },
+    rasgosDeclarados(FORMULARIO),
+  );
+  assert.deepEqual(indices, []);
+});
+
+test("una version del mismo modelo no es otro auto", () => {
+  // "Clio Mio" contra "Clio": la misma primera palabra alcanza. Comparar la
+  // frase entera convertiria cada version de un modelo en un desacuerdo.
+  assert.equal(desacuerdos(
+    { tipo: null, color: null, marca: "renault", modelo: "clio mio" },
+    { tipo: null, color: null, marca: "renault", modelo: "clio" },
+  ), 0);
+});
+
+test("un solo desacuerdo contra el formulario tampoco alcanza", () => {
+  // Declaro gris y la foto salio negra: es la luz, no otro auto.
+  const { indices } = fotosDeOtroAuto(
+    { 0: rasgos("hatchback", "negro", "Renault Clio") },
+    rasgosDeclarados({ ...FORMULARIO, color: "Gris" }),
+  );
+  assert.deepEqual(indices, []);
+});
+
+test("sin datos utiles en el formulario, se sigue comparando foto contra foto", () => {
+  const { indices, porFormulario } = fotosDeOtroAuto(
+    {
+      0: rasgos("hatchback", "blanco", "Renault Clio"),
+      1: rasgos("hatchback", "blanco", "Renault Clio"),
+      2: rasgos("SUV", "gris", "Toyota Corolla Cross"),
+    },
+    rasgosDeclarados({ brand: "", model: "", color: "#123456", category: "ELECTRIC" }),
+  );
+  assert.deepEqual(indices, [2]);
+  assert.deepEqual(porFormulario, []);
 });

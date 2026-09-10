@@ -24,7 +24,7 @@ import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../s
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { precioUsable } from "../../services/precio";
-import { fotosDeOtroAuto } from "../../services/mismoAuto";
+import { fotosDeOtroAuto, rasgosDeclarados } from "../../services/mismoAuto";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
@@ -657,10 +657,19 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
     photos.forEach((_, i) => {
       if (photoValidations[i]?.state === "ok") aprobadas[i] = photoValidations[i];
     });
-    return fotosDeOtroAuto(aprobadas);
-  }, [photos, photoValidations]);
+    /*
+      Se compara contra el auto que la persona CARGÓ EN EL PASO ANTERIOR, y no
+      solo entre las fotos. Es la comparación más confiable que hay: la marca, el
+      modelo, la categoría y el color no los dedujo un modelo mirando una foto,
+      los escribió quien publica. Y es la única que resuelve el caso de dos
+      fotos, una de cada auto, donde entre ellas no hay forma de saber cuál sobra.
+    */
+    return fotosDeOtroAuto(aprobadas, rasgosDeclarados(vehicleForm));
+  }, [photos, photoValidations, vehicleForm]);
 
   const esDeOtroAuto = (i) => otroAuto.indices.includes(i);
+  /** El auto del formulario, escrito como lo escribió la persona. */
+  const autoDeclarado = `${vehicleForm.brand || ""} ${vehicleForm.model || ""}`.trim();
   const lleno = photos.length >= MAX_FOTOS;
 
   /**
@@ -1277,15 +1286,14 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
             onClick={() => { if (!enEspera && !lleno) document.getElementById("car-photos").click(); }}>
             <input id="car-photos" type="file" accept="image/*" multiple disabled={enEspera || lleno} style={{ display: "none" }} onChange={handlePhotos} />
             {enEspera ? (
+              // Solo el reloj y una línea. El motivo técnico no va: quien está
+              // esperando necesita saber cuánto falta, no por qué.
               <>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--fw-amber-text)", lineHeight: 1.2, fontVariantNumeric: "tabular-nums" }}>
+                <div style={{ fontSize: 30, fontWeight: 800, color: "var(--fw-blue)", lineHeight: 1.15, fontVariantNumeric: "tabular-nums" }}>
                   {relojDeEspera}
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", margin: "6px 0 4px" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fw-text-2)", marginTop: 6 }}>
                   {tr("publish.waitToUpload")}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--fw-text-4)", maxWidth: 380, margin: "0 auto", lineHeight: 1.5 }}>
-                  {tr("publish.waitWhy")}
                 </div>
               </>
             ) : (
@@ -1352,12 +1360,18 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                         {tr("publish.otherCar")}
                       </div>
                       <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
-                        {otroAuto.principal != null && photoValidations[otroAuto.principal]?.detected && photoValidations[i]?.detected
-                          ? tr("publish.otherCarSeen", {
-                            aca: photoValidations[i].detected,
-                            resto: photoValidations[otroAuto.principal].detected,
-                          })
-                          : tr("publish.otherCarShort")}
+                        {/* Contra el formulario se puede nombrar el auto tal
+                            como lo escribió la persona, que es lo más claro que
+                            hay. Si no, se compara con lo que muestran las otras
+                            fotos. Y si falta hasta eso, la frase corta. */}
+                        {otroAuto.porFormulario.includes(i) && autoDeclarado && photoValidations[i]?.detected
+                          ? tr("publish.otherCarDeclared", { aca: photoValidations[i].detected, auto: autoDeclarado })
+                          : otroAuto.principal != null && photoValidations[otroAuto.principal]?.detected && photoValidations[i]?.detected
+                            ? tr("publish.otherCarSeen", {
+                              aca: photoValidations[i].detected,
+                              resto: photoValidations[otroAuto.principal].detected,
+                            })
+                            : tr("publish.otherCarShort")}
                       </div>
                     </div>
                   )}
