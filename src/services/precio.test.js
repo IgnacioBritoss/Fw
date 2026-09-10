@@ -198,3 +198,65 @@ test("el error avisa que el problema fue el precio y no la conexión", () => {
     assert.equal(err.precioRaro, true);
   }
 });
+
+// ── La banda que se muestra al lado del precio ─────────────────────────────
+//
+//  El precio recomendado se revisaba con lupa y la banda no se revisaba nada:
+//  salia tal como la habia escrito el modelo. Asi se veia una sugerencia
+//  perfecta con una banda al lado que decia "$45.000 a $12.000.000", o una que
+//  ni siquiera contenia el numero recomendado.
+
+test("una banda de verdad se respeta", () => {
+  const r = precioUsable({
+    valor_estimado: 12_000_000, precio_min: 28000, precio_max: 44000,
+    precio_recomendado: 36000,
+  });
+  assert.equal(r.precio_min, 28000);
+  assert.equal(r.precio_max, 44000);
+  assert.equal(r.banda, "ia");
+});
+
+test("si el maximo es el valor del auto, la banda se rehace", () => {
+  const r = precioUsable({
+    valor_estimado: 12_000_000, precio_min: 45000, precio_max: 12_000_000,
+    precio_recomendado: 45000,
+  });
+  assert.equal(r.precio_recomendado, 45000);
+  assert.equal(r.banda, "calculada");
+  assert.equal(r.precio_min, 36000);
+  assert.equal(r.precio_max, 54000);
+});
+
+test("una banda que no contiene el precio recomendado tampoco vale", () => {
+  const r = precioUsable({
+    valor_estimado: 12_000_000, precio_min: 60000, precio_max: 80000,
+    precio_recomendado: 36000,
+  });
+  assert.equal(r.banda, "calculada");
+  assert.ok(r.precio_min <= r.precio_recomendado && r.precio_recomendado <= r.precio_max);
+});
+
+test("dada vuelta (el minimo mayor que el maximo) tampoco", () => {
+  const r = precioUsable({
+    valor_estimado: 12_000_000, precio_min: 44000, precio_max: 28000,
+    precio_recomendado: 36000,
+  });
+  assert.equal(r.banda, "calculada");
+});
+
+test("cuando el numero lo calculamos nosotros, la explicacion del modelo se tira", () => {
+  // Hablaba del precio en dolares que descartamos: abajo del precio en pesos
+  // quedaba una frase explicando con total seguridad otra cosa.
+  const r = precioUsable({
+    valor_estimado: 12_000_000, precio_recomendado: 36,
+    justificacion: "36 dolares por dia es lo habitual para este auto",
+  });
+  assert.equal(r.origen, "valor");
+  assert.equal(r.justificacion, null);
+});
+
+test("un valor del auto disparatado no se muestra como si fuera un dato", () => {
+  const r = precioUsable({ valor_estimado: 900, precio_recomendado: 36000 });
+  assert.equal(r.precio_recomendado, 36000);
+  assert.equal(r.valor_estimado, null);
+});

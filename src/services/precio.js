@@ -119,6 +119,33 @@ export function esPrecioCreible(precio, valorDelAuto = null) {
 }
 
 /**
+ * La banda "de tanto a tanto" que se muestra al lado del precio recomendado.
+ *
+ * POR QUÉ HACÍA FALTA. El precio recomendado se revisaba con lupa y la banda no
+ * se revisaba nada: salía tal como la había escrito el modelo. Así que se podía
+ * ver una sugerencia perfecta con una banda al lado que decía "$45.000 a
+ * $12.000.000" —el modelo había puesto el valor del auto en el máximo—, o una
+ * banda que ni siquiera contenía el número recomendado. La pantalla mostraba las
+ * dos cosas juntas y la que se leía primero era la que estaba mal.
+ *
+ * Ahora la banda se acepta solo si es una banda de verdad: los dos extremos
+ * creíbles por separado, el mínimo antes que el máximo, y el precio recomendado
+ * adentro. Si no, se arma alrededor del recomendado y se avisa que es calculada,
+ * porque una banda inventada presentada como del tasador es peor que no tenerla.
+ */
+export function bandaUsable(min, max, recomendado, valorDelAuto = null) {
+  const sirve = (n) => Number.isFinite(n) && esPrecioCreible(n, valorDelAuto);
+  if (sirve(min) && sirve(max) && min <= max && recomendado >= min && recomendado <= max) {
+    return { precio_min: Math.round(min), precio_max: Math.round(max), banda: "ia" };
+  }
+  return {
+    precio_min: Math.round(recomendado * 0.8),
+    precio_max: Math.round(recomendado * 1.2),
+    banda: "calculada",
+  };
+}
+
+/**
  * Devuelve la respuesta de la IA con un `precio_recomendado` usable.
  *
  * `origen` dice de dónde salió el número, para poder avisarlo en pantalla:
@@ -174,12 +201,23 @@ export function precioUsable(respuesta) {
           origen: "bajoElPiso",
         };
       }
+      const redondeado = Math.round(precio);
       return {
         ...datos,
-        valor_estimado: valorCreible ?? datos.valor_estimado,
-        precio_min: Number.isFinite(min) ? min : datos.precio_min,
-        precio_max: Number.isFinite(max) ? max : datos.precio_max,
-        precio_recomendado: Math.round(precio),
+        /*
+          LA EXPLICACIÓN SE TIRA CUANDO EL NÚMERO NO ES EL DEL MODELO.
+
+          Con `origen: "valor"` el precio que dio el modelo no servía —contestó en
+          dólares, o puso el valor del auto en el campo del alquiler— y el número
+          que se muestra lo calculamos nosotros. Su justificación habla del
+          número que descartamos, así que abajo del precio quedaba una frase que
+          explicaba con total seguridad otra cosa. Una explicación que no explica
+          lo que está arriba es peor que ninguna: hace desconfiar de las dos.
+        */
+        justificacion: origen === "valor" ? null : datos.justificacion,
+        valor_estimado: valorCreible ?? null,
+        ...bandaUsable(min, max, redondeado, valorCreible),
+        precio_recomendado: redondeado,
         origen,
       };
     }
