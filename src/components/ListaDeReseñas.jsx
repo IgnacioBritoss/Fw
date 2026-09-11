@@ -12,25 +12,22 @@
 //   · Quién la escribió —con su foto—, cuántas estrellas puso y cuándo.
 //   · DESDE QUÉ LADO. No es lo mismo que te califique el dueño de un auto que
 //     alguien que alquiló el tuyo: son dos reputaciones distintas.
-//   · Las características elegidas. Van ANTES del texto porque muchas reseñas no
-//     tienen texto: marcar casillas es un clic y escribir un párrafo no lo hace
-//     casi nadie. Sin ellas, esas reseñas eran una fecha y unas estrellas.
 //   · El comentario, si lo hay.
 //
-//  ── POR QUÉ LAS CARACTERÍSTICAS SE DIBUJAN ASÍ ────────────────────────────
-//  El peso lo lleva el REDONDEL con el ✓ o la ×, en color pleno, y la cápsula
-//  que lo rodea es apenas un tinte del mismo color con el texto a tono. Así el
-//  signo se ve de un vistazo sin que cuatro rectángulos saturados le ganen la
-//  atención al comentario, que es lo único que la persona se tomó el trabajo de
-//  escribir.
+//  ── POR QUÉ ACÁ YA NO ESTÁN LAS CARACTERÍSTICAS ───────────────────────────
+//  Debajo de cada reseña iban las casillas que había marcado quien la escribió,
+//  en cápsulas de colores. Se probaron tres versiones —fondo pleno, caja gris,
+//  tinte suave— y el problema no era el dibujo: era que estaban de más.
 //
-//  Las dos versiones anteriores fallaban por los dos extremos: primero fueron
-//  cápsulas verdes y rojas a fondo pleno —la tarjeta parecía un semáforo—, y
-//  después una caja gris con borde, que no se leía como nada.
+//  Cuatro o cinco cápsulas arriba del comentario le ganan la atención a lo único
+//  que la persona se tomó el trabajo de escribir, y encima repiten: la misma
+//  información, ya contada y comparada entre todas las reseñas, está arriba en
+//  la planilla de reputación, que es donde sirve. Acá abajo eran las mismas
+//  palabras una vez por reseña, sin sumar nada.
 //
-//  Es el mismo redondel que usan el formulario de reseña y la planilla de
-//  reputación. Que sea el mismo en los tres lados es lo que hace que se lea como
-//  una sola aplicación y no como tres pantallas parecidas.
+//  Las características NO se sacaron del sistema: se siguen eligiendo al reseñar
+//  y siguen siendo lo que arma las columnas de la planilla. Lo que se sacó es
+//  mostrarlas dos veces en la misma pantalla.
 //
 //  Props:
 //   · reviews  → la lista tal como la devuelve el servidor
@@ -39,44 +36,8 @@
 // ============================================================================
 import { useI18n } from "../i18n/core";
 import { shortDate } from "../i18n/dates";
-import { atributo, esBueno } from "../services/atributos";
 import { initialsOf } from "../services/people";
 import Avatar from "./Avatar";
-
-/**
- * Una característica de una reseña, en modo lectura.
- *
- * Es una función que devuelve JSX y no un componente aparte a propósito: el
- * nombre de este archivo lleva una ñ, y la regla de recarga en caliente no
- * reconoce como componente a nada que tenga letras fuera del inglés, así que un
- * segundo componente acá adentro se marca como error. Un ayudante en minúscula
- * no es un componente para nadie y hace exactamente lo mismo.
- */
-const marca = (code, texto) => {
-  const bueno = esBueno(code);
-  return (
-    <span key={code} style={{
-      display: "inline-flex", alignItems: "center", gap: 6,
-      fontSize: 12, lineHeight: 1.5, fontWeight: 600,
-      padding: "4px 11px 4px 5px", borderRadius: 999,
-      background: bueno ? "var(--fw-green-bg)" : "var(--fw-red-bg)",
-      color: bueno ? "var(--fw-green-text-2)" : "var(--fw-red-text-2)",
-    }}>
-      <span
-        aria-hidden="true"
-        style={{
-          width: 17, height: 17, flexShrink: 0, borderRadius: 999,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          background: bueno ? "var(--fw-green)" : "var(--fw-red)",
-          color: "#fff", fontSize: 10, fontWeight: 900, lineHeight: 1,
-        }}
-      >
-        {bueno ? "✓" : "×"}
-      </span>
-      {texto}
-    </span>
-  );
-};
 
 export default function ListaDeReseñas({ reviews = [], vacio }) {
   const { t: tr, lang } = useI18n();
@@ -125,15 +86,6 @@ export default function ListaDeReseñas({ reviews = [], vacio }) {
                 </div>
               </div>
             </div>
-
-            {Array.isArray(review.tags) && review.tags.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8, marginLeft: 42 }}>
-                {/* Se saltean los códigos que este front no conozca: si el servidor
-                    agrega uno nuevo, la pantalla vieja lo ignora en vez de mostrar
-                    un código crudo en pantalla. */}
-                {review.tags.filter(atributo).map((code) => marca(code, tr(`attr.${code}`)))}
-              </div>
-            )}
 
             {review.comment && (
               <div style={{ fontSize: 13, color: "var(--fw-text-2)", marginTop: 8, marginLeft: 42, lineHeight: 1.6 }}>

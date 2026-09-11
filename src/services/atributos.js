@@ -195,3 +195,52 @@ export function resumenDe(cuenta, codeBueno, codeMalo) {
   const nivel = proporcion >= 0.7 ? "bien" : proporcion >= 0.4 ? "regular" : "mal";
   return { nivel, bien, mal, total };
 }
+
+/**
+ * Los aspectos de los que MÁS habló la gente, con su veredicto y con la
+ * característica concreta que ganó.
+ *
+ * ── POR QUÉ EXISTE ────────────────────────────────────────────────────────
+ * La planilla tenía dos columnas fijas, Atención y Puntualidad, y aparte una
+ * lista de todas las características contadas. Eran dos formas de decir lo
+ * mismo peleándose por el mismo cuadro: la lista repetía abajo, en chiquito y
+ * con etiquetas de colores, lo que las columnas ya decían arriba, y encima
+ * arrastraba características que no tenían columna (el trato, cómo cuidó el
+ * auto) como si fueran un dato de segunda.
+ *
+ * Ahora hay una sola cosa: las columnas se arman con los aspectos MÁS VOTADOS
+ * de esa persona. Si de alguien lo que más marcaron es cómo cuidó el auto, esa
+ * es la columna. Las dos columnas fijas no eran una decisión sobre esa persona,
+ * eran una decisión nuestra tomada de antemano para todo el mundo.
+ *
+ * Cada aspecto trae:
+ *   · `key`     → para el título (`aspect.<key>` en el diccionario)
+ *   · `nivel`   → "bien" | "regular" | "mal", lo mismo que devuelve resumenDe
+ *   · `bien` / `mal` / `total` → sobre cuánto está dicho
+ *   · `gana`    → el CÓDIGO de la característica que más marcaron en ese
+ *                 aspecto. Es lo que la gente escribió de verdad ("contesta
+ *                 rápido"), en vez de la palabra que elegimos nosotros para
+ *                 resumirlo ("buena").
+ *
+ * Ordenados por cuántas veces los mencionaron. Los aspectos que nadie mencionó
+ * no entran: una columna vacía no es un dato.
+ */
+export function aspectosDestacados(cuenta, cuantos = 2) {
+  return PARES
+    .map((par) => {
+      const resumen = resumenDe(cuenta, par.bueno, par.malo);
+      return {
+        key: par.key,
+        ...resumen,
+        // Empatados gana la buena. Un empate no es una acusación, y el color y
+        // el nivel ("regular") ya cuentan que hubo de las dos.
+        gana: resumen.total === 0 ? null : resumen.bien >= resumen.mal ? par.bueno : par.malo,
+      };
+    })
+    .filter((aspecto) => aspecto.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, cuantos);
+}
+
+/** Un aspecto del que todavía nadie dijo nada, para que la planilla no quede vacía. */
+export const aspectoSinDatos = (key) => ({ key, nivel: null, bien: 0, mal: 0, total: 0, gana: null });

@@ -17,6 +17,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ATRIBUTOS, PARES, MAXIMO, paresPara, esBueno, contarAtributos, resumenDe,
+  aspectosDestacados, aspectoSinDatos,
 } from "./atributos.js";
 
 const cuenta = (pares) => Object.entries(pares).map(([code, n]) => ({ code, n, bueno: esBueno(code) }));
@@ -119,4 +120,45 @@ test("un código que este front no conoce se saltea en vez de mostrarse crudo", 
 test("una reseña sin características no rompe nada", () => {
   assert.deepEqual(contarAtributos([{ tags: null }, {}]).todas, []);
   assert.deepEqual(contarAtributos().todas, []);
+});
+
+// ── Los aspectos mas votados ───────────────────────────────────────────────
+//
+//  Las dos columnas de veredicto de la planilla eran fijas (Atencion y
+//  Puntualidad). No era una decision sobre la persona, era una nuestra tomada de
+//  antemano, y dejaba afuera lo que de alguien mas se destaca.
+
+test("los aspectos salen ordenados por cuanto los mencionaron", () => {
+  const c = cuenta({ CUIDO_EL_AUTO: 5, PUNTUAL: 2, IMPUNTUAL: 1, RESPONDE_RAPIDO: 1 });
+  assert.deepEqual(aspectosDestacados(c, 2).map(a => a.key), ["cuidado", "puntualidad"]);
+});
+
+test("cada aspecto dice cual fue la caracteristica mas marcada", () => {
+  const [primero] = aspectosDestacados(cuenta({ CUIDO_EL_AUTO: 3 }), 1);
+  assert.equal(primero.key, "cuidado");
+  assert.equal(primero.gana, "CUIDO_EL_AUTO");
+  assert.equal(primero.nivel, "bien");
+});
+
+test("si gano la mala, se dice la mala: un resumen que solo elogia es un cartel", () => {
+  const [primero] = aspectosDestacados(cuenta({ PUNTUAL: 1, IMPUNTUAL: 4 }), 1);
+  assert.equal(primero.gana, "IMPUNTUAL");
+  assert.equal(primero.nivel, "mal");
+});
+
+test("empatadas gana la buena: un empate no es una acusacion", () => {
+  const [primero] = aspectosDestacados(cuenta({ PUNTUAL: 2, IMPUNTUAL: 2 }), 1);
+  assert.equal(primero.gana, "PUNTUAL");
+  assert.equal(primero.nivel, "regular");
+});
+
+test("un aspecto que nadie menciono no ocupa una columna", () => {
+  assert.deepEqual(aspectosDestacados(cuenta({ PUNTUAL: 1 }), 2).map(a => a.key), ["puntualidad"]);
+  assert.deepEqual(aspectosDestacados([], 2), []);
+});
+
+test("el aspecto vacio tiene la misma forma, para que la planilla no se rompa", () => {
+  assert.deepEqual(aspectoSinDatos("atencion"), {
+    key: "atencion", nivel: null, bien: 0, mal: 0, total: 0, gana: null,
+  });
 });

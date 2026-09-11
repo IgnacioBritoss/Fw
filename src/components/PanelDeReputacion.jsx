@@ -21,27 +21,28 @@
 //  2. LA ESCALERA. Cuatro escalones con el actual encendido. Un rango solo no
 //     dice nada si no se ve contra qué: "Oro" es una palabra hasta que se ve que
 //     arriba hay uno más y abajo hay dos.
-//  3. TRES NÚMEROS. Alquileres terminados, atención y puntualidad. Son los tres
-//     que contestan "¿este me va a dejar a pie?". Cada uno dice SOBRE CUÁNTO
-//     está dicho (ver más abajo: es lo que estaba mal).
+//  3. TRES COLUMNAS. Los alquileres terminados, y los DOS ASPECTOS MÁS VOTADOS
+//     de esta persona. Cada uno dice el veredicto, sobre cuántas menciones está
+//     dicho, y cuál fue la característica que la gente marcó.
 //  4. LAS DOS CALIFICACIONES, separadas. Alguien puede cuidar muy bien los autos
 //     que alquila y a la vez tener un auto que no está a la altura de lo que
 //     promete. Mezclarlas en un promedio único esconde justo lo que se quiere
 //     saber.
-//  5. LO QUE MÁS DESTACAN: las características contadas, ordenadas y con una
-//     barra proporcional. Convierte veinte reseñas en algo que se lee en cinco
-//     segundos.
 //
-//  ── POR QUÉ LAS CARACTERÍSTICAS YA NO SON ETIQUETAS DE COLORES ────────────
-//  Eran quince cápsulas verdes y rojas amontonadas, todas del mismo tamaño, con
-//  un numerito adentro. Con eso no se puede comparar: "contesta rápido 8" y
-//  "llegó tarde 1" ocupaban lo mismo y gritaban igual, así que el ojo veía una
-//  mancha de colores y había que leer los números uno por uno para entender algo.
+//  ── POR QUÉ YA NO HAY UNA LISTA DE CARACTERÍSTICAS ────────────────────────
+//  Abajo de todo había una sección con TODAS las características contadas, en
+//  cápsulas de colores primero y en barras proporcionales después. Cambiarle el
+//  dibujo no arreglaba el problema de fondo: era una segunda forma de decir lo
+//  mismo que ya decían las columnas de arriba, peleándose con ellas por el mismo
+//  cuadro. Y las columnas, encima, eran siempre las mismas dos —Atención y
+//  Puntualidad— así que lo que de alguien más se destacaba terminaba en esa
+//  lista de abajo, como un dato de segunda.
 //
-//  Ahora es una lista ordenada con una barra proporcional. Lo más mencionado
-//  está arriba y es lo más largo, y una queja aislada se ve chiquita al lado de
-//  un elogio repetido, que es exactamente lo que significa. Se entiende sin leer
-//  ningún número, y el número igual está.
+//  Ahora hay una sola cosa. Las columnas se arman con los aspectos que MÁS
+//  VOTARON de esa persona, y adentro de cada una va la característica concreta
+//  que ganó: "Buena" es la palabra que elegimos nosotros para resumir, "Contesta
+//  rápido" es lo que marcaron las personas, y las dos juntas dicen algo que
+//  ninguna dice sola.
 //
 //  ── LO QUE ESTE CUADRO NO HACE ────────────────────────────────────────────
 //  No inventa nada. Sin reseñas no hay rango, sin características no aparece la
@@ -62,7 +63,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getUserReputation } from "../services/api";
 import { useI18n } from "../i18n/core";
 import { rankOf, nextRank, TIERS } from "../services/rank";
-import { contarAtributos, resumenDe, esBueno } from "../services/atributos";
+import { contarAtributos, aspectosDestacados, aspectoSinDatos, esBueno } from "../services/atributos";
 import EscudoDeRango from "./EscudoDeRango";
 
 /** El color de un nivel. El null es "todavía no se sabe", que no es malo. */
@@ -118,7 +119,7 @@ function Estrellas({ average, count, etiqueta, sinNada }) {
  * El null (nadie lo mencionó todavía) NO se dibuja como algo malo: pintar de
  * rojo a alguien por ser nuevo sería acusarlo de algo que no hizo.
  */
-function Columna({ etiqueta, valor, resumen, detalle, primera }) {
+function Columna({ etiqueta, valor, resumen, detalle, destacada, primera }) {
   /*
     Tres casos, tres colores, y hay que distinguirlos:
      · hay veredicto        → el color del nivel
@@ -167,50 +168,36 @@ function Columna({ etiqueta, valor, resumen, detalle, primera }) {
           <div style={{ fontSize: 10.5, color: "var(--fw-text-4)", lineHeight: 1.4 }}>{detalle}</div>
         )}
       </div>
-    </div>
-  );
-}
+      {/*
+        LO QUE LA GENTE MARCÓ DE VERDAD.
 
-/**
- * Una característica del resumen: el nombre, cuántas veces la marcaron y una
- * barra proporcional a la más mencionada de todas.
- *
- * El piso del 8% no es decoración: sin él, una característica mencionada una vez
- * al lado de otra mencionada veinte queda con una barra de cero píxeles, o sea
- * invisible, y "aparece pero casi no pasó" se convierte en "no aparece".
- */
-function Barra({ nombre, n, bueno, max }) {
-  const ancho = Math.max(8, Math.round((n / max) * 100));
-  return (
-    <div style={{ marginBottom: 9 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-        <span
-          aria-hidden="true"
-          style={{
-            width: 13, height: 13, flexShrink: 0, borderRadius: 999, alignSelf: "center",
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            background: bueno ? "var(--fw-green)" : "var(--fw-red)",
-            color: "#fff", fontSize: 8.5, fontWeight: 900, lineHeight: 1,
-          }}
-        >
-          {bueno ? "✓" : "×"}
-        </span>
-        <span style={{
-          flex: 1, minWidth: 0, fontSize: 12, color: "var(--fw-text-2)",
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
-          {nombre}
-        </span>
-        <strong style={{ fontSize: 12, color: "var(--fw-text-3)", fontVariantNumeric: "tabular-nums" }}>
-          {n}
-        </strong>
-      </div>
-      <div style={{ height: 4, borderRadius: 2, background: "var(--fw-surface-3)", overflow: "hidden" }}>
+        "Buena" es la palabra que elegimos nosotros para resumir; "Contesta
+        rápido" es lo que marcaron las personas. Las dos cosas juntas dicen algo
+        que ninguna dice sola: cuál es el veredicto, y de dónde sale.
+
+        Va acá adentro y no en una lista aparte: la lista de abajo repetía en
+        chiquito lo que estas columnas ya decían arriba, y era lo que hacía que
+        la planilla se viera como un montón de etiquetas de colores.
+      */}
+      {destacada && (
         <div style={{
-          width: `${ancho}%`, height: "100%", borderRadius: 2,
-          background: bueno ? "var(--fw-green)" : "var(--fw-red)",
-        }} />
-      </div>
+          display: "flex", alignItems: "center", gap: 5, marginTop: 7,
+          fontSize: 11.5, lineHeight: 1.35, color: "var(--fw-text-2)", fontWeight: 600,
+        }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 13, height: 13, flexShrink: 0, borderRadius: 999,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: destacada.bueno ? "var(--fw-green)" : "var(--fw-red)",
+              color: "#fff", fontSize: 8.5, fontWeight: 900, lineHeight: 1,
+            }}
+          >
+            {destacada.bueno ? "✓" : "×"}
+          </span>
+          <span style={{ minWidth: 0 }}>{destacada.texto}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,8 +240,31 @@ export default function PanelDeReputacion({
     return contarAtributos(Array.isArray(reviews) ? reviews : []).todas;
   }, [reputacion, reviews]);
 
-  const atencion = resumenDe(contadas, "RESPONDE_RAPIDO", "RESPONDE_TARDE");
-  const puntualidad = resumenDe(contadas, "PUNTUAL", "IMPUNTUAL");
+  /*
+    LAS DOS COLUMNAS DE VEREDICTO YA NO SON FIJAS.
+
+    Eran siempre Atención y Puntualidad. No era una decisión sobre esta persona:
+    era una decisión nuestra, tomada de antemano, igual para todo el mundo. Y
+    dejaba afuera lo que de alguien más se destaca —cómo cuidó el auto, el
+    trato— que terminaba abajo, en una lista de etiquetas de colores, como un
+    dato de segunda.
+
+    Ahora las columnas son LOS DOS ASPECTOS MÁS VOTADOS de esta persona. Si de
+    alguien lo que más marcaron es cómo devolvió el auto, esa es la columna.
+
+    Sin ninguna reseña con características se muestran Atención y Puntualidad
+    vacías: es lo que había, y dos columnas en blanco explican mejor que el
+    cuadro se llena con las reseñas que no mostrar nada.
+  */
+  const columnas = useMemo(() => {
+    const votados = aspectosDestacados(contadas, 2);
+    if (votados.length === 2) return votados;
+    // Se completa con los de siempre, salteando el que ya esté puesto.
+    const relleno = ["atencion", "puntualidad"]
+      .filter(key => !votados.some(a => a.key === key))
+      .map(aspectoSinDatos);
+    return [...votados, ...relleno].slice(0, 2);
+  }, [contadas]);
 
   /*
     ALQUILERES TERMINADOS vs. RESEÑAS RECIBIDAS.
@@ -275,22 +285,6 @@ export default function PanelDeReputacion({
   const escalones = [...TIERS].reverse();
   const alcanzado = escalones.findIndex(t => t.key === tier.key);
 
-  // Las más mencionadas primero, buenas y malas mezcladas por cantidad: lo que
-  // más le pasó a la gente con esta persona es lo que va arriba, sea del signo
-  // que sea. Ordenar por signo sería elegir por el lector qué es lo importante.
-  const destacadas = [...contadas].sort((a, b) => b.n - a.n).slice(0, 6);
-  /*
-    Contra qué se miden las barras: contra la característica más mencionada, con
-    un piso de 2.
-
-    El piso es por el perfil recién empezado. Con tres reseñas todas las
-    características van una vez, así que la más mencionada vale 1 y TODAS las
-    barras salen llenas: seis barras al tope, que se leen como "diez puntos en
-    todo" cuando lo que pasó es que nadie repitió nada. Con el piso en 2 se
-    quedan a la mitad, que es exactamente lo que significa: está mencionado, y
-    todavía no hay nada que se destaque por encima del resto.
-  */
-  const maximo = Math.max(2, ...destacadas.map(x => x.n));
 
   return (
     <div style={{
@@ -340,7 +334,9 @@ export default function PanelDeReputacion({
       <div style={{
         display: "flex", flexWrap: "wrap", rowGap: 14,
         borderTop: "1px solid var(--fw-line-soft)", borderBottom: "1px solid var(--fw-line-soft)",
-        padding: "13px 0", marginBottom: 13,
+        // Sin las dos calificaciones debajo, el margen dejaba una raya y después
+        // un hueco vacío hasta el borde de la tarjeta.
+        padding: "13px 0", marginBottom: reputacion ? 13 : 0,
       }}>
         <Columna
           primera
@@ -348,52 +344,29 @@ export default function PanelDeReputacion({
           valor={terminados !== null ? terminados : ratingCount}
           detalle={terminados ? tr("rep.doneSplit", { owner: comoDueño, driver: comoConductor }) : null}
         />
-        <Columna
-          etiqueta={tr("rep.attention")}
-          valor={atencion.nivel ? tr(`rep.level.${atencion.nivel}`) : tr("rep.noData")}
-          resumen={atencion}
-          detalle={tr("rep.basis", { good: atencion.bien, total: atencion.total })}
-        />
-        <Columna
-          etiqueta={tr("rep.punctuality")}
-          valor={puntualidad.nivel ? tr(`rep.level.${puntualidad.nivel}`) : tr("rep.noData")}
-          resumen={puntualidad}
-          detalle={tr("rep.basis", { good: puntualidad.bien, total: puntualidad.total })}
-        />
+        {columnas.map((aspecto) => (
+          <Columna
+            key={aspecto.key}
+            etiqueta={tr(`aspect.${aspecto.key}`)}
+            valor={aspecto.nivel ? tr(`rep.level.${aspecto.nivel}`) : tr("rep.noData")}
+            resumen={aspecto}
+            detalle={tr("rep.basis", { good: aspecto.bien, total: aspecto.total })}
+            destacada={aspecto.gana && {
+              texto: tr(`attr.${aspecto.gana}`),
+              bueno: esBueno(aspecto.gana),
+            }}
+          />
+        ))}
       </div>
 
       {/* 4 · Las dos calificaciones, separadas */}
       {reputacion && (
-        <div style={{ marginBottom: destacadas.length ? 13 : 0 }}>
+        <div>
           <Estrellas {...reputacion.asOwner} etiqueta={tr("profile.asOwnerShort")} sinNada={tr("profile.noReviewsShort")} />
           <Estrellas {...reputacion.asDriver} etiqueta={tr("profile.asDriver")} sinNada={tr("profile.noReviewsShort")} />
         </div>
       )}
 
-      {/* 5 · Lo que más destacan. Sin características todavía, la sección no
-             aparece: un título sobre una lista vacía es peor que nada. */}
-      {destacadas.length > 0 && (
-        // La raya de arriba solo cuando hay algo entre medio que separar: sin
-        // las dos calificaciones, esta sección queda pegada a la franja de
-        // números, que ya trae la suya, y quedaban dos rayas juntas con un
-        // hueco vacío en el medio.
-        <div style={reputacion
-          ? { borderTop: "1px solid var(--fw-line-soft)", paddingTop: 13 }
-          : undefined}
-        >
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--fw-text-4)" }}>
-            {tr("rep.whatTheySay")}
-          </div>
-          {/* Qué es el número de la derecha. Sin esto, "3" puede leerse como una
-              nota del uno al cinco, que es justo lo que no es. */}
-          <div style={{ fontSize: 11, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 9 }}>
-            {tr("rep.whatTheySayHint")}
-          </div>
-          {destacadas.map(({ code, n, bueno }) => (
-            <Barra key={code} nombre={tr(`attr.${code}`)} n={n} bueno={bueno} max={maximo} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
