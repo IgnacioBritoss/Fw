@@ -231,14 +231,35 @@ export default function Dashboard() {
 
       {/* Los tres números, en celdas de una misma franja. La primera no lleva
           línea a la izquierda: quedaría doble contra el borde de la caja. */}
+      {/*
+        LOS DOS PRIMEROS NÚMEROS TREPAN HASTA SU VALOR; EL TERCERO NO.
+
+        Los dos primeros son cuentas: cuántos autos, cuántas solicitudes.
+        Verlos subir de cero al valor real es lo que hace que se lean como un
+        resultado y no como una etiqueta, y es la primera cosa que mira quien
+        entra al panel.
+
+        El tercero es plata, y va escrito con su símbolo y su moneda
+        ("$ 48.500", "US$ 412"). El contador reescribe el contenido del elemento
+        con un número pelado, así que sobre ese se comería el símbolo mientras
+        sube: durante un segundo diría "48500" y recién al final volvería a
+        decir cuánto es y en qué moneda. Un importe a medio escribir no es un
+        detalle de animación.
+
+        `contador` es el número cuando se puede contar y null cuando no
+        —mientras carga, o cuando es un importe—. Ver anim/scrollcraft.js.
+      */}
       <div style={s.franja}>
         {[
-          [loadingCars ? "..." : myCars.length, tr("dash.publishedCars")],
-          [loadingBookings ? "..." : requests.length, tr("dash.requests")],
-          [loadingBookings ? "..." : precio(earnings), tr("dash.earnings")],
-        ].map(([num, label], i) => (
+          [loadingCars ? "..." : myCars.length, tr("dash.publishedCars"), loadingCars ? null : myCars.length],
+          [loadingBookings ? "..." : requests.length, tr("dash.requests"), loadingBookings ? null : requests.length],
+          [loadingBookings ? "..." : precio(earnings), tr("dash.earnings"), null],
+        ].map(([num, label, contador], i) => (
           <div key={label} style={{ ...s.franjaCelda, ...(i === 0 ? { borderLeft: "none" } : {}) }}>
-            <div style={{ ...s.statNum, fontSize: isMobile ? 18 : 24 }}>{num}</div>
+            {/* `data-sc-in` acá no es decoración: es lo que le avisa al motor
+                que este elemento entró en pantalla, y el contador arranca con
+                eso. Sin la marca de entrada no hay nada que dispare la cuenta. */}
+            <div data-sc-in data-sc-count={contador ?? undefined} style={{ ...s.statNum, fontSize: isMobile ? 18 : 24 }}>{num}</div>
             <div style={{ ...s.statLabel, fontSize: isMobile ? 10 : 11 }}>{label}</div>
           </div>
         ))}
@@ -266,7 +287,7 @@ export default function Dashboard() {
             <button style={s.btn} onClick={() => navigate("/publish")}>{tr("dash.publishFirst")}</button>
           </div>
         ) : myCars.map(car => (
-          <div key={car.id} style={s.card}>
+          <div key={car.id} data-sc-in style={s.card}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ width: 74, height: 56, borderRadius: 4, overflow: "hidden", background: "var(--fw-bg)", flexShrink: 0 }}>
                 {car.photos?.length > 0
@@ -310,7 +331,7 @@ export default function Dashboard() {
         ) : requests.length === 0 ? (
           <div style={s.empty}>{tr("dash.noRequests")}</div>
         ) : requests.map(r => (
-          <div key={r.id} style={s.card}>
+          <div key={r.id} data-sc-in style={s.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)" }}>{personName(r.renter)}</div>

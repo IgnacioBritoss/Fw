@@ -5,7 +5,10 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // 'dist' es lo compilado. '.claude' son las skills instaladas: código de
+  // terceros que se usa como referencia y que no se edita acá, así que sus
+  // avisos serían ruido permanente entre los de este proyecto.
+  globalIgnores(['dist', '.claude']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

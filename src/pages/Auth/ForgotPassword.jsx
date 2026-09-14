@@ -24,6 +24,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { authFields } from "../../styles/authFields";
 import AuthShell from "../../components/AuthShell";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 const MailIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
@@ -41,21 +42,38 @@ export default function ForgotPassword() {
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    Todo el formulario avisa por `avisar` y no llamando a `setError` directo,
+    para que el contador suba siempre sin depender de que cada aviso se acuerde
+    de subirlo. El contador es lo que hace que la sacudida sirva de algo: dos
+    intentos fallidos seguidos dan el MISMO texto de error, el estado no cambia,
+    y sin él el cartel se quedaría quieto justo en el segundo intento, que es
+    cuando más falta hace que reaccione. Limpiar el aviso no cuenta como aviso.
+    Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setIntento((n) => n + 1);
+  };
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const [sentTo, setSentTo] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     const address = email.trim();
-    if (!address) { setError(t("reg.errEmail")); return; }
+    if (!address) { avisar(t("reg.errEmail")); return; }
     setLoading(true);
-    setError("");
+    avisar("");
 
     const result = await forgotPassword(address);
     setLoading(false);
 
     // Solo se muestra la confirmación si el envío realmente salió.
     if (result && result.success === false) {
-      setError(result.error || t("auth.mailFailed"));
+      avisar(result.error || t("auth.mailFailed"));
       return;
     }
     setSentTo(address);
@@ -103,7 +121,7 @@ export default function ForgotPassword() {
           <li>{t("auth.checkAddress")}</li>
         </ul>
 
-        <button onClick={() => { setSentTo(""); setError(""); }}
+        <button onClick={() => { setSentTo(""); avisar(""); }}
           style={{ ...f.btnGhost, marginTop: 20 }}>
           {t("auth.tryAnotherEmail")}
         </button>
@@ -123,7 +141,7 @@ export default function ForgotPassword() {
       subtitle={t("auth.recoverSubtitle")}
       footer={volver}
     >
-      {error && <div style={f.error}>{error}</div>}
+      {error && <div ref={cartelError} style={f.error}>{error}</div>}
 
       <label style={f.label}>{t("auth.email")}</label>
       <input style={{ ...f.input, marginBottom: 18 }} type="email" inputMode="email"

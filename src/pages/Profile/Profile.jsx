@@ -469,7 +469,7 @@ export default function Profile() {
   return (
     <div style={{ padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
       {/* Portada + cabecera */}
-      <div style={{ ...t.card, overflow: "hidden" }}>
+      <div data-sc-in="depth" style={{ ...t.card, overflow: "hidden" }}>
         <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,var(--fw-blue-strong) 70%,var(--fw-blue) 100%)" }} />
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, padding: isMobile ? "0 20px" : "0 32px", marginTop: isMobile ? -46 : -60, flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
@@ -586,7 +586,7 @@ export default function Profile() {
       </div>
 
       {/* Cifras reales: promedio, autos publicados y reservas terminadas */}
-      <div style={{ ...t.card, display: "flex", flexWrap: "wrap" }}>
+      <div data-sc-in="depth" style={{ ...t.card, display: "flex", flexWrap: "wrap" }}>
         <div style={t.statCol}>
           {ratingAverage === null ? (
             <>
@@ -615,7 +615,7 @@ export default function Profile() {
       {/* Quién ve la foto. Solo tiene sentido si hay una foto puesta: sin foto no
           hay nada que mostrar ni que esconder. */}
       {user?.profilePhotoUrl && (
-        <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
+        <div data-sc-in="depth" style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.photoWho")}</div>
             {visibilityBusy && <Spinner size={14} />}
@@ -642,7 +642,7 @@ export default function Profile() {
         Ahora es el mismo cuadro, con `propio` prendido: lo único que se agrega
         es cuánto falta para el rango siguiente, que a un tercero no le importa.
       */}
-      <div style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
+      <div data-sc-in="depth" style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.rank")}</div>
         <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("profile.rankSub")}</div>
         <PanelDeReputacion

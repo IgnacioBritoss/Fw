@@ -751,7 +751,11 @@ export default function CarDetail() {
     <div style={{ ...s.page, ...(isMobile ? s.pageMobile : {}) }}>
 
       {/* Galería */}
-      <div style={{ position: "relative", marginBottom: 28 }}>
+      {/* Entra creciendo apenas, desde el 96%: es lo primero que se ve de la
+          publicación y el gesto la presenta. Nunca desde cero, que es el error
+          clásico: nada en el mundo real aparece de la nada, y una foto que se
+          infla desde un punto se lee como un globo. Ver anim/. */}
+      <div data-sc-in="scale" style={{ position: "relative", marginBottom: 28 }}>
         <div style={{
           width: "100%", height: isMobile ? 240 : 380,
           borderRadius: isMobile ? 10 : 14, overflow: "hidden",
@@ -855,7 +859,7 @@ export default function CarDetail() {
               enseguida una pared de importes sin saber todavía qué auto era. */}
           {isMobile && priceCard()}
 
-          <div style={s.section}>
+          <div data-sc-in="depth" style={s.section}>
             <div style={s.sectionTitle}>{tr("car.description")}</div>
             <p style={{ fontSize: 14, color: "var(--fw-text-2)", lineHeight: 1.7 }}>
               {car.description || tr("car.noDescription")}
@@ -867,7 +871,7 @@ export default function CarDetail() {
             )}
           </div>
 
-          <div style={s.section}>
+          <div data-sc-in="depth" style={s.section}>
             <div style={s.sectionTitle}>{tr("car.specs")}</div>
             <div style={s.specGrid}>
               {[
@@ -884,7 +888,7 @@ export default function CarDetail() {
           </div>
 
           {techSpecs.length > 0 && (
-            <div style={s.section}>
+            <div data-sc-in="depth" style={s.section}>
               <div style={s.sectionTitle}>{tr("spec.techTitle")}</div>
               <div style={s.specGrid}>
                 {techSpecs.map(([label, val]) => (
@@ -898,7 +902,7 @@ export default function CarDetail() {
           )}
 
           {(car.bluetooth || car.rearCamera || car.parkingSensors) && (
-            <div style={s.section}>
+            <div data-sc-in="depth" style={s.section}>
               <div style={s.sectionTitle}>{tr("spec.equipment")}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {car.bluetooth && <span style={s.badge}>Bluetooth</span>}
@@ -908,7 +912,7 @@ export default function CarDetail() {
             </div>
           )}
 
-          <div style={s.section}>
+          <div data-sc-in="depth" style={s.section}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
               <div style={s.sectionTitle}>{tr("car.reviews", { count: car.ratingCount })}</div>
               {/* Promedio real: sale de las puntuaciones guardadas, no de un número fijo. */}
@@ -990,9 +994,11 @@ export default function CarDetail() {
       {confirmDelete && (
         <div
           onClick={() => !deleting && setConfirmDelete(false)}
+          className="fw-velo"
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
         >
           <div onClick={e => e.stopPropagation()}
+            className="fw-modal"
             style={{ background: "var(--fw-surface)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.25)" }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--fw-red-bg)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="#dc2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)", marginBottom: 6 }}>{tr("car.deleteListing")}</div>

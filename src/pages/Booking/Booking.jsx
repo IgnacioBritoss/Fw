@@ -12,6 +12,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import BookingCalendar from "../../components/BookingCalendar";
 import { getListingById, createBooking } from "../../services/api";
 import Spinner from "../../components/Spinner";
+import { useSacudida } from "../../anim";
 import { useI18n } from "../../i18n/core";
 import { useCurrency } from "../../context/CurrencyContext";
 
@@ -42,7 +43,7 @@ function CarSummaryCard({ car, mobile }) {
   const { t: tr } = useI18n();
   const { precio } = useCurrency();
   return (
-    <div style={s.carCard}>
+    <div style={s.carCard} data-sc-in="scale">
       <div style={mobile ? s.carImgMobile : s.carImg}>
         {car.photos?.length > 0
           ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -68,6 +69,19 @@ export default function Booking() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [needsVerification, setNeedsVerification] = useState(false);
+  /*
+    Cuántas veces se intentó reservar. Sin esto, dos intentos con el mismo
+    rechazo —"esas fechas ya están tomadas", que es el más común— dejarían el
+    cartel quieto la segunda vez. Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  /*
+    UN SOLO REF PARA LOS DOS CARTELES. La pantalla dibuja el error en dos
+    lugares, uno para el teléfono y otro para la computadora, pero nunca los dos
+    a la vez: el que no corresponde no se dibuja. Así que el ref siempre apunta
+    al único que existe.
+  */
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
 
   // Al cargar: trae la publicación por su id y arma el objeto del auto.
   useEffect(() => {
@@ -116,6 +130,7 @@ export default function Booking() {
       } else {
         setError(err.message || tr("booking.createFailed"));
       }
+      setIntento(n => n + 1);
     } finally {
       setSubmitting(false);
     }
@@ -148,7 +163,7 @@ export default function Booking() {
       {isMobile ? (
         <div>
           <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
-          {error && <div style={s.errorBox}>{error}</div>}
+          {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
           {avisoVerificacion}
           {submitting && <Spinner block label={tr("booking.creating")} />}
           <div style={{ ...s.infoBox, marginTop: 16 }}><strong>{tr("booking.remember")}</strong> {tr("booking.rememberNote")}</div>
@@ -157,7 +172,7 @@ export default function Booking() {
         <div style={s.grid}>
           <div>
             <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
-            {error && <div style={s.errorBox}>{error}</div>}
+            {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
             {avisoVerificacion}
             {submitting && <Spinner block label={tr("booking.creating")} />}
           </div>

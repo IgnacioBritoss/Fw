@@ -162,23 +162,80 @@ src/
     groq.js               la IA, siempre vía backend
     listings.js  dates.js  identity.js  phone.js  rank.js
     notifications.js  people.js  theme.js
+  anim/                 el movimiento de toda la app
+    scrollcraft.js        el motor: lee marcas data-sc-* y las mueve
+    feedback.js           las animaciones de los eventos (anime.js)
+    index.js              los ganchos de React que usan las pantallas
   context/              sesión (AuthContext) y favoritos
   hooks/                useListings, useIsMobile, useDraggableFab...
   i18n/                 los cinco idiomas y las funciones de traducción
-  styles/theme.css      estilos comunes, modo oscuro y animaciones
+  styles/theme.css      estilos comunes y modo oscuro
+  styles/motion.css     los estados que enciende el motor de movimiento
   data/mockData.js      autos de ejemplo, solo si la base está vacía
 ```
 
-Dos decisiones que explican la mayor parte del código:
+Tres decisiones que explican la mayor parte del código:
 
 - **`services/api.js` es el único archivo que conoce al backend.** Ninguna
   pantalla arma una URL ni un `fetch` por su cuenta.
 - **El código está comentado en español**, y los comentarios explican *por qué*
   algo está hecho de una manera, no qué hace la línea de abajo. Cuando algo se
   cambió para arreglar un problema concreto, el comentario cuenta cuál era.
+- **El movimiento no vive adentro de las pantallas.** Una tarjeta que entra al
+  scrollear no lleva ningún efecto, ningún observador ni ningún `useEffect`:
+  lleva `data-sc-in`, y un solo motor —`anim/scrollcraft.js`, encendido una vez
+  en el Layout— la mueve. Ver más abajo.
 
 Para una recorrida más larga —pantalla por pantalla, con preguntas y respuestas
 típicas— está `GUIA_DEFENSA_ORAL.md`.
+
+---
+
+## El movimiento
+
+La aplicación se mueve, y el movimiento está en dos piezas que resuelven dos
+problemas distintos.
+
+**Lo que se mueve solo: `src/anim/scrollcraft.js`.** Un motor que lee marcas
+escritas en el HTML que ya existe y las anima. No dibuja nada, no envuelve
+componentes y no cambia ningún estilo: se le pone `data-sc-in` a una tarjeta y
+esa tarjeta ahora entra desde el fondo cuando aparece en pantalla; se le saca la
+marca y queda exactamente como estaba. Hay un solo observador, un solo lector
+de scroll y un solo cuadro por fotograma para toda la aplicación.
+
+| Marca | Qué hace |
+| --- | --- |
+| `data-sc-in="up\|depth\|left\|right\|scale"` | Entra una vez, al aparecer en pantalla |
+| `data-sc-stagger="55"` | En un contenedor: sus hijos entran uno atrás del otro |
+| `data-sc-depth="-0.11"` | Profundidad continua al scrollear (planos a distinta velocidad) |
+| `data-sc-tilt="6"` | Se inclina en 3D hacia el puntero |
+| `data-sc-spotlight` | Publica la posición del mouse para un brillo que lo sigue |
+| `data-sc-count="42"` | El número trepa hasta ese valor |
+
+La gramática viene de la skill [scroll-craft](https://github.com/nateherkai/scroll-craft),
+instalada en `.claude/skills/`. Su motor original está pensado para páginas
+sueltas de HTML: monta una vez y no se desmonta nunca, así que en una aplicación
+de una sola página no ve nada de lo que se dibuja al cambiar de ruta. El de acá
+habla la misma gramática y además mira los cambios del documento.
+
+**Lo que se mueve cuando pasa algo: `src/anim/feedback.js`.** Las secuencias de
+los momentos que importan, hechas con [anime.js](https://animejs.com/):
+
+- `celebrar` — el círculo se endereza en 3D y el tilde se dibuja de punta a
+  punta. Es el final de un pago, de una publicación, de una verificación de
+  identidad, de una entrega del auto y de una denuncia.
+- `sacudir` — el cartel de error se mueve de lado, cuatro veces, cada una más
+  corta. En los formularios va con un contador de intentos, porque el mismo
+  error dos veces seguidas no cambia el estado y sin el contador el cartel se
+  quedaría quieto justo en el segundo intento.
+- `aparecer` / `desplegar` — para lo que no llega scrolleando: un paso de
+  formulario que reemplaza al anterior, un panel que se abre.
+
+**Menos movimiento, no cero.** Con `prefers-reduced-motion` activado se apaga
+todo lo que se DESPLAZA y se conserva lo que APARECE: la opacidad es lo que
+comunica "esto es nuevo" y no es lo que marea. La preferencia se relee en vivo,
+sin recargar. Y las celebraciones, que existen solo por el movimiento, se apagan
+enteras: lo que dicen está escrito también en palabras.
 
 ---
 

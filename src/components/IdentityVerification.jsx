@@ -32,7 +32,7 @@
 //  Se usa en el registro (últimos pasos) y en la pantalla /kyc.
 //  Props: onDone() al terminar, onCancel() para salir.
 // ============================================================================
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { uploadIdentityDocument } from "../services/cloudinary";
@@ -43,6 +43,7 @@ import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
 import { buscarPais, normalizePhone, PAIS_POR_DEFECTO, PAISES } from "../services/phone";
 import { useVerificationStatus } from "../hooks/useVerificationStatus";
+import { useCelebracion, useSacudida, aparecer } from "../anim";
 import {
   accionSugerida, claveDelError, cuilCoincideConDni, dniDelCuil, motivoDeRevision,
   normalizarCuil, normalizarDni, problemaDeIdentidad,
@@ -233,6 +234,13 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const [reviews, setReviews] = useState({}); // resultado de la revisión por foto
   const [docsConfirmed, setDocsConfirmed] = useState(false);
   const [error, setError] = useState("");
+  /*
+    Cuántas veces se avisó, para que el cartel se sacuda también cuando el aviso
+    repite. Acá pasa seguido: "sacá la foto de nuevo, no se lee el número" es el
+    mismo texto tres intentos seguidos, y es justo cuando el cartel tiene que
+    hacerse notar. Ver anim/index.js.
+  */
+  const [avisoNro, setAvisoNro] = useState(0);
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
   // Cuántas fotos van subidas, para que la espera no sea una barra muda. Subir
@@ -246,6 +254,44 @@ export default function IdentityVerification({ onDone, onCancel }) {
   // El checklist real del backend, con revalidación al volver a la pestaña y
   // consulta periódica mientras haya una solicitud esperando veredicto.
   const { status, refrescar: refrescarStatus, aplicar: aplicarStatus } = useVerificationStatus();
+
+  /*
+    ── EL MOVIMIENTO DE ESTA PANTALLA ──────────────────────────────────────────
+
+    Verificar la identidad es el trámite más largo de la app: cuatro fotos, tres
+    datos, un teléfono, y una espera de hasta cincuenta segundos mientras el
+    servidor lee los códigos de barras y los cruza contra la cuenta. Durante todo
+    eso la pantalla es siempre la misma tarjeta, y lo único que cambia es qué hay
+    adentro. Sin nada que marque los cortes, no se distingue un paso que avanzó
+    de un paso que se rehízo.
+
+    Tres gestos, uno por cada cosa que puede pasar:
+
+     · `avisar` sacude el cartel rojo cuando una foto no sirve. Es el caso que
+       más se repite y el que más frustra, porque el aviso suele ser el mismo
+       texto tres veces seguidas.
+     · `aparecer` trae el paso nuevo desde atrás al pasar de uno al otro.
+     · `useCelebracion` dibuja el tilde cuando la cuenta queda verificada. En
+       VERDE, que es lo que significa verificado en toda la app —el escudo del
+       perfil, la etiqueta de la publicación—, y no en el azul de la marca.
+
+    El círculo del último paso ya cambiaba de color según el resultado: verde si
+    quedó verificada, azul si quedó en revisión. La celebración se ata a lo
+    mismo, así que solo se dispara cuando el trámite TERMINÓ, y no cuando quedó
+    a la espera de un veredicto que puede tardar horas. Celebrar una espera sería
+    mentirle a quien está esperando.
+  */
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setAvisoNro((n) => n + 1);
+  };
+  const cartelAviso = useSacudida(error ? `${avisoNro}:${error}` : "");
+  const { icono: iconoVerificado } = useCelebracion(
+    step === 3 && status?.fullyVerified === true,
+    { tono: "verde" },
+  );
+  const tarjetaPaso = useRef(null);
+  useEffect(() => { aparecer(tarjetaPaso.current); }, [step]);
 
   // El teléfono acepta cualquier país en E.164: el código va aparte del número.
   const [paisTel, setPaisTel] = useState(PAIS_POR_DEFECTO);
@@ -321,7 +367,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
     setDocs({ dniFront: null, dniBack: null, licFront: null, licBack: null });
     setReviews({});
     setDocsConfirmed(false);
-    setError(""); setInfo("");
+    avisar(""); setInfo("");
     setStep(0);
   };
 
@@ -334,7 +380,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
    * el archivo pesa de más sin que el lector de códigos gane nada.
    */
   const handlePhoto = (key) => async (file, kind) => {
-    setError("");
+    avisar("");
     setReviews(r => ({ ...r, [key]: { state: "checking" } }));
 
     let foto;
@@ -346,7 +392,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       // subirlo igual para que lo rechace el servidor tres pantallas después.
       setDocs(d => ({ ...d, [key]: null }));
       setReviews(r => ({ ...r, [key]: null }));
-      setError(err.message || tr("kyc.errPhotoFormat"));
+      avisar(err.message || tr("kyc.errPhotoFormat"));
       return;
     }
 
@@ -375,7 +421,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
     if (datosBloqueados) return true;
 
     const problema = problemaDeIdentidad(datos);
-    if (problema) { setError(tr(problema)); return false; }
+    if (problema) { avisar(tr(problema)); return false; }
 
     // Si los tres datos ya son los que tiene la cuenta, no hay nada que guardar.
     // Importa: este guardado se dispara también al enviar los documentos, y
@@ -387,7 +433,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       datos.address.trim() === String(user?.address ?? "").trim();
     if (sinCambios) return true;
 
-    setBusy(true); setError(""); setInfo("");
+    setBusy(true); avisar(""); setInfo("");
     try {
       const perfil = await updateMe({
         dni: normalizarDni(datos.dni),
@@ -403,7 +449,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       return true;
     } catch (err) {
       const clave = claveDelError(err);
-      setError(clave ? tr(clave) : err.message || tr("kyc.errSaveData"));
+      avisar(clave ? tr(clave) : err.message || tr("kyc.errSaveData"));
       return false;
     } finally {
       setBusy(false);
@@ -432,9 +478,9 @@ export default function IdentityVerification({ onDone, onCancel }) {
     // una foto se vuelve a elegir y el navegador no puede decodificarla, esa
     // casilla se limpia, y el botón de este paso solo mira las dos de la licencia.
     const faltante = CASILLAS.find(([key]) => !docs[key]?.blob);
-    if (faltante) { setError(tr("kyc.errMissingPhoto")); setStep(0); return; }
+    if (faltante) { avisar(tr("kyc.errMissingPhoto")); setStep(0); return; }
 
-    setBusy(true); setError(""); setInfo("");
+    setBusy(true); avisar(""); setInfo("");
     setProgreso({ hecho: 0, total: CASILLAS.length });
     try {
       // De a una y no las cuatro en paralelo: cada subida necesita su propia
@@ -458,7 +504,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       // corregir. (`notes` es el texto del backend anterior.)
       if (submission?.status === "REJECTED") {
         const porQue = (submission.reasonCodes ?? []).map(motivoDeRevision).map(textoDeMotivo);
-        setError(
+        avisar(
           porQue.length
             ? `${tr("kyc.rejectedNote")} ${porQue.join(" ")}`
             : submission.notes || tr("kyc.rejectedNote"),
@@ -492,14 +538,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
         const fresh = await refrescarStatus();
         await refreshUser();
         if (fresh?.fullyVerified) setInfo(tr("kyc.approvedNote"));
-        else if (fresh?.lastReview?.outcome === "rejected") setError(tr("kyc.rejectedNote"));
+        else if (fresh?.lastReview?.outcome === "rejected") avisar(tr("kyc.rejectedNote"));
         else setInfo(tr("kyc.pendingNote"));
         setStep(3);
         return;
       }
-      if (err?.status === 429) { setError(tr("kyc.errTooMany")); return; }
+      if (err?.status === 429) { avisar(tr("kyc.errTooMany")); return; }
       const clave = claveDelError(err);
-      setError(clave ? tr(clave) : err.message || tr("kyc.errSend"));
+      avisar(clave ? tr(clave) : err.message || tr("kyc.errSend"));
     } finally {
       setBusy(false);
       setProgreso(null);
@@ -516,7 +562,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
    * sirve después de corregir el DNI o el CUIL: la revisión los vuelve a cotejar.
    */
   const reintentarRevision = async () => {
-    setBusy(true); setError(""); setInfo(""); setRevisando(true);
+    setBusy(true); avisar(""); setInfo(""); setRevisando(true);
     try {
       // review-retry devuelve el mismo objeto que GET /verification/me/status, así
       // que se aplica directo en vez de pedirlo otra vez.
@@ -532,9 +578,9 @@ export default function IdentityVerification({ onDone, onCancel }) {
         setInfo(fresh?.fullyVerified ? tr("kyc.approvedNote") : tr("kyc.retryPending"));
         return;
       }
-      if (err?.status === 429) { setError(tr("kyc.errTooManyRetries")); return; }
+      if (err?.status === 429) { avisar(tr("kyc.errTooManyRetries")); return; }
       const clave = claveDelError(err);
-      setError(clave ? tr(clave) : err.message || tr("kyc.errRetry"));
+      avisar(clave ? tr(clave) : err.message || tr("kyc.errRetry"));
     } finally {
       setBusy(false);
       setRevisando(false);
@@ -548,10 +594,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
     // persona con un teléfono español no podía completar este paso ni queriendo.
     const full = normalizePhone(buscarPais(paisTel).dial, phone);
     if (!full) {
-      setError(tr("kyc.errPhone"));
+      avisar(tr("kyc.errPhone"));
       return;
     }
-    setBusy(true); setError(""); setInfo("");
+    setBusy(true); avisar(""); setInfo("");
     try {
       if (full !== user?.phone) await updateMe({ phone: full });
       const result = await requestPhoneCode();
@@ -563,7 +609,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
           : tr("kyc.codeBySms"),
       );
     } catch (err) {
-      setError(err.message || tr("email.errSend"));
+      avisar(err.message || tr("email.errSend"));
     } finally {
       setBusy(false);
     }
@@ -571,15 +617,15 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
   // Confirma el código del teléfono.
   const verifyPhone = async () => {
-    if (code.length !== 6) { setError(tr("reg.errCode")); return; }
-    setBusy(true); setError(""); setInfo("");
+    if (code.length !== 6) { avisar(tr("reg.errCode")); return; }
+    setBusy(true); avisar(""); setInfo("");
     try {
       // confirm devuelve el mismo objeto que GET /verification/me/status.
       aplicarStatus(await confirmPhoneCode(code));
       await refreshUser();
       setStep(3);
     } catch (err) {
-      setError(err.message || tr("kyc.errBadCode"));
+      avisar(err.message || tr("kyc.errBadCode"));
     } finally {
       setBusy(false);
     }
@@ -633,8 +679,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
   return (
     <div>
       <Stepper current={step} steps={STEPS} isMobile={isMobile} />
-      <div style={st.card}>
-        {error && <div style={st.error}>{error}</div>}
+      {/* La tarjeta de los cuatro pasos. Entra desde atrás cada vez que el paso
+          cambia: ver `tarjetaPaso` más arriba. */}
+      <div ref={tarjetaPaso} style={st.card}>
+        {error && <div ref={cartelAviso} style={st.error}>{error}</div>}
         {info && <div style={st.info}>{info}</div>}
 
         {/* PASO 0: DNI */}
@@ -867,7 +915,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
         {/* PASO 3: CONFIRMACIÓN — con el estado REAL del backend */}
         {step === 3 && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,var(--fw-green),#15803d)" : "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
+            <div ref={iconoVerificado} style={{ width: 72, height: 72, borderRadius: "50%", background: status?.fullyVerified ? "linear-gradient(135deg,var(--fw-green),#15803d)" : "linear-gradient(135deg,#0f6ce6,#0b55c0)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px" }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
             <h2 style={st.title}>
@@ -933,7 +981,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
               {/* Un solo camino a la vez, el que corresponde a los motivos. */}
               {accion === "datos" && (
-                <button style={st.btnPrimary} onClick={() => { setError(""); setInfo(""); setStep(0); }}>
+                <button style={st.btnPrimary} onClick={() => { avisar(""); setInfo(""); setStep(0); }}>
                   {tr("kyc.ctaFixData")}
                 </button>
               )}

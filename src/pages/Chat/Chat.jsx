@@ -427,7 +427,7 @@ export default function Chat() {
               </span>
             </div>
           )}
-          <div style={{
+          <div className={isMe ? "fw-burbuja-mia" : "fw-burbuja-suya"} style={{
             alignSelf: isMe ? "flex-end" : "flex-start",
             maxWidth: "72%",
             background: isMe ? "var(--fw-blue)" : "var(--fw-surface)",

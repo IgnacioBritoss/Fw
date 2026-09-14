@@ -50,6 +50,7 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "../i18n/core";
 import { paresPara, MAXIMO } from "../services/atributos";
+import { useSacudida } from "../anim";
 
 const LARGO_MAXIMO = 1000;
 
@@ -64,6 +65,16 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   const [respuestas, setRespuestas] = useState({});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  /*
+    El contador de avisos, para que la sacudida también funcione cuando el
+    aviso se repite tal cual. Ver anim/index.js.
+  */
+  const [avisoNro, setAvisoNro] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setAvisoNro((n) => n + 1);
+  };
+  const cartelAviso = useSacudida(error ? `${avisoNro}:${error}` : "");
 
   const shown = hover || rating;
 
@@ -104,11 +115,11 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   const handleSubmit = async () => {
     if (!rating || sending) return;
     setSending(true);
-    setError("");
+    avisar("");
     try {
       await onSubmit({ rating, comment: comment.trim(), tags: elegidas });
     } catch (err) {
-      setError(err.message || tr("review.saveFailed"));
+      avisar(err.message || tr("review.saveFailed"));
       setSending(false);
     }
   };
@@ -271,7 +282,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
       </div>
 
       {error && (
-        <div style={{ background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "8px 11px", fontSize: 12.5, color: "var(--fw-red-text-2)", marginBottom: 10 }}>
+        <div ref={cartelAviso} style={{ background: "var(--fw-red-bg)", border: "1px solid var(--fw-red-line)", borderRadius: 8, padding: "8px 11px", fontSize: 12.5, color: "var(--fw-red-text-2)", marginBottom: 10 }}>
           {error}
         </div>
       )}

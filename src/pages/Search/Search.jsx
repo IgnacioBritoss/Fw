@@ -332,9 +332,23 @@ export default function Search() {
   const Card = ({ car }) => {
     const on = selected === car.id;
     return (
+      /*
+        `data-sc-in="up"`: la tarjeta entra desde abajo la primera vez que se la
+        ve. Acá NO va la inclinación hacia el mouse que sí llevan las del inicio,
+        y no es un olvido: esta tarjeta es apaisada —la foto a la izquierda y la
+        ficha a la derecha— y ocupa el ancho entero de la lista. Inclinar una
+        pieza de 900 píxeles de ancho mueve sus dos puntas en direcciones
+        opuestas, y lo que en una tarjeta chica se lee como que responde al
+        mouse, en esta se lee como que la lista entera se dobla.
+
+        Lo que sí hace al pasar el mouse es acercarse: `translateZ` en vez de los
+        dos píxeles para arriba que tenía. Es el mismo gesto que las categorías
+        del inicio, así que las dos pantallas se sienten del mismo sistema.
+      */
       <div style={{ ...st.card, borderColor: on ? "var(--fw-blue)" : "var(--fw-line)", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
+        data-sc-in
         onClick={() => navigate(`/cars/${car.id}`)}
-        onMouseEnter={e => { setHovered(car.id); e.currentTarget.style.transform = "translateY(-2px)"; if (!on) e.currentTarget.style.boxShadow = "0 10px 30px rgba(0,0,0,.08)"; }}
+        onMouseEnter={e => { setHovered(car.id); e.currentTarget.style.transform = "perspective(1000px) translate3d(0,-3px,16px)"; if (!on) e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,.10)"; }}
         onMouseLeave={e => { setHovered(null); e.currentTarget.style.transform = "none"; if (!on) e.currentTarget.style.boxShadow = "none"; }}>
         <div style={st.ph}>
           {car.photos?.length > 0
@@ -547,7 +561,7 @@ export default function Search() {
 
       {/* Lista + Mapa */}
       <div style={{ display: (showMap && !isMobile) ? "grid" : "block", gridTemplateColumns: "1fr 42%", gap: 20 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, ...(showMap && !isMobile ? { maxHeight: "calc(100vh - 240px)", overflowY: "auto", paddingRight: 4 } : {}) }}>
+        <div data-sc-stagger="40" style={{ display: "flex", flexDirection: "column", gap: 14, ...(showMap && !isMobile ? { maxHeight: "calc(100vh - 240px)", overflowY: "auto", paddingRight: 4 } : {}) }}>
           {loading
             ? <Spinner block label={tr("common.loading")} />
             : filtered.length === 0

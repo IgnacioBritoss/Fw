@@ -719,7 +719,24 @@ export default function Home() {
   // ─────────────────────────────────────────── Subcomponentes
   // Tarjeta individual de un auto en la grilla (foto, datos, precio y botón).
   const CarCard = ({ car }) => (
-    <div style={t.carCard} onClick={() => navigate(`/cars/${car.id}`)}>
+    /*
+      LA TARJETA ENTRA AL APARECER Y SE INCLINA HACIA EL MOUSE.
+
+      `data-sc-in` la trae desde abajo la primera vez que se la ve, y nada más
+      que la primera: una tarjeta que se vuelve a esconder al subir el scroll es
+      un defecto y no un efecto.
+
+      `data-sc-tilt="4"` son CUATRO grados y no ocho como en las tarjetas de los
+      pasos. La diferencia es qué hay adentro: los pasos son un número grande y
+      dos renglones, y esto es una FOTO con un precio abajo. Una foto inclinada
+      ocho grados se lee torcida —el horizonte de la calle deja de estar
+      horizontal—, y el precio, que es el dato que se viene a comparar entre una
+      tarjeta y la otra, se pone más difícil de leer. Cuatro grados alcanzan para
+      que la tarjeta responda al mouse sin que nada se lea peor.
+
+      Los dos juntos no se pisan: se turnan. Ver anim/scrollcraft.js.
+    */
+    <div style={t.carCard} data-sc-in data-sc-tilt="4" onClick={() => navigate(`/cars/${car.id}`)}>
       {/*
         TODAS LAS FOTOS OCUPAN EXACTAMENTE LO MISMO.
 
@@ -794,13 +811,17 @@ export default function Home() {
           parejas de cuatro. Con seis columnas quedaban seis arriba y las que
           sobraban solas abajo, que se ve como si faltara algo. En el celular,
           dos por fila. */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
+      {/* `data-sc-stagger`: las ocho no aparecen de golpe sino una atrás de la
+          otra, de a 55 milisegundos. Se lee como una sola cosa que se despliega
+          en vez de como ocho cajas que se encienden juntas. Ver anim/. */}
+      <div data-sc-stagger="55" style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {CATEGORIES.map((c) => {
           const min = priceByCategory[c.id];
           const count = countByCategory[c.id] || 0;
           const active = cat === c.id;
           return (
             <div key={c.id}
+              data-sc-in="depth"
               onClick={() => setCat(active ? "" : c.id)}
               style={{
                 background: "var(--fw-surface)",
@@ -809,8 +830,19 @@ export default function Home() {
                 transition: "transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .35s ease",
                 boxShadow: active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)",
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.10)"; if (!active) e.currentTarget.style.borderColor = "#bfd8fb"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "var(--fw-line)"; }}
+              /*
+                Al pasar el mouse la tarjeta se ACERCA, no sube.
+
+                `translateY(-4px)` movía la tarjeta cuatro píxeles para arriba y
+                nada más: el mismo gesto que hace una fila de una lista al
+                seleccionarse. `translate3d(0,-5px,22px)` la trae 22 píxeles
+                hacia adelante en el espacio, y con la perspectiva puesta eso se
+                ve como que se agranda desde su propio centro mientras se
+                levanta. La sombra que crece al mismo tiempo es lo que cierra la
+                lectura: algo que se acerca deja más sombra abajo.
+              */
+              onMouseEnter={e => { e.currentTarget.style.transform = "perspective(800px) translate3d(0,-5px,22px)"; e.currentTarget.style.boxShadow = "0 14px 34px rgba(0,0,0,.12)"; if (!active) e.currentTarget.style.borderColor = "#bfd8fb"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = active ? "0 6px 20px rgba(37,99,235,.12)" : "0 1px 3px rgba(0,0,0,.04)"; if (!active) e.currentTarget.style.borderColor = "var(--fw-line)"; }}
             >
               <div style={{ width: 28, height: 3, borderRadius: 2, background: active ? "var(--fw-blue)" : "var(--fw-surface-3)", marginBottom: 16, transition: "background .35s ease" }} />
               <div style={{ fontSize: 16, fontWeight: 700, color: "var(--fw-text)", letterSpacing: "-.2px" }}>{tr(c.key)}</div>
@@ -829,14 +861,20 @@ export default function Home() {
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>
       <div style={{ fontSize: 13, color: "var(--fw-text-4)", marginBottom: 16 }}>{tr("home.firstTimeSub")}</div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
+      <div data-sc-stagger="70" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4,1fr)", gap: 14, marginBottom: 32 }}>
         {[
           ["01", "home.step1", "home.step1Sub"],
           ["02", "home.step2", "home.step2Sub"],
           ["03", "home.step3", "home.step3Sub"],
           ["04", "home.step4", "home.step4Sub"],
         ].map(([n, ti, d]) => (
-          <div key={n} style={t.stepCard}>
+          /*
+            Los cuatro pasos entran uno atrás del otro y se inclinan hacia el
+            mouse. El escalonado acá es más largo que en las categorías —70 contra
+            55— porque esto es una SECUENCIA: 01, 02, 03, 04. Que aparezcan en ese
+            orden y con aire entre uno y otro es lo mismo que dice el número.
+          */
+          <div key={n} data-sc-in="depth" data-sc-tilt="7" style={t.stepCard}>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--fw-blue)", marginBottom: 8 }}>{n}</div>
             <div style={{ fontWeight: 700, fontSize: 15, color: "var(--fw-text)", marginBottom: 4 }}>{tr(ti)}</div>
             <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.5 }}>{tr(d)}</div>
@@ -857,10 +895,39 @@ export default function Home() {
         La tarjeta blanca del buscador que va adentro se oscurece por CSS
         (.fw-hero-search en theme.css), porque acá el filtro ya no la alcanza.
       */}
-      <div style={t.hero} data-no-invert>
+      {/*
+        EL BLOQUE PRINCIPAL TIENE PROFUNDIDAD DE VERDAD, NO UNA FOTO Y UN TEXTO
+        ENCIMA.
+
+        La foto de la ciudad es el fondo de esta misma caja, así que se queda
+        quieta con la página. El título y la bajada, en cambio, llevan
+        `data-sc-depth` con tasas DISTINTAS: al bajar suben un poco más rápido
+        que la foto, y el título más que la bajada. Son tres cosas moviéndose a
+        tres velocidades, que es exactamente de dónde sale la sensación de
+        profundidad. Con una sola velocidad hay una foto que se desliza.
+
+        Los valores son chicos a propósito (0.11 y 0.07), y están calculados
+        contra el recorrido real que tienen: el bloque principal está arriba de
+        todo, así que sale de la pantalla a los 150 píxeles de scroll y eso es
+        TODO el trayecto que hay para usar. A esa tasa el título se despega unos
+        dieciséis píxeles de la foto y la bajada unos diez, que es lo que
+        alcanza para que se lean como tres planos a distinta distancia. Más
+        arriba de eso el título se le montaría al buscador antes de irse.
+
+        EL BUSCADOR NO SE MUEVE, y no es un olvido. Adentro tiene el calendario,
+        que se abre en una capa flotante posicionada contra la pantalla; un
+        `transform` en cualquiera de sus antepasados cambia el marco de
+        referencia de esa capa y el calendario se abriría corrido de su campo.
+        Una animación no puede costar que el calendario deje de apuntar donde
+        tiene que apuntar.
+
+        `data-sc-spotlight` es la luz que sigue al mouse por encima de la foto
+        (ver motion.css). En el celular no existe.
+      */}
+      <div style={t.hero} data-no-invert data-sc-spotlight>
         <div>
-          <div style={{ fontSize: isMobile ? 27 : 42, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
-          <div style={{ fontSize: 14.5, opacity: .85, marginTop: 12 }}>{tr("home.subtitle")}</div>
+          <div data-sc-depth="-0.11" style={{ fontSize: isMobile ? 27 : 42, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-1px" }}>{tr("home.title")}</div>
+          <div data-sc-depth="-0.07" style={{ fontSize: 14.5, opacity: .85, marginTop: 12 }}>{tr("home.subtitle")}</div>
 
           <div className="fw-hero-search" style={t.searchRow}>
             {/*
@@ -1094,6 +1161,11 @@ export default function Home() {
           {/* La lista. En el teléfono se muestra solo si está elegida. */}
           {(!isMobile || view === "lista") && (
             <div
+              // El escalonado de la grilla es corto —40ms— y tiene tope a los
+              // diez: son muchas tarjetas, y con el escalón de las categorías la
+              // última de una búsqueda con treinta autos aparecería casi dos
+              // segundos después que la primera. Ver anim/scrollcraft.js.
+              data-sc-stagger="40"
               style={{
                 display: "grid",
                 // Una sola columna en el teléfono. Con dos, cada tarjeta quedaba

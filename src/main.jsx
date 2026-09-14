@@ -6,6 +6,7 @@
 //  StrictMode es una ayuda de React en desarrollo para detectar problemas.
 // ============================================================================
 import "./styles/theme.css";
+import "./styles/motion.css";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'

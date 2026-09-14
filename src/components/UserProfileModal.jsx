@@ -56,6 +56,7 @@ export default function UserProfileModal({ userId, onClose }) {
   return (
     <div
       onClick={onClose}
+      className="fw-velo"
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 2000,
         display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
@@ -63,6 +64,7 @@ export default function UserProfileModal({ userId, onClose }) {
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="fw-modal"
         style={{
           background: "var(--fw-surface)", borderRadius: 16, width: "100%", maxWidth: 440,
           maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,.25)",

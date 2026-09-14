@@ -26,6 +26,7 @@ import BrandLogo from "../../components/Logo";
 import AuthAside from "../../components/AuthAside";
 import LangPicker from "../../components/LangPicker";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
@@ -102,6 +103,23 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    Todo el formulario avisa por `avisar` y no llamando a `setError` directo,
+    para que el contador suba siempre sin depender de que cada aviso se acuerde
+    de subirlo. El contador es lo que hace que la sacudida sirva de algo: dos
+    intentos fallidos seguidos dan el MISMO texto de error, el estado no cambia,
+    y sin él el cartel se quedaría quieto justo en el segundo intento, que es
+    cuando más falta hace que reaccione. Limpiar el aviso no cuenta como aviso.
+    Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setIntento((n) => n + 1);
+  };
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
@@ -137,19 +155,19 @@ export default function Register() {
   const handleRequestCode = async () => {
     setPhoneTouched(true);
     const invalid = validateForm();
-    if (invalid) { setError(invalid); return; }
-    setLoading(true); setError(""); setInfo("");
+    if (invalid) { avisar(invalid); return; }
+    setLoading(true); avisar(""); setInfo("");
     const result = await startRegistration(form.email.trim());
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) { avisar(result.error); return; }
     setInfo("");
     setStep(1);
   };
 
   // Paso 1 → 2: con el código, crea la cuenta y deja la sesión abierta.
   const handleCreateAccount = async () => {
-    if (code.length !== 6) { setError(t("reg.errCode")); return; }
-    setLoading(true); setError(""); setInfo("");
+    if (code.length !== 6) { avisar(t("reg.errCode")); return; }
+    setLoading(true); avisar(""); setInfo("");
     const result = await completeRegistration({
       email: form.email.trim(),
       code,
@@ -162,7 +180,7 @@ export default function Register() {
     });
     setLoading(false);
     if (!result.success) {
-      setError(result.error);
+      avisar(result.error);
       /*
         UN DATO REPETIDO SE ARREGLA EN EL PASO ANTERIOR, ASÍ QUE ALLÁ SE VUELVE.
 
@@ -186,11 +204,11 @@ export default function Register() {
 
   // Reenvía el código: volver a llamar al paso 1 rota el código anterior.
   const handleResend = async () => {
-    setResending(true); setError(""); setInfo("");
+    setResending(true); avisar(""); setInfo("");
     const result = await startRegistration(form.email.trim());
     setResending(false);
     if (result.success) setInfo(t("reg.codeResent"));
-    else setError(result.error);
+    else avisar(result.error);
   };
 
   // En celular los campos van a 16px: con menos, Safari en iPhone hace zoom solo
@@ -246,7 +264,7 @@ export default function Register() {
               </p>
             </div>
 
-            {error && <div style={errorBox}>{error}</div>}
+            {error && <div ref={cartelError} style={errorBox}>{error}</div>}
 
             <button onClick={() => window.location.href = GOOGLE_AUTH_URL} style={{
               width:"100%", padding: isMobile ? "14px 16px" : "11px 16px", background:"var(--fw-surface)", border:"1.5px solid var(--fw-border)",
@@ -379,7 +397,7 @@ export default function Register() {
               {t("reg.codeSentTo")} <strong>{form.email}</strong>.<br/>{t("reg.codeEnterIt")}
             </p>
 
-            {error && <div style={{ ...errorBox, marginBottom:16 }}>{error}</div>}
+            {error && <div ref={cartelError} style={{ ...errorBox, marginBottom:16 }}>{error}</div>}
             {info && <div style={infoBox}>{info}</div>}
 
             <input

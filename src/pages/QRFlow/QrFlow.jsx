@@ -22,6 +22,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { getBookingTokens, confirmPickup, confirmReturn, getBookingById } from "../../services/api";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
+import { useCelebracion, useSacudida } from "../../anim";
 
 const s = {
   page: { maxWidth: 480, margin: "0 auto", padding: "40px 24px", textAlign: "center" },
@@ -71,6 +72,21 @@ export default function QRFlow() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState(null);
+  /*
+    LA ENTREGA DEL AUTO ES EL MOMENTO MÁS FÍSICO DE TODO EL ALQUILER: las dos
+    personas están una frente a la otra, una mostrando el código en su teléfono
+    y la otra escribiéndolo. El tilde que se dibuja es lo que las dos miran para
+    saber que quedó hecho, y a un brazo de distancia un texto que cambia no se
+    ve.
+
+    La sacudida del código equivocado va por lo mismo: tipear mal un código de
+    seis caracteres es lo más común que puede pasar ahí, y el mensaje de error
+    es siempre el mismo, así que sin el contador el segundo intento fallido no
+    movería nada. Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
+  const { icono: iconoEntrega } = useCelebracion(confirmed);
 
   // Trae la reserva y los tokens que le corresponden a este usuario.
   const load = () => {
@@ -95,7 +111,7 @@ export default function QRFlow() {
   const myToken = mode === "pickup" ? tokens?.pickupQrToken : tokens?.returnQrToken;
 
   const handleConfirm = async () => {
-    if (!tokenInput.trim()) { setError(tr("qr.errEmpty")); return; }
+    if (!tokenInput.trim()) { setError(tr("qr.errEmpty")); setIntento(n => n + 1); return; }
     setConfirming(true);
     setError(null);
     try {
@@ -104,6 +120,7 @@ export default function QRFlow() {
       setConfirmed(true);
     } catch (err) {
       setError(err.message || tr("qr.errBadCode"));
+      setIntento(n => n + 1);
     } finally {
       setConfirming(false);
     }
@@ -122,7 +139,7 @@ export default function QRFlow() {
   if (confirmed) {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
-        <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+        <div ref={iconoEntrega} style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
         <div style={s.title}>{tr(mode === "pickup" ? "qr.pickupDone" : "qr.returnDone")}</div>
         <div style={s.sub}>
           {tr(mode === "pickup" ? "qr.pickupDoneNote" : "qr.returnDoneNote")}
@@ -184,14 +201,17 @@ export default function QRFlow() {
           <input style={s.input} placeholder={tr("qr.phCode")} value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleConfirm()} />
-          {error && <div style={s.errorBox}>{error}</div>}
+          {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
           <button style={confirming ? s.btnDisabled : s.btn} disabled={confirming} onClick={handleConfirm}>
             {confirming ? tr("car.confirming") : tr(mode === "pickup" ? "qr.confirmPickup" : "qr.confirmReturn")}
           </button>
         </div>
       )}
 
-      {!iConfirm && error && <div style={s.errorBox}>{error}</div>}
+      {/* El mismo ref que el de arriba: los dos carteles nunca se dibujan a la
+          vez —uno es para quien confirma y el otro para quien muestra el
+          código—, así que siempre apunta al único que existe. */}
+      {!iConfirm && error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
 
       <button style={{ padding: "10px 0", background: "transparent", border: "none", color: "var(--fw-blue)", fontSize: 13, fontWeight: 600, cursor: "pointer" }} onClick={load}>
         {tr("qr.refresh")}

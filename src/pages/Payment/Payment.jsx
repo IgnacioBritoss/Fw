@@ -46,6 +46,7 @@ import { tramosDelPago } from "../../services/pago";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
 import { longDate } from "../../i18n/dates";
+import { useCelebracion, useSacudida } from "../../anim";
 
 const s = {
   page: { maxWidth: 600, margin: "0 auto", padding: "40px 24px" },
@@ -125,6 +126,18 @@ export default function Payment() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState(null);
+  /*
+    CUÁNTAS VECES SE INTENTÓ COBRAR.
+
+    No es para mostrarlo: es la señal que hace que el cartel de error se sacuda
+    también cuando el error es EL MISMO que la vez anterior. El texto del error
+    solo no alcanza: si alguien aprieta "Pagar" con la tarjeta vencida dos
+    veces, el mensaje es idéntico las dos veces, el estado no cambia, y el
+    cartel se quedaría quieto justo cuando más falta hace que reaccione —quien
+    apretó de nuevo está esperando que pase ALGO—. Con el contador, cada intento
+    es distinto del anterior. Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
 
   // Trae la reserva y el estado del pago (montos ya calculados por el backend).
   const load = useCallback(async () => {
@@ -168,6 +181,7 @@ export default function Payment() {
       await load();
     } catch (err) {
       setError(err.message || tr("payment.failed"));
+      setIntento(n => n + 1);
     } finally {
       setPaying(false);
     }
@@ -185,12 +199,11 @@ export default function Payment() {
       await load();
     } catch (err) {
       setError(err.message || tr("payment.simFailed"));
+      setIntento(n => n + 1);
     } finally {
       setPaying(false);
     }
   };
-
-  if (loading) return <Spinner block label={tr("common.loading")} />;
 
   const vehicle = booking?.listing?.vehicle || booking?.vehicle || {};
   const vehicleLabel = `${vehicle.brand || ""} ${vehicle.model || ""} ${vehicle.year || ""}`.trim();
@@ -229,6 +242,28 @@ export default function Payment() {
   const tramoActual = tramos.find(t => !t.hecho) || null;
   const isPaid = tramos.length > 0 && tramoActual === null;
 
+  /*
+    LA CELEBRACIÓN Y LA SACUDIDA, ATADAS AL ESTADO DEL COBRO.
+
+    Los ganchos van ACÁ ARRIBA, antes de cualquier `return`, porque los ganchos
+    de React tienen que llamarse siempre y en el mismo orden: puestos abajo, en
+    el dibujado en que la pantalla devuelve el spinner no se llamarían y React
+    corta con un error. Por eso el spinner de "cargando" bajó unos renglones,
+    hasta después de esta línea: los datos de arriba se calculan igual sin
+    reserva cargada —`tramosDelPago` con todo en null devuelve una lista vacía,
+    así que `isPaid` es falso— y no cuesta nada.
+
+    POR QUÉ ESTAS DOS Y NO UNA SOLA. Son los dos finales posibles de la misma
+    acción, y las dos existen por la misma razón: entre que se aprieta "Pagar" y
+    que la pantalla cambia, la única diferencia visible es que el texto de
+    adentro es otro. Quien apretó no mira el texto: mira si pasó algo. El tilde
+    que se dibuja y la sacudida contestan esa pregunta antes de que nadie lea.
+  */
+  const { icono: iconoPago, detalle: detallePago } = useCelebracion(isPaid);
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
+
+  if (loading) return <Spinner block label={tr("common.loading")} />;
+
   // La reserva se paga recién cuando el dueño la aceptó.
   if (booking && booking.status !== "ACCEPTED" && !isPaid) {
     return (
@@ -248,7 +283,11 @@ export default function Payment() {
     return (
       <div style={isMobile ? s.pageMobile : s.page}>
         <div style={s.successBox}>
-          <div style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+          <div ref={iconoPago} style={s.successIcon}><svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#0f6ce6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+          {/* Lo que sube detrás del tilde: el título, la nota, el resumen y los
+              botones, en ese orden y de a 70 milisegundos. El orden no es
+              decorativo: es el orden en que se lee. */}
+          <div ref={detallePago} style={{ display: "contents" }}>
           <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "var(--fw-text)" }}>{tr("payment.confirmed")}</div>
           <div style={{ color: "var(--fw-text-3)", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
             {tr("payment.confirmedNote")}
@@ -265,6 +304,7 @@ export default function Payment() {
             <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
             <button style={{ padding: "12px 28px", background: "transparent", border: "1.5px solid var(--fw-border)", color: "var(--fw-text-2)", borderRadius: 10, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/")}>{tr("common.goHome")}</button>
           </div>
+          </div>
         </div>
       </div>
     );
@@ -278,7 +318,7 @@ export default function Payment() {
       {hasFailed && (
         <div style={s.error}>{tr("payment.lastRejected")}</div>
       )}
-      {error && <div style={s.error}>{error}</div>}
+      {error && <div ref={cartelError} style={s.error}>{error}</div>}
 
       <div style={s.card}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--fw-text)" }}>{tr("payment.summary")}</div>

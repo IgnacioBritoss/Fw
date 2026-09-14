@@ -86,7 +86,20 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
           )}
         </div>
 
-        <div style={{ flex: 1, padding: "26px 20px 40px" }}>
+        {/*
+          LAS PANTALLAS DE ENTRADA NO TIENEN EL MOTOR DE SCROLL, y por eso acá
+          va una clase de CSS y no una marca `data-sc-*`.
+
+          El motor se enciende en el Layout (ver anim/index.js), y el login, el
+          registro y el resto del onboarding van por afuera del Layout a
+          propósito: son pantallas de un solo formulario, sin barra lateral y
+          sin nada que revelar al bajar. `fw-pantalla-entra` es la misma entrada
+          que usa el contenido al cambiar de ruta, escrita en CSS puro
+          (styles/motion.css), así que no necesita que haya ningún motor
+          andando. Y como el login es LO PRIMERO que ve alguien que entra por
+          primera vez, es donde más importa que la app se sienta viva.
+        */}
+        <div className="fw-pantalla-entra" style={{ flex: 1, padding: "26px 20px 40px" }}>
           <h2 style={{ fontSize: 23, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px", marginBottom: 6 }}>
             {title}
           </h2>
@@ -125,7 +138,7 @@ export default function AuthShell({ hero, foto, title, subtitle, footer, maxWidt
           flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
           padding: "24px 56px 48px",
         }}>
-          <div style={{ width: "100%", maxWidth }}>
+          <div className="fw-pantalla-entra" style={{ width: "100%", maxWidth }}>
             <div style={{ marginBottom: 30 }}>
               <h2 style={{ fontSize: 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-0.5px", marginBottom: 6 }}>
                 {title}

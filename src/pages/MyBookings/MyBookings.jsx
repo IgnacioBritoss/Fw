@@ -358,7 +358,7 @@ export default function MyBookings() {
 
     if (isMobile) {
       return (
-        <div style={s.cardMobile}>
+        <div data-sc-in style={s.cardMobile}>
           <div style={s.carImgMobile}>
             {vehicle.photos?.length > 0
               ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -370,7 +370,7 @@ export default function MyBookings() {
     }
 
     return (
-      <div style={s.card}>
+      <div data-sc-in style={s.card}>
         <div style={s.carImg}>
           {vehicle.photos?.length > 0
             ? <img src={vehicle.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

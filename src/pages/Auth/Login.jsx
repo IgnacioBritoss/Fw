@@ -13,6 +13,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { authFields } from "../../styles/authFields";
 import AuthShell from "../../components/AuthShell";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 // Ícono de Google (SVG) para el botón "Continuar con Google".
 const GoogleIcon = () => (
@@ -53,6 +54,16 @@ export default function Login() {
   // Si se llegó acá por una sesión vencida, se avisa en vez de dejar la pantalla
   // en blanco sin explicación.
   const expired = searchParams.get("expired") === "1";
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    El contador sube con cada intento, y sin él la sacudida no serviría de nada
+    justo acá: equivocarse la contraseña dos veces seguidas da el MISMO texto de
+    error las dos veces, el estado no cambia, y el cartel se quedaría quieto en
+    el segundo intento. Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
 
   /**
    * Inicia sesión. El backend puede responder tres cosas distintas:
@@ -64,11 +75,11 @@ export default function Login() {
    * respuesta que no había llegado.
    */
   const handleSubmit = async () => {
-    if (!form.email || !form.password) { setError(t("auth.errAllFields")); return; }
+    if (!form.email || !form.password) { setError(t("auth.errAllFields")); setIntento(n => n + 1); return; }
     setLoading(true); setError("");
     const result = await loginWithCredentials(form.email.trim(), form.password);
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) { setError(result.error); setIntento(n => n + 1); return; }
     if (result.pending === "verify_email") { navigate("/verify-email"); return; }
     if (result.pending === "complete_profile") { navigate("/complete-profile"); return; }
     navigate("/");
@@ -97,7 +108,7 @@ export default function Login() {
       {expired && !error && (
         <div style={f.notice}>{t("auth.sessionExpired")}</div>
       )}
-      {error && <div style={f.error}>{error}</div>}
+      {error && <div ref={cartelError} style={f.error}>{error}</div>}
 
       <button onClick={() => { window.location.href = GOOGLE_AUTH_URL; }}
         style={{ ...f.btnGhost, marginBottom: 20 }}>

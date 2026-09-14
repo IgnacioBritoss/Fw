@@ -88,9 +88,11 @@ export default function Favorites() {
           <button style={t.btn} onClick={() => navigate("/buscar")}>{tr("favorites.explore")}</button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
+        <div data-sc-stagger="45" style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(250px,1fr))", gap: 16 }}>
           {visible.map(car => (
-            <div key={car.id} style={t.card} onClick={() => navigate(`/cars/${car.id}`)}>
+            /* Entra al aparecer y se inclina hacia el mouse, igual que las del
+               inicio: es la misma tarjeta de auto y tiene que sentirse igual. */
+            <div key={car.id} data-sc-in data-sc-tilt="4" style={t.card} onClick={() => navigate(`/cars/${car.id}`)}>
               {/* La foto va fuera del flujo para que no estire la caja: con una
                   foto vertical, el `height: 100%` de adentro no se puede resolver
                   contra un alto que sale de la proporción, y la caja crecía hasta

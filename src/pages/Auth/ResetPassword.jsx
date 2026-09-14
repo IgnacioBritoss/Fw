@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -58,6 +59,23 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    Todo el formulario avisa por `avisar` y no llamando a `setError` directo,
+    para que el contador suba siempre sin depender de que cada aviso se acuerde
+    de subirlo. El contador es lo que hace que la sacudida sirva de algo: dos
+    intentos fallidos seguidos dan el MISMO texto de error, el estado no cambia,
+    y sin él el cartel se quedaría quieto justo en el segundo intento, que es
+    cuando más falta hace que reaccione. Limpiar el aviso no cuenta como aviso.
+    Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setIntento((n) => n + 1);
+  };
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -76,14 +94,14 @@ export default function ResetPassword() {
 
   // Valida (largo mínimo y que ambas coincidan) y guarda la nueva contraseña.
   const handleSubmit = async () => {
-    if (!form.password) { setError(t("reset.errEmpty")); return; }
-    if (form.password.length < 6) { setError(t("reset.errShort")); return; }
-    if (form.password !== form.confirm) { setError(t("reg.errPassMatch")); return; }
+    if (!form.password) { avisar(t("reset.errEmpty")); return; }
+    if (form.password.length < 6) { avisar(t("reset.errShort")); return; }
+    if (form.password !== form.confirm) { avisar(t("reg.errPassMatch")); return; }
     setLoading(true);
-    setError("");
+    avisar("");
     const result = await resetPassword({ token, userId, newPassword: form.password });
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) { avisar(result.error); return; }
     setDone(true);
     setTimeout(() => navigate("/login"), 2000);
   };
@@ -94,7 +112,7 @@ export default function ResetPassword() {
         <div style={s.title}>{t("reset.title")}</div>
         <div style={s.sub}>{t("reset.sub")}</div>
 
-        {error && <div style={s.error}>{error}</div>}
+        {error && <div ref={cartelError} style={s.error}>{error}</div>}
 
         {done ? (
           <div style={s.success}>{t("reset.done")}</div>

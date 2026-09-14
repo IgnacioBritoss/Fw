@@ -20,6 +20,7 @@ import PhoneInput from "../../components/PhoneInput";
 import { buscarPais, isValidPhone, normalizePhone } from "../../services/phone";
 import { updateMe } from "../../services/api";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 // Edad exacta a partir de la fecha (YYYY-MM-DD).
 function ageFrom(dateString) {
@@ -49,6 +50,23 @@ export default function CompleteProfile() {
   const [phoneCountry, setPhoneCountry] = useState("AR");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [error, setError] = useState("");
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    Todo el formulario avisa por `avisar` y no llamando a `setError` directo,
+    para que el contador suba siempre sin depender de que cada aviso se acuerde
+    de subirlo. El contador es lo que hace que la sacudida sirva de algo: dos
+    intentos fallidos seguidos dan el MISMO texto de error, el estado no cambia,
+    y sin él el cartel se quedaría quieto justo en el segundo intento, que es
+    cuando más falta hace que reaccione. Limpiar el aviso no cuenta como aviso.
+    Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setIntento((n) => n + 1);
+  };
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const [loading, setLoading] = useState(false);
 
   const firstName = user?.firstName || (user?.name || "").split(" ")[0] || "";
@@ -65,22 +83,22 @@ export default function CompleteProfile() {
 
   // Guarda la fecha de nacimiento (obligatoria) y, si se cargó, el teléfono.
   const finish = async () => {
-    if (!dateOfBirth) { setError(t("reg.errBirth")); return; }
+    if (!dateOfBirth) { avisar(t("reg.errBirth")); return; }
     const age = ageFrom(dateOfBirth);
-    if (age === null) { setError(t("reg.errBirthBad")); return; }
-    if (age < 18) { setError(t("reg.err18")); return; }
+    if (age === null) { avisar(t("reg.errBirthBad")); return; }
+    if (age < 18) { avisar(t("reg.err18")); return; }
     // El teléfono es opcional acá, pero si lo cargan tiene que estar completo:
     // guardar un número a medias no le sirve a nadie.
     if (phone && !isValidPhone(buscarPais(phoneCountry).dial, phone)) {
       setPhoneTouched(true);
-      setError(t("complete.errPhone"));
+      avisar(t("complete.errPhone"));
       return;
     }
 
     setLoading(true);
-    setError("");
+    avisar("");
     const result = await completeProfile(dateOfBirth);
-    if (!result.success) { setLoading(false); setError(result.error); return; }
+    if (!result.success) { setLoading(false); avisar(result.error); return; }
 
     /*
       Con la sesión ya completa se puede guardar el teléfono.
@@ -104,7 +122,7 @@ export default function CompleteProfile() {
       } catch (err) {
         if (err?.code === "PHONE_ALREADY_REGISTERED" || err?.status === 409) {
           setPhoneTouched(true);
-          setError(err.message || t("complete.errPhoneTaken"));
+          avisar(err.message || t("complete.errPhoneTaken"));
           setLoading(false);
           await refreshUser();
           return;
@@ -126,7 +144,7 @@ export default function CompleteProfile() {
         <div style={{ color:"var(--fw-text-3)", fontSize:14, marginBottom:24, lineHeight:1.6 }}>
           {t("complete.sub")}
         </div>
-        {error && <div style={s.error}>{error}</div>}
+        {error && <div ref={cartelError} style={s.error}>{error}</div>}
 
         <div style={{ marginBottom:20 }}>
           <label style={s.label}>{t("profile.birthDate")} *</label>

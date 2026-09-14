@@ -22,6 +22,7 @@ import { createReport } from "../services/api";
 import { uploadImageToCloudinary } from "../services/cloudinary";
 import { useI18n } from "../i18n/core";
 import Select from "./Select";
+import { useCelebracion, useSacudida } from "../anim";
 
 // Estilos en línea de la ventana modal.
 const s = {
@@ -84,6 +85,19 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
   const [done, setDone] = useState(false);           // ¿ya se envió?
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  /*
+    El contador de avisos, para que la sacudida también funcione cuando el
+    aviso se repite tal cual. Ver anim/index.js.
+  */
+  const [avisoNro, setAvisoNro] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setAvisoNro((n) => n + 1);
+  };
+  const cartelAviso = useSacudida(error ? `${avisoNro}:${error}` : "");
+  // La denuncia enviada: el mismo tilde que un pago cobrado. Es el único acuse
+  // de recibo que hay, y quien denuncia algo necesita saber que llegó.
+  const { icono: iconoEnviado } = useCelebracion(done, { tono: "verde" });
   // Pruebas: cada una es { id, dataUrl, file }. Se suben a Cloudinary al enviar,
   // no al elegirlas, para no dejar archivos colgados si la persona se arrepiente.
   const [evidence, setEvidence] = useState([]);
@@ -101,21 +115,21 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
   const addFiles = (fileList) => {
     const files = Array.from(fileList || []);
     if (files.length === 0) return;
-    setError("");
+    avisar("");
 
     const libres = MAX_EVIDENCE - evidence.length;
     if (libres <= 0) {
-      setError(tr("report.maxFiles", { max: MAX_EVIDENCE }));
+      avisar(tr("report.maxFiles", { max: MAX_EVIDENCE }));
       return;
     }
 
     for (const file of files.slice(0, libres)) {
       if (!file.type.startsWith("image/")) {
-        setError(tr("report.onlyImages"));
+        avisar(tr("report.onlyImages"));
         continue;
       }
       if (file.size > MAX_FILE_BYTES) {
-        setError(tr("report.tooBig", { name: file.name }));
+        avisar(tr("report.tooBig", { name: file.name }));
         continue;
       }
       const reader = new FileReader();
@@ -127,7 +141,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       reader.readAsDataURL(file);
     }
     if (files.length > libres) {
-      setError(`Solo se agregaron ${libres}: el máximo es ${MAX_EVIDENCE} archivos.`);
+      avisar(`Solo se agregaron ${libres}: el máximo es ${MAX_EVIDENCE} archivos.`);
     }
   };
 
@@ -138,7 +152,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
   const handleSubmit = async () => {
     if (!canSubmit || sending) return;
     setSending(true);
-    setError("");
+    avisar("");
     try {
       // Primero las pruebas: si alguna falla, el reporte no se crea a medias.
       const evidenceUrls = await Promise.all(
@@ -154,17 +168,17 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
       });
       setDone(true);
     } catch (err) {
-      setError(err.message || tr("report.sendFailed"));
+      avisar(err.message || tr("report.sendFailed"));
     } finally {
       setSending(false);
     }
   };
 
   if (done) return (
-    <div style={s.overlay} onClick={onClose}>
-      <div style={s.modal} onClick={e => e.stopPropagation()}>
+    <div className="fw-velo" style={s.overlay} onClick={onClose}>
+      <div className="fw-modal" style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.success}>
-          <div style={s.successIcon}><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+          <div ref={iconoEnviado} style={s.successIcon}><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
           <div style={s.successTitle}>{tr("report.sent")}</div>
           <div style={s.successSub}>
             {tr("report.sentNote")}
@@ -177,8 +191,8 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
   );
 
   return (
-    <div style={s.overlay} onClick={onClose}>
-      <div style={s.modal} onClick={e => e.stopPropagation()}>
+    <div className="fw-velo" style={s.overlay} onClick={onClose}>
+      <div className="fw-modal" style={s.modal} onClick={e => e.stopPropagation()}>
         <div style={s.header}>
           <div style={s.title}>
             {tr(targetType === "car" ? "report.titleListing" : "report.titleUser")}
@@ -303,7 +317,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
           </button>
         </div>
         {error && (
-          <div style={{ ...s.warning, marginTop: 12, marginBottom: 0 }}>{error}</div>
+          <div ref={cartelAviso} style={{ ...s.warning, marginTop: 12, marginBottom: 0 }}>{error}</div>
         )}
       </div>
     </div>

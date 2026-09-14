@@ -24,6 +24,7 @@ import Avatar from "./Avatar";
 import { useAsistente } from "../context/AssistantContext";
 import { useI18n } from "../i18n/core";
 import RobotIcon from "./RobotIcon";
+import { useScrollCraft, useTransicionDePantalla } from "../anim";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
 // sistema y desentona con el resto de la interfaz.
@@ -360,6 +361,22 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile } = useIsMobile();
+  /*
+    EL MOTOR DE MOVIMIENTO SE ENCIENDE ACÁ Y EN NINGÚN OTRO LADO.
+
+    El Layout envuelve a casi todas las pantallas y no se desmonta al cambiar de
+    ruta —React lo reconoce en el mismo lugar del árbol y solo le reemplaza los
+    hijos—, así que el motor se monta una vez por sesión y no una por pantalla.
+    Ver anim/scrollcraft.js: engancha lo que vaya apareciendo por su cuenta, así
+    que ninguna pantalla tiene que avisarle nada.
+
+    Las de entrada (login, registro, KYC) van por afuera del Layout y por eso no
+    tienen motor de scroll: son pantallas de un formulario que entra completo en
+    la pantalla, sin nada que revelar al bajar.
+  */
+  useScrollCraft();
+  // La pantalla entra desde atrás en cada navegación. Ver anim/index.js.
+  const contenido = useTransicionDePantalla(location.pathname);
   // Wili vive en components/ChatBot, que se dibuja fuera de las rutas: lo único
   // que comparten es si está abierto, y eso viaja por el contexto.
   const { abierto: asistenteAbierto, alternar: alternarAsistente } = useAsistente();
@@ -810,7 +827,7 @@ export default function Layout({ children }) {
           <div style={{ flex: 1 }} />
           {topbarRight()}
         </div>
-        <div className="fw-content">{children}</div>
+        <div className="fw-content" ref={contenido}>{children}</div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
+import { useSacudida } from "../../anim";
 
 // Los estilos dependen del ancho de la pantalla, así que se arman adentro del
 // componente. En celular: menos aire alrededor y campos de 16px, porque con
@@ -36,32 +37,49 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  /*
+    EL CARTEL DE ERROR SE SACUDE AL APARECER.
+
+    Todo el formulario avisa por `avisar` y no llamando a `setError` directo,
+    para que el contador suba siempre sin depender de que cada aviso se acuerde
+    de subirlo. El contador es lo que hace que la sacudida sirva de algo: dos
+    intentos fallidos seguidos dan el MISMO texto de error, el estado no cambia,
+    y sin él el cartel se quedaría quieto justo en el segundo intento, que es
+    cuando más falta hace que reaccione. Limpiar el aviso no cuenta como aviso.
+    Ver anim/index.js.
+  */
+  const [intento, setIntento] = useState(0);
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setIntento((n) => n + 1);
+  };
+  const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
   // Verifica el código de 6 dígitos. Si es válido, avanza a completar el perfil.
   const handleVerify = async () => {
-    if (code.length !== 6) { setError(t("reg.errCode")); return; }
+    if (code.length !== 6) { avisar(t("reg.errCode")); return; }
     setLoading(true);
-    setError("");
+    avisar("");
     const result = await verifyEmail(code);
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) { avisar(result.error); return; }
     navigate("/complete-profile");
   };
 
   // Reenvía un código nuevo al email del usuario.
   const handleResend = async () => {
     setResending(true);
-    setError("");
+    avisar("");
     setInfo("");
     const result = await resendVerification();
     setResending(false);
     if (result.success) {
       setInfo(t("verify.resent"));
     } else {
-      setError(result.error);
+      avisar(result.error);
     }
   };
 
@@ -75,7 +93,7 @@ export default function VerifyEmail() {
           {t("verify.enterIt")}
         </div>
 
-        {error && <div style={s.error}>{error}</div>}
+        {error && <div ref={cartelError} style={s.error}>{error}</div>}
         {info && <div style={s.success}>{info}</div>}
 
         <input

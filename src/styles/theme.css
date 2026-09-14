@@ -626,8 +626,16 @@ html.fw-dark .fw-hero-search [role="option"] {
    `alert` que reemplaza.
    ========================================================================== */
 @keyframes fw-aviso-entra {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  /*
+    Sube Y se acerca. El `translateZ` negativo con la perspectiva puesta lo hace
+    entrar desde un poco más atrás, así que además de subir crece unos píxeles
+    hasta su tamaño real. Es la misma entrada que usan la transición entre
+    pantallas y los pasos de los formularios (ver styles/motion.css): el aviso
+    aparece por encima de todo lo demás, y con el mismo gesto que el resto se
+    lee como parte de la misma app y no como algo que se le pegó encima.
+  */
+  from { opacity: 0; transform: perspective(900px) translate3d(0, 12px, -40px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .fw-aviso {

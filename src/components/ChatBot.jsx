@@ -388,6 +388,9 @@ function Asistente() {
       {messages.map((m, i) => (
         <div
           key={i}
+          // Wili contesta desde la izquierda y lo que escribo entra desde la
+          // derecha, igual que en el chat entre personas. Ver styles/motion.css.
+          className={m.role === "assistant" ? "fw-burbuja-suya" : "fw-burbuja-mia"}
           style={
             m.role === "assistant"
               ? {

@@ -230,12 +230,16 @@ export default function Notifications() {
       {groups.map(([label, items]) => (
         <div key={label}>
           <div style={s.groupLabel}>{tr(label)}</div>
-          <div style={s.lista}>
+          {/* Los renglones entran desde la IZQUIERDA y no desde abajo: una lista
+              de avisos se lee de arriba abajo, y entrando desde abajo cada
+              renglón cruza el lugar del que tiene encima. Desde el costado
+              entran por donde no hay nada. */}
+          <div data-sc-stagger="45" style={s.lista}>
           {items.map((n, i) => {
             const meta = CAT_META[n.cat] || CAT_META.sistema;
             const read = isRead(n);
             return (
-              <div key={n.id} style={s.row(read, i === 0)} onClick={() => openNotif(n)}
+              <div key={n.id} data-sc-in="left" style={s.row(read, i === 0)} onClick={() => openNotif(n)}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--fw-bg)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = read ? "var(--fw-surface)" : "#f7faff"; }}>
                 {read ? <span style={s.dotGap} /> : <span style={s.dot} />}

@@ -276,7 +276,24 @@ export default function Settings() {
         </div>
 
         {/* Contenido */}
-        <div>
+        {/*
+          AL CAMBIAR DE SECCIÓN, LA COLUMNA VUELVE A ENTRAR.
+
+          Las seis secciones —cuenta, apariencia, notificaciones, pagos…— se
+          dibujan todas en el mismo lugar, y en el celular el menú queda arriba,
+          fuera de la vista al bajar. Sin nada que marque el cambio, tocar una
+          opción del menú se veía como que la pantalla no había hecho nada, y la
+          reacción es volver a tocarla.
+
+          Va con `key`, que es un caso en el que sí conviene: la clave cambia con
+          la sección, React da por muerta la columna anterior y monta la nueva,
+          y una animación de CSS sobre un elemento recién montado arranca sola.
+          Acá no cuesta nada porque el contenido de la sección se reemplaza
+          entero de todos modos, y no hay ningún estado que se pierda: lo que se
+          edita en cada sección vive en el estado de la pantalla, que está más
+          arriba y no se toca.
+        */}
+        <div key={section} className="fw-pantalla-entra">
           {section === "cuenta" ? (
             <>
               <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>{tr("settings.accountTitle")}</div>

@@ -1,0 +1,298 @@
+/* ============================================================================
+   motion.css — LA HOJA DEL MOVIMIENTO
+   ----------------------------------------------------------------------------
+   Todo lo que se mueve en la app y no es un estilo en línea vive acá: los
+   estados de entrada que dispara el motor (anim/scrollcraft.js), el brillo que
+   sigue al puntero, y las animaciones sueltas de los eventos importantes.
+
+   POR QUÉ ESTÁ SEPARADA DE theme.css. theme.css describe cómo se VE la app: los
+   colores, las líneas, el calendario. Esto describe cómo se MUEVE. Son dos
+   cosas que se tocan por motivos distintos y en momentos distintos, y juntas
+   convertían un archivo ya largo en uno donde no se encuentra nada.
+
+   LA REGLA DE ORO, Y NO ES NEGOCIABLE: solo `transform`, `opacity` y
+   `clip-path`. Esas tres las resuelve el compositor sin volver a calcular el
+   diseño de la página. Animar `width`, `height`, `top` o `margin` obliga al
+   navegador a rehacer el diseño en CADA fotograma, y en una grilla de treinta
+   autos eso es la diferencia entre sesenta cuadros por segundo y una pantalla
+   que se traba. `transition: all` es lo mismo pero sin querer, porque también
+   toma las propiedades que no se pensaba animar.
+
+   Y NUNCA `ease-in` EN LA INTERFAZ. Retrasa justo el momento que el ojo ya está
+   mirando: la misma animación con `ease-out` se siente más rápida aunque dure
+   exactamente lo mismo. El suavizado de la casa es --fw-salida.
+   ========================================================================== */
+
+:root {
+  /* Arranca fuerte y frena largo. Es el mismo que ya usaban el menú lateral y
+     el aviso de abajo desde antes; acá pasa a tener nombre para que no se
+     escriba de nuevo en cada regla. */
+  --fw-salida: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ============================================================================
+   LAS ENTRADAS (data-sc-in)
+   ----------------------------------------------------------------------------
+   El motor le pone `sc-in` al elemento apenas lo engancha —ahí queda invisible
+   y corrido— y le agrega `sc-visible` cuando entra en pantalla. De dónde viene
+   lo escribe en --sc-desde, según la variante que tenga puesta.
+
+   LA CLASE LA PONE EL JAVASCRIPT, Y ESO IMPORTA: si el motor no llega a
+   arrancar —un error al cargar, un navegador viejo—, `sc-in` nunca se escribe y
+   la página entera se ve igual que siempre, con todo su contenido visible. Un
+   sistema de entradas que esconde primero desde el CSS y muestra después desde
+   el JavaScript deja la pantalla en blanco cuando el JavaScript falla.
+
+   POR QUÉ ES UNA ANIMACIÓN Y NO UNA TRANSICIÓN, que sería lo natural.
+
+   Media app tiene sus estilos escritos en línea, y varias tarjetas traen su
+   propio `transition` ahí —la de Buscar, por ejemplo, con
+   `transition: box-shadow .2s, transform .2s`—. Un estilo en línea le gana a
+   cualquier clase, así que una transición escrita acá no la usaría ninguna de
+   esas: la tarjeta se desplazaría con el tiempo de SU transición y la opacidad,
+   que en esa lista no está declarada, aparecería de golpe. El resultado es una
+   tarjeta que se materializa y después se acomoda, que es peor que no animar
+   nada.
+
+   Una animación no compite con eso: corre por su cuenta y no la toca ningún
+   `transition`.
+
+   `backwards` Y NO `both`, que es donde está el detalle fino. Con `both` el
+   estado final de la animación se queda aplicado para siempre, y el estado
+   final es `transform: none`; eso le ganaría después al `transform` que el
+   motor le escribe a la tarjeta para inclinarla hacia el mouse, y la
+   inclinación no funcionaría nunca en nada que haya entrado animado. Con
+   `backwards` la animación solo manda ANTES de empezar —que es lo que hace
+   falta para que el escalonado espere invisible en vez de parpadear— y al
+   terminar suelta el control.
+
+   `will-change` NO ESTÁ PUESTO a propósito: le pide al navegador una capa de
+   memoria de video por elemento, y en una grilla de cincuenta autos eso son
+   cincuenta capas para una animación que dura medio segundo y no vuelve.
+   ========================================================================== */
+.sc-in {
+  opacity: 0;
+  /* Sin variable —o sea, sin variante elegida— no hay transformación, y ahí
+     `none` es lo correcto: deja el elemento sin contexto 3D en vez de dejarle
+     una matriz de identidad escrita para siempre. */
+  transform: var(--sc-desde, none);
+}
+
+@keyframes fw-sc-entra {
+  from { opacity: 0; transform: var(--sc-desde, none); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sc-visible {
+  opacity: 1;
+  transform: none;
+  animation: fw-sc-entra .62s var(--fw-salida) var(--sc-retraso, 0ms) backwards;
+}
+
+/* ============================================================================
+   EL BRILLO QUE SIGUE AL PUNTERO (data-sc-spotlight)
+   ----------------------------------------------------------------------------
+   El motor publica --sc-mx y --sc-my con la posición del mouse adentro del
+   elemento, de 0 a 1. Acá se dibuja con eso un resplandor tenue que se mueve
+   por arriba de la foto, como la luz de un local sobre la chapa.
+
+   Va en un `::after` y no en el fondo del elemento porque el elemento ya tiene
+   el suyo —la foto de la ciudad— y son dos capas, no una.
+
+   `mix-blend-mode: soft-light` en vez de un blanco con transparencia: sobre el
+   azul de la marca, un velo blanco lo lava y lo deja gris. `soft-light` aclara
+   respetando el tono, así que el azul sigue siendo el azul.
+   ========================================================================== */
+[data-sc-spotlight] { position: relative; }
+
+[data-sc-spotlight]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity .35s ease;
+  mix-blend-mode: soft-light;
+  background: radial-gradient(
+    380px circle at calc(var(--sc-mx, .5) * 100%) calc(var(--sc-my, .5) * 100%),
+    rgba(255, 255, 255, .28),
+    transparent 62%
+  );
+}
+
+/* Solo con mouse de verdad: en una pantalla táctil el brillo se quedaría
+   clavado donde tocó el último dedo. */
+@media (hover: hover) and (pointer: fine) {
+  [data-sc-spotlight]:hover::after { opacity: 1; }
+}
+
+/* ============================================================================
+   LAS TARJETAS QUE SE INCLINAN (data-sc-tilt)
+   ----------------------------------------------------------------------------
+   El ángulo lo escribe el motor. Acá va lo único que no puede escribir por
+   fotograma sin costo: el punto de origen de la rotación —el centro, que es lo
+   que hace que se incline en el lugar en vez de pivotear desde una esquina— y
+   el aviso al navegador de que esto va a girar en 3D.
+   ========================================================================== */
+[data-sc-tilt] {
+  transform-origin: center center;
+  transform-style: preserve-3d;
+}
+
+/* ============================================================================
+   LA TRANSICIÓN ENTRE PANTALLAS (components/Layout.jsx)
+   ----------------------------------------------------------------------------
+   Al cambiar de ruta el contenido entra una pizca desde atrás. Es corto —260ms—
+   porque no es un efecto: es la señal de que la pantalla CAMBIÓ. Sin nada, dos
+   pantallas parecidas —"Mis reservas" y "Favoritos", las dos una lista de
+   tarjetas— se reemplazan sin que se note que pasó algo, y la duda de si el
+   toque llegó es la que hace que alguien toque dos veces.
+
+   Nada de deslizamientos laterales largos ni de cortinas: el contenido de abajo
+   es siempre el mismo, la barra de arriba no se mueve, y lo único que cambia es
+   la profundidad. Se lee como una hoja nueva que se apoya, no como una
+   diapositiva.
+   ========================================================================== */
+@keyframes fw-pantalla-entra {
+  from { opacity: 0; transform: perspective(1400px) translate3d(0, 10px, -34px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.fw-pantalla-entra {
+  animation: fw-pantalla-entra .26s var(--fw-salida) both;
+}
+
+/* ============================================================================
+   LAS BURBUJAS DEL CHAT (pages/Chat, components/ChatBot)
+   ----------------------------------------------------------------------------
+   Cada mensaje entra desde SU lado: los míos desde la derecha, los del otro
+   desde la izquierda. No es un adorno con dos variantes: el lado del que entra
+   una burbuja dice de quién es antes de que el ojo llegue a registrar el color,
+   y en una conversación larga eso es lo que se está leyendo todo el tiempo.
+
+   Va en CSS y no con `data-sc-in` porque un mensaje que llega no viene
+   scrolleando: nace ya adentro de la pantalla. El observador que dispara las
+   entradas del motor avisa cuando algo ENTRA a la vista, y esto ya estaba.
+
+   Corta —220ms— y sin profundidad: son muchas, aparecen de a una cada pocos
+   segundos, y una animación larga en algo que se repite tanto se vuelve una
+   espera. La regla es al revés de la de una pantalla que se abre: cuanto más
+   se repite un movimiento, más corto tiene que ser.
+   ========================================================================== */
+@keyframes fw-burbuja-mia {
+  from { opacity: 0; transform: translate3d(10px, 4px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fw-burbuja-suya {
+  from { opacity: 0; transform: translate3d(-10px, 4px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.fw-burbuja-mia  { animation: fw-burbuja-mia .22s var(--fw-salida) both; }
+.fw-burbuja-suya { animation: fw-burbuja-suya .22s var(--fw-salida) both; }
+
+/* ============================================================================
+   LAS VENTANAS QUE SE ABREN ENCIMA (los modales)
+   ----------------------------------------------------------------------------
+   Un modal que aparece de golpe sobre la pantalla no se lee como que se abrió:
+   se lee como que la pantalla cambió. Y como tapa lo que había, el ojo tiene
+   que volver a buscar dónde está parado.
+
+   Entra desde atrás y creciendo desde el 96%, que es lo que dice "esto se puso
+   ADELANTE de lo otro, que sigue ahí abajo". El fondo oscuro va aparte y solo
+   se desvanece: son dos planos y se mueven distinto, que es justamente lo que
+   los separa.
+
+   Nunca desde `scale(0)`: nada en el mundo real aparece de la nada, y un modal
+   que se infla desde un punto del medio de la pantalla se ve como un globo.
+   ========================================================================== */
+@keyframes fw-modal-entra {
+  from { opacity: 0; transform: perspective(1200px) translate3d(0, 12px, -60px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fw-velo-entra {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fw-modal { animation: fw-modal-entra .26s var(--fw-salida) both; }
+.fw-velo  { animation: fw-velo-entra .2s ease both; }
+
+/* ============================================================================
+   LA CELEBRACIÓN (anim/feedback.js)
+   ----------------------------------------------------------------------------
+   El anillo que se expande detrás del tilde cuando un pago entra, un auto se
+   publica o una identidad queda verificada. El círculo del tilde ya existía en
+   esas tres pantallas; esto es una capa atrás, que no ocupa lugar y no corre
+   nada.
+
+   Es un `::before` sobre el círculo que ya está, con la misma forma: así el
+   anillo sale exactamente del borde del ícono y no de una caja aproximada.
+   ========================================================================== */
+.fw-celebra { position: relative; }
+
+.fw-celebra::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid currentColor;
+  color: var(--fw-blue);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fw-celebra-verde::before { color: var(--fw-green); }
+
+@keyframes fw-anillo {
+  from { opacity: .55; transform: scale(1); }
+  to   { opacity: 0;   transform: scale(2.1); }
+}
+
+.fw-celebra-activo::before {
+  animation: fw-anillo .9s var(--fw-salida) .18s both;
+}
+
+/* ============================================================================
+   MENOS MOVIMIENTO
+   ----------------------------------------------------------------------------
+   La preferencia del sistema de quien se marea con las animaciones. Acá NO se
+   apaga todo: se apaga lo que se DESPLAZA y se conserva lo que aparece.
+
+   La diferencia importa. Una entrada que solo cambia de opacidad sigue diciendo
+   "esto es nuevo, mirá acá", que es el trabajo que la animación estaba
+   haciendo. Lo que marea es el desplazamiento, y eso es lo que se va. Apagarlo
+   todo de un saque convierte una preferencia de accesibilidad en una versión
+   peor de la aplicación, y esa es exactamente la razón por la que la gente la
+   deja apagada aunque la necesite.
+
+   La celebración y la transición de pantalla sí se van enteras: son gestos que
+   existen solo por el movimiento, y sin él no queda nada que valga la pena
+   dejar prendido.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  /*
+    La entrada se queda, pero sin desplazamiento: se apaga borrando de dónde
+    venía. Un solo lugar, y los cinco aparejos —arriba, profundidad, izquierda,
+    derecha, escala— quedan reducidos a lo mismo: aparecer. Eso es lo que hay
+    que conservar, porque es lo que dice "esto es nuevo"; lo que marea es el
+    recorrido, y el recorrido es justo lo que esta línea borra.
+  */
+  .sc-in,
+  .sc-visible { --sc-desde: none; }
+  .sc-visible { animation-duration: .3s; }
+
+  .fw-pantalla-entra { animation: none; }
+  .fw-celebra-activo::before { animation: none; }
+  /* Las burbujas conservan la aparición y pierden el desplazamiento: de qué
+     lado es el mensaje ya lo dicen el color y la posición en la columna. */
+  .fw-burbuja-mia,
+  .fw-burbuja-suya { animation-name: fw-sc-entra; animation-duration: .18s; }
+  /* El modal conserva la aparición y pierde el acercamiento: que apareció ya lo
+     dice el fondo que se oscurece detrás. */
+  .fw-modal { animation-name: fw-velo-entra; }
+  [data-sc-spotlight]::after { display: none; }
+}

@@ -29,6 +29,7 @@ import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
 import { MARCAS, modelosDe } from "../../data/sugerencias";
+import { useCelebracion, useSacudida, aparecer } from "../../anim";
 
 /**
  * Los colores que se ofrecen de entrada, al elegir el color del auto.
@@ -293,7 +294,61 @@ export default function PublishCar() {
   const [step, setStep] = useState(() => draft?.step ?? 0);
   const [draftRestored, setDraftRestored] = useState(Boolean(draft));
   const [done, setDone] = useState(false);
+  /*
+    LA CELEBRACIÓN DE "TU AUTO YA ESTÁ PUBLICADO".
+
+    Publicar es el final de un formulario de cuatro pasos: se cargaron los
+    datos, se subieron cinco fotos, se esperó a que la revisión las aprobara. La
+    pantalla que aparece al terminar tiene el mismo círculo azul con un tilde
+    que la de un pago cobrado, y eso es correcto —son la misma clase de final—,
+    pero llegar hasta acá costó mucho más. El tilde que se dibuja es lo que hace
+    que el último paso se sienta como un final y no como otra pantalla más.
+
+    En verde y no en azul: el azul es el color de la marca y está en todos lados
+    —el botón de publicar, el menú, los precios—, así que un círculo azul más no
+    se distingue de la pantalla anterior. El verde acá significa una sola cosa,
+    la misma que en el resto de la app: quedó hecho.
+  */
+  const { icono: iconoPublicado, detalle: detallePublicado } = useCelebracion(done, { tono: "verde" });
   const [error, setError] = useState("");
+  /*
+    CUÁNTAS VECES SE AVISÓ DEL ERROR.
+
+    Sube con cada aviso, incluso si el texto es el mismo. Y acá el texto es el
+    mismo casi siempre: el caso normal de este formulario es apretar "Siguiente"
+    sin haber completado la marca, leer el aviso, no completarla igual y volver
+    a apretar. Sin el contador, el segundo intento no movería nada, y es
+    justamente cuando alguien necesita que el cartel se haga notar. Ver
+    anim/index.js.
+  */
+  const [avisoNro, setAvisoNro] = useState(0);
+  /*
+    Todo el formulario avisa por acá y no llamando a `setError` directo: así el
+    contador sube siempre, sin depender de que cada uno de los veinte avisos
+    del formulario se acuerde de subirlo. Limpiar el aviso —`avisar("")`— no
+    cuenta como aviso nuevo y no sacude nada.
+  */
+  const avisar = (mensaje) => {
+    setError(mensaje);
+    if (mensaje) setAvisoNro((n) => n + 1);
+  };
+  const cartelAviso = useSacudida(error ? `${avisoNro}:${error}` : "");
+  /*
+    CADA PASO DEL FORMULARIO ENTRA DESDE ATRÁS.
+
+    Los cuatro pasos comparten la misma tarjeta blanca en el mismo lugar de la
+    pantalla, y al pasar de uno al otro lo único que cambia es qué campos hay
+    adentro. En la barra de pasos de arriba se ve avanzar el número, pero eso
+    está a 300 píxeles de donde está mirando el ojo, que es el campo que acaba
+    de completar. El resultado es que el formulario parecía mutar en el lugar.
+
+    No se puede usar `data-sc-in` acá: eso lo dispara el observador cuando algo
+    ENTRA EN PANTALLA, y esta tarjeta nunca sale, así que no dispararía nunca.
+    El paso que cambia es un hecho, no una posición, y va con anime.js como las
+    demás cosas que pasan.
+  */
+  const tarjetaPaso = useRef(null);
+  useEffect(() => { aparecer(tarjetaPaso.current); }, [step]);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [pricingLoading, setPricingLoading] = useState(false);
@@ -367,10 +422,10 @@ export default function PublishCar() {
   // localStorage para no volver a pedir lo mismo.
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
-      setError(tr("publish.errBeforeAi"));
+      avisar(tr("publish.errBeforeAi"));
       return;
     }
-    setError("");
+    avisar("");
     const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
     let data;
     const cached = localStorage.getItem(cacheKey);
@@ -401,7 +456,7 @@ Si no sabés un dato, usá null.`;
         data = extractJSON(response);
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch {
-        setError(tr("publish.errSpecs"));
+        avisar(tr("publish.errSpecs"));
         setAiLoading(false);
         return;
       }
@@ -423,7 +478,7 @@ Si no sabés un dato, usá null.`;
   const fetchPricing = async (forzar = false) => {
     setPricingLoading(true);
     setPricingSuggestion(null);
-    setError("");
+    avisar("");
     const location = listingForm.locationText || "Argentina";
     /*
       LA CLAVE DE LA MEMORIA LLEVA VERSIÓN, Y LO GUARDADO VENCE.
@@ -559,7 +614,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         const motivo = fallo?.precioRaro
           ? tr("publish.errPriceOutOfRange")
           : porQueFalloLaIa(fallo);
-        setError(`${tr("publish.errPriceAi")} ${motivo}`);
+        avisar(`${tr("publish.errPriceAi")} ${motivo}`);
         setPricingLoading(false);
         return;
       }
@@ -616,7 +671,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
     e.target.value = "";
     if (!files.length) return;
     if (enEspera) return;
-    if (photos.length + files.length > MAX_FOTOS) { setError(tr("publish.errMaxPhotos", { max: MAX_FOTOS })); return; }
+    if (photos.length + files.length > MAX_FOTOS) { avisar(tr("publish.errMaxPhotos", { max: MAX_FOTOS })); return; }
     const startIdx = photos.length;
 
     /*
@@ -763,20 +818,20 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
   // (datos obligatorios, mínimo 4 fotos válidas, precio y ubicación, etc.).
   const validateStep = () => {
     if (step === 0) {
-      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { setError(tr("publish.errBrandModel")); return false; }
-      if (!vehicleForm.category) { setError(tr("publish.errCategory")); return false; }
-      if (!vehicleForm.color) { setError(tr("publish.errColor")); return false; }
-      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { setError(tr("publish.errSeats")); return false; }
-      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { setError(tr("publish.errPlate")); return false; }
-      if (specWarnings.length > 0) { setError(tr("publish.errSpecRange")); return false; }
+      if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) { avisar(tr("publish.errBrandModel")); return false; }
+      if (!vehicleForm.category) { avisar(tr("publish.errCategory")); return false; }
+      if (!vehicleForm.color) { avisar(tr("publish.errColor")); return false; }
+      if (!vehicleForm.seats || isNaN(Number(vehicleForm.seats)) || Number(vehicleForm.seats) < 1) { avisar(tr("publish.errSeats")); return false; }
+      if (vehicleForm.plate && !validateArgentinePlate(vehicleForm.plate)) { avisar(tr("publish.errPlate")); return false; }
+      if (specWarnings.length > 0) { avisar(tr("publish.errSpecRange")); return false; }
     }
     if (step === 1) {
-      if (photos.length < MIN_FOTOS) { setError(tr("publish.errMinPhotos", { min: MIN_FOTOS })); return false; }
+      if (photos.length < MIN_FOTOS) { avisar(tr("publish.errMinPhotos", { min: MIN_FOTOS })); return false; }
       if (photos.some((_, i) => estadoFoto(i) === "loading")) {
-        setError(tr("publish.errWaitReview")); return false;
+        avisar(tr("publish.errWaitReview")); return false;
       }
       if (photos.some((_, i) => estadoFoto(i) === "invalid")) {
-        setError(tr("publish.errBadPhotos")); return false;
+        avisar(tr("publish.errBadPhotos")); return false;
       }
       /*
         FOTOS DE OTRO AUTO: NO SE PASA, Y NO HAY CASILLA PARA HACERSE CARGO.
@@ -789,30 +844,30 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         es exactamente lo que se está tapando. Se saca la foto que sobra.
       */
       if (otroAuto.indices.length > 0) {
-        setError(tr("publish.errOtherCar")); return false;
+        avisar(tr("publish.errOtherCar")); return false;
       }
       // Las que no se pudieron revisar tampoco pasan solas: hace falta que la
       // persona se haga cargo marcando la casilla. Antes pasaban sin que nada lo
       // dijera, que es como una foto de un perro llegó a una publicación.
       const sinRevisar = photos.filter((_, i) => estadoFoto(i) === "unknown").length;
       if (sinRevisar > 0 && !photosConfirmed) {
-        setError(tr(sinRevisar === 1 ? "publish.errUnreviewedOne" : "publish.errUnreviewedMany", { count: sinRevisar }));
+        avisar(tr(sinRevisar === 1 ? "publish.errUnreviewedOne" : "publish.errUnreviewedMany", { count: sinRevisar }));
         return false;
       }
     }
     if (step === 2) {
-      if (!listingForm.title) { setError(tr("publish.errTitle")); return false; }
-      if (!listingForm.description) { setError(tr("publish.errDescription")); return false; }
-      if (!listingForm.pricePerDay) { setError(tr("publish.errPrice")); return false; }
-      if (!listingForm.locationText) { setError(tr("publish.errLocation")); return false; }
+      if (!listingForm.title) { avisar(tr("publish.errTitle")); return false; }
+      if (!listingForm.description) { avisar(tr("publish.errDescription")); return false; }
+      if (!listingForm.pricePerDay) { avisar(tr("publish.errPrice")); return false; }
+      if (!listingForm.locationText) { avisar(tr("publish.errLocation")); return false; }
       // El punto en el mapa es obligatorio para el servidor. Antes se dejaba
       // seguir sin él y el aviso reventaba recién al final, después de haber
       // subido todas las fotos, con un error del servidor en inglés.
       if (listingForm.latitude == null || listingForm.longitude == null) {
-        setError(tr("publish.errLocationPin")); return false;
+        avisar(tr("publish.errLocationPin")); return false;
       }
     }
-    setError(""); return true;
+    avisar(""); return true;
   };
 
   // Avanza al siguiente paso solo si la validación pasa.
@@ -832,7 +887,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
    */
   const handlePublish = async () => {
     setLoading(true);
-    setError("");
+    avisar("");
     try {
       // 1) Armamos los datos del vehículo (traduciendo a los códigos del backend
       //    e incluyendo solo los campos que el usuario cargó).
@@ -921,9 +976,9 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
       // verificada: se explica qué hacer en vez de mostrar el error crudo.
       if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
         setNeedsVerification(true);
-        setError(tr("publish.errNeedVerified"));
+        avisar(tr("publish.errNeedVerified"));
       } else {
-        setError(err.message || tr("publish.errPublish"));
+        avisar(err.message || tr("publish.errPublish"));
       }
     } finally {
       setLoading(false);
@@ -954,19 +1009,22 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
   if (done) return (
     <div style={isMobile ? s.pageMobile : s.page}>
       <div style={s.success}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,var(--fw-blue),var(--fw-blue-strong))", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
+        <div ref={iconoPublicado} style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,var(--fw-blue),var(--fw-blue-strong))", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 8px 24px rgba(37,99,235,.3)" }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17L4 12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <div style={s.successTitle}>{tr("publish.published")}</div>
-        <div style={s.successSub}>
-          Tu auto ya está publicado y visible para otros usuarios.<br />
-          {tr("publish.blockDatesNote")}
-        </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-          <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>{tr("publish.goToMyCars")}</button>
-          <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>{tr("publish.seeHome")}</button>
+        {/* El título, la nota y los dos botones suben detrás del tilde. */}
+        <div ref={detallePublicado} style={{ display: "contents" }}>
+          <div style={s.successTitle}>{tr("publish.published")}</div>
+          <div style={s.successSub}>
+            Tu auto ya está publicado y visible para otros usuarios.<br />
+            {tr("publish.blockDatesNote")}
+          </div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button style={{ ...s.btn, maxWidth: 220, flex: "none" }} onClick={() => navigate("/dashboard")}>{tr("publish.goToMyCars")}</button>
+            <button style={{ ...s.btnBack, maxWidth: 160, flex: "none" }} onClick={() => navigate("/")}>{tr("publish.seeHome")}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1043,7 +1101,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         </div>
       )}
 
-      {error && <div style={s.error}>{error}</div>}
+      {error && <div ref={cartelAviso} style={s.error}>{error}</div>}
 
       {/* La cuenta sin verificar es el motivo más común de que publicar falle:
           se ofrece el camino para resolverlo en vez de dejar solo el error. */}
@@ -1059,7 +1117,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
 
       {/* PASO 0 */}
       {step === 0 && (
-        <div style={cardStyle}>
+        <div ref={tarjetaPaso} style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.vehicleData")}</div>
           <div style={isMobile ? s.grid3Mobile : s.grid3}>
             {/*
@@ -1264,7 +1322,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
 
       {/* PASO 1 */}
       {step === 1 && (
-        <div style={cardStyle}>
+        <div ref={tarjetaPaso} style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.photos")}</div>
           <p style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 16, lineHeight: 1.6 }}>
             {tr("publish.photosHint", { min: MIN_FOTOS, max: MAX_FOTOS })}
@@ -1461,7 +1519,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
 
       {/* PASO 2 */}
       {step === 2 && (
-        <div style={cardStyle}>
+        <div ref={tarjetaPaso} style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.listingData")}</div>
           <div style={s.field}>
             <label style={s.label}>{tr("publish.adTitle")} *</label>
@@ -1609,7 +1667,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
 
       {/* PASO 3 */}
       {step === 3 && (
-        <div style={cardStyle}>
+        <div ref={tarjetaPaso} style={cardStyle}>
           <div style={s.sectionTitle}>{tr("publish.review")}</div>
           {photos.length > 0 && (
             <img src={photos[0].url} alt="principal"
