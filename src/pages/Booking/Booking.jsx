@@ -11,6 +11,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import BookingCalendar from "../../components/BookingCalendar";
 import { getListingById, createBooking } from "../../services/api";
+import { avisoDeConducir, avisoDelRechazo, esBloqueoDeConducir, esCuentaSinVerificar } from "../../services/conducir";
+import AvisoDeConducir from "../../components/AvisoDeConducir";
 import Spinner from "../../components/Spinner";
 import { useSacudida } from "../../anim";
 import { useI18n } from "../../i18n/core";
@@ -70,6 +72,13 @@ export default function Booking() {
   const [error, setError] = useState(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   /*
+    El motivo por el que el servidor no dejó reservar, cuando es por la licencia.
+
+    Se guarda aparte del error común porque no es un error de esta reserva: es un
+    estado de la cuenta, con su propio cartel y su propio camino para arreglarlo.
+  */
+  const [bloqueoConducir, setBloqueoConducir] = useState(null);
+  /*
     Cuántas veces se intentó reservar. Sin esto, dos intentos con el mismo
     rechazo —"esas fechas ya están tomadas", que es el más común— dejarían el
     cartel quieto la segunda vez. Ver anim/index.js.
@@ -112,6 +121,7 @@ export default function Booking() {
     setSubmitting(true);
     setError(null);
     setNeedsVerification(false);
+    setBloqueoConducir(null);
     try {
       const booking = await createBooking({
         listingId: id,
@@ -123,8 +133,21 @@ export default function Booking() {
       // iba directo a pagar, algo que el backend todavía no permite.
       navigate("/my-bookings", { state: { justRequested: booking.id } });
     } catch (err) {
-      // La cuenta sin verificar es el motivo más común: se explica qué hacer.
-      if (err.code === "ACCOUNT_NOT_VERIFIED" || err.status === 403) {
+      /*
+        DOS 403 QUE NO SON EL MISMO.
+
+        Acá se miraba el NÚMERO de la respuesta: cualquier 403 se trataba como
+        "verificá tu cuenta". Desde que existe el control de la licencia eso
+        manda a completar una verificación YA HECHA a quien lo que tiene es la
+        licencia vencida, y el trámite que se le ofrece no destraba nada.
+
+        Ahora se mira el código, que es lo que distingue una cosa de la otra:
+        DRIVING_NOT_ALLOWED se arregla subiendo una licencia vigente y
+        ACCOUNT_NOT_VERIFIED completando la verificación.
+      */
+      if (esBloqueoDeConducir(err)) {
+        setBloqueoConducir(avisoDelRechazo(err));
+      } else if (esCuentaSinVerificar(err) || err.status === 403) {
         setNeedsVerification(true);
         setError(tr("booking.needVerified"));
       } else {
@@ -144,6 +167,17 @@ export default function Booking() {
    * apretar "confirmar", con las fechas ya elegidas, es hacerle perder el tiempo a
    * la persona por algo que se sabía desde que entró a la pantalla.
    */
+  /*
+    EL CARTEL DE LA LICENCIA.
+
+    `avisoDeConducir(user)` lo saca de lo que ya vino en /users/me al abrir la
+    app: se muestra APENAS SE ENTRA, sin tener que intentar nada. El del rechazo
+    del servidor (`bloqueoConducir`) es la red de seguridad para el caso en que
+    la licencia haya vencido entre que se cargó la pantalla y se apretó el botón.
+  */
+  const avisoConducir = bloqueoConducir || avisoDeConducir(user);
+  const noPuedeConducir = avisoConducir?.tono === "bloqueo";
+
   const avisoVerificacion = (needsVerification || (user && !isVerified)) && (
     <div style={{ background: "var(--fw-orange-bg)", border: "1.5px solid var(--fw-orange-line)", borderRadius: 10, padding: "12px 16px", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div style={{ fontSize: 13, color: "var(--fw-orange-text)" }}>{tr("booking.needVerified")}</div>
@@ -162,7 +196,8 @@ export default function Booking() {
       {isMobile && <CarSummaryCard car={listing} mobile />}
       {isMobile ? (
         <div>
-          <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
+          <AvisoDeConducir aviso={avisoConducir} style={{ marginBottom: 12 }} />
+          <BookingCalendar listingId={id} car={listing} bloqueado={noPuedeConducir} onConfirm={submitting ? () => {} : handleConfirm} />
           {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
           {avisoVerificacion}
           {submitting && <Spinner block label={tr("booking.creating")} />}
@@ -171,7 +206,8 @@ export default function Booking() {
       ) : (
         <div style={s.grid}>
           <div>
-            <BookingCalendar listingId={id} car={listing} onConfirm={submitting ? () => {} : handleConfirm} />
+            <AvisoDeConducir aviso={avisoConducir} style={{ marginBottom: 12 }} />
+            <BookingCalendar listingId={id} car={listing} bloqueado={noPuedeConducir} onConfirm={submitting ? () => {} : handleConfirm} />
             {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
             {avisoVerificacion}
             {submitting && <Spinner block label={tr("booking.creating")} />}

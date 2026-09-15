@@ -40,6 +40,8 @@ import { prepararFotoDocumento } from "../services/documentPhoto";
 import { checkDocument } from "../services/groq";
 import PhoneInput from "./PhoneInput";
 import { useI18n } from "../i18n/core";
+import { useRevisionDeDocumentos } from "../hooks/useRevisionDeDocumentos";
+import { codigosDeMotivos, loQueHayQueDecir, resultadoDe } from "../services/revisionDocumentos";
 import Spinner from "./Spinner";
 import { buscarPais, normalizePhone, PAIS_POR_DEFECTO, PAISES } from "../services/phone";
 import { useVerificationStatus } from "../hooks/useVerificationStatus";
@@ -250,6 +252,22 @@ export default function IdentityVerification({ onDone, onCancel }) {
   // pedido puede tardar 50 segundos: ahí adentro el servidor lee los códigos de
   // barras y cruza todo contra la cuenta.
   const [revisando, setRevisando] = useState(false);
+  /*
+    LA ESPERA DE LA LECTURA AUTOMÁTICA.
+
+    El envío ya no trae el veredicto: contesta enseguida y la lectura sigue
+    corriendo del lado del servidor unos diez segundos. Este gancho es el que
+    vuelve a preguntar hasta que termina (ver hooks/useRevisionDeDocumentos).
+  */
+  const {
+    documentos: documentosRevisados,
+    revisando: leyendoDocumentos,
+    agotado: lecturaDemorada,
+    empezar: esperarLectura,
+    traer: traerDocumentos,
+  } = useRevisionDeDocumentos();
+  // Hay un envío cuyo resultado todavía no se mostró.
+  const [esperandoVeredicto, setEsperandoVeredicto] = useState(false);
 
   // El checklist real del backend, con revalidación al volver a la pestaña y
   // consulta periódica mientras haya una solicitud esperando veredicto.
@@ -320,6 +338,13 @@ export default function IdentityVerification({ onDone, onCancel }) {
   }, [user?.phone]);
 
   const checklist = status?.checklist || {};
+  /*
+    Lo que hay para decir de los documentos, ya separado en dos: lo que la
+    persona puede corregir y lo que nos pasó a nosotros. Ver
+    services/revisionDocumentos.js.
+  */
+  const { motivos: motivosDeLosDocumentos, errores: erroresDeLectura } =
+    loQueHayQueDecir(documentosRevisados);
   // El backend informa si el teléfono es obligatorio. Hoy no lo es, porque el
   // envío por SMS es un servicio pago.
   const phoneRequired = status?.phoneRequired === true;
@@ -357,9 +382,19 @@ export default function IdentityVerification({ onDone, onCancel }) {
    * es siempre el mismo. "El CUIL no corresponde al DNI" se arregla escribiendo
    * bien un número —volver a sacar las fotos no lo cambia— y "no pudimos leer el
    * código del DNI" se arregla con otra foto, no tocando el perfil.
+   *
+   * Los códigos salen del resumen del último envío, y si ese resumen todavía no
+   * llegó, de los documentos mismos. Con la lectura automática el resumen puede
+   * venir vacío mientras cada documento YA trae sus motivos, y sin este respaldo
+   * la pantalla decía exactamente qué estaba mal y no ofrecía ningún botón para
+   * arreglarlo.
    */
-  const accion = !status?.fullyVerified && motivos.length
-    ? accionSugerida(status?.lastReview?.reasonCodes ?? [])
+  const codigosDeLaRevision = status?.lastReview?.reasonCodes ?? [];
+  const codigosParaElBoton = codigosDeLaRevision.length
+    ? codigosDeLaRevision
+    : codigosDeMotivos(documentosRevisados);
+  const accion = !status?.fullyVerified && codigosParaElBoton.length
+    ? accionSugerida(codigosParaElBoton)
     : null;
 
   /** Vuelve al principio con las cuatro casillas vacías, para sacar otras fotos. */
@@ -456,6 +491,43 @@ export default function IdentityVerification({ onDone, onCancel }) {
     }
   };
 
+  /*
+    CUANDO LA LECTURA TERMINA, RECIÉN AHÍ SE DICE CÓMO QUEDÓ.
+
+    `esperandoVeredicto` marca que hay un envío del que todavía no se mostró el
+    resultado; `leyendoDocumentos` marca que la lectura sigue corriendo. Cuando
+    el segundo se apaga con el primero prendido, es el momento exacto en que hay
+    algo nuevo que contar.
+
+    El estado real se relee del servidor y no se deduce de los documentos: la
+    cuenta queda verificada cuando TODO está en orden, y eso lo decide el
+    backend, no esta pantalla.
+  */
+  useEffect(() => {
+    if (!esperandoVeredicto || leyendoDocumentos) return;
+    setEsperandoVeredicto(false);
+    (async () => {
+      const fresh = await refrescarStatus();
+      await refreshUser();
+      if (fresh?.fullyVerified) setInfo(tr("kyc.approvedNote"));
+      // Se acabó el tiempo de esperar, no la paciencia: la lectura puede seguir
+      // corriendo del lado del servidor. Decirlo así, en vez de dar un veredicto
+      // que todavía no existe.
+      else if (lecturaDemorada) setInfo(tr("kyc.reviewTakingLong"));
+      else setInfo(tr("kyc.pendingNote"));
+    })();
+  }, [esperandoVeredicto, leyendoDocumentos, lecturaDemorada, refrescarStatus, refreshUser, tr]);
+
+  /*
+    Al entrar, se mira si hay una lectura a medio camino.
+
+    Pasa todo el tiempo: se envían los documentos, se cierra la pestaña y se
+    vuelve a los veinte segundos. Sin esto, la pantalla mostraría el estado viejo
+    y la persona no se enteraría de que su cuenta ya está aprobada.
+  */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { traerDocumentos(); }, []);
+
   /**
    * Sube las cuatro fotos y las manda al backend, que vuelve a revisarlas del
    * lado del servidor antes de aprobar (el chequeo del navegador es solo para
@@ -496,12 +568,31 @@ export default function IdentityVerification({ onDone, onCancel }) {
       setProgreso(null);
       setRevisando(true);
       const submission = await submitIdentity(urls);
-      const fresh = await refrescarStatus();
-      await refreshUser();
 
-      // El backend puede rechazar la documentación al revisarla. Los motivos
-      // vienen en códigos: se traducen, porque "REJECTED" a secas no dice qué
-      // corregir. (`notes` es el texto del backend anterior.)
+      /*
+        EL ENVÍO YA NO TRAE EL VEREDICTO.
+
+        Antes la revisión corría adentro del pedido y la respuesta venía con el
+        resultado. Ahora el servidor le manda las fotos a un servicio que las
+        lee, y eso tarda unos diez segundos: el envío contesta enseguida y el
+        resultado llega después.
+
+        Así que acá no se decide nada. Se arranca la espera —que vuelve a
+        preguntar cada tres segundos hasta que termina— y el resultado lo muestra
+        el efecto de más abajo. Dar por buena la respuesta del envío haría que la
+        pantalla dijera "queda para que la mire una persona" en el 100% de los
+        casos, incluso en los que se aprueban solos tres segundos después.
+
+        Un backend viejo, que sí contesta con el veredicto, no manda `analysis`:
+        la espera termina en la primera vuelta y el camino es exactamente el
+        mismo.
+      */
+      setRevisando(false);
+      setEsperandoVeredicto(true);
+      esperarLectura();
+
+      // El rechazo de un administrador sí viene en el momento y no depende de la
+      // lectura: se dice ya, sin esperar nada.
       if (submission?.status === "REJECTED") {
         const porQue = (submission.reasonCodes ?? []).map(motivoDeRevision).map(textoDeMotivo);
         avisar(
@@ -512,15 +603,6 @@ export default function IdentityVerification({ onDone, onCancel }) {
         setStep(3);
         return;
       }
-
-      // Si no quedó verificada en el momento, es porque la revisión automática no
-      // pudo decidir y la solicitud está esperando a un administrador. Decirlo,
-      // en vez de un "enviada correctamente" que deja pensando si falta algo.
-      setInfo(
-        (fresh ?? {}).fullyVerified || submission?.status === "VERIFIED"
-          ? tr("kyc.approvedNote")
-          : tr("kyc.pendingNote"),
-      );
       // Al resultado, no al teléfono. Antes, después de enviar se caía en el paso
       // del teléfono —que es OPCIONAL— y los motivos de una revisión que no pudo
       // decidir quedaban una pantalla más adelante: la persona leía "documentación
@@ -652,7 +734,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
   // ENTERA adentro del pedido y puede tardar casi un minuto; con el formulario a
   // la vista, esa espera parece la pantalla colgada y la gente recarga, que es lo
   // único que sí puede romper el trámite.
-  if (progreso || revisando) {
+  if (progreso || revisando || leyendoDocumentos) {
     return (
       <div>
         <Stepper current={step} steps={STEPS} isMobile={isMobile} />
@@ -959,6 +1041,83 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 {motivos.map((motivo) => (
                   <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
                     · {textoDeMotivo(motivo)}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/*
+              CÓMO QUEDÓ CADA DOCUMENTO, POR SEPARADO.
+
+              El DNI y la licencia se leen por separado y pueden terminar
+              distinto: uno aprobado y el otro con la fecha que no coincide. Un
+              único "en revisión" para los dos esconde cuál es el que falta y
+              deja a la persona sacando las cuatro fotos de nuevo.
+
+              Los mensajes van TAL CUAL vienen del servidor: traen la fecha y el
+              dato que no coincidía adentro ("el documento dice 1998-03-07"), y
+              cualquier texto que se escribiera acá sería una versión peor.
+            */}
+            {documentosRevisados.length > 0 && !status?.fullyVerified && (
+              <div style={{ textAlign: "left", maxWidth: 380, margin: "18px auto 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                {documentosRevisados.map((documento) => {
+                  const { clase } = resultadoDe(documento);
+                  const bien = clase === "aprobado";
+                  const espera = clase === "analizando" || clase === "enRevision";
+                  return (
+                    <div key={documento.id || documento.type} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                      fontSize: 12.5, fontWeight: 600, borderRadius: 8, padding: "8px 12px",
+                      color: bien ? "var(--fw-green-text-2)" : espera ? "var(--fw-text-3)" : "var(--fw-amber-text)",
+                      background: bien ? "var(--fw-green-bg)" : espera ? "var(--fw-surface-2)" : "var(--fw-amber-bg)",
+                      border: `1px solid ${bien ? "var(--fw-green-line)" : espera ? "var(--fw-border)" : "var(--fw-amber-line)"}`,
+                    }}>
+                      <span>{tr(documento.type === "LICENSE" ? "kyc.docLicense" : "kyc.docDni")}</span>
+                      <span>{tr(`kyc.doc.${clase}`)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Lo que hay para corregir, dicho por el servidor. */}
+            {motivosDeLosDocumentos.length > 0 && (
+              <div style={{
+                textAlign: "left", maxWidth: 380, margin: "12px auto 0",
+                background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10,
+                padding: "12px 14px",
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-amber-text)", marginBottom: 6 }}>
+                  {tr("kyc.reviewNotes")}
+                </div>
+                {motivosDeLosDocumentos.map((motivo, i) => (
+                  <div key={`${motivo.code}-${i}`} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
+                    · {motivo.message}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/*
+              LO QUE NO ES CULPA DE SUS FOTOS.
+
+              Un problema del servicio que lee los documentos no va con los
+              motivos: no hay nada que corregir y mandar a sacar las fotos de
+              nuevo sería hacerle perder el tiempo a alguien que hizo todo bien.
+              Va aparte, con otras palabras y en gris, que es lo que significa.
+            */}
+            {erroresDeLectura.length > 0 && (
+              <div style={{
+                textAlign: "left", maxWidth: 380, margin: "12px auto 0",
+                background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderRadius: 10,
+                padding: "12px 14px",
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-text-3)", marginBottom: 6 }}>
+                  {tr("kyc.ourProblem")}
+                </div>
+                {erroresDeLectura.map((fallo, i) => (
+                  <div key={i} style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6 }}>
+                    · {fallo.mensaje}
                   </div>
                 ))}
               </div>

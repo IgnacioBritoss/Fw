@@ -17,7 +17,12 @@
 //   · Faltaba impedir que el rango elegido pase por encima de un día ocupado
 //     (el calendario dejaba seleccionar "saltando" fechas bloqueadas).
 //
-//  Props: listingId (id de la publicación), car (datos del auto), onConfirm.
+//  Props: listingId (id de la publicación), car (datos del auto), onConfirm y
+//  `bloqueado`, que apaga el botón de confirmar cuando el que mira la pantalla
+//  no puede alquilar (licencia vencida, por ejemplo). El cartel con el motivo lo
+//  pone el padre, arriba; acá solo hace falta que el botón deje de invitar a
+//  apretarlo, porque un botón azul y firme arriba de un cartel rojo es una
+//  contradicción, y apretarlo sin que pase nada es peor todavía.
 // ============================================================================
 import { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
@@ -73,7 +78,7 @@ const s = {
 // días ocupados que devuelve el backend.
 const dayKey = (date) => format(date, "yyyy-MM-dd");
 
-export default function BookingCalendar({ listingId, car, onConfirm }) {
+export default function BookingCalendar({ listingId, car, onConfirm, bloqueado = false }) {
   const { t: tr, lang } = useI18n();
   const { precio } = useCurrency();
   const [range, setRange] = useState([null, null]); // [fechaInicio, fechaFin] elegidas
@@ -207,7 +212,7 @@ export default function BookingCalendar({ listingId, car, onConfirm }) {
   const total = days * pricePerDay;               // subtotal por los días
   const commission = Math.round(total * 0.1);     // comisión de la plataforma (10%)
   const deposit = pricePerDay * 2;                // depósito de garantía (2 días)
-  const canConfirm = start && end && days > 0 && !rangeHasBlockedDay;
+  const canConfirm = start && end && days > 0 && !rangeHasBlockedDay && !bloqueado;
 
   return (
     <div style={s.wrap} ref={cajaRef}>

@@ -21,6 +21,8 @@ import UserProfileModal from "../../components/UserProfileModal";
 import { useParams, useNavigate } from "react-router-dom";
 import { mockCars } from "../../data/mockData";
 import { useAuth } from "../../context/AuthContext";
+import { avisoDeConducir } from "../../services/conducir";
+import AvisoDeConducir from "../../components/AvisoDeConducir";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getListingById, getListingAvailability, startConversation,
@@ -242,6 +244,9 @@ export default function CarDetail() {
   const dateLocale = localeFor(lang);
   const { id } = useParams();
   const { user } = useAuth();
+  // Ver components/AvisoDeConducir: sale de lo que ya vino en /users/me.
+  const avisoConducir = avisoDeConducir(user);
+  const noPuedeConducir = avisoConducir?.tono === "bloqueo";
   const { isMobile } = useIsMobile();
   const navigate = useNavigate();
 
@@ -683,16 +688,28 @@ export default function CarDetail() {
         <>
           {car.isMock ? (
             <div style={{ background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "var(--fw-amber-text)", marginBottom: 10 }}>
-              Este es un auto de ejemplo para mostrar la app: no se puede reservar.
+              {tr("car.mockNote")}
             </div>
           ) : (
-            <button
-              data-fw-accion
-              style={s.btn}
-              onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
-            >
-              {user ? tr("car.bookNow") : tr("car.loginToBook")}
-            </button>
+            <>
+              {/*
+                LA LICENCIA, ANTES DE ELEGIR LAS FECHAS.
+
+                Estar verificado y poder manejar son dos cosas distintas: la
+                segunda cambia sola cuando la licencia vence. Enterarse recién al
+                confirmar, con las fechas ya elegidas, es hacerle perder el
+                tiempo a la persona por algo que se sabía desde que entró.
+              */}
+              <AvisoDeConducir aviso={avisoConducir} style={{ marginBottom: 10 }} />
+              <button
+                data-fw-accion
+                style={{ ...s.btn, ...(noPuedeConducir ? { opacity: 0.55, cursor: "not-allowed" } : {}) }}
+                disabled={noPuedeConducir}
+                onClick={() => user ? navigate(`/booking/${car.id}`) : navigate("/login")}
+              >
+                {user ? tr("car.bookNow") : tr("car.loginToBook")}
+              </button>
+            </>
           )}
           <button
             style={contactLoading ? s.chatBtnLoading : s.chatBtn}

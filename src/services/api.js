@@ -442,9 +442,16 @@ export async function getMyIdentity() {
 /**
  * Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
  *
- * El pedido no "encola" nada: la revisión entera corre acá adentro y la respuesta
- * ya trae el veredicto (VERIFIED / REJECTED / ID_SUBMITTED). Por eso el tope es
- * de 70 segundos y no de 10.
+ * LA RESPUESTA YA NO TRAE EL VEREDICTO. El servidor guarda las fotos, encola la
+ * lectura y contesta enseguida; leer el DNI y la licencia tarda unos diez
+ * segundos más y ocurre después. Quien llame a esto tiene que esperar el
+ * resultado aparte, preguntando por GET /verification/identity/me hasta que
+ * `analysis.pending` deje de ser true — de eso se encarga
+ * hooks/useRevisionDeDocumentos.
+ *
+ * Tratar lo que devuelve como si fuera el veredicto es el error grande: diría
+ * "rechazado" tres segundos después de enviar, cuando en realidad todavía no
+ * miró nada.
  *
  * Se mandan SOLO las cuatro URLs. El backend valida el cuerpo con lista blanca y
  * rechaza con 400 cualquier propiedad que no esté en el contrato, así que sumar
@@ -477,6 +484,26 @@ export async function getIdentityUploadSignature({ document, side }) {
     method: "POST",
     timeoutMs: ESPERA_CONSULTA,
     body: JSON.stringify(side ? { document, side } : { document }),
+  });
+}
+
+/**
+ * Vuelve a pedir la LECTURA de un documento, sin reenviar las fotos.
+ *
+ * `document` es "dni" o "license". Se llama solo cuando el propio documento dice
+ * `analysis.canRetry === true`: el servidor es el que sabe cuándo tiene sentido.
+ *
+ * SE LLAMA UNA SOLA VEZ POR DOCUMENTO. El servicio que lee los documentos
+ * procesa de a uno, así que reintentar sin freno le saca el turno a otra persona
+ * que está esperando. Si el segundo intento tampoco sale, el camino es pedir
+ * revisión manual, no seguir insistiendo.
+ *
+ * Si no se podía reintentar contesta 400 con code ANALYSIS_RETRY_NOT_AVAILABLE.
+ */
+export async function retryDocumentAnalysis(document) {
+  return apiFetch(`/verification/identity/${document}/retry-analysis`, {
+    method: "POST",
+    timeoutMs: ESPERA_CONSULTA,
   });
 }
 

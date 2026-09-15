@@ -33,11 +33,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
+import { shortDate } from "../../i18n/dates";
 import { getMyIdentity, getMyListings, getMyBookings, getUserReviews, updateMe } from "../../services/api";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import IdentityDocuments from "../../components/IdentityDocuments";
 import EscudoDeRango from "../../components/EscudoDeRango";
 import PanelDeReputacion from "../../components/PanelDeReputacion";
+import { datosDeDocumentos } from "../../services/conducir";
 import ListaDeReseñas from "../../components/ListaDeReseñas";
 import { rankOf } from "../../services/rank";
 import Avatar from "../../components/Avatar";
@@ -361,6 +363,9 @@ export default function Profile() {
   const phoneVerified = checklist.phoneVerified ?? !!user?.phoneVerifiedAt;
   const documentsSubmitted = checklist.documentsSubmitted === true;
   const fullyVerified = isVerified;
+  // Los vencimientos que el servidor leyó del DNI y de la licencia. Ver
+  // services/conducir.js: los que no se saben no se muestran.
+  const documentos = datosDeDocumentos(user);
   // El teléfono es opcional salvo que el backend diga lo contrario.
   const phoneRequired = user?.verification?.phoneRequired === true;
 
@@ -642,6 +647,39 @@ export default function Profile() {
         Ahora es el mismo cuadro, con `propio` prendido: lo único que se agrega
         es cuánto falta para el rango siguiente, que a un tercero no le importa.
       */}
+      {/*
+        MIS DOCUMENTOS: LOS VENCIMIENTOS, A LA VISTA.
+
+        Estas fechas las leyó el servidor de las propias fotos, así que son las
+        de verdad y no las que alguien escribió a mano. Importan porque la
+        licencia vence sola: sin verla, la persona se entera el día que intenta
+        reservar y no puede.
+
+        Solo se muestran las que EXISTEN. Un dato en null es "no se sabe" —una
+        cuenta verificada antes de que el servidor supiera leer estas fechas—, no
+        "vencido", y dibujar un renglón vacío inventaría un problema que no hay.
+        Sin ninguna fecha, la sección directamente no aparece.
+      */}
+      {documentos.length > 0 && (
+        <div data-sc-in="depth" style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("docs.title")}</div>
+          <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("docs.note")}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {documentos.map(({ campo, clave, fecha, valor }) => (
+              <div key={campo} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                gap: 12, padding: "7px 0", borderTop: "1px solid var(--fw-line-soft)", fontSize: 13,
+              }}>
+                <span style={{ color: "var(--fw-text-3)" }}>{tr(clave)}</span>
+                <strong style={{ color: "var(--fw-text)" }}>
+                  {fecha ? shortDate(valor, lang) : valor}
+                </strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div data-sc-in="depth" style={{ ...t.card, padding: isMobile ? 20 : 24 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.rank")}</div>
         <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 14 }}>{tr("profile.rankSub")}</div>

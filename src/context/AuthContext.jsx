@@ -20,7 +20,7 @@
 //  La sesión se guarda en localStorage (clave "fw_user") para que siga activa
 //  aunque se recargue la página.
 // ============================================================================
-import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useRef, useState, useEffect } from "react";
 import { useI18n } from "../i18n/core";
 import {
   loginUser, registerStart, registerComplete, getMe,
@@ -259,6 +259,33 @@ export function AuthProvider({ children }) {
       return null;
     }
   }, [user, saveUser]);
+
+  /*
+    AL ABRIR LA APP, LA CUENTA SE RELEE UNA VEZ.
+
+    Lo que hay guardado en el navegador es una FOTO de cómo estaba la cuenta la
+    última vez que se la miró, y puede tener días. Eso alcanzaba mientras todo lo
+    que decía cambiaba solo cuando la persona hacía algo.
+
+    Ya no: poder conducir CAMBIA SOLO. Una licencia vence un martes a la mañana y
+    la copia guardada sigue diciendo que se puede alquilar hasta que algo la
+    actualice. Sin esto, alguien con la licencia vencida no vería ningún cartel,
+    elegiría las fechas y recién ahí se enteraría, con un 403 del servidor.
+
+    Una sola vez por sesión: `refreshUser` cambia de identidad cada vez que
+    guarda, así que sin el ref esto se llamaría a sí mismo para siempre.
+
+    Sale del cuerpo del efecto a propósito. Pedirle al servidor la cuenta y
+    guardarla es trabajo de afuera de React, no parte de este render: arrancarlo
+    en el mismo tick encadenaría un render arriba del otro justo mientras la app
+    está abriendo, que es el momento en que menos conviene.
+  */
+  const yaSeReleyo = useRef(false);
+  useEffect(() => {
+    if (yaSeReleyo.current || !user?.accessToken) return;
+    yaSeReleyo.current = true;
+    setTimeout(() => { refreshUser(); }, 0);
+  }, [user?.accessToken, refreshUser]);
 
   // ¿La cuenta puede publicar autos o reservar? El backend lo exige.
   const isVerified = user?.verification?.fullyVerified === true ||
