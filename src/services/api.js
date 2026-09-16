@@ -440,37 +440,55 @@ export async function getMyIdentity() {
 }
 
 /**
- * Envía las 4 fotos (ya subidas a Cloudinary) para validar la identidad.
+ * Envía UN documento con sus dos fotos. `documento` es "dni" o "license".
  *
- * LA RESPUESTA YA NO TRAE EL VEREDICTO. El servidor guarda las fotos, encola la
- * lectura y contesta enseguida; leer el DNI y la licencia tarda unos diez
- * segundos más y ocurre después. Quien llame a esto tiene que esperar el
- * resultado aparte, preguntando por GET /verification/identity/me hasta que
- * `analysis.pending` deje de ser true — de eso se encarga
- * hooks/useRevisionDeDocumentos.
+ * NO HAY UN ENVÍO ÚNICO CON LAS CUATRO FOTOS. Había uno acá contra
+ * `/verification/identity/submit`, y esa ruta no existe: el backend lleva DNI y
+ * licencia como dos trámites separados, cada uno con su fila, su estado y sus
+ * motivos. El envío único terminaba en 404 y nadie podía verificarse.
  *
- * Tratar lo que devuelve como si fuera el veredicto es el error grande: diría
- * "rechazado" tres segundos después de enviar, cuando en realidad todavía no
- * miró nada.
+ * LA RESPUESTA NO TRAE EL VEREDICTO. El servidor guarda las fotos, encola la
+ * lectura y contesta enseguida; leer el documento tarda unos diez segundos más y
+ * ocurre después. Quien llame a esto tiene que esperar el resultado aparte,
+ * preguntando por GET /verification/identity/me hasta que `analysis.pending`
+ * deje de ser true.
  *
- * Se mandan SOLO las cuatro URLs. El backend valida el cuerpo con lista blanca y
- * rechaza con 400 cualquier propiedad que no esté en el contrato, así que sumar
- * un campo "por las dudas" rompe el envío.
+ * Se mandan SOLO las dos URLs. El backend valida el cuerpo con lista blanca y
+ * rechaza con 400 cualquier propiedad que no esté en el contrato.
  */
-export async function submitIdentity({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }) {
-  return apiFetch("/verification/identity/submit", {
+export async function submitIdentityDocument(documento, { frontUrl, backUrl }) {
+  return apiFetch(`/verification/identity/${documento}/submit`, {
     method: "POST",
     timeoutMs: ESPERA_REVISION,
-    body: JSON.stringify({ dniFrontUrl, dniBackUrl, licenseFrontUrl, licenseBackUrl }),
+    body: JSON.stringify({ frontUrl, backUrl }),
+  });
+}
+
+/**
+ * Diagnostica UNA foto ya subida, sin gastar ninguno de los 5 envíos que permite
+ * el límite. Contesta 200 SIEMPRE: `ok` dice si serviría y, si no, `error` trae
+ * el chequeo que falló, con `message` y `hint` listos para mostrar.
+ *
+ * Sirve para avisar en el momento que una foto quedó mal subida, en vez de
+ * descubrirlo al enviar el documento y perder un intento de los que hacen falta.
+ */
+export async function inspectIdentityUrl({ document, side, url }) {
+  return apiFetch("/verification/identity/inspect-url", {
+    method: "POST",
+    timeoutMs: ESPERA_CONSULTA,
+    body: JSON.stringify({ document, side, url }),
   });
 }
 
 /**
  * Firma para subir UNA foto de identidad concreta.
  *
- * `document` es "dni" | "license" | "selfie" y `side` es "front" | "back" (la
- * selfie no lleva lado). El servidor decide la carpeta, el nombre del archivo y
- * que el asset quede PRIVADO: el navegador no elige nada de eso.
+ * `document` es "dni" | "license" y `side` es "front" | "back"; los dos son
+ * obligatorios. El servidor decide la carpeta, el nombre del archivo y que el
+ * asset quede PRIVADO: el navegador no elige nada de eso.
+ *
+ * Devuelve `uploadUrl` y `params`, que son los campos EXACTOS que hay que
+ * copiarle a Cloudinary. Ver cloudinary.js: agregar o sacar uno rompe la firma.
  *
  * POR QUÉ EXISTE: el backend ya no acepta una URL cualquiera de Cloudinary. Al
  * enviar los documentos comprueba que cada archivo esté en `identity/<tu-id>/` y
@@ -483,7 +501,7 @@ export async function getIdentityUploadSignature({ document, side }) {
   return apiFetch("/verification/identity/upload-signature", {
     method: "POST",
     timeoutMs: ESPERA_CONSULTA,
-    body: JSON.stringify(side ? { document, side } : { document }),
+    body: JSON.stringify({ document, side }),
   });
 }
 
@@ -508,36 +526,31 @@ export async function retryDocumentAnalysis(document) {
 }
 
 /**
- * Vuelve a correr la revisión de la última solicitud pendiente, sin volver a
- * subir las fotos. Sirve cuando la revisión no pudo decidir (un timeout del
- * proveedor) o después de corregir el DNI, el CUIL o el domicilio.
+ * Pide que un administrador revise a mano UN documento.
+ *
+ * Reemplaza al viejo `review-retry`, que no existe: no hay una "solicitud"
+ * única que reintentar, hay un documento que se manda a la cola del admin. Se
+ * puede sobre uno pendiente o uno cuya lectura automática falló.
+ *
+ * Pedir la revisión NO impide reenviar fotos después: mandar fotos nuevas
+ * reemplaza la fila entera y deja el pedido sin efecto, porque el admin tiene
+ * que mirar ESAS fotos.
  */
-export async function retryIdentityReview() {
-  // Vuelve a correr la revisión completa, igual que el envío: mismo tope.
-  return apiFetch("/verification/identity/review-retry", {
+export async function requestDocumentReview(documento) {
+  return apiFetch(`/verification/identity/${documento}/request-review`, {
     method: "POST",
-    timeoutMs: ESPERA_REVISION,
+    timeoutMs: ESPERA_CONSULTA,
   });
 }
 
 /**
- * Revisa una foto de documento ANTES de subirla, para avisar en el momento si no
- * corresponde. `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
- * Devuelve { matches, reason }: matches en null significa que no se pudo revisar.
- *
- * Las pantallas NO deberían llamar a esto directo, sino a checkDocument() de
- * services/groq.js, que además achica la foto (si no, el backend la rechaza por
- * peso) y tiene el respaldo por si la IA no está configurada en el servidor.
- *
- * ESTA SE QUEDA EN EL BACKEND PRINCIPAL, a diferencia del chat, la foto del auto
- * y las notas de voz, que se mudaron al servicio propio. El DNI y la licencia
- * son datos de identidad: los guarda, los coteja contra lo declarado y los
- * muestra al administrador el backend que tiene las cuentas. Partir eso en dos
- * servidores sería mandar documentos a un lugar que no los necesita.
+ * Si este deploy puede leer documentos solo o si todo pasa por un administrador.
+ * Sirve para decir cuánto va a tardar antes de que la persona suba nada.
  */
-export async function aiDocument(image, kind) {
-  return postConIdioma("/ai/document", { image, kind });
+export async function getIdentityDiagnostics() {
+  return apiFetch("/verification/identity/diagnostics", { timeoutMs: ESPERA_CONSULTA });
 }
+
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }

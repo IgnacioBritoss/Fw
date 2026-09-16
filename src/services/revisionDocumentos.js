@@ -48,8 +48,25 @@ export const CADA_MS = 3000;
  */
 export const TOPE_MS = 120_000;
 
-/** Los documentos, tal como los devuelve GET /verification/identity/me. */
-export const documentos = (respuesta) => lista(respuesta);
+/**
+ * Los documentos, tal como los devuelve GET /verification/identity/me.
+ *
+ * Esa ruta contesta un OBJETO con un documento por clave —`{ dni, license }`, y
+ * null en el que todavía no se envió—, no una lista. Tratarlo como lista lo
+ * dejaba en cero: `enAnalisis` daba false en la primera vuelta, la espera
+ * terminaba antes de empezar y el veredicto no aparecía nunca.
+ *
+ * Se aceptan las dos formas igual. Es una función de normalización: el día que
+ * el servidor devuelva una lista, o que se le pase el `documents` que viene
+ * adentro de /verification/me/status, sigue andando sin tocar nada.
+ */
+export const documentos = (respuesta) => {
+  if (Array.isArray(respuesta)) return respuesta;
+  if (respuesta && typeof respuesta === "object") {
+    return Object.values(respuesta).filter(Boolean);
+  }
+  return [];
+};
 
 /** ¿Hay algún documento todavía en análisis? Es lo que decide si seguir mirando. */
 export const enAnalisis = (docs) =>

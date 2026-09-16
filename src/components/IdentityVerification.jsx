@@ -18,12 +18,13 @@
 //  sola. Por eso se piden acá, en el mismo paso que el DNI, y se validan antes de
 //  mandarlos (el CUIL lleva el DNI adentro y un dígito verificador).
 //
-//  SOBRE LAS FOTOS: al elegir cada una se la revisa en el momento (POST
-//  /ai/document) y se avisa si no corresponde, así el problema se ve antes de
-//  enviar y no se puede usar una imagen cualquiera como documento. Cada foto se
-//  sube con una firma PROPIA de su casilla (DNI frente, DNI dorso, licencia
-//  frente, licencia dorso): el servidor rechaza el envío si un archivo no está en
-//  la casilla que le corresponde.
+//  SOBRE LAS FOTOS: no se revisan al elegirlas. Había un chequeo contra POST
+//  /ai/document, una ruta que no existe, así que cada foto elegida moría ahí. Lo
+//  que sí se hace, ya subidas y antes de enviar, es pedir `inspect-url`: dice si
+//  el archivo quedó bien y no gasta ninguno de los cinco envíos del límite. Cada
+//  foto se sube con una firma PROPIA de su casilla (DNI frente, DNI dorso,
+//  licencia frente, licencia dorso): el servidor rechaza el envío si un archivo
+//  no está en la casilla que le corresponde.
 //
 //  SOBRE EL TELÉFONO: mandar un SMS a un número real es un servicio pago, así
 //  que el código llega al EMAIL de la persona. Por eso el teléfono no bloquea la
@@ -37,7 +38,6 @@ import { useAuth } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { uploadIdentityDocument } from "../services/cloudinary";
 import { prepararFotoDocumento } from "../services/documentPhoto";
-import { checkDocument } from "../services/groq";
 import PhoneInput from "./PhoneInput";
 import { useI18n } from "../i18n/core";
 import { useRevisionDeDocumentos } from "../hooks/useRevisionDeDocumentos";
@@ -47,12 +47,13 @@ import { buscarPais, normalizePhone, PAIS_POR_DEFECTO, PAISES } from "../service
 import { useVerificationStatus } from "../hooks/useVerificationStatus";
 import { useCelebracion, useSacudida, aparecer } from "../anim";
 import {
-  accionSugerida, claveDelError, cuilCoincideConDni, dniDelCuil, motivoDeRevision,
+  accionSugerida, claveDelError, cuilCoincideConDni, dniDelCuil,
   normalizarCuil, normalizarDni, problemaDeIdentidad,
 } from "../services/identity";
 import {
   confirmPhoneCode, requestPhoneCode,
-  retryIdentityReview, submitIdentity, updateMe,
+  inspectIdentityUrl, requestDocumentReview, retryDocumentAnalysis,
+  submitIdentityDocument, updateMe,
 } from "../services/api";
 
 // Las cuatro fotos, en el orden en que se suben. La tupla es: la clave con la que
@@ -101,7 +102,7 @@ const styles = (isMobile) => ({
  * automática y muestra el resultado: "corresponde", "no corresponde" (con el
  * motivo) o "no se pudo revisar".
  */
-function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange }) {
+function PhotoCard({ id, label, hint, value, review, avisoClave, onChange }) {
   const { t: tr } = useI18n();
   const border =
     review?.state === "invalid" ? "1.5px solid var(--fw-red)"
@@ -122,7 +123,7 @@ function PhotoCard({ id, label, hint, kind, value, review, avisoClave, onChange 
             // Se limpia el input para que elegir DOS VECES la misma foto vuelva a
             // disparar el evento (si no, el navegador lo considera "sin cambios").
             e.target.value = "";
-            if (file) onChange(file, kind);
+            if (file) onChange(file);
           }} />
         <div style={{ position: "relative", width: "100%", height: 120, borderRadius: 10, overflow: "hidden", background: value ? "var(--fw-chip)" : "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
           {value ? (
@@ -365,16 +366,17 @@ export default function IdentityVerification({ onDone, onCancel }) {
       ? String(Number(dniDelCuil(cuilLimpio)))
       : null;
 
-  // Motivos de la última revisión, ya traducidos. Sin esto, una solicitud queda
-  // "en revisión" sin decir qué le faltó, y la persona no sabe qué corregir.
-  const motivos = (status?.lastReview?.reasonCodes ?? []).map(motivoDeRevision);
-  // Un código que este front todavía no conoce se muestra tal cual: es feo, pero
-  // es información, y es mejor que esconder el motivo del rechazo.
-  const textoDeMotivo = ({ code, clave }) => (clave ? tr(clave) : code);
-  // Reintentar solo tiene sentido con una solicitud pendiente: con veredicto, el
-  // backend contesta 400 REVIEW_NOT_PENDING. Que el campo exista es además la
-  // señal de que este backend tiene el endpoint.
-  const puedeReintentar = status?.lastReview?.outcome === "pending";
+  // Hay algo enviado que todavía no está aprobado. Es lo que habilita el atajo
+  // de "corregí un dato y volvé a revisar".
+  //
+  // ANTES ESTO MIRABA `status.lastReview`, UN CAMPO QUE EL BACKEND NO MANDA. La
+  // condición daba false siempre, así que el bloque no se dibujaba nunca: quien
+  // tenía el CUIL mal cargado no tenía forma de pedir que lo revisaran de nuevo
+  // después de corregirlo, salvo volver a sacar las cuatro fotos. Ahora se mira
+  // el estado real de cada documento.
+  const puedeReintentar = documentosRevisados.some(
+    (d) => d && d.status !== "APPROVED",
+  );
 
   /**
    * Qué botón ofrecer con estos motivos. Una lista de códigos no es una
@@ -383,16 +385,12 @@ export default function IdentityVerification({ onDone, onCancel }) {
    * bien un número —volver a sacar las fotos no lo cambia— y "no pudimos leer el
    * código del DNI" se arregla con otra foto, no tocando el perfil.
    *
-   * Los códigos salen del resumen del último envío, y si ese resumen todavía no
-   * llegó, de los documentos mismos. Con la lectura automática el resumen puede
-   * venir vacío mientras cada documento YA trae sus motivos, y sin este respaldo
-   * la pantalla decía exactamente qué estaba mal y no ofrecía ningún botón para
-   * arreglarlo.
+   * Los códigos salen de los documentos mismos. Antes salían de
+   * `status.lastReview.reasonCodes`, con los documentos como respaldo: ese campo
+   * el backend no lo manda, así que la rama principal nunca se usaba y el
+   * respaldo era el único camino. Queda el camino que de verdad corre.
    */
-  const codigosDeLaRevision = status?.lastReview?.reasonCodes ?? [];
-  const codigosParaElBoton = codigosDeLaRevision.length
-    ? codigosDeLaRevision
-    : codigosDeMotivos(documentosRevisados);
+  const codigosParaElBoton = codigosDeMotivos(documentosRevisados);
   const accion = !status?.fullyVerified && codigosParaElBoton.length
     ? accionSugerida(codigosParaElBoton)
     : null;
@@ -414,7 +412,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
    * un HEIC de iPhone se rechazaba al final del trámite, y por encima de 2400px
    * el archivo pesa de más sin que el lector de códigos gane nada.
    */
-  const handlePhoto = (key) => async (file, kind) => {
+  const handlePhoto = (key) => async (file) => {
     avisar("");
     setReviews(r => ({ ...r, [key]: { state: "checking" } }));
 
@@ -432,17 +430,18 @@ export default function IdentityVerification({ onDone, onCancel }) {
     }
 
     setDocs(d => ({ ...d, [key]: foto }));
-
-    const result = await checkDocument(foto.preview, kind).catch(() => null);
-    setReviews(r => ({
-      ...r,
-      [key]: result?.matches === true ? { state: "ok" }
-        : result?.matches === false ? { state: "invalid", reason: result.reason || "", reasonKey: result.reasonKey }
-          // No se pudo revisar: se muestra el motivo real. Si el servidor no
-          // tiene la clave de la IA no es lo mismo que si la foto era ilegible,
-          // y antes las dos cosas llegaban como el mismo aviso genérico.
-          : { state: "unknown", code: result?.code, reason: result?.reason || "", reasonKey: result?.reasonKey },
-    }));
+    // YA NO SE REVISA LA FOTO ACÁ. Había un chequeo contra `POST /ai/document`
+    // que preguntaba si la imagen era de verdad el documento pedido; esa ruta no
+    // existe —el módulo de AI expone health, chat, vision y transcribe— así que
+    // cada foto elegida moría en "Cannot POST /ai/document" y el asistente se
+    // trababa antes de poder enviar nada.
+    //
+    // No se reemplazó por otra llamada: el trabajo lo hace el backend al enviar,
+    // que baja las dos fotos y se las da al servicio que las LEE de verdad
+    // (códigos de barras, MRZ, texto impreso) y cruza lo leído contra la cuenta.
+    // Una segunda opinión de un modelo genérico antes de subir no agregaba nada
+    // que eso no diga, y sí agregaba un motivo para no poder verificarse.
+    setReviews(r => ({ ...r, [key]: null }));
   };
 
   /**
@@ -567,7 +566,35 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
       setProgreso(null);
       setRevisando(true);
-      const submission = await submitIdentity(urls);
+      // UN ENVÍO POR DOCUMENTO. El envío único contra
+      // `/verification/identity/submit` no existe: el backend lleva DNI y
+      // licencia como dos trámites separados, cada uno con su fila, su estado y
+      // sus motivos. Se mandan los dos seguidos para que desde afuera el paso
+      // siga siendo uno solo.
+      //
+      // Antes de gastar un envío —hay 5 cada 15 minutos— cada foto pasa por
+      // `inspect-url`, que no gasta ninguno y dice qué chequeo falló.
+      for (const [, casilla, campo] of CASILLAS) {
+        const revision = await inspectIdentityUrl({
+          document: casilla.document, side: casilla.side, url: urls[campo],
+        }).catch(() => null);
+        // Si el diagnóstico no contesta se sigue igual: es una ayuda, no una
+        // puerta. El envío vuelve a validar todo del lado del servidor.
+        if (revision && revision.ok === false) {
+          const detalle = revision.error;
+          avisar([detalle?.message, detalle?.hint].filter(Boolean).join(" ")
+            || tr("kyc.errSlotMismatch"));
+          setRevisando(false);
+          return;
+        }
+      }
+
+      const submission = await submitIdentityDocument("dni", {
+        frontUrl: urls.dniFrontUrl, backUrl: urls.dniBackUrl,
+      });
+      await submitIdentityDocument("license", {
+        frontUrl: urls.licenseFrontUrl, backUrl: urls.licenseBackUrl,
+      });
 
       /*
         EL ENVÍO YA NO TRAE EL VEREDICTO.
@@ -594,7 +621,9 @@ export default function IdentityVerification({ onDone, onCancel }) {
       // El rechazo de un administrador sí viene en el momento y no depende de la
       // lectura: se dice ya, sin esperar nada.
       if (submission?.status === "REJECTED") {
-        const porQue = (submission.reasonCodes ?? []).map(motivoDeRevision).map(textoDeMotivo);
+        // Los motivos vienen como { code, message } y el texto ya está escrito
+        // por el backend, con la fecha y el dato que no coincidía adentro.
+        const porQue = (submission.reasons ?? []).map((m) => m.message || m.code);
         avisar(
           porQue.length
             ? `${tr("kyc.rejectedNote")} ${porQue.join(" ")}`
@@ -646,12 +675,33 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const reintentarRevision = async () => {
     setBusy(true); avisar(""); setInfo(""); setRevisando(true);
     try {
-      // review-retry devuelve el mismo objeto que GET /verification/me/status, así
-      // que se aplica directo en vez de pedirlo otra vez.
-      const fresh = await retryIdentityReview();
-      aplicarStatus(fresh);
+      // No hay una "solicitud" única que reintentar: hay dos documentos, y cada
+      // uno tiene su propio camino.
+      //
+      // Si la LECTURA se puede repetir, eso primero: vuelve a leer las mismas
+      // fotos y las cruza contra los datos de la cuenta, que es justo lo que hace
+      // falta cuando lo que se corrigió fue el CUIL o el domicilio. Recién si no
+      // hay nada que releer se manda a la cola de un administrador, que es más
+      // lento y ocupa a una persona.
+      const aRelear = documentosRevisados.filter((d) => d?.analysis?.canRetry && d?.type);
+      const claveDe = (doc) => (doc.type === "LICENSE" ? "license" : "dni");
+
+      if (aRelear.length) {
+        await Promise.allSettled(aRelear.map((d) => retryDocumentAnalysis(claveDe(d))));
+      } else {
+        // El que no se pueda —ya aprobado, o ya en la cola— se saltea sin romper
+        // el otro: por eso allSettled y no all.
+        await Promise.allSettled(
+          documentosRevisados
+            .filter((d) => d && d.status !== "APPROVED")
+            .map((d) => requestDocumentReview(claveDe(d))),
+        );
+      }
+
+      const fresh = await refrescarStatus();
       await refreshUser();
-      setInfo(fresh?.fullyVerified ? tr("kyc.approvedNote") : tr("kyc.retryPending"));
+      setInfo(fresh?.fullyVerified ? tr("kyc.approvedNote")
+        : aRelear.length ? tr("kyc.retryQueued") : tr("kyc.reviewRequested"));
     } catch (err) {
       // Igual que en el envío: el corte por tiempo no dice que haya fallado.
       if (err?.timedOut) {
@@ -784,11 +834,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-amber-text)", marginBottom: 6 }}>
                   {tr("kyc.alreadySent")}
                 </div>
-                {motivos.length > 0 && (
+                {motivosDeLosDocumentos.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
-                    {motivos.map((motivo) => (
+                    {motivosDeLosDocumentos.map((motivo) => (
                       <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
-                        · {textoDeMotivo(motivo)}
+                        · {motivo.message || motivo.code}
                       </div>
                     ))}
                   </div>
@@ -849,10 +899,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
 
             <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
               <PhotoCard id="iv-dni-front" label={tr("kyc.dniFront")} hint={tr("kyc.dniFrontHint")}
-                kind="DNI_FRONT" value={docs.dniFront?.preview} avisoClave={docs.dniFront?.avisoClave}
+                value={docs.dniFront?.preview} avisoClave={docs.dniFront?.avisoClave}
                 review={reviews.dniFront} onChange={handlePhoto("dniFront")} />
               <PhotoCard id="iv-dni-back" label={tr("kyc.dniBack")} hint={tr("kyc.dniBackHint")}
-                kind="DNI_BACK" value={docs.dniBack?.preview} avisoClave={docs.dniBack?.avisoClave}
+                value={docs.dniBack?.preview} avisoClave={docs.dniBack?.avisoClave}
                 review={reviews.dniBack} onChange={handlePhoto("dniBack")} />
             </div>
             <div style={{ borderTop: "1px solid var(--fw-line-soft)", paddingTop: 20, marginBottom: 20 }}>
@@ -902,10 +952,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
             <p style={st.sub}>{tr("kyc.licenseSub")}</p>
             <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
               <PhotoCard id="iv-lic-front" label={tr("kyc.licFront")} hint={tr("kyc.licFrontHint")}
-                kind="LICENSE_FRONT" value={docs.licFront?.preview} avisoClave={docs.licFront?.avisoClave}
+                value={docs.licFront?.preview} avisoClave={docs.licFront?.avisoClave}
                 review={reviews.licFront} onChange={handlePhoto("licFront")} />
               <PhotoCard id="iv-lic-back" label={tr("kyc.licBack")} hint={tr("kyc.licBackHint")}
-                kind="LICENSE_BACK" value={docs.licBack?.preview} avisoClave={docs.licBack?.avisoClave}
+                value={docs.licBack?.preview} avisoClave={docs.licBack?.avisoClave}
                 review={reviews.licBack} onChange={handlePhoto("licBack")} />
             </div>
             <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginBottom: 20 }}>
@@ -1016,7 +1066,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 // pendiente para siempre: verlo es lo que permite entender por qué
                 // "mandé todo" y la cuenta sigue sin verificarse.
                 ["kyc.ckData", checklist.identityDataProvided, true],
-                ["kyc.ckDocs", checklist.documentsSubmitted, true],
+                // `documentsSubmitted` no existe más en el checklist del backend:
+                // ahora viene uno por documento, y lo que cuenta es si están
+                // APROBADOS. Leyendo el campo viejo, la fila decía "pendiente"
+                // para siempre incluso con los dos documentos verificados.
+                ["kyc.ckDocs", checklist.dniApproved === true && checklist.licenseApproved === true, true],
                 ["kyc.ckBirth", checklist.dateOfBirthProvided, true],
                 ["kyc.ckPhone", checklist.phoneVerified, phoneRequired],
               ].map(([label, ok, required]) => (
@@ -1029,7 +1083,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
             {/* Qué le faltó a la última revisión. Sin esto la pantalla dice "en
                 revisión" y no hay forma de saber si hay que corregir un dato,
                 sacar mejor una foto o simplemente esperar. */}
-            {motivos.length > 0 && !status?.fullyVerified && (
+            {motivosDeLosDocumentos.length > 0 && !status?.fullyVerified && (
               <div style={{
                 textAlign: "left", maxWidth: 380, margin: "18px auto 0",
                 background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 10,
@@ -1038,9 +1092,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fw-amber-text)", marginBottom: 6 }}>
                   {tr("kyc.reviewNotes")}
                 </div>
-                {motivos.map((motivo) => (
+                {/* El texto lo escribe el backend y viene con la fecha y el dato
+                    que no coincidía adentro: se muestra tal cual. */}
+                {motivosDeLosDocumentos.map((motivo) => (
                   <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
-                    · {textoDeMotivo(motivo)}
+                    · {motivo.message || motivo.code}
                   </div>
                 ))}
               </div>

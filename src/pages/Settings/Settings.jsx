@@ -433,7 +433,9 @@ export default function Settings() {
                 <VerifRow
                   title={tr("settings.docsTitle")}
                   desc={tr("settings.docsDesc")}
-                  verified={checklist.documentsSubmitted === true}
+                  // Un documento aprobado, no "enviado": el campo viejo no lo
+                  // manda más el backend y esta fila quedaba en rojo para siempre.
+                  verified={checklist.dniApproved === true && checklist.licenseApproved === true}
                   onVerify={() => navigate("/kyc")}
                 />
                 <VerifRow

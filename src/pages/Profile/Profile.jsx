@@ -115,13 +115,17 @@ export default function Profile() {
 
   // Mis propios documentos. Cada uno puede ver las fotos que mandó y los datos
   // que se leyeron de ellas; las de los demás no las ve nadie más que el admin.
-  const [myDocs, setMyDocs] = useState([]);
+  const [myDocs, setMyDocs] = useState({});
   useEffect(() => {
     getMyIdentity()
-      .then(list => setMyDocs(Array.isArray(list) ? list : []))
-      .catch(() => setMyDocs([]));
+      .then(docs => setMyDocs(docs && typeof docs === "object" ? docs : {}))
+      .catch(() => setMyDocs({}));
   }, []);
-  const lastSubmission = myDocs[0] || null;
+  // `/verification/identity/me` contesta { dni, license }: un documento por
+  // clave, no una lista. Se muestran los dos, cada uno con su estado.
+  const documentosEnviados = ["dni", "license"]
+    .map((clave) => myDocs?.[clave])
+    .filter(Boolean);
 
   // Las cifras REALES del perfil: cuántos autos publiqué y cuántas reservas
   // terminé. Antes estaban escritas a mano en el código.
@@ -361,7 +365,12 @@ export default function Profile() {
   const checklist = user?.verification?.checklist || {};
   const emailVerified = checklist.emailVerified ?? !!user?.emailVerifiedAt;
   const phoneVerified = checklist.phoneVerified ?? !!user?.phoneVerifiedAt;
-  const documentsSubmitted = checklist.documentsSubmitted === true;
+  // El checklist ya no trae "documentos enviados": trae uno por documento, y lo
+  // que cuenta es si están APROBADOS. Leyendo el campo viejo —que el backend no
+  // manda— esto daba false siempre, y el perfil decía "faltan tus documentos"
+  // incluso con los dos verificados.
+  const documentsApproved =
+    checklist.dniApproved === true && checklist.licenseApproved === true;
   const fullyVerified = isVerified;
   // Los vencimientos que el servidor leyó del DNI y de la licencia. Ver
   // services/conducir.js: los que no se saben no se muestran.
@@ -400,8 +409,10 @@ export default function Profile() {
         {[
           [
             "docs", tr("profile.docs"),
-            documentsSubmitted ? (fullyVerified ? tr("profile.docsValidated") : tr("profile.docsInReview")) : tr("profile.docsMissing"),
-            documentsSubmitted,
+            documentsApproved ? tr("profile.docsValidated")
+              : (checklist.dniApproved || checklist.licenseApproved) ? tr("profile.docsInReview")
+                : tr("profile.docsMissing"),
+            documentsApproved,
           ],
           [
             "email", tr("profile.emailVerified"),
@@ -440,7 +451,7 @@ export default function Profile() {
           la cuenta (y el panel admin): en el perfil de otra persona nunca
           aparecen, porque un DNI a la vista de cualquiera es material para
           suplantar una identidad. */}
-      {lastSubmission && (
+      {documentosEnviados.length > 0 && (
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--fw-line-soft)" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)", marginBottom: 3 }}>
             {tr("profile.myDocs")}
@@ -448,7 +459,11 @@ export default function Profile() {
           <div style={{ fontSize: 12.5, color: "var(--fw-text-4)", marginBottom: 12 }}>
             {tr("profile.myDocsNote")}
           </div>
-          <IdentityDocuments submission={lastSubmission} />
+          {documentosEnviados.map((doc) => (
+            <div key={doc.id} style={{ marginBottom: 16 }}>
+              <IdentityDocuments doc={doc} />
+            </div>
+          ))}
         </div>
       )}
 
@@ -458,7 +473,7 @@ export default function Profile() {
             {tr("profile.blockedNote")}
             {" "}{tr("profile.missing")}: {[
               !emailVerified && tr("profile.missEmail"),
-              !documentsSubmitted && tr("profile.missDocs"),
+              !documentsApproved && tr("profile.missDocs"),
               !checklist.dateOfBirthProvided && tr("profile.missBirth"),
               // El teléfono no bloquea: solo se sugiere si además falta.
               phoneRequired && !phoneVerified && tr("profile.missPhone"),

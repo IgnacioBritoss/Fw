@@ -20,6 +20,16 @@ import {
   adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
+
+/**
+ * ¿Este documento está esperando a que lo mire un administrador?
+ *
+ * Es MANUAL_REVIEW y nada más. PENDING significa "las fotos están, la lectura
+ * automática todavía no terminó": ahí el admin no tiene nada que decidir, y
+ * contarlo en la cola le infla el número de pendientes con trabajo que no es
+ * suyo. (ID_SUBMITTED, que es lo que miraba antes, ya no existe como estado.)
+ */
+const esperaAlAdmin = (v) => v?.status === "MANUAL_REVIEW";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
@@ -217,7 +227,7 @@ export default function Admin() {
       .catch(() => setOpenReports(0));
     adminGetVerifications()
       .then(data => setPendingVerifications(
-        (Array.isArray(data) ? data : []).filter(v => v.status === "ID_SUBMITTED").length,
+        (Array.isArray(data) ? data : []).filter(esperaAlAdmin).length,
       ))
       .catch(() => setPendingVerifications(0));
   }, [tab, tr]);
@@ -229,7 +239,7 @@ export default function Admin() {
       const fresh = await adminGetVerifications();
       setVerifications(Array.isArray(fresh) ? fresh : []);
       setPendingVerifications(
-        (Array.isArray(fresh) ? fresh : []).filter(v => v.status === "ID_SUBMITTED").length,
+        (Array.isArray(fresh) ? fresh : []).filter(esperaAlAdmin).length,
       );
       showAlert(label);
     } catch (err) {
@@ -755,7 +765,7 @@ export default function Admin() {
             const person = v.user || {};
             const name = [person.firstName, person.lastName].filter(Boolean).join(" ")
               || person.displayName || person.email || tr("admin.noName");
-            const waiting = v.status === "ID_SUBMITTED";
+            const waiting = esperaAlAdmin(v);
             return (
               <div key={v.id} style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
@@ -767,7 +777,7 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <IdentityDocuments submission={v} compact
+                <IdentityDocuments doc={v} compact
                   urls={docsFirmados[v.id] || null}
                   loadingPhotos={cargandoDocs === v.id}
                   onLoadPhotos={() => verDocumentos(v.id)} />
@@ -775,7 +785,7 @@ export default function Admin() {
                 {waiting && (
                   <div style={s.btnRow}>
                     <button style={s.btnRestore}
-                      onClick={() => doReviewVerification(v.id, "VERIFIED", tr("admin.identityApproved"))}>
+                      onClick={() => doReviewVerification(v.id, "APPROVED", tr("admin.identityApproved"))}>
                       {tr("admin.approveIdentity")}
                     </button>
                     <button style={s.btnDelete}

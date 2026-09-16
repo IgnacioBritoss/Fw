@@ -22,104 +22,95 @@
 //  mostrar nada— es lo que deja ver que la foto SÍ se envió.
 //
 //  Props:
-//    · submission     → una fila de UserVerification (o su vista pública)
+//    · doc            → la vista de UN documento: { type, status, reasons,
+//                       documents: { front, back }, analysis, expiresAt, ... }
 //    · compact        → miniaturas más chicas, para la lista del panel admin
-//    · urls           → { dniFront, dniBack, licenseFront, licenseBack } ya
-//                       firmadas, cuando alguien las pidió
+//    · urls           → { front, back } ya firmadas, cuando alguien las pidió
 //    · onLoadPhotos   → si se pasa, aparece el botón para pedirlas firmadas
 //    · loadingPhotos  → mientras se están pidiendo
 // ============================================================================
 import StatusChip from "./StatusChip";
 import { useI18n } from "../i18n/core";
 import { longDate } from "../i18n/dates";
-import { motivoDeRevision } from "../services/identity";
 
-const PHOTOS = [
-  { slot: "dniFront", field: "dniFrontUrl", key: "kyc.dniFront" },
-  { slot: "dniBack", field: "dniBackUrl", key: "kyc.dniBack" },
-  { slot: "licenseFront", field: "licenseFrontUrl", key: "kyc.licFront" },
-  { slot: "licenseBack", field: "licenseBackUrl", key: "kyc.licBack" },
-];
+/** El nombre del documento y de cada uno de sus lados. */
+const ETIQUETAS = {
+  DNI: { titulo: "kyc.dniTitle", front: "kyc.dniFront", back: "kyc.dniBack" },
+  LICENSE: { titulo: "kyc.licTitle", front: "kyc.licFront", back: "kyc.licBack" },
+};
 
 /** Cómo se muestra cada estado, con el color que le corresponde. */
 const STATUS = {
-  VERIFIED: { key: "kyc.approved", tone: "verified" },
+  APPROVED: { key: "kyc.approved", tone: "verified" },
   REJECTED: { key: "kyc.rejected", tone: "danger" },
-  ID_SUBMITTED: { key: "kyc.waitingReview", tone: "warn" },
+  MANUAL_REVIEW: { key: "kyc.waitingReview", tone: "warn" },
+  PENDING: { key: "kyc.stPending", tone: "warn" },
+  FAILED: { key: "kyc.stFailed", tone: "warn" },
 };
 
-/**
- * ¿Esta URL es de un asset privado? Se reconoce por el tipo de entrega que trae
- * la propia URL. Las solicitudes viejas siguen guardadas como públicas y esas se
- * pueden mostrar directo; una privada sin firmar solo daría una imagen rota.
- */
-const esPrivada = (url) => /\/image\/authenticated\//.test(String(url));
-
 export default function IdentityDocuments({
-  submission, compact = false, urls = null, onLoadPhotos = null, loadingPhotos = false,
+  doc, compact = false, urls = null, onLoadPhotos = null, loadingPhotos = false,
 }) {
   const { t: tr, lang } = useI18n();
   const prettyDate = (value) => longDate(value, lang) || null;
-  if (!submission) return null;
+  if (!doc) return null;
 
-  const state = STATUS[submission.status]
-    ? { label: tr(STATUS[submission.status].key), tone: STATUS[submission.status].tone }
-    : { label: submission.status, tone: "neutral" };
+  const etiquetas = ETIQUETAS[doc.type] ?? ETIQUETAS.DNI;
+  const state = STATUS[doc.status]
+    ? { label: tr(STATUS[doc.status].key), tone: STATUS[doc.status].tone }
+    : { label: doc.status, tone: "neutral" };
   const size = compact ? 96 : 132;
 
-  // Una casilla se puede mostrar si hay una URL usable; se sabe que se envió
-  // aunque no haya URL, porque el backend informa qué casillas tienen archivo.
-  const fotos = PHOTOS.map((foto) => {
-    const firmada = urls?.[foto.slot] || null;
-    const guardada = submission[foto.field] || null;
-    return {
-      ...foto,
-      url: firmada || (guardada && !esPrivada(guardada) ? guardada : null),
-      enviada: Boolean(firmada || guardada || submission.documents?.[foto.slot]),
-    };
-  }).filter((foto) => foto.enviada);
+  // Una casilla se puede mostrar si llegó firmada; se sabe que se envió aunque no
+  // haya URL, porque el backend informa qué casillas tienen archivo.
+  const fotos = ["front", "back"]
+    .map((lado) => ({
+      lado,
+      etiqueta: etiquetas[lado],
+      url: urls?.[lado] || null,
+      enviada: Boolean(urls?.[lado] || doc.documents?.[lado]),
+    }))
+    .filter((foto) => foto.enviada);
 
   // Hay algo enviado que no se puede mirar todavía.
   const hayPrivadas = fotos.some((foto) => !foto.url);
 
-  // Los datos que la IA leyó de las fotos. No se los pide al usuario justamente
-  // para que no pueda escribir un número que no es el de su documento.
+  // Lo que se leyó del documento. No se lo pide al usuario justamente para que no
+  // pueda escribir un número que no es el de su documento.
   const scanned = [
-    [tr("kyc.docNumber"), submission.documentNumber],
-    [tr("kyc.docName"), submission.fullNameOnDocument],
-    [tr("kyc.licExpires"), prettyDate(submission.licenseExpiresAt)],
+    [tr("kyc.expiresOn"), prettyDate(doc.expiresAt)],
   ].filter(([, value]) => Boolean(value));
 
-  // Por qué la revisión no aprobó. Vienen como códigos estables (sin datos
-  // personales), así que se traducen; uno que este front no conozca se muestra
-  // crudo antes que esconder el motivo.
-  const motivos = (submission.reasonCodes ?? []).map(motivoDeRevision);
+  // Por qué no quedó aprobado. El texto lo escribe el backend y viene listo para
+  // mostrar: trae la fecha y el dato que no coincidía adentro.
+  const motivos = doc.reasons ?? [];
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)" }}>{tr(etiquetas.titulo)}</span>
         <StatusChip tone={state.tone}>{state.label}</StatusChip>
-        {submission.createdAt && (
+        {doc.createdAt && (
           <span style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
-            {tr("kyc.sentOn", { date: prettyDate(submission.createdAt) })}
+            {tr("kyc.sentOn", { date: prettyDate(doc.createdAt) })}
           </span>
         )}
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-        {fotos.map(({ slot, key, url }) => (
+        {fotos.map(({ lado, etiqueta, url }) => (
           url ? (
-            <a key={slot} href={url} target="_blank" rel="noopener noreferrer"
+            <a key={lado} href={url} target="_blank" rel="noopener noreferrer"
               title={tr("kyc.openBig")}
               style={{ textDecoration: "none", color: "inherit" }}>
-              <img src={url} alt={tr(key)} style={{
+              <img src={url} alt={tr(etiqueta)} style={{
                 width: size, height: size * 0.66, objectFit: "cover",
                 borderRadius: 8, border: "1px solid var(--fw-border)", display: "block", background: "var(--fw-bg)",
               }} />
-              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
+              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(etiqueta)}</div>
             </a>
           ) : (
-            <div key={slot}>
+            <div key={lado}>
               <div style={{
                 width: size, height: size * 0.66, borderRadius: 8,
                 border: "1px dashed var(--fw-border-2)", background: "var(--fw-surface-2)",
@@ -130,7 +121,7 @@ export default function IdentityDocuments({
                   {tr("kyc.photoStored")}
                 </span>
               </div>
-              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(key)}</div>
+              <div style={{ fontSize: 11, color: "var(--fw-text-3)", marginTop: 4, maxWidth: size }}>{tr(etiqueta)}</div>
             </div>
           )
         ))}
@@ -175,17 +166,19 @@ export default function IdentityDocuments({
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fw-amber-text)", letterSpacing: ".04em", marginBottom: 6 }}>
             {tr("kyc.reviewNotes")}
           </div>
-          {motivos.map(({ code, clave }) => (
-            <div key={code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
-              · {clave ? tr(clave) : code}
+          {motivos.map((motivo) => (
+            <div key={motivo.code} style={{ fontSize: 12.5, color: "var(--fw-amber-text)", lineHeight: 1.6 }}>
+              · {motivo.message || motivo.code}
             </div>
           ))}
         </div>
       )}
 
-      {submission.notes && (
+      {/* La lectura automática se cayó del lado nuestro. Va aparte de los
+          motivos a propósito: no es algo que la persona tenga que arreglar. */}
+      {doc.analysis?.error && (
         <div style={{ fontSize: 12, color: "var(--fw-text-3)", marginTop: 10, lineHeight: 1.6 }}>
-          {submission.notes}
+          {doc.analysis.error}
         </div>
       )}
     </div>

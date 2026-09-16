@@ -36,7 +36,7 @@ export const estaPendiente = (status) => status?.lastReview?.outcome === "pendin
  *
  * `refrescar` vuelve a consultar a mano (después de guardar datos, de enviar los
  * documentos o de confirmar el teléfono). `aplicar` guarda un estado que ya vino
- * en la respuesta de otra llamada —confirm y review-retry devuelven este mismo
+ * en la respuesta de otra llamada —confirmar el teléfono devuelve este mismo
  * objeto— y así se evita un pedido de más.
  */
 export function useVerificationStatus({ activo = true } = {}) {

@@ -25,9 +25,13 @@
 // ============================================================================
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getMyIdentity, retryDocumentAnalysis } from "../services/api";
-import { CADA_MS, TOPE_MS, enAnalisis, faltaReintentar } from "../services/revisionDocumentos";
+import { CADA_MS, TOPE_MS, documentos as comoLista, enAnalisis, faltaReintentar } from "../services/revisionDocumentos";
 
 export function useRevisionDeDocumentos() {
+  // SIEMPRE UNA LISTA. `/verification/identity/me` contesta un objeto con un
+  // documento por clave —{ dni, license }— y guardarlo crudo hacía que cualquier
+  // `.some` o `.filter` sobre este estado reventara con "no es una función".
+  // Se normaliza al entrar, una vez, en vez de en cada lugar que lo consume.
   const [documentos, setDocumentos] = useState([]);
   const [revisando, setRevisando] = useState(false);
   /** Se llegó al tope sin que terminara. No es un error: es "seguí vos". */
@@ -76,7 +80,7 @@ export function useRevisionDeDocumentos() {
       docs = null;
     }
     if (!vivo.current) return;
-    if (docs) setDocumentos(docs);
+    if (docs) setDocumentos(comoLista(docs));
 
     // El reintento de la lectura, una sola vez por documento.
     for (const documento of faltaReintentar(docs, reintentados.current)) {
@@ -116,7 +120,7 @@ export function useRevisionDeDocumentos() {
     try {
       const docs = await getMyIdentity();
       if (vivo.current && docs) {
-        setDocumentos(docs);
+        setDocumentos(comoLista(docs));
         // Si se entra a la pantalla con una lectura a medio camino, se espera:
         // es exactamente la misma situación que después de enviar.
         if (enAnalisis(docs)) empezar();

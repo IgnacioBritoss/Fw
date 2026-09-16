@@ -127,24 +127,22 @@ export async function uploadImageToCloudinary(imageOrDataUrl) {
 export async function uploadIdentityDocument(file, { document, side }) {
   const firma = await getIdentityUploadSignature({ document, side });
 
+  // `params` son los campos EXACTOS sobre los que el servidor calculó la firma.
+  // Se copian tal cual, y lo único que se agrega es el archivo.
+  //
+  // OJO CON `folder`: la respuesta lo trae —es informativo, dice dónde va a
+  // quedar— pero NO va en el formulario. El `public_id` ya incluye la ruta
+  // entera, así que mandar los dos hace que Cloudinary anteponga la carpeta otra
+  // vez y el archivo termine en `identity/<id>/identity/<id>/...`. Después el
+  // envío lo rechaza por estar en otro slot, con un error que no menciona la
+  // carpeta por ningún lado. Era exactamente lo que hacía este archivo.
   const form = new FormData();
   form.append("file", file);
-  form.append("api_key", firma.apiKey);
-  form.append("timestamp", String(firma.timestamp));
-  form.append("signature", firma.signature);
-  form.append("public_id", firma.publicId);
-  form.append("type", firma.type);
-  // La carpeta va SOLO si el servidor la mandó, porque la firma se calcula sobre
-  // los parámetros exactos: mandar uno que no firmó, o dejar de mandar uno que sí
-  // firmó, hace que Cloudinary rechace la subida. Hoy la firma incluye la
-  // carpeta; si el backend deja de incluirla —el public_id ya lleva la ruta
-  // entera— esto sigue funcionando sin tocar nada acá.
-  if (firma.folder) form.append("folder", firma.folder);
+  for (const [clave, valor] of Object.entries(firma.params ?? {})) {
+    form.append(clave, String(valor));
+  }
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${firma.cloudName}/image/upload`,
-    { method: "POST", body: form },
-  );
+  const res = await fetch(firma.uploadUrl, { method: "POST", body: form });
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch { /* respuesta no JSON */ }
@@ -164,9 +162,10 @@ export async function uploadIdentityDocument(file, { document, side }) {
   // Cloudinary lo guardó en otra ruta, el envío iba a fallar más adelante con un
   // 400 que no explica nada; acá se corta con el detalle a la vista, que es lo
   // que hace falta para arreglarlo.
-  if (data.public_id && firma.publicId && data.public_id !== firma.publicId) {
+  const esperado = firma.params?.public_id;
+  if (data.public_id && esperado && data.public_id !== esperado) {
     throw new Error(
-      `${tSync("kyc.errUploadPath")} (${data.public_id} != ${firma.publicId})`,
+      `${tSync("kyc.errUploadPath")} (${data.public_id} != ${esperado})`,
     );
   }
   return data.secure_url;

@@ -4,7 +4,6 @@
 //  Se usa la IA para cuatro cosas:
 //    1) aiChat          → el chatbot de ayuda y autocompletar las specs del auto.
 //    2) groqVision      → verificar que una foto sea realmente de un vehículo.
-//    3) checkDocument   → verificar que una foto sea el DNI/licencia pedido.
 //    4) groqTranscribe  → pasar a texto las notas de voz del chat.
 //
 //  DÓNDE CORRE ESTO
@@ -30,7 +29,7 @@
 //  volvía como "no se pudo revisar" sin que la IA la llegara a mirar nunca. Por
 //  eso toda imagen pasa por shrinkImage() antes de salir.
 // ============================================================================
-import { aiChat as apiAiChat, aiDocument as apiAiDocument, aiTranscribe as apiAiTranscribe, aiVision as apiAiVision } from "./api";
+import { aiChat as apiAiChat, aiTranscribe as apiAiTranscribe, aiVision as apiAiVision } from "./api";
 
 // Envía una conversación al modelo de texto y devuelve la respuesta como string.
 // - messages: lista de mensajes con roles (system/user/assistant).
@@ -163,38 +162,25 @@ export async function groqVision(imageDataUrl) {
   };
 }
 
-/**
- * Revisa si una foto es realmente el documento pedido, ANTES de subirla.
- * `kind` es DNI_FRONT, DNI_BACK, LICENSE_FRONT o LICENSE_BACK.
- *
- * Devuelve { matches, reason, code }:
- *   · matches true  → es el documento correcto
- *   · matches false → no corresponde (reason explica por qué)
- *   · matches null  → no se pudo revisar (code dice el motivo)
- */
-export async function checkDocument(imageDataUrl, kind) {
-  // 1024px y calidad 0.8: suficiente para que se lea el número del documento y
-  // muy por debajo del límite de peso del backend.
-  const small = await shrinkImage(imageDataUrl, 1024, 0.8);
-
-  let failure = null;
-  try {
-    const data = await apiAiDocument(small, kind);
-    if (data?.matches === true || data?.matches === false) return data;
-    failure = data;
-  } catch (err) {
-    failure = err;
-  }
-
-  // El backend no pudo: `matches: null` es "no se pudo revisar". La pantalla lo
-  // dice y pide que la persona lo confirme; no aprueba nada por su cuenta.
-  return {
-    matches: null,
-    code: failure?.code || (failure?.status === 503 ? "not_configured" : "upstream_error"),
-    reason: failure?.reason || failure?.message || "",
-    reasonKey: (failure?.reason || failure?.message) ? undefined : "ai.cannotReview",
-  };
-}
+// LA REVISIÓN PREVIA DE LAS FOTOS DE DOCUMENTO YA NO EXISTE.
+//
+// Había acá un checkDocument() que, antes de subir una foto del DNI o de la
+// licencia, se la mandaba a POST /ai/document para que un modelo dijera si de
+// verdad era ese documento. Ese endpoint NO EXISTE en el backend —el módulo de
+// AI expone health, chat, vision y transcribe, y nada más—, así que cada foto
+// elegida terminaba en "Cannot POST /ai/document" y el asistente se trababa
+// antes de poder enviar nada.
+//
+// No se reemplazó por otra llamada porque el trabajo ya lo hace el backend, y
+// mejor: al enviar el documento baja las dos fotos y se las manda al servicio
+// que las lee de verdad (códigos de barras, MRZ, texto impreso), que además
+// cruza lo leído contra los datos de la cuenta. Una segunda opinión de un modelo
+// genérico antes de subir no agregaba nada que eso no diga, y sí agregaba un
+// motivo para no poder verificarse.
+//
+// Lo que sí se puede pedir, y el asistente lo pide, es
+// POST /verification/identity/inspect-url: diagnostica una foto YA SUBIDA sin
+// gastar ninguno de los cinco envíos del límite.
 
 // Transcribe una nota de voz. Recibe la URL del audio ya subido a Cloudinary y
 // el backend se encarga de descargarlo y mandarlo al modelo.
