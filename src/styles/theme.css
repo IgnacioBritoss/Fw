@@ -197,6 +197,33 @@ body {
 }
 
 /*
+  LOS CUADRADITOS AZULES SIN NINGÚN NÚMERO ADENTRO.
+
+  Con dos meses a la vista, los días que caen en los dos —el 28, 29 y 30 de
+  septiembre aparecen al final de septiembre Y al principio de octubre— la
+  librería los dibuja UNA sola vez con el número y la otra VACÍOS, para no
+  mostrar la misma fecha dos veces. Pero la celda vacía sigue existiendo, y
+  sigue recibiendo las clases del rango elegido.
+
+  O sea que al elegir fechas que cruzan un fin de mes se pintaban de azul unos
+  recuadros en blanco: en la grilla de octubre, tres cuadrados celestes sin
+  número antes del 1. Peor todavía, el FINAL del rango caía en uno de esos
+  cuadrados vacíos, así que el rango parecía terminar en la nada.
+
+  Un cuadrado pintado dice "este día está elegido". Si no tiene número, no dice
+  ningún día, y entonces no tiene por qué estar pintado. Tampoco tiene por qué
+  responder al mouse: eran celdas invisibles que igual elegían una fecha al
+  tocarlas, y ver que el calendario cambia solo porque uno pasó por un lugar
+  donde no había nada es de las cosas que más desconfianza dan.
+
+  Va al final del bloque porque tiene que ganarle a todas las reglas de arriba.
+*/
+.react-datepicker__day:empty {
+  background: transparent !important;
+  pointer-events: none;
+}
+
+/*
   LAS FLECHAS DE MES: LA FLECHA SOLA, SIN REDONDEL.
 
   Antes eran dos botones redondos, blancos y con sombra, apoyados encima de la

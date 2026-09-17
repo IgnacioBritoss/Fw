@@ -26,6 +26,7 @@
 // ============================================================================
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
+import { cargarLeaflet } from "../services/leaflet";
 
 /**
  * Hasta dónde se puede estirar la entrega.
@@ -78,17 +79,12 @@ export default function LocationPicker({ value, onChange, radioKm = 0, onRadioKm
   const [selected, setSelected] = useState(value || null);
   const debounceRef = useRef(null); // temporizador para no buscar en cada tecla
 
-  // Carga la librería Leaflet (CSS + JS) una sola vez si todavía no está cargada.
+  // Carga la librería Leaflet. El cargador es único para toda la app y evita
+  // que dos pantallas la bajen a la vez: ver services/leaflet.js.
   useEffect(() => {
-    if (window.L) { setMapLoaded(true); return; }
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => setMapLoaded(true);
-    document.head.appendChild(script);
+    let vivo = true;
+    cargarLeaflet().then(() => { if (vivo) setMapLoaded(true); }).catch(() => {});
+    return () => { vivo = false; };
   }, []);
 
   // Crea el mapa cuando Leaflet ya está listo. Al hacer clic en el mapa,

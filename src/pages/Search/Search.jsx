@@ -20,6 +20,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { cargarLeaflet } from "../../services/leaflet";
 import { useListings } from "../../hooks/useListings";
 import {
   CATEGORIES, filterCars, priceOf, sortCars, categoryLabel, transmissionLabel, fuelLabel,
@@ -187,9 +188,10 @@ export default function Search() {
 
   // ── Leaflet ──
   useEffect(() => {
-    if (window.L) { setMapLoaded(true); return; }
-    const link = document.createElement("link"); link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(link);
-    const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; sc.onload = () => setMapLoaded(true); document.head.appendChild(sc);
+    // Un solo cargador para toda la app: ver services/leaflet.js.
+    let vivo = true;
+    cargarLeaflet().then(() => { if (vivo) setMapLoaded(true); }).catch(() => {});
+    return () => { vivo = false; };
   }, []);
 
   /*

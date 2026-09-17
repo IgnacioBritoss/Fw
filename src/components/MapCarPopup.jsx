@@ -22,8 +22,8 @@ import FavoriteButton from "./FavoriteButton";
 import { priceOf } from "../services/listings";
 import { useI18n } from "../i18n/core";
 import FlechaFoto from "./FlechaFoto";
-
-const ALTO_FOTO = 132;
+// El tamaño de la tarjeta sale de cuánto mapa hay: ver services/mapaGlobo.js.
+import { medidaDeLaTarjeta } from "../services/mapaGlobo";
 
 const botonFlecha = (lado) => ({
   position: "absolute", top: "50%", [lado]: 6, transform: "translateY(-50%)",
@@ -33,7 +33,7 @@ const botonFlecha = (lado) => ({
   boxShadow: "0 1px 5px rgba(0,0,0,.25)", cursor: "pointer", zIndex: 3,
 });
 
-export default function MapCarPopup({ car, precio }) {
+export default function MapCarPopup({ car, precio, mapa = null }) {
   const { t: tr } = useI18n();
   const navigate = useNavigate();
   // Arranca en la primera foto. Quien la monta le pone `key={car.id}`, así que
@@ -43,6 +43,7 @@ export default function MapCarPopup({ car, precio }) {
 
   const fotos = Array.isArray(car?.photos) ? car.photos.filter(Boolean) : [];
   const varias = fotos.length > 1;
+  const { ancho, altoFoto } = medidaDeLaTarjeta(mapa);
 
   if (!car) return null;
 
@@ -59,10 +60,10 @@ export default function MapCarPopup({ car, precio }) {
   return (
     <div
       onClick={abrir}
-      style={{ width: 208, cursor: "pointer", fontFamily: "inherit" }}
+      style={{ width: ancho, cursor: "pointer", fontFamily: "inherit" }}
     >
       <div style={{
-        position: "relative", width: "100%", height: ALTO_FOTO,
+        position: "relative", width: "100%", height: altoFoto,
         borderRadius: 10, overflow: "hidden", marginBottom: 10, background: "var(--fw-surface-3)",
       }}>
         {fotos.length > 0 ? (

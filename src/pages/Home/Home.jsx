@@ -19,6 +19,8 @@
 // ============================================================================
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { cargarLeaflet } from "../../services/leaflet";
+import { ajusteParaQueEntre, medidaDeLaTarjeta } from "../../services/mapaGlobo";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useListings } from "../../hooks/useListings";
@@ -163,6 +165,32 @@ export default function Home() {
     Un solo div para todos los pines: hay un solo globo abierto por vez.
   */
   const [pinAbierto, setPinAbierto] = useState(null);
+  /*
+    CUÁNTO MAPA HAY. La tarjeta del globo se mide contra esto.
+
+    El mapa no tiene un tamaño fijo: cambia con la ventana, y también al apretar
+    "Agrandar mapa", que anima el ancho de la columna durante 350ms. Un número
+    escrito a mano acá estaría mal la mitad del tiempo, así que se mide el div de
+    verdad y se vuelve a medir cuando cambia.
+  */
+  const [medidaMapa, setMedidaMapa] = useState(null);
+  /*
+    El div del mapa, en un estado y no solo en un ref.
+
+    Un ref no avisa cuando se llena, y este div aparece TARDE: recién cuando
+    termina de cargar la lista de autos. Un efecto que mire `mapRef.current`
+    corre antes de que exista, se va por la primera guarda y no vuelve a
+    correr nunca, porque nada de lo que mira cambió. Así quedaba la medida en
+    null para siempre y la tarjeta volvía al tamaño de antes.
+
+    Con un ref de función React avisa en el momento exacto en que el div entra y
+    sale, que es cuando hay algo para medir.
+  */
+  const [nodoMapa, setNodoMapa] = useState(null);
+  const ponerNodoMapa = useCallback((nodo) => {
+    mapRef.current = nodo;
+    setNodoMapa(nodo);
+  }, []);
   // El globo que está abierto ahora mismo. Ver la nota de `popupclose`.
   const globoRef = useRef(null);
   // Los círculos del auto que está abierto: el de la zona aproximada y, si el
@@ -231,17 +259,12 @@ export default function Home() {
     return "";
   }, [pickup, dropoff, tr]);
 
-  // Carga la librería del mapa (Leaflet) una sola vez.
+  // Carga la librería del mapa (Leaflet). El cargador está en services/leaflet.js
+  // y se encarga de que sea una sola vez para toda la app: ver la nota de ahí.
   useEffect(() => {
-    if (window.L) return;
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => setMapLoaded(true);
-    document.head.appendChild(script);
+    let vivo = true;
+    cargarLeaflet().then(() => { if (vivo) setMapLoaded(true); }).catch(() => {});
+    return () => { vivo = false; };
   }, []);
 
   /** ¿Hay mapa en pantalla? En computadora siempre; en el teléfono, si lo eligió. */
@@ -401,6 +424,75 @@ export default function Home() {
   }, [filtered, addMarkers, hayMapa]);
 
   /*
+    El mapa avisa cuánto mide, y la tarjeta se acomoda.
+
+    `ResizeObserver` y no `window.resize`: la columna del mapa también cambia de
+    ancho al apretar "Agrandar mapa", sin que la ventana se mueva. Escuchar la
+    ventana se perdería justo ese caso, que es el que más cambia el tamaño.
+  */
+  useEffect(() => {
+    if (!nodoMapa || typeof ResizeObserver === "undefined") return;
+    const medir = () => {
+      const { width, height } = nodoMapa.getBoundingClientRect();
+      setMedidaMapa((antes) => {
+        const w = Math.round(width);
+        const h = Math.round(height);
+        // Solo si cambió de verdad: durante la animación esto se dispara en cada
+        // cuadro, y redibujar la tarjeta sesenta veces por segundo no aporta nada.
+        return antes && antes.w === w && antes.h === h ? antes : { w, h };
+      });
+    };
+    medir();
+    const ojo = new ResizeObserver(medir);
+    ojo.observe(nodoMapa);
+    return () => ojo.disconnect();
+  }, [nodoMapa]);
+
+  /*
+    EL LUGAR DEL MAPA QUE NO SE PUEDE USAR.
+
+    Arriba a la derecha están "Agrandar mapa" y "Cómo funciona", dibujados por
+    encima del mapa; a la izquierda, el zoom de Leaflet. Se MIDEN los botones en
+    vez de escribir un número: son botones con texto, y el texto cambia de largo
+    en cada idioma y de alto según el tamaño de letra del navegador.
+  */
+  const margenesDelMapa = useCallback((caja) => {
+    let arriba = 16;
+    for (const control of nodoMapa?.parentElement?.querySelectorAll("[data-fw-mapa-control]") ?? []) {
+      arriba = Math.max(arriba, control.getBoundingClientRect().bottom - caja.top + 10);
+    }
+    // El zoom de Leaflet siempre mide lo mismo, así que ese no hace falta medirlo.
+    return { arriba: Math.round(arriba), izq: 56, abajo: 18, der: 18 };
+  }, [nodoMapa]);
+
+  /*
+    QUE EL GLOBO ENTRE, DESPUÉS DE QUE EL MAPA SE MOVIÓ.
+
+    Leaflet acomoda el globo UNA vez, al abrirlo. Acá el mapa se mueve dos veces
+    más después de eso: cuando el círculo de entrega encuadra la zona, y cuando
+    se aprieta "Agrandar mapa". Las dos lo dejan cortado contra un borde.
+
+    Volver a llamar a `openOn` no arregla nada —sobre un globo ya abierto,
+    Leaflet corta antes de rehacer la cuenta— así que la cuenta se hace acá y se
+    corre el mapa a mano. La parte de decidir CUÁNTO está en services/mapaGlobo.js.
+  */
+  const acomodarGlobo = useCallback(() => {
+    const map = mapInstanceRef.current;
+    const globo = globoRef.current;
+    if (!map || !globo || !nodoMapa || !map.hasLayer?.(globo)) return;
+    const elemento = globo.getElement?.();
+    if (!elemento) return;
+    const caja = nodoMapa.getBoundingClientRect();
+    const g = elemento.getBoundingClientRect();
+    const { dx, dy } = ajusteParaQueEntre(
+      { x: g.left - caja.left, y: g.top - caja.top, w: g.width, h: g.height },
+      { w: caja.width, h: caja.height },
+      margenesDelMapa(caja),
+    );
+    if (dx || dy) map.panBy([dx, dy], { animate: true });
+  }, [nodoMapa, margenesDelMapa]);
+
+  /*
     Abre el globo con la tarjeta YA dibujada.
 
     Este efecto corre después del render, así que cuando Leaflet mide el globo
@@ -414,12 +506,51 @@ export default function Home() {
     if (!pinVisible) { map.closePopup(); return; }
     // Se anota cuál es el nuestro ANTES de abrirlo: abrirlo cierra el anterior y
     // dispara su aviso de cierre, que con la referencia ya cambiada se ignora.
-    const globo = window.L.popup({ closeButton: true, maxWidth: 240, minWidth: 208, autoPan: true })
+    /*
+      DÓNDE PUEDE CAER EL GLOBO.
+
+      `autoPan` mueve el mapa para que el globo entre, pero con el margen de
+      fábrica —5px— "entrar" incluye quedar pegado al borde y encima de los
+      botones: el globo aterrizaba sobre el + y el - del zoom, que quedaban
+      tapados y sin poder apretarse.
+
+      Arriba y a la izquierda se reserva el lugar de los controles (el zoom a la
+      izquierda, "Agrandar mapa" y "Cómo funciona" arriba). Abajo y a la derecha
+      alcanza con un margen para que no quede lamiendo el borde.
+
+      `maxHeight` es la red: aunque la tarjeta ya se mide contra el mapa, si
+      alguien abre la ventana en una pantalla muy baja el globo se hace
+      desplazable en vez de salirse por arriba.
+    */
+    const tam = map.getSize?.() || { x: 0, y: 0 };
+    const { ancho } = medidaDeLaTarjeta({ w: tam.x, h: tam.y });
+    /*
+      CUÁNTO HAY QUE DEJAR LIBRE ARRIBA.
+
+      Arriba a la derecha están "Agrandar mapa" y "Cómo funciona", que se
+      dibujan por encima del globo: si el globo cae ahí, los botones le quedan
+      escritos encima y no se entiende ninguno de los dos.
+
+      Se MIDEN en vez de escribir un número: son botones con texto, y el texto
+      cambia de largo en cada idioma y de alto según el tamaño de letra del
+      navegador. Un número a mano estaría bien en castellano y mal en alemán.
+    */
+    const caja = nodoMapa?.getBoundingClientRect();
+    const margenes = caja ? margenesDelMapa(caja) : { arriba: 56, izq: 56, abajo: 18, der: 18 };
+    const globo = window.L.popup({
+      closeButton: true,
+      maxWidth: ancho + 32,
+      minWidth: ancho,
+      autoPan: true,
+      autoPanPaddingTopLeft: [margenes.izq, margenes.arriba],
+      autoPanPaddingBottomRight: [margenes.der, margenes.abajo],
+      ...(tam.y > 0 ? { maxHeight: Math.max(150, Math.round(tam.y * 0.62)) } : {}),
+    })
       .setLatLng([pinVisible.lat, pinVisible.lng])
       .setContent(nodoGlobo);
     globoRef.current = globo;
     globo.openOn(map);
-  }, [pinVisible, nodoGlobo]);
+  }, [pinVisible, nodoGlobo, nodoMapa, margenesDelMapa]);
 
   /*
     EL CÍRCULO DE ENTREGA: aparece al TOCAR el punto, no antes.
@@ -504,6 +635,25 @@ export default function Home() {
         // puede acercar de más y dejar al auto solo en la pantalla. Si el mapa no
         // sabe decir su zoom, se encuadra sin tope, que es lo de menos.
         const zoomActual = typeof map.getZoom === "function" ? map.getZoom() : undefined;
+        /*
+          Y CUANDO TERMINE DE MOVERSE, EL GLOBO SE VUELVE A ACOMODAR.
+
+          Acá hay dos cosas moviendo el mapa por el mismo clic, y en este orden:
+          primero el globo se abre y `autoPan` corre el mapa lo justo para que
+          entre entero, y después este `fitBounds` lo vuelve a mover para que se
+          vea la zona de entrega. El segundo movimiento DESHACE el primero, y el
+          globo queda cortado por el borde de arriba: es el auto con la foto
+          partida al medio contra el borde del mapa.
+
+          No se puede elegir uno solo de los dos: el encuadre de la zona es el
+          que explica hasta dónde te lo acercan, y el globo cortado no se lee.
+          Así que se dejan correr los dos y el globo se reacomoda al final, que
+          es el único momento en que se sabe dónde quedó el mapa.
+
+          `once` y no `on`: reacomodar puede mover el mapa una vez más, y con un
+          oyente permanente eso volvería a dispararse solo, para siempre.
+        */
+        map.once("moveend", acomodarGlobo);
         map.fitBounds(zona, {
           padding: [48, 48], animate: true,
           ...(zoomActual !== undefined ? { maxZoom: zoomActual } : {}),
@@ -512,7 +662,7 @@ export default function Home() {
     }
 
     return limpiar;
-  }, [pinVisible]);
+  }, [pinVisible, acomodarGlobo]);
 
 
   /*
@@ -529,9 +679,26 @@ export default function Home() {
   */
   useEffect(() => {
     if (!hayMapa || !mapInstanceRef.current) return;
-    const t = setTimeout(() => mapInstanceRef.current?.invalidateSize(), 380);
+    const t = setTimeout(() => {
+      const map = mapInstanceRef.current;
+      if (!map) return;
+      map.invalidateSize();
+      /*
+        Y si hay un globo abierto, hay que volver a acomodarlo.
+
+        El globo se ubica UNA vez, al abrirse: Leaflet mueve el mapa lo justo
+        para que entre y ahí termina su trabajo. Achicar el mapa después lo deja
+        donde estaba, y si el mapa se achicó de ese lado, el globo queda cortado
+        por el borde —la foto del auto partida al medio— o directamente afuera.
+        Es lo que pasaba al apretar "Achicar mapa" con un auto abierto.
+
+        Reabrirlo en el mismo lugar vuelve a correr ese acomodo, ahora con el
+        tamaño nuevo. No parpadea: es el mismo globo con el mismo contenido.
+      */
+      acomodarGlobo();
+    }, 380);
     return () => clearTimeout(t);
-  }, [mapaGrande, hayMapa]);
+  }, [mapaGrande, hayMapa, acomodarGlobo]);
 
   /**
    * Precio más barato de cada categoría, calculado con los autos que hay. Es lo
@@ -1189,7 +1356,7 @@ export default function Home() {
           {/* El mapa. */}
           {hayMapa && (
             <div style={{ position: isMobile ? "static" : "sticky", top: 90 }}>
-              <div ref={mapRef} style={{
+              <div ref={ponerNodoMapa} style={{
                 height: isMobile ? "60vh" : "calc(100vh - 240px)",
                 borderRadius: 16, overflow: "hidden", zIndex: 0, border: "1px solid var(--fw-border)",
               }} />
@@ -1215,6 +1382,9 @@ export default function Home() {
                   aria-pressed={mapaGrande}
                   aria-label={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                   title={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
+                  // Marca para que el globo sepa que acá hay algo y no se le
+                  // abra debajo. Ver `autoPanPaddingTopLeft`, más arriba.
+                  data-fw-mapa-control
                   style={{
                     position: "absolute", right: 12, top: 12, zIndex: 2,
                     display: "flex", alignItems: "center", gap: 8,
@@ -1245,7 +1415,7 @@ export default function Home() {
                 apoya debajo, corrido a la derecha.
               */}
               {!isMobile && (
-                <div style={{ position: "absolute", right: 12, top: 56, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                <div data-fw-mapa-control style={{ position: "absolute", right: 12, top: 56, zIndex: 2, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
                   <button
                     type="button"
                     onClick={() => setManualAbierto((v) => !v)}
@@ -1301,7 +1471,7 @@ export default function Home() {
                 && createPortal(
                   // `key`: al tocar otro pin el componente se rehace, y las fotos
                   // arrancan de la primera sin ningún efecto de por medio.
-                  <MapCarPopup key={pinVisible.id} car={pinVisible} precio={precio} />,
+                  <MapCarPopup key={pinVisible.id} car={pinVisible} precio={precio} mapa={medidaMapa} />,
                   nodoGlobo,
                 )}
             </div>
