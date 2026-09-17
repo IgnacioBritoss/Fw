@@ -55,22 +55,37 @@ const s = {
   summaryRow: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--fw-text-2)", marginBottom: 8 },
   summaryTotal: { display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 16, color: "var(--fw-text)", borderTop: "1px solid var(--fw-border)", paddingTop: 10, marginTop: 4 },
   warn: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: "var(--fw-amber-text)", marginTop: 12 },
-  // La tira de meses. Se desliza de costado en el teléfono, donde los siete no
-  // entran de una: `overflowX` con los botones sin encoger.
+  /*
+    LA TIRA DE MESES: LAS MISMAS PESTAÑAS QUE EL RESTO DE LA APP.
+
+    Eran siete píldoras con borde, cada una con su cajita, y abajo una barra de
+    desplazamiento gris de punta a punta. Siete recuadros en fila compiten entre
+    ellos y con el calendario que está justo abajo, que es lo que uno vino a
+    mirar; y la barra ocupaba casi el alto de un botón para no decir nada.
+
+    "Mis reservas" y el panel ya resuelven esto mismo —elegir entre varias
+    vistas— con pestañas planas: el texto en gris, el elegido en azul con un
+    subrayado, y una línea fina abajo que las apoya. Sin cajas. Es lo que ya se
+    usa bien en el proyecto, así que es lo que va acá.
+
+    Los nombres van abreviados ("sept", "oct") por una razón concreta: enteros,
+    los siete meses no entran en la columna y aparece la barra. Abreviados
+    entran, y la barra deja de existir en vez de esconderse.
+  */
   tira: {
-    display: "flex", gap: 6, marginBottom: 12,
-    overflowX: "auto", paddingBottom: 4,
-    scrollbarWidth: "thin",
+    display: "flex", marginBottom: 14,
+    borderBottom: "1px solid var(--fw-line-soft)",
+    overflowX: "auto",
   },
   mes: {
-    flexShrink: 0, padding: "6px 12px", borderRadius: 999,
-    border: "1px solid var(--fw-border)", background: "var(--fw-surface)",
-    color: "var(--fw-text-2)", fontSize: 12.5, fontWeight: 600,
+    flexShrink: 0, padding: "9px 12px",
+    border: "none", background: "transparent",
+    borderBottom: "2px solid transparent", marginBottom: -1,
+    color: "var(--fw-text-3)", fontSize: 13, fontWeight: 600,
     cursor: "pointer", textTransform: "capitalize", whiteSpace: "nowrap",
   },
   mesElegido: {
-    background: "var(--fw-blue-bg)", borderColor: "var(--fw-blue)",
-    color: "var(--fw-blue-text)",
+    color: "var(--fw-blue)", borderBottomColor: "var(--fw-blue)",
   },
 };
 
@@ -171,9 +186,19 @@ export default function BookingCalendar({ listingId, car, onConfirm, bloqueado =
       const fecha = addMonths(hoy, i);
       return {
         fecha,
-        // El año solo cuando cambia: repetirlo en los siete es ruido, pero sin
-        // él, al cruzar diciembre, "enero" no dice de qué año habla.
-        etiqueta: format(fecha, fecha.getFullYear() === hoy.getFullYear() ? "LLLL" : "LLLL yyyy", { locale }),
+        /*
+          Abreviado, y con el año en dos cifras solo cuando cambia.
+
+          Enteros —"septiembre", "noviembre", "diciembre"— los siete no entran
+          en la columna y aparece la barra de desplazamiento. Abreviados entran
+          todos, que es mejor que poder deslizarlos: se ven de una y se puede
+          comparar dónde está uno sin arrastrar nada.
+
+          El año no se repite en los siete, que sería ruido, pero tampoco se
+          omite: al cruzar diciembre, "ene" solo no dice de qué año habla.
+        */
+        etiqueta: format(fecha, fecha.getFullYear() === hoy.getFullYear() ? "LLL" : "LLL yy", { locale })
+          .replace(".", ""),
       };
     });
   }, [lang]);
@@ -237,7 +262,7 @@ export default function BookingCalendar({ listingId, car, onConfirm, bloqueado =
 
       {/* La tira de meses. Ver `meses`, más arriba: es lo que hace que los seis
           meses se puedan usar de verdad y no a fuerza de flechas. */}
-      <div style={s.tira} role="group" aria-label={tr("cal.goToMonth")}>
+      <div className="fw-tira-lisa" style={s.tira} role="group" aria-label={tr("cal.goToMonth")}>
         {meses.map(({ fecha, etiqueta }) => {
           const elegido = isSameMonth(fecha, mesALaVista);
           return (

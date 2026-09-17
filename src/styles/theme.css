@@ -56,6 +56,20 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--fw-surface-3); border-radius: 3px; }
 
+/*
+  UNA TIRA QUE SE DESLIZA SIN BARRA A LA VISTA.
+
+  Para una fila corta de opciones —los meses del calendario— la barra de
+  desplazamiento es un renglón gris de punta a punta debajo de los botones, casi
+  tan alto como ellos, que no dice nada: ya se ve que hay meses, y en la
+  computadora nadie la va a arrastrar.
+
+  Se esconde la barra, no el desplazamiento: la rueda del mouse, el gesto en el
+  teléfono y el teclado siguen funcionando igual.
+*/
+.fw-tira-lisa { scrollbar-width: none; -ms-overflow-style: none; }
+.fw-tira-lisa::-webkit-scrollbar { display: none; }
+
 /* ============================================================================
    El calendario (react-datepicker)
    ----------------------------------------------------------------------------
