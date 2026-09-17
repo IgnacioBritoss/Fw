@@ -45,7 +45,7 @@ export function cargarLeaflet() {
   promesa = new Promise((listo, fallo) => {
     // El CSS se agrega una sola vez. Sin él el mapa se dibuja pero los mosaicos
     // quedan apilados en una columna, que es peor que no tener mapa.
-    if (!document.querySelector(`link[data-fw-leaflet]`)) {
+    if (!document.querySelector("link[data-fw-leaflet]")) {
       const hoja = document.createElement("link");
       hoja.rel = "stylesheet";
       hoja.href = `${BASE}.css`;

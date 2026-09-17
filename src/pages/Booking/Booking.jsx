@@ -28,7 +28,28 @@ const s = {
   title: { fontSize: 24, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
   titleMobile: { fontSize: 20, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px", marginBottom: 6 },
   sub: { fontSize: 14, color: "var(--fw-text-3)", marginBottom: 28 },
-  grid: { display: "grid", gridTemplateColumns: "1fr 340px", gap: 32 },
+  /*
+    `minmax(0, 1fr)` Y NO `1fr` A SECAS. Parecen lo mismo y no lo son.
+
+    Un `1fr` pelado no se achica por debajo del MINIMO de su contenido. Acá
+    adentro va el calendario, y su mínimo son siete días por fila que no se
+    pueden encoger. Cuando la pantalla no daba para tanto, la columna se
+    quedaba con ese mínimo igual, la grilla crecía más que la página, y lo que
+    sobraba lo pagaba la columna de al lado: la ficha del auto y el "Recordá"
+    se iban FUERA de la pantalla. Medido: 83px afuera en una pantalla de 1280 y
+    40 en una de 1366.
+
+    Y no había barra de desplazamiento que lo delatara —lo que se pasaba era el
+    contenido de una grilla, no de la página—, así que desde afuera parecía un
+    problema de margen: la tarjeta "pegada a la pared" de la derecha. No estaba
+    pegada, estaba cortada.
+
+    Con `minmax(0, 1fr)` la columna puede achicarse hasta lo que de verdad hay,
+    y el calendario, que se mide a sí mismo, pasa solo a un mes cuando dos ya no
+    entran. Medido después del cambio, de 1024 a 1920: cero desborde, y nunca
+    menos de 24px de aire a la derecha, que es el mismo que hay a la izquierda.
+  */
+  grid: { display: "grid", gridTemplateColumns: "minmax(0, 1fr) 340px", gap: 32 },
   carCard: { background: "var(--fw-surface)", borderRadius: 12, overflow: "hidden", border: "1px solid var(--fw-line-soft)", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.06)" },
   carImg: { width: "100%", height: 180, background: "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   carImgMobile: { width: "100%", height: 140, background: "var(--fw-bg)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" },

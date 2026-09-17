@@ -512,11 +512,8 @@ export default function Home() {
       `autoPan` mueve el mapa para que el globo entre, pero con el margen de
       fábrica —5px— "entrar" incluye quedar pegado al borde y encima de los
       botones: el globo aterrizaba sobre el + y el - del zoom, que quedaban
-      tapados y sin poder apretarse.
-
-      Arriba y a la izquierda se reserva el lugar de los controles (el zoom a la
-      izquierda, "Agrandar mapa" y "Cómo funciona" arriba). Abajo y a la derecha
-      alcanza con un margen para que no quede lamiendo el borde.
+      tapados y sin poder apretarse. Los márgenes salen de `margenesDelMapa`,
+      que mide los controles de verdad.
 
       `maxHeight` es la red: aunque la tarjeta ya se mide contra el mapa, si
       alguien abre la ventana en una pantalla muy baja el globo se hace
@@ -524,17 +521,6 @@ export default function Home() {
     */
     const tam = map.getSize?.() || { x: 0, y: 0 };
     const { ancho } = medidaDeLaTarjeta({ w: tam.x, h: tam.y });
-    /*
-      CUÁNTO HAY QUE DEJAR LIBRE ARRIBA.
-
-      Arriba a la derecha están "Agrandar mapa" y "Cómo funciona", que se
-      dibujan por encima del globo: si el globo cae ahí, los botones le quedan
-      escritos encima y no se entiende ninguno de los dos.
-
-      Se MIDEN en vez de escribir un número: son botones con texto, y el texto
-      cambia de largo en cada idioma y de alto según el tamaño de letra del
-      navegador. Un número a mano estaría bien en castellano y mal en alemán.
-    */
     const caja = nodoMapa?.getBoundingClientRect();
     const margenes = caja ? margenesDelMapa(caja) : { arriba: 56, izq: 56, abajo: 18, der: 18 };
     const globo = window.L.popup({
@@ -574,7 +560,11 @@ export default function Home() {
     const L = window.L;
     if (!map || !L) return;
 
+    // El oyente de `moveend` que arma el encuadre, para poder desarmarlo.
+    let soltarOyente = null;
     const limpiar = () => {
+      soltarOyente?.();
+      soltarOyente = null;
       circuloRef.current.forEach((c) => { try { map.removeLayer(c); } catch { /* ya no estaba */ } });
       circuloRef.current = [];
     };
@@ -653,7 +643,14 @@ export default function Home() {
           `once` y no `on`: reacomodar puede mover el mapa una vez más, y con un
           oyente permanente eso volvería a dispararse solo, para siempre.
         */
+        /*
+          Se desarma en la limpieza. Si `fitBounds` no llegara a mover el mapa,
+          este oyente quedaría armado esperando, y el primer arrastre de la
+          persona dispararía un reacomodo que nadie pidió: el mapa saltando solo
+          mientras uno lo mueve.
+        */
         map.once("moveend", acomodarGlobo);
+        soltarOyente = () => map.off("moveend", acomodarGlobo);
         map.fitBounds(zona, {
           padding: [48, 48], animate: true,
           ...(zoomActual !== undefined ? { maxZoom: zoomActual } : {}),
@@ -686,14 +683,10 @@ export default function Home() {
       /*
         Y si hay un globo abierto, hay que volver a acomodarlo.
 
-        El globo se ubica UNA vez, al abrirse: Leaflet mueve el mapa lo justo
-        para que entre y ahí termina su trabajo. Achicar el mapa después lo deja
-        donde estaba, y si el mapa se achicó de ese lado, el globo queda cortado
-        por el borde —la foto del auto partida al medio— o directamente afuera.
-        Es lo que pasaba al apretar "Achicar mapa" con un auto abierto.
-
-        Reabrirlo en el mismo lugar vuelve a correr ese acomodo, ahora con el
-        tamaño nuevo. No parpadea: es el mismo globo con el mismo contenido.
+        El globo se ubica UNA vez, al abrirse. Achicar el mapa después lo deja
+        donde estaba, y si se achicó de ese lado queda cortado por el borde —la
+        foto del auto partida al medio— o directamente afuera. Es lo que pasaba
+        al apretar "Achicar mapa" con un auto abierto.
       */
       acomodarGlobo();
     }, 380);
@@ -1383,7 +1376,7 @@ export default function Home() {
                   aria-label={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                   title={tr(mapaGrande ? "home.mapShrink" : "home.mapExpand")}
                   // Marca para que el globo sepa que acá hay algo y no se le
-                  // abra debajo. Ver `autoPanPaddingTopLeft`, más arriba.
+                  // abra debajo. Los mide `margenesDelMapa`, más arriba.
                   data-fw-mapa-control
                   style={{
                     position: "absolute", right: 12, top: 12, zIndex: 2,
