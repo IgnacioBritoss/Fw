@@ -16,7 +16,6 @@
 // Vercel; con VITE_API_URL se puede apuntar a un backend local para desarrollo
 // (por ejemplo VITE_API_URL=http://localhost:3000 en un archivo .env.local).
 import { tSync, idiomaInicial } from "../i18n/core";
-import { enDemo } from "./demo";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://free-wheel-back.vercel.app";
 
@@ -68,27 +67,6 @@ const isAuthRoute = (path) => AUTH_ROUTES.some(route => path.startsWith(route));
 //   la pantalla que llamó pueda mostrarlo. Nunca devuelve `undefined` en un
 //   error: si lo hiciera, quien la llamó reventaría al leer `data.user`.
 async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
-  /*
-    LA DEMO SE DESVÍA ACÁ, Y SOLO ACÁ.
-
-    Esta función es la ÚNICA puerta por la que sale un pedido en toda la app:
-    las cien funciones de abajo son atajos que terminan todos en esta línea.
-    Interceptando este punto, la demo contesta todo sin que ninguna pantalla,
-    ningún contexto y ningún gancho se enteren de nada: piden lo de siempre y
-    reciben lo de siempre.
-
-    Es también lo que hace que la demo no se desactualice. No hay una copia de
-    las pantallas en ningún lado: son las mismas, con otro servidor detrás.
-
-    Con la demo apagada esto es una comparación de un booleano que ya está en
-    memoria, y sigue de largo. El módulo del servidor falso se carga a pedido,
-    así que en producción ni siquiera se baja.
-  */
-  if (enDemo()) {
-    const { responderDemo } = await import("../demo/servidor");
-    return responderDemo(path, options);
-  }
-
   const servidor = base || BASE_URL;
   const token = getToken();
   const headers = {

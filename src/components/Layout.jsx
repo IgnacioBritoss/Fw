@@ -25,7 +25,6 @@ import { useAsistente } from "../context/AssistantContext";
 import { useI18n } from "../i18n/core";
 import RobotIcon from "./RobotIcon";
 import { useScrollCraft, useTransicionDePantalla } from "../anim";
-import BotonDemo from "./BotonDemo";
 
 // Iconos del menú. Son SVG, no emojis: un emoji se dibuja distinto en cada
 // sistema y desentona con el resto de la interfaz.
@@ -676,14 +675,6 @@ export default function Layout({ children }) {
           <RobotIcon color={asistenteAbierto ? "var(--fw-blue)" : undefined} />
         </TopButton>
       )}
-      {/*
-        ENTRAR Y SALIR DE LA DEMO.
-
-        Último de la fila, a la derecha de todo. Va con y sin sesión a propósito:
-        sin sesión es la puerta de entrada —se prueba la app sin registrarse ni
-        depender del backend— y con sesión es la de salida.
-      */}
-      <BotonDemo estilo={t.iconBtn} />
       {!user && (
         /*
           Sin cuenta: entrar y crear cuenta, con la MISMA forma que los botones

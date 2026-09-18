@@ -29,7 +29,30 @@ import IdentityDocuments from "../../components/IdentityDocuments";
  * contarlo en la cola le infla el número de pendientes con trabajo que no es
  * suyo. (ID_SUBMITTED, que es lo que miraba antes, ya no existe como estado.)
  */
-const esperaAlAdmin = (v) => v?.status === "MANUAL_REVIEW";
+/*
+  QUÉ PUEDE APROBAR UN ADMINISTRADOR.
+
+  Acá decía `status === "MANUAL_REVIEW"`, y eso dejaba el panel sin nada que
+  hacer justo en el caso más común: alguien que se registra por primera vez.
+
+  El motivo es que MANUAL_REVIEW no es el estado en el que cae un envío nuevo.
+  Un documento recién enviado queda PENDING mientras lo leen, y termina en
+  APPROVED, o en PENDING/FAILED con motivos. A MANUAL_REVIEW se llega SOLO si la
+  persona aprieta "pedir que lo mire alguien". O sea que el panel solo mostraba
+  a quienes ya se habían dado cuenta de que había un botón escondido, y para
+  todos los demás decía "no hay verificaciones pendientes" aunque estuvieran
+  esperando.
+
+  Lo que se puede aprobar lo decide el backend, y es más amplio: cualquier
+  documento que no esté ya aprobado ni rechazado. Un RECHAZADO no se puede
+  aprobar porque ya no tiene fotos que mirar —las borra—, y uno APROBADO no
+  tiene sentido aprobarlo de nuevo. Todo lo demás, sí.
+
+  Se refleja esa regla acá, que es la del servidor, en vez de una más chica
+  inventada en el front.
+*/
+const esperaAlAdmin = (v) =>
+  Boolean(v?.status) && v.status !== "APPROVED" && v.status !== "REJECTED";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
