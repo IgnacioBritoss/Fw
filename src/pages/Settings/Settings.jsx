@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
 import ReportIssueCard from "../../components/ReportIssueCard";
+import Billetera from "../../components/Billetera";
 import { useCurrency } from "../../context/CurrencyContext";
 import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
@@ -581,6 +582,26 @@ export default function Settings() {
                   {tr("currency.note")}
                 </div>
               </div>
+            </>
+          ) : section === "pagos" ? (
+            /*
+              "Pagos" era una de las puertas cerradas del menú: abría un cartel
+              de "próximamente" y nada más. Ahora es donde se vinculan las
+              tarjetas, que es lo que cualquiera va a buscar en una sección
+              llamada así.
+
+              Lo que se guarda de cada tarjeta es la ficha —marca, últimos
+              cuatro, vencimiento y nombre—, igual que en cualquier aplicación.
+              El número no: ver components/Billetera y services/tarjeta.
+            */
+            <>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.4px" }}>
+                {tr("settings.paymentsTitle")}
+              </div>
+              <div style={{ fontSize: 14, color: "var(--fw-text-4)", marginTop: 2, marginBottom: 20 }}>
+                {tr("settings.paymentsSub")}
+              </div>
+              <Billetera />
             </>
           ) : section === "reportar" ? (
             <>

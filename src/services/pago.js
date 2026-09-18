@@ -110,6 +110,74 @@ export function tramoPendiente(datos) {
 }
 
 /**
+ * ESPERAR A QUE EL SERVIDOR SE ENTERE DE QUE SE PAGÓ.
+ *
+ * ── El problema, que no es obvio ──────────────────────────────────────────
+ * Cuando el navegador termina de pagar, Stripe le contesta "listo" A ÉL. El
+ * servidor todavía no sabe nada: se entera por un aviso aparte que Stripe le
+ * manda por atrás (el webhook), y ese aviso tarda lo suyo —normalmente menos de
+ * un segundo, a veces varios—.
+ *
+ * O sea que hay un rato en el que la tarjeta ya se debitó y la reserva todavía
+ * figura impaga. Si la pantalla se refresca UNA sola vez justo ahí, muestra la
+ * reserva sin pagar con la plata ya cobrada, que es el peor cartel posible: la
+ * persona vuelve a apretar "Pagar".
+ *
+ * Y no se puede arreglar creyéndole al navegador. Quien dice si un cobro entró
+ * es el servidor, porque es el único que lo escuchó de Stripe con la firma que
+ * lo prueba; el navegador puede decir cualquier cosa. Así que se pregunta hasta
+ * que conteste, que es esto.
+ *
+ * ── Por qué recibe hasta el reloj por parámetro ───────────────────────────
+ * `pedirEstado` y `dormir` entran de afuera para que esto se pueda probar sin
+ * servidor y sin esperar veinte segundos de verdad: las pruebas le pasan un
+ * `dormir` que no duerme (pago.test.js). Sin eso, probar el caso "el aviso
+ * nunca llega" costaría medio minuto de reloj por corrida.
+ *
+ * @returns `{ confirmado, motivo, estado, vueltas }`. Los motivos:
+ *   · "rechazado" el servidor registró el cobro y salió mal
+ *   · "demora"    se acabaron los intentos sin novedad
+ */
+export async function esperarElCobro({
+  kind, pedirEstado, dormir, vueltas = 14, espera = 1200,
+} = {}) {
+  let estado = null;
+  for (let vuelta = 1; vuelta <= vueltas; vuelta++) {
+    estado = await pedirEstado();
+    /*
+      ACÁ NO SE PASA `depositPaymentIntentId`, Y ES A PROPÓSITO.
+
+      Para la lista de reservas ese identificador significa "el depósito ya se
+      pidió", y alcanza. Pero el servidor lo guarda en cuanto se CREA el
+      intento, o sea antes de que nadie haya puesto una tarjeta. Pasárselo acá
+      haría que la primera vuelta contestara "confirmado" siempre, sin cobro:
+      la espera se volvería un adorno. Lo único que vale en esta función son
+      los registros, que son los que dicen si la plata se retuvo.
+    */
+    const tramo = tramosDelPago({
+      paymentStatus: estado?.paymentStatus,
+      sena: estado?.sena,
+      balance: estado?.balance,
+      deposit: estado?.deposit,
+      records: estado?.records,
+    }).find(t => t.kind === kind);
+
+    if (tramo?.hecho) return { confirmado: true, motivo: null, estado, vueltas: vuelta };
+    /*
+      UN RECHAZO CORTA LA ESPERA.
+
+      Sin esto, una tarjeta sin fondos dejaba la pantalla dando vueltas los
+      veinte segundos enteros para terminar diciendo "demora", que es mentira:
+      el servidor ya había contestado, y lo que había contestado era que no.
+    */
+    if (tramo?.rechazado) return { confirmado: false, motivo: "rechazado", estado, vueltas: vuelta };
+    // Después de la última vuelta no se duerme: no hay nada más que esperar.
+    if (vuelta < vueltas) await dormir(espera);
+  }
+  return { confirmado: false, motivo: "demora", estado, vueltas };
+}
+
+/**
  * Lo mismo, pero a partir de una reserva de la lista de "Mis reservas".
  *
  * Ahí no hay `records`: la lista de reservas no los trae. Se arma con lo que sí

@@ -871,6 +871,25 @@ export async function createBalanceIntent(bookingId) {
 export async function createDepositHold(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/deposit-hold`, { method: "POST" });
 }
+
+/**
+ * El intento de cobro del tramo que toque.
+ *
+ * Los tres tramos tienen su propia ruta porque el servidor controla cosas
+ * distintas en cada uno —el saldo, por ejemplo, exige que la seña ya esté
+ * cobrada—, pero la pantalla de pago no tiene por qué saber eso: sabe cuál es
+ * el tramo que sigue y pide ese. Elegir la ruta acá evita repetir el mismo
+ * `if` en cada pantalla que cobre.
+ *
+ * Devuelve `{ paymentIntentId, clientSecret, amountMinor, currency }`. El
+ * `clientSecret` es lo que después usa Stripe en el navegador para cobrar: con
+ * él se paga ESE cobro y nada más.
+ */
+export async function crearIntentoDePago(bookingId, kind) {
+  if (kind === "BALANCE") return createBalanceIntent(bookingId);
+  if (kind === "DEPOSIT_HOLD") return createDepositHold(bookingId);
+  return createSenaIntent(bookingId);
+}
 export async function mockConfirmPayment(bookingId, kind) {
   return apiFetch(`/payments/bookings/${bookingId}/mock-confirm`, {
     method: "POST",
