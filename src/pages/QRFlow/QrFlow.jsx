@@ -14,12 +14,35 @@
 //  ruta /qr/:id no existía, así que el botón de "Mis reservas" no llevaba a
 //  ninguna parte), leía los tokens con nombres de campo que el backend no
 //  devuelve, y le mostraba a los dos usuarios el mismo formulario.
+//
+//  ─────────────────────────────────────────────────────────────────────────
+//  Y SE ARREGLÓ LO QUE HACÍA QUE ESTO NO SE PUDIERA USAR.
+//
+//  El código de entrega son CUARENTA Y OCHO caracteres hexadecimales: el
+//  servidor lo arma con 24 bytes al azar. Algo así:
+//
+//      9f3c7a12bd48e05f6c2a19b7e4d30f8a5c61be27d94af083
+//
+//  Y la única forma de pasarlo de una persona a la otra era este campo de
+//  texto: parados al lado del auto, uno leyendo del teléfono del otro,
+//  escribiendo cuarenta y ocho caracteres sin equivocarse en ninguno. Porque
+//  equivocarse en uno solo da el mismo error que inventarlo entero.
+//
+//  Había un QR dibujado ahí arriba, que era la respuesta a ese problema... y
+//  nada que lo leyera. Ahora sí: se abre la cámara, se apunta, y se confirma
+//  solo (components/EscanerQR). El campo de texto sigue estando como salida de
+//  emergencia —puede no haber luz, la pantalla del otro puede estar rota—, y
+//  al lado del código hay un botón para copiarlo y mandarlo por el chat, que es
+//  lo que hace que esa salida sirva para algo.
 // ============================================================================
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { getBookingTokens, confirmPickup, confirmReturn, getBookingById } from "../../services/api";
+import { normalizarCodigoEscrito } from "../../services/escaner";
+import EscanerQR from "../../components/EscanerQR";
+import CodigoQR from "../../components/CodigoQR";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
 import { useCelebracion, useSacudida } from "../../anim";
@@ -40,22 +63,34 @@ const s = {
   infoBox: { background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)", borderRadius: 10, padding: 12, fontSize: 13, color: "var(--fw-blue-text)", marginBottom: 16 },
   tabRow: { display: "flex", gap: 4, marginBottom: 20, background: "var(--fw-bg)", borderRadius: 10, padding: 4 },
   tab: { flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-};
+  /*
+    EL BOTÓN DE LA CÁMARA ES EL BOTÓN PRINCIPAL, Y EL DE CONFIRMAR A MANO PASÓ
+    A SER EL SECUNDARIO.
 
-// Dibuja el QR a partir del token con un servicio que genera la imagen. Si no
-// carga, queda el token en texto, que sirve igual.
-function QRDisplay({ token }) {
-  if (!token) return null;
-  const size = 180;
-  return (
-    <img
-      src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(token)}&bgcolor=ffffff&color=000000&qzone=1`}
-      alt=""
-      style={{ width: size, height: size, borderRadius: 10, display: "block", margin: "0 auto 12px" }}
-      onError={(e) => { e.target.style.display = "none"; }}
-    />
-  );
-}
+    Los dos hacen lo mismo, pero uno funciona y el otro pide escribir cuarenta y
+    ocho caracteres hexadecimales. Que el que funciona sea el azul lleno no es
+    una preferencia estética: es lo que hace que la gente lo use.
+  */
+  btnCamara: {
+    width: "100%", padding: "14px", background: "var(--fw-blue)", color: "#fff",
+    border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700,
+    fontFamily: "inherit", cursor: "pointer", marginBottom: 12,
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
+  },
+  btnSuave: {
+    width: "100%", padding: "13px", background: "transparent", color: "var(--fw-text-2)",
+    border: "1.5px solid var(--fw-border)", borderRadius: 10, fontSize: 14,
+    fontFamily: "inherit", fontWeight: 600, cursor: "pointer", marginBottom: 10,
+  },
+  oSino: {
+    fontSize: 12, color: "var(--fw-text-4)", textAlign: "center", marginBottom: 10,
+  },
+  copiar: {
+    background: "none", border: "none", padding: "0 0 12px", fontFamily: "inherit",
+    fontSize: 12.5, color: "var(--fw-blue-text)", cursor: "pointer",
+    textDecoration: "underline", textUnderlineOffset: 2,
+  },
+};
 
 export default function QRFlow() {
   const { t: tr } = useI18n();
@@ -79,12 +114,15 @@ export default function QRFlow() {
     saber que quedó hecho, y a un brazo de distancia un texto que cambia no se
     ve.
 
-    La sacudida del código equivocado va por lo mismo: tipear mal un código de
-    seis caracteres es lo más común que puede pasar ahí, y el mensaje de error
-    es siempre el mismo, así que sin el contador el segundo intento fallido no
-    movería nada. Ver anim/index.js.
+    La sacudida del código equivocado va por lo mismo: un código mal copiado es
+    lo más común que puede pasar ahí, y el mensaje de error es siempre el mismo,
+    así que sin el contador el segundo intento fallido no movería nada. Ver
+    anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // La cámara abierta encima de la pantalla. Se cierra sola al leer.
+  const [escaneando, setEscaneando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const cartelError = useSacudida(error ? `${intento}:${error}` : "");
   const { icono: iconoEntrega } = useCelebracion(confirmed);
 
@@ -110,19 +148,49 @@ export default function QRFlow() {
   // devolución. El backend solo lo entrega en el estado correcto de la reserva.
   const myToken = mode === "pickup" ? tokens?.pickupQrToken : tokens?.returnQrToken;
 
-  const handleConfirm = async () => {
-    if (!tokenInput.trim()) { setError(tr("qr.errEmpty")); setIntento(n => n + 1); return; }
+  /**
+   * Confirma la entrega con un código.
+   *
+   * El código entra por parámetro y no se lee del estado, porque el escáner
+   * confirma en el mismo momento en que lee: guardarlo primero y confirmar
+   * después mandaría el valor ANTERIOR —React no actualiza el estado en el
+   * acto— y el primer escaneo siempre fallaría.
+   */
+  const handleConfirm = async (codigo = tokenInput) => {
+    // Se limpia antes de mandarlo: un código pegado del chat se trae espacios y
+    // saltos de línea, y rechazarlo por eso sería inventar un error.
+    const limpio = normalizarCodigoEscrito(codigo);
+    if (!limpio) { setError(tr("qr.errEmpty")); setIntento(n => n + 1); return; }
+    setEscaneando(false);
     setConfirming(true);
     setError(null);
     try {
-      if (mode === "pickup") await confirmPickup(bookingId, tokenInput.trim());
-      else await confirmReturn(bookingId, tokenInput.trim());
+      if (mode === "pickup") await confirmPickup(bookingId, limpio);
+      else await confirmReturn(bookingId, limpio);
       setConfirmed(true);
     } catch (err) {
       setError(err.message || tr("qr.errBadCode"));
       setIntento(n => n + 1);
     } finally {
       setConfirming(false);
+    }
+  };
+
+  /**
+   * Copiar el código propio, para mandarlo por el chat.
+   *
+   * Es lo que hace que escribirlo a mano deje de ser imposible: cuarenta y ocho
+   * caracteres no se dictan, pero pegados en el chat llegan enteros. Es la
+   * salida cuando la cámara no está disponible.
+   */
+  const copiarCodigo = async (codigo) => {
+    try {
+      await navigator.clipboard.writeText(codigo);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      // Sin permiso para el portapapeles —o sin HTTPS— el código sigue estando
+      // a la vista para seleccionarlo a mano. No hay nada que avisar.
     }
   };
 
@@ -153,6 +221,23 @@ export default function QRFlow() {
 
   return (
     <div style={isMobile ? s.pageMobile : s.page}>
+      {/*
+        LA CÁMARA, ENCIMA DE TODO.
+
+        Se dibuja acá y no adentro de la tarjeta de confirmar porque ocupa la
+        pantalla entera: adentro de un contenedor con `overflow` quedaría
+        recortada. Al leer confirma en el mismo momento —handleConfirm recibe el
+        código, no lo busca en el estado— y eso es lo que hace que escanear sea
+        un solo gesto y no "escanear y después apretar confirmar".
+      */}
+      {escaneando && (
+        <EscanerQR
+          onLeido={(codigo) => handleConfirm(codigo)}
+          onCerrar={() => setEscaneando(false)}
+          onAMano={() => setEscaneando(false)}
+        />
+      )}
+
       <div style={s.title}>{tr(mode === "pickup" ? "qr.pickupTitle" : "qr.returnTitle")}</div>
       <div style={s.sub}>
         {`${vehicle.brand || ""} ${vehicle.model || ""}`.trim()}
@@ -174,9 +259,15 @@ export default function QRFlow() {
             <div style={{ fontSize: 13, color: "var(--fw-text-3)", marginBottom: 12, fontWeight: 600 }}>
               {tr(mode === "pickup" ? "qr.myPickupQr" : "qr.myReturnQr")}
             </div>
-            <QRDisplay token={myToken} />
+            <CodigoQR token={myToken} />
             <div style={s.tokenLabel}>{tr("qr.code")}</div>
             <div style={s.tokenDisplay}>{myToken}</div>
+            {/* Cuarenta y ocho caracteres no se dictan. Pegados en el chat
+                llegan enteros, y por eso este botón es lo que hace que
+                escribirlo a mano sea una salida de verdad y no un adorno. */}
+            <button type="button" style={s.copiar} onClick={() => copiarCodigo(myToken)}>
+              {tr(copiado ? "qr.copiado" : "qr.copiar")}
+            </button>
             <div style={{ fontSize: 12, color: "var(--fw-text-4)" }}>
               {tr(mode === "pickup" ? "qr.showToOwner" : "qr.showToDriver")}
             </div>
@@ -198,11 +289,29 @@ export default function QRFlow() {
           <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 12 }}>
             {tr(mode === "pickup" ? "qr.enterDriverCode" : "qr.enterOwnerCode")}
           </div>
+
+          {/*
+            LA CÁMARA VA PRIMERO, Y ARRIBA.
+
+            Es el camino que funciona: el de abajo pide escribir cuarenta y ocho
+            caracteres. Al revés —el campo de texto arriba y la cámara como un
+            enlace al pie— todo el mundo empieza a tipear, se equivoca, y recién
+            entonces busca otra forma.
+          */}
+          <button type="button" style={s.btnCamara} disabled={confirming} onClick={() => { setError(null); setEscaneando(true); }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M3 9V7a2 2 0 0 1 2-2h2M3 15v2a2 2 0 0 0 2 2h2M21 9V7a2 2 0 0 0-2-2h-2M21 15v2a2 2 0 0 1-2 2h-2M7 12h10"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {tr("qr.escanear")}
+          </button>
+          <div style={s.oSino}>{tr("qr.oEscribilo")}</div>
+
           <input style={s.input} placeholder={tr("qr.phCode")} value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleConfirm()} />
           {error && <div ref={cartelError} style={s.errorBox}>{error}</div>}
-          <button style={confirming ? s.btnDisabled : s.btn} disabled={confirming} onClick={handleConfirm}>
+          <button style={confirming ? s.btnDisabled : s.btnSuave} disabled={confirming} onClick={() => handleConfirm()}>
             {confirming ? tr("car.confirming") : tr(mode === "pickup" ? "qr.confirmPickup" : "qr.confirmReturn")}
           </button>
         </div>
