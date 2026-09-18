@@ -32,6 +32,7 @@
 // ============================================================================
 import { getCloudinarySignature, getIdentityUploadSignature } from "./api";
 import { tSync } from "../i18n/core";
+import { enDemo } from "./demo";
 
 // La firma sirve para varias subidas seguidas (mismo folder y timestamp), así
 // que se reutiliza un rato en vez de pedir una por foto.
@@ -49,11 +50,46 @@ async function fetchSignature(folder) {
 }
 
 /**
+ * Un archivo o una URL de datos, siempre como URL de datos.
+ *
+ * Lo que llega acá puede ser un `File` recién elegido o una cadena `data:` que
+ * ya pasó por el reencodado a JPEG. La demo necesita las dos cosas del mismo
+ * lado: algo que se pueda poner en un `src` y guardar.
+ */
+function comoUrlDeDatos(archivo) {
+  if (typeof archivo === "string") return Promise.resolve(archivo);
+  return new Promise((listo, fallo) => {
+    const lector = new FileReader();
+    lector.onload = () => listo(String(lector.result));
+    lector.onerror = () => fallo(new Error("No se pudo leer el archivo"));
+    lector.readAsDataURL(archivo);
+  });
+}
+
+/**
  * Sube un archivo a Cloudinary. `resourceType` es el tipo que espera Cloudinary:
  * "image" para fotos, "auto" para audio y "raw" para documentos.
  * Devuelve la respuesta completa de Cloudinary.
  */
 async function upload(file, { resourceType = "image", folder = "freewheel", fileName } = {}) {
+  /*
+    EN LA DEMO LAS FOTOS NO SALEN DEL NAVEGADOR.
+
+    Cloudinary es el único pedido de toda la app que NO pasa por `apiFetch`: va
+    derecho al servicio, con una firma que da el backend. O sea que es el único
+    lugar donde la demo tendría que salir a internet de verdad, y encima dejaría
+    fotos de prueba en la cuenta real.
+
+    Se devuelve la foto tal cual, como URL de datos. Es una dirección válida:
+    `<img src>` la muestra igual que una de Cloudinary, y todo lo que viene
+    después —la revisión, el envío, la publicación— la trata como a cualquier
+    otra. La única diferencia es que vive en el navegador y se va con la demo.
+  */
+  if (enDemo()) {
+    const url = await comoUrlDeDatos(file);
+    return { secure_url: url, url, public_id: `demo/${Date.now()}`, folder };
+  }
+
   const form = new FormData();
   if (fileName) form.append("file", file, fileName);
   else form.append("file", file);

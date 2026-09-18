@@ -1,0 +1,284 @@
+{
+  "_": "Datos de la demo. Ver demo/servidor.js, que es quien los usa y explica por que existe cada cosa. Aca no hay logica: solo lo que el servidor de mentira devuelve.",
+
+  "usuario": {
+    "id": "demo-user",
+    "email": "demo@freewheel.app",
+    "firstName": "Martina",
+    "lastName": "Rey",
+    "name": "Martina Rey",
+    "role": "USER",
+    "status": "ACTIVE",
+    "verificationStatus": "VERIFIED",
+    "phone": "+5491133445566",
+    "dni": "38924517",
+    "cuil": "27-38924517-4",
+    "address": "Gorriti 4520, Palermo, CABA",
+    "birthDate": "1995-04-12",
+    "createdAt": "2025-11-08T14:00:00.000Z",
+    "licenseExpiresAt": "2029-06-30T00:00:00.000Z",
+    "licenseClass": "B1",
+    "licenseIssuedAt": "2019-06-30T00:00:00.000Z",
+    "licenseBeginnerUntil": null,
+    "dniExpiresAt": "2033-02-18T00:00:00.000Z",
+    "driving": { "canRent": true, "reasons": [], "licenseExpiresAt": "2029-06-30T00:00:00.000Z", "expiresSoon": false }
+  },
+
+  "duenos": [
+    { "id": "d1", "firstName": "Roberto", "lastName": "Ortiz", "displayName": "Roberto O." },
+    { "id": "d2", "firstName": "Carla", "lastName": "Benitez", "displayName": "Carla B." },
+    { "id": "d3", "firstName": "Sergio", "lastName": "Lima", "displayName": "Sergio L." },
+    { "id": "d4", "firstName": "Luciana", "lastName": "Paz", "displayName": "Luciana P." },
+    { "id": "d5", "firstName": "Matias", "lastName": "Vega", "displayName": "Matias V." }
+  ],
+
+  "autos": [
+    {
+      "id": "demo-1",
+      "title": "Toyota Corolla 2021",
+      "description": "Impecable, siempre en garage. Service al dia en concesionario oficial. Ideal para viajes largos o para moverse por la ciudad.",
+      "pricePerDay": 52000,
+      "locationText": "Gorriti y Thames, Palermo",
+      "latitude": -34.5885,
+      "longitude": -58.4315,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 5000,
+      "ratingAverage": 4.8,
+      "ratingCount": 12,
+      "ownerId": "d1",
+      "owner": { "id": "d1", "firstName": "Roberto", "lastName": "Ortiz", "displayName": "Roberto O." },
+      "vehicle": { "brand": "Toyota", "model": "Corolla", "year": 2021, "category": "SEDAN", "seats": 5, "doors": 4, "transmission": "AUTOMATIC", "fuelType": "GASOLINE", "color": "Gris plata" },
+      "photos": [
+        "https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=1000&auto=format&fit=crop&q=70",
+        "https://images.unsplash.com/photo-1621968175389-f1a0c0692cdc?w=1000&auto=format&fit=crop&q=70",
+        "https://images.unsplash.com/photo-1638618164682-12b986ec2a75?w=1000&auto=format&fit=crop&q=70"
+      ]
+    },
+    {
+      "id": "demo-2",
+      "title": "Volkswagen T-Cross 2022",
+      "description": "SUV compacta, comoda y con baul grande. La uso poco, esta como nueva.",
+      "pricePerDay": 64000,
+      "locationText": "Av. Cabildo y Juramento, Belgrano",
+      "latitude": -34.5620,
+      "longitude": -58.4560,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 12000,
+      "ratingAverage": 4.9,
+      "ratingCount": 23,
+      "ownerId": "d2",
+      "owner": { "id": "d2", "firstName": "Carla", "lastName": "Benitez", "displayName": "Carla B." },
+      "vehicle": { "brand": "Volkswagen", "model": "T-Cross", "year": 2022, "category": "SUV", "seats": 5, "doors": 5, "transmission": "AUTOMATIC", "fuelType": "GASOLINE", "color": "Blanco" },
+      "photos": [
+        "https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=1000&auto=format&fit=crop&q=70",
+        "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1000&auto=format&fit=crop&q=70"
+      ]
+    },
+    {
+      "id": "demo-3",
+      "title": "Fiat Cronos 2023",
+      "description": "Economico y facil de estacionar. Nafta rinde muchisimo, perfecto para la ciudad.",
+      "pricePerDay": 38000,
+      "locationText": "Bonpland y Nicaragua, Villa Crespo",
+      "latitude": -34.5940,
+      "longitude": -58.4420,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 0,
+      "ratingAverage": 4.6,
+      "ratingCount": 7,
+      "ownerId": "d3",
+      "owner": { "id": "d3", "firstName": "Sergio", "lastName": "Lima", "displayName": "Sergio L." },
+      "vehicle": { "brand": "Fiat", "model": "Cronos", "year": 2023, "category": "SEDAN", "seats": 5, "doors": 4, "transmission": "MANUAL", "fuelType": "GASOLINE", "color": "Rojo" },
+      "photos": [
+        "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1000&auto=format&fit=crop&q=70"
+      ]
+    },
+    {
+      "id": "demo-4",
+      "title": "Peugeot 208 2022",
+      "description": "Hatchback agil, con pantalla y camara de retroceso. Lo cuido mucho.",
+      "pricePerDay": 44000,
+      "locationText": "Av. Rivadavia y Acoyte, Caballito",
+      "latitude": -34.6180,
+      "longitude": -58.4380,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 7000,
+      "ratingAverage": 4.7,
+      "ratingCount": 15,
+      "ownerId": "d4",
+      "owner": { "id": "d4", "firstName": "Luciana", "lastName": "Paz", "displayName": "Luciana P." },
+      "vehicle": { "brand": "Peugeot", "model": "208", "year": 2022, "category": "HATCHBACK", "seats": 5, "doors": 5, "transmission": "MANUAL", "fuelType": "GASOLINE", "color": "Azul" },
+      "photos": [
+        "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1000&auto=format&fit=crop&q=70"
+      ]
+    },
+    {
+      "id": "demo-5",
+      "title": "Toyota Hilux 2021",
+      "description": "Pickup 4x4 para trabajo o para salir de la ciudad. Cubiertas nuevas.",
+      "pricePerDay": 89000,
+      "locationText": "Av. Directorio y Lacarra, Parque Avellaneda",
+      "latitude": -34.6440,
+      "longitude": -58.4760,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 20000,
+      "ratingAverage": 5,
+      "ratingCount": 9,
+      "ownerId": "d5",
+      "owner": { "id": "d5", "firstName": "Matias", "lastName": "Vega", "displayName": "Matias V." },
+      "vehicle": { "brand": "Toyota", "model": "Hilux", "year": 2021, "category": "PICKUP", "seats": 5, "doors": 4, "transmission": "MANUAL", "fuelType": "DIESEL", "color": "Gris oscuro" },
+      "photos": [
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1000&auto=format&fit=crop&q=70"
+      ]
+    },
+    {
+      "id": "demo-6",
+      "title": "Renault Kangoo 2020",
+      "description": "Utilitario con mucho espacio de carga. Ideal para mudanzas chicas.",
+      "pricePerDay": 41000,
+      "locationText": "Av. Triunvirato y Olazabal, Villa Urquiza",
+      "latitude": -34.5730,
+      "longitude": -58.4900,
+      "status": "ACTIVE",
+      "deliveryRadiusM": 9000,
+      "ratingAverage": 4.4,
+      "ratingCount": 5,
+      "ownerId": "d2",
+      "owner": { "id": "d2", "firstName": "Carla", "lastName": "Benitez", "displayName": "Carla B." },
+      "vehicle": { "brand": "Renault", "model": "Kangoo", "year": 2020, "category": "VAN", "seats": 5, "doors": 5, "transmission": "MANUAL", "fuelType": "DIESEL", "color": "Blanco" },
+      "photos": [
+        "https://images.unsplash.com/photo-1617195737496-bc30194e3a19?w=1000&auto=format&fit=crop&q=70"
+      ]
+    }
+  ],
+
+  "reservas": [
+    {
+      "id": "res-1",
+      "listingId": "demo-2",
+      "renterId": "demo-user",
+      "ownerId": "d2",
+      "status": "ACCEPTED",
+      "startDate": "__EN_5_DIAS__",
+      "endDate": "__EN_8_DIAS__",
+      "totalAmount": 192000,
+      "commissionAmount": 19200,
+      "depositAmount": 128000,
+      "createdAt": "__HACE_2_DIAS__"
+    },
+    {
+      "id": "res-2",
+      "listingId": "demo-3",
+      "renterId": "demo-user",
+      "ownerId": "d3",
+      "status": "COMPLETED",
+      "startDate": "__HACE_20_DIAS__",
+      "endDate": "__HACE_17_DIAS__",
+      "totalAmount": 114000,
+      "commissionAmount": 11400,
+      "depositAmount": 76000,
+      "createdAt": "__HACE_25_DIAS__"
+    }
+  ],
+
+  "resenas": [
+    { "id": "rev-1", "listingId": "demo-1", "authorName": "Julian M.", "rating": 5, "comment": "Roberto super puntual y el auto impecable. Lo recomiendo.", "createdAt": "__HACE_12_DIAS__", "tags": ["PUNTUAL", "BUEN_TRATO"] },
+    { "id": "rev-2", "listingId": "demo-1", "authorName": "Paula G.", "rating": 5, "comment": "Andaba todo perfecto, la entrega fue rapidisima.", "createdAt": "__HACE_30_DIAS__", "tags": ["CONTESTA_RAPIDO"] },
+    { "id": "rev-3", "listingId": "demo-2", "authorName": "Nicolas D.", "rating": 5, "comment": "Muy comoda para la ruta, la devolvi sin un problema.", "createdAt": "__HACE_8_DIAS__", "tags": ["AUTO_LIMPIO"] }
+  ],
+
+  "reputacion": {
+    "average": 4.9,
+    "count": 14,
+    "completed": { "asOwner": 6, "asDriver": 8 },
+    "tagCounts": { "PUNTUAL": 9, "BUEN_TRATO": 7, "CONTESTA_RAPIDO": 6, "AUTO_LIMPIO": 5, "CUIDO_EL_AUTO": 4 }
+  },
+
+  "conversaciones": [
+    {
+      "id": "conv-1",
+      "listingId": "demo-2",
+      "otro": { "id": "d2", "firstName": "Carla", "lastName": "Benitez", "displayName": "Carla B." },
+      "mensajes": [
+        { "id": "m1", "type": "TEXT", "readAt": "__HACE_1_DIA__", "senderId": "demo-user", "content": "Hola Carla! Esta disponible para el finde que viene?", "createdAt": "__HACE_2_DIAS__" },
+        { "id": "m2", "type": "TEXT", "readAt": "__HACE_1_DIA__", "senderId": "d2", "content": "Hola! Si, esta libre. La entrego con el tanque lleno.", "createdAt": "__HACE_2_DIAS__" },
+        { "id": "m3", "type": "TEXT", "readAt": "__HACE_1_DIA__", "senderId": "demo-user", "content": "Barbaro, ya te mando la solicitud.", "createdAt": "__HACE_2_DIAS__" },
+        { "id": "m4", "type": "TEXT", "readAt": null, "senderId": "d2", "content": "La acepte. Cualquier cosa escribime por aca.", "createdAt": "__HACE_1_DIA__" }
+      ]
+    }
+  ],
+
+  "corolla2022": {
+    "brand": "Toyota",
+    "model": "Corolla",
+    "year": 2022,
+    "category": "SEDAN",
+    "seats": 5,
+    "doors": 4,
+    "transmission": "AUTOMATIC",
+    "fuelType": "GASOLINE",
+    "color": "Gris plata",
+    "specs": {
+      "baul_litros": 470,
+      "puertas": 4,
+      "potencia_cv": 170,
+      "consumo_mixto": "5.4 l/100km",
+      "traccion": "Delantera",
+      "largo_mm": 4630,
+      "ancho_mm": 1780,
+      "alto_mm": 1435,
+      "peso_kg": 1395,
+      "motor": "1.8 Hibrido",
+      "bluetooth": "Si",
+      "camara_reversa": "Si",
+      "sensor_estacionamiento": "Delanteros y traseros",
+      "climatizador": "Automatico bizona",
+      "airbags": 7
+    },
+    "descripcion": "Toyota Corolla 2022 hibrido, automatico, con 5 asientos y baul de 470 litros. Bajo consumo, camara de retroceso y sensores de estacionamiento. Service oficial al dia."
+  },
+
+  "precioSugerido": {
+    "sugerido": 57000,
+    "minimo": 48000,
+    "maximo": 66000,
+    "moneda": "ARS",
+    "razon": "Sedanes automaticos 2022 en Palermo y Villa Crespo se estan alquilando entre 48.000 y 66.000 por dia. Con 5 asientos, baul grande y bajo consumo, 57.000 queda en el medio de la banda y es lo que mas rapido se reserva.",
+    "comparables": [
+      { "titulo": "Toyota Corolla 2021 automatico", "zona": "Palermo", "precio": 52000 },
+      { "titulo": "Volkswagen Vento 2022 automatico", "zona": "Belgrano", "precio": 61000 },
+      { "titulo": "Chevrolet Onix Plus 2023", "zona": "Caballito", "precio": 49000 },
+      { "titulo": "Honda City 2022 automatico", "zona": "Nunez", "precio": 66000 }
+    ]
+  },
+
+  "revisionDeFotos": {
+    "ok": {
+      "esAuto": true,
+      "marca": "Toyota",
+      "modelo": "Corolla",
+      "anio": 2022,
+      "color": "Gris plata",
+      "mismoAuto": true,
+      "mensaje": "Se ve el auto completo y con buena luz."
+    }
+  },
+
+  "asistente": [
+    { "pregunta": "reserva|reservar|alquilar", "respuesta": "Para reservar, entra al auto que te guste, elegi las fechas en el calendario y toca Reservar. El dueno tiene que aceptar la solicitud y recien despues se paga: hasta ese momento no se te cobra nada." },
+    { "pregunta": "pago|pagar|precio|cobra", "respuesta": "Se paga una sena para confirmar y el saldo antes de retirar el auto. Ademas queda un deposito de garantia retenido, que se devuelve cuando devolves el auto sin danos. La comision de Freewheel es del 10%." },
+    { "pregunta": "cancel", "respuesta": "Podes cancelar desde Mis reservas mientras la reserva no haya empezado. Si el dueno todavia no la acepto, no se te cobra nada." },
+    { "pregunta": "verific|dni|licencia|documento", "respuesta": "La verificacion se hace una sola vez: subis el frente y el dorso del DNI y de la licencia, y en menos de un minuto queda lista. Sirve tanto para alquilar como para publicar tu auto." },
+    { "pregunta": "publicar|publico|mi auto|dueno", "respuesta": "Desde Publicar auto cargas la patente o la marca y el modelo, y el resto se completa solo. Despues subis las fotos, elegis el precio por dia (te sugerimos uno) y listo." },
+    { "pregunta": "seguro|dano|choque|accidente", "respuesta": "Todas las reservas incluyen cobertura durante el alquiler. Si pasa algo, se reporta desde la reserva y el deposito de garantia cubre la franquicia." },
+    { "pregunta": "entrega|acerca|llevar", "respuesta": "Algunos duenos acercan el auto hasta cierta distancia: lo vas a ver en la ficha del auto como 'Te lo acerca hasta X km'. Los que no ofrecen entrega se retiran en el punto que figura en el mapa." }
+  ],
+
+  "asistentePorDefecto": "Puedo ayudarte con reservas, pagos, verificacion de identidad, publicar tu auto y como funciona la entrega. Preguntame lo que necesites.",
+
+  "notificaciones": [
+    { "id": "n1", "type": "BOOKING_ACCEPTED", "title": "Carla acepto tu solicitud", "body": "Ya podes pagar la sena de la Volkswagen T-Cross.", "read": false, "createdAt": "__HACE_1_DIA__" },
+    { "id": "n2", "type": "MESSAGE", "title": "Tenes un mensaje nuevo", "body": "Carla B.: La acepte. Cualquier cosa escribime por aca.", "read": false, "createdAt": "__HACE_1_DIA__" },
+    { "id": "n3", "type": "REVIEW_REMINDER", "title": "Como te fue con el Fiat Cronos?", "body": "Contale al resto como estuvo la experiencia.", "read": true, "createdAt": "__HACE_17_DIAS__" }
+  ]
+}

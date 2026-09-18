@@ -125,6 +125,8 @@ export default {
   "auth.loginBtn": "Accedi",
   "auth.loggingIn": "Accesso...",
   "auth.withGoogle": "Continua con Google",
+  "demo.enter": "Prova la demo senza account",
+  "demo.exit": "Esci dalla demo",
   "auth.orEmail": "o con email",
   "auth.orRegisterEmail": "o registrati con email",
   "auth.sessionExpired": "La sessione è scaduta. Accedi di nuovo per continuare.",

@@ -129,6 +129,8 @@ export default {
   "auth.loginBtn": "登录",
   "auth.loggingIn": "正在登录…",
   "auth.withGoogle": "使用 Google 继续",
+  "demo.enter": "无需账号试用演示",
+  "demo.exit": "退出演示",
   "auth.orEmail": "或使用邮箱",
   "auth.orRegisterEmail": "或使用邮箱注册",
   "auth.sessionExpired": "登录已过期，请重新登录后继续。",
