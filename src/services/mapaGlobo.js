@@ -26,7 +26,6 @@
 
 /** Lo más grande que se dibuja, que es como estaba antes. */
 export const ANCHO_MAXIMO = 208;
-export const ALTO_FOTO_MAXIMO = 132;
 
 /*
   Lo más chico que sigue siendo legible.
@@ -38,7 +37,7 @@ export const ALTO_FOTO_MAXIMO = 132;
   venía a arreglar. Lo que tiene que achicarse es la foto, no el texto.
 */
 export const ANCHO_MINIMO = 180;
-export const ALTO_FOTO_MINIMO = 62;
+export const ALTO_FOTO_MINIMO = 96;
 
 /**
  * Lo que ocupa la tarjeta SIN contar la foto.
@@ -58,9 +57,33 @@ export const ALTO_FOTO_MINIMO = 62;
  */
 export const ALTO_SIN_FOTO = 155;
 
-/** Cuánto del mapa puede tapar la tarjeta. Más que esto y el mapa deja de verse. */
+/** Cuánto del mapa puede tapar la tarjeta a lo ancho. */
 const PARTE_DEL_ANCHO = 0.62;
-const PARTE_DEL_ALTO = 0.52;
+
+/**
+ * LA FOTO GUARDA SU PROPORCIÓN. NO SE APLASTA.
+ *
+ * Antes el alto de la foto salía de cuánto mapa había: se le restaba el texto a
+ * la mitad del alto del mapa y lo que quedaba era la foto. El problema es que
+ * eso no mira el ANCHO, así que en un mapa bajo la foto quedaba de 227x95 —una
+ * franja de 2.4 a 1— y un auto ahí adentro sale cortado por arriba y por abajo:
+ * se ve el capot y las ruedas, y nada del medio.
+ *
+ * Ahora el alto sale del ancho, con la proporción a la que se ve un auto entero.
+ * La tarjeta queda un poco más alta en los mapas bajos, y eso se resuelve donde
+ * corresponde: corriendo el mapa para que entre (ver `ajusteParaQueEntre`), que
+ * es gratis, en vez de arruinando la foto, que es lo único que se mira.
+ */
+const PROPORCION_DE_LA_FOTO = 0.62;
+
+/**
+ * El alto de la foto en la tarjeta más grande.
+ *
+ * Sale de la proporción y no es un número escrito aparte: si fuera suelto,
+ * cambiar la proporción lo dejaría diciendo otra cosa, que es exactamente lo que
+ * pasaba con el 132 que había antes.
+ */
+export const ALTO_FOTO_MAXIMO = Math.round(ANCHO_MAXIMO * PROPORCION_DE_LA_FOTO);
 
 /** Lo que el globo de Leaflet le suma al ancho de la tarjeta (marco y sombra). */
 const MARCO = 47;
@@ -79,19 +102,10 @@ export function medidaDeLaTarjeta(mapa) {
   const ancho = mapa?.w > 0
     ? entre(ANCHO_MINIMO, ANCHO_MAXIMO, Math.round(mapa.w * PARTE_DEL_ANCHO) - MARCO)
     : ANCHO_MAXIMO;
-  const altoFoto = mapa?.h > 0
-    ? entre(ALTO_FOTO_MINIMO, ALTO_FOTO_MAXIMO, Math.round(mapa.h * PARTE_DEL_ALTO) - ALTO_SIN_FOTO)
-    : ALTO_FOTO_MAXIMO;
+  const altoFoto = entre(ALTO_FOTO_MINIMO, ALTO_FOTO_MAXIMO, Math.round(ancho * PROPORCION_DE_LA_FOTO));
   return { ancho, altoFoto };
 }
 
-/**
- * El alto total del globo con esa foto, para comprobar contra el mapa.
- *
- * Existe para las pruebas y para el tope de `maxHeight`: es la cuenta que dice
- * si la tarjeta entra o no, y conviene que esté escrita una sola vez.
- */
-export const altoDelGlobo = (altoFoto) => altoFoto + ALTO_SIN_FOTO;
 
 /**
  * Cuánto hay que correr el mapa para que el globo entre entero.

@@ -159,8 +159,28 @@
   to   { opacity: 1; transform: none; }
 }
 
+/*
+  `backwards` Y NO `both`. UNA PALABRA, Y ROMPÍA TODOS LOS MODALES.
+
+  Con `both`, al terminar la animación el elemento QUEDA con el valor del último
+  fotograma aplicado para siempre. Ese fotograma es `transform: none`, o sea que
+  no mueve nada... pero el navegador igual lo calcula como una matriz, y
+  CUALQUIER transform —aunque sea la identidad— convierte al elemento en el
+  marco de referencia de todo lo que tenga adentro posicionado con `fixed`.
+
+  Consecuencia: los modales de la app decían `position: fixed; inset: 0` para
+  cubrir la pantalla, y en vez de eso se acomodaban contra este div. Medido: el
+  velo del perfil del dueño quedaba en top -496 y 1118x1264 en una ventana de
+  1366x768, y el panel arrancaba 191px ARRIBA del borde. Eso es el modal que
+  aparecía cortado y obligaba a subir para verlo.
+
+  `backwards` aplica el primer fotograma antes de arrancar y NADA al terminar.
+  Se ve exactamente igual —el estado final de la animación es el natural del
+  elemento: opaco y sin mover— y al no quedar ningún transform, todo lo que
+  tiene adentro vuelve a medirse contra la ventana, que es lo que corresponde.
+*/
 .fw-pantalla-entra {
-  animation: fw-pantalla-entra .26s var(--fw-salida) both;
+  animation: fw-pantalla-entra .26s var(--fw-salida) backwards;
 }
 
 /* ============================================================================

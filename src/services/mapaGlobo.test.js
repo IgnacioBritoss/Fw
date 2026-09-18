@@ -13,7 +13,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  medidaDeLaTarjeta, altoDelGlobo, ajusteParaQueEntre,
+  medidaDeLaTarjeta, ajusteParaQueEntre,
   ANCHO_MAXIMO, ALTO_FOTO_MAXIMO, ANCHO_MINIMO, ALTO_FOTO_MINIMO,
 } from "./mapaGlobo.js";
 
@@ -24,44 +24,21 @@ const MAPAS = [
   { nombre: "pantalla grande", w: 900, h: 800 },
 ];
 
-test("con mapa suficiente, la tarjeta no pasa de la mitad del alto", () => {
-  for (const mapa of MAPAS.filter((m) => m.h >= 420)) {
-    const { altoFoto } = medidaDeLaTarjeta(mapa);
-    const parte = altoDelGlobo(altoFoto) / mapa.h;
-    assert.ok(parte <= 0.55, `${mapa.nombre}: ocupa el ${Math.round(parte * 100)}% del alto`);
-  }
-});
-
-test("en un mapa muy bajo gana el piso de la foto, y esta bien que gane", () => {
+test("la foto NUNCA se aplasta: siempre guarda su proporcion", () => {
   /*
-    Abajo de unos 420px de alto la cuenta pide una foto mas chica que el minimo,
-    y ahi manda el minimo: la tarjeta queda en el 57% en vez del 52%.
+    Esta es la regla que reemplazo a la anterior, y el motivo esta a la vista en
+    el mapa: antes el alto de la foto salia de cuanto mapa habia, sin mirar el
+    ancho, y en un mapa bajo quedaba una franja de 227x95 —2.4 a 1— donde del
+    auto se veian el capot y las ruedas y nada del medio.
 
-    Es a proposito. Para bajar de ahi habria que dejar la foto en una franja de
-    50px donde no se distingue el auto, y una tarjeta que ocupa un poco mas pero
-    muestra algo es mejor que una compacta que no muestra nada. El 57% igual es
-    bastante menos que el 70% que ocupaba antes.
+    Se prefiere una tarjeta un poco mas alta y correr el mapa para que entre
+    (ajusteParaQueEntre) antes que arruinar lo unico que se mira.
   */
-  const { altoFoto } = medidaDeLaTarjeta({ w: 412, h: 380 });
-  assert.equal(altoFoto, ALTO_FOTO_MINIMO);
-  const parte = altoDelGlobo(altoFoto) / 380;
-  assert.ok(parte <= 0.58, `ocupa el ${Math.round(parte * 100)}%`);
-});
-
-test("el caso que se veia mal en la notebook baja", () => {
-  // 412x380 era el peor: la tarjeta ocupaba 267 de 380, el 70% del mapa.
-  const { altoFoto } = medidaDeLaTarjeta({ w: 412, h: 380 });
-  const alto = altoDelGlobo(altoFoto);
-  assert.ok(alto <= 380 * 0.58, `quedo en ${alto} de 380`);
-  assert.ok(alto < 267, "no bajo de lo que medía antes");
-});
-
-test("antes ocupaba mas de la mitad y ahora no", () => {
-  // El caso que se veia mal: 132 de foto en un mapa de 380 daba 267 de globo.
-  const antes = altoDelGlobo(ALTO_FOTO_MAXIMO) / 380;
-  const ahora = altoDelGlobo(medidaDeLaTarjeta({ w: 412, h: 380 }).altoFoto) / 380;
-  assert.ok(antes > 0.65, `antes ocupaba el ${Math.round(antes * 100)}%`);
-  assert.ok(ahora < antes, "no mejoro");
+  for (const mapa of [...MAPAS, { nombre: "angostisimo", w: 120, h: 200 }]) {
+    const { ancho, altoFoto } = medidaDeLaTarjeta(mapa);
+    const proporcion = ancho / altoFoto;
+    assert.ok(proporcion > 1.4 && proporcion < 1.8, `${mapa.nombre}: la foto quedo ${proporcion.toFixed(2)}:1`);
+  }
 });
 
 test("en un mapa grande queda del tamaño de siempre", () => {
@@ -69,6 +46,25 @@ test("en un mapa grande queda del tamaño de siempre", () => {
   const { ancho, altoFoto } = medidaDeLaTarjeta({ w: 900, h: 800 });
   assert.equal(ancho, ANCHO_MAXIMO);
   assert.equal(altoFoto, ALTO_FOTO_MAXIMO);
+});
+
+test("en un mapa angosto se achica el ANCHO, no la foto", () => {
+  // Lo que se recorta es el texto, que se acomoda solo; la foto se acompaña
+  // para no deformarse, y por eso baja proporcionalmente y no de golpe.
+  const grande = medidaDeLaTarjeta({ w: 900, h: 800 });
+  const chico = medidaDeLaTarjeta({ w: 353, h: 480 });
+  assert.ok(chico.ancho < grande.ancho, "no se achico a lo ancho");
+  assert.ok(chico.altoFoto <= grande.altoFoto, "la foto crecio en un mapa mas chico");
+  assert.ok(Math.abs((chico.ancho / chico.altoFoto) - (grande.ancho / grande.altoFoto)) < 0.1,
+    "cambio la proporcion al achicarse");
+});
+
+test("sin medida se usa el tamaño de siempre", () => {
+  // Misma regla que en el resto de la app: sin dato no se cambia nada. Una
+  // tarjeta diminuta por una medicion que fallo seria peor que una grande.
+  for (const sinNada of [null, undefined, {}, { w: 0, h: 0 }]) {
+    assert.deepEqual(medidaDeLaTarjeta(sinNada), { ancho: ANCHO_MAXIMO, altoFoto: ALTO_FOTO_MAXIMO });
+  }
 });
 
 test("nunca se achica tanto que deje de leerse", () => {
@@ -79,13 +75,6 @@ test("nunca se achica tanto que deje de leerse", () => {
   }
 });
 
-test("sin medida se usa el tamaño de siempre", () => {
-  // Misma regla que en el resto de la app: sin dato no se cambia nada. Una
-  // tarjeta diminuta por una medicion que fallo seria peor que una grande.
-  for (const sinNada of [null, undefined, {}, { w: 0, h: 0 }]) {
-    assert.deepEqual(medidaDeLaTarjeta(sinNada), { ancho: ANCHO_MAXIMO, altoFoto: ALTO_FOTO_MAXIMO });
-  }
-});
 
 test("mas mapa nunca da una tarjeta mas chica", () => {
   let anchoAnterior = 0;

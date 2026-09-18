@@ -329,12 +329,44 @@ const RUTAS = [
     anotar();
     return estado.usuario;
   }],
-  ["GET", "/users/:id/reputation", () => fijos.reputacion],
-  ["GET", "/users/:id/reviews", () => estado.resenas],
+  ["GET", "/users/:id/reputation", ({ id: quien }) => {
+    if (quien === estado.usuario.id) return fijos.reputacion;
+    // Los dueños: un historial mas chico y coherente con sus propias reseñas.
+    const suyas = estado.resenas.filter((r) => {
+      const auto = estado.autos.find((a) => a.id === r.listingId);
+      return auto?.ownerId === quien;
+    });
+    const promedio = suyas.length
+      ? suyas.reduce((t, r) => t + (Number(r.rating) || 0), 0) / suyas.length
+      : null;
+    return {
+      average: promedio,
+      count: suyas.length,
+      completed: { asOwner: suyas.length, asDriver: 0 },
+      tagCounts: suyas.reduce((cuenta, r) => {
+        for (const t of r.tags || []) cuenta[t] = (cuenta[t] || 0) + 1;
+        return cuenta;
+      }, {}),
+    };
+  }],
+  ["GET", "/users/:id/reviews", ({ id: quien }) => {
+    if (quien === estado.usuario.id) return estado.resenas;
+    return estado.resenas.filter((r) => {
+      const auto = estado.autos.find((a) => a.id === r.listingId);
+      return auto?.ownerId === quien;
+    });
+  }],
   ["GET", "/users/:id", ({ id: quien }) =>
     quien === estado.usuario.id
       ? estado.usuario
       : fijos.duenos.find((d) => d.id === quien) || estado.usuario],
+  /*
+    La reputacion de CADA uno, no la misma para todos.
+
+    Devolver el mismo bloque para cualquier id dejaba al dueño con "Sin
+    historial" arriba y "14 alquileres terminados" abajo, en la misma tarjeta.
+    Una demo que se contradice sola es peor que una sin datos.
+  */
 
   // ── Los autos ───────────────────────────────────────────────────────────
   ["GET", "/listings/me", () => estado.autos.filter((a) => a.ownerId === estado.usuario.id).map(conDueno)],
