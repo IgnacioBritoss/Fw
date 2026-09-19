@@ -963,6 +963,49 @@ export async function settleBooking(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/settle`, { method: "POST" });
 }
 
+// ── EL RECLAMO DE UN DAÑO ──────────────────────────────────────────────
+/*
+  Cuando el auto vuelve, el dueño lo revisa. El depósito en garantía ya NO se
+  libera en el instante de la devolución: queda retenido unas horas para que
+  haya tiempo de mirar el auto. Sin esa ventana el reclamo llegaría siempre
+  tarde, porque no habría retención que capturar.
+
+  El dueño RECLAMA y un administrador RESUELVE cuánto se cobra. El dueño nunca
+  cobra solo: es plata de otra persona y las dos partes tienen intereses
+  opuestos exactamente acá.
+*/
+
+/** En qué anda la revisión: si se puede reclamar, hasta cuándo, y los reclamos. */
+export async function getEstadoDelDano(bookingId) {
+  return apiFetch(`/bookings/${bookingId}/damage`);
+}
+
+/** El dueño abre el reclamo. `evidenceUrls` son las fotos ya subidas. */
+export async function crearReclamoDeDano(bookingId, { description, claimedAmountMinor, evidenceUrls }) {
+  return apiFetch(`/bookings/${bookingId}/damage`, {
+    method: "POST",
+    body: JSON.stringify({ description, claimedAmountMinor, evidenceUrls }),
+  });
+}
+
+/** "Está todo bien": suelta la garantía sin esperar a que venza el plazo. */
+export async function confirmarRevisionOk(bookingId) {
+  return apiFetch(`/bookings/${bookingId}/inspection-ok`, { method: "POST" });
+}
+
+/** Los reclamos sin resolver (admin). */
+export async function adminGetReclamos() {
+  return apiFetch("/admin/damage-claims");
+}
+
+/** Aceptar cobra del depósito; rechazar libera la garantía entera (admin). */
+export async function adminResolverReclamo(claimId, { aceptar, amountMinor, nota }) {
+  return apiFetch(`/admin/damage-claims/${claimId}/resolve`, {
+    method: "POST",
+    body: JSON.stringify({ aceptar, ...(amountMinor != null ? { amountMinor } : {}), nota }),
+  });
+}
+
 export async function getBookingLedger(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/ledger`);
 }

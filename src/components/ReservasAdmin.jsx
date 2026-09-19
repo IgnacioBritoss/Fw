@@ -32,6 +32,7 @@ import { shortDate } from "../i18n/dates";
 import { adminGetBookings, captureDeposit, settleBooking } from "../services/api";
 import { garantiaDeLaReserva, revisarCaptura, liquidacionPendiente } from "../services/movimientos";
 import Spinner from "./Spinner";
+import ReclamosAdmin from "./ReclamosAdmin";
 
 const s = {
   card: { background: "var(--fw-surface)", borderRadius: 12, padding: 18, marginBottom: 12, border: "1px solid var(--fw-line-soft)" },
@@ -215,6 +216,10 @@ export default function ReservasAdmin() {
 
   return (
     <div>
+      {/* Los reclamos primero: es lo único de esta pantalla que tiene a alguien
+          esperando del otro lado. Mientras un reclamo está abierto, el depósito
+          de quien alquiló sigue retenido y el dueño no cobró su daño. */}
+      <ReclamosAdmin />
       {reservas.map(r => (
         <div key={r.id} style={s.card}>
           <div style={s.fila}>

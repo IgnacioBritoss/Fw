@@ -33,6 +33,7 @@ import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import { tramoPendienteDeReserva } from "../../services/pago";
 import { decidirCancelacion, avisoDeCancelacion } from "../../services/cancelacion";
+import RevisarElAuto from "../../components/RevisarElAuto";
 import StatusChip from "../../components/StatusChip";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import { useI18n } from "../../i18n/core";
@@ -166,6 +167,15 @@ export default function MyBookings() {
   // con apretar un botón: el cartel pide escribir la frase. Ver
   // components/ConfirmarEscribiendo.jsx.
   const [cancelando, setCancelando] = useState(null);
+  /*
+    LA RESERVA QUE EL DUEÑO ESTÁ REVISANDO.
+
+    El depósito en garantía ya no se libera en el instante de la devolución:
+    queda retenido unas horas para que el dueño pueda mirar el auto. Acá se
+    abre esa pantalla, que es donde dice "está todo bien" o reclama un daño.
+    Ver components/RevisarElAuto.
+  */
+  const [revisando, setRevisando] = useState(null);
 
   // Trae todas las reservas del usuario. Se reutiliza tras cada acción.
   const load = useCallback(() => {
@@ -325,6 +335,15 @@ export default function MyBookings() {
             {actionLoading === `${b.id}-cancel` ? "..." : t("common.cancel")}
           </button>
         )}
+        {/* El dueño revisa el auto que volvió. Se ofrece en todas las
+            devueltas y no solo mientras el plazo corre: pasada la ventana,
+            esta misma pantalla es donde el dueño ve en qué quedó el reclamo
+            que hizo. */}
+        {isOwner && b.status === "COMPLETED" && (
+          <button style={s.btnQR} onClick={() => setRevisando(b)}>
+            {t("reclamo.revisar")}
+          </button>
+        )}
         {/* La reseña se habilita solo cuando la reserva terminó y el pago se
             completó: es lo que hace que las puntuaciones signifiquen algo. */}
         {canReview && (
@@ -447,6 +466,15 @@ export default function MyBookings() {
         myOwnerBookings.length === 0 ? (
           <div style={s.empty}>{t("bookings.noRequests")}</div>
         ) : myOwnerBookings.map((b) => <BookingCard key={b.id} b={b} isOwner={true} />)
+      )}
+
+      {revisando && (
+        <RevisarElAuto
+          bookingId={revisando.id}
+          moneda={revisando.currency}
+          onCerrar={() => setRevisando(null)}
+          onListo={load}
+        />
       )}
 
       <ConfirmarEscribiendo
