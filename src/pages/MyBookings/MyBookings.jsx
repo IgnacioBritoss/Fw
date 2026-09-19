@@ -32,6 +32,7 @@ import {
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import { tramoPendienteDeReserva } from "../../services/pago";
+import { decidirCancelacion, avisoDeCancelacion } from "../../services/cancelacion";
 import StatusChip from "../../components/StatusChip";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import { useI18n } from "../../i18n/core";
@@ -202,14 +203,51 @@ export default function MyBookings() {
   // idioma del navegador y con "Aceptar" a un centímetro de "Cancelar". Para
   // algo que no se puede deshacer es poco. Ahora abre el cartel de la app, que
   // pide escribir la frase.
-  const handleCancel = (id) => setCancelando(id);
+  // El rol viaja con el id porque la política no es la misma: el dueño que se
+  // baja devuelve todo, siempre. Ver services/cancelacion.js.
+  const handleCancel = (id, laCancelaElDueno) => setCancelando({ id, laCancelaElDueno });
 
   const confirmarCancelacion = async () => {
-    const id = cancelando;
+    const id = cancelando?.id;
     if (!id) return;
     await runAction(`${id}-cancel`, () => cancelBooking(id));
     setCancelando(null);
   };
+
+  /*
+    QUÉ VA A PASAR SI SE CANCELA, DICHO ANTES DE CANCELAR.
+
+    La política existe desde el servidor, pero el servidor decide DESPUÉS de
+    apretar, y para entonces ya no hay nada que decidir. Lo único que esta
+    pantalla puede aportar es la diferencia entre cancelar hoy y cancelar
+    mañana, que es justo lo que cambia lo que la persona hace.
+  */
+  const reservaCancelando = cancelando
+    ? bookings.find(b => b.id === cancelando.id)
+    : null;
+  const decisionCancelar = reservaCancelando
+    ? decidirCancelacion({
+      status: reservaCancelando.status,
+      startDate: reservaCancelando.startDate,
+      laCancelaElDueno: Boolean(cancelando?.laCancelaElDueno),
+    })
+    : null;
+  const avisoCancelar = reservaCancelando
+    ? avisoDeCancelacion(reservaCancelando, decisionCancelar)
+    : null;
+
+  /*
+    LA PLATA DE UNA DEVOLUCIÓN NO SE CONVIERTE NI SE REDONDEA.
+
+    El resto de la pantalla muestra los precios con `precio()`, que los pasa a
+    la moneda que la persona eligió para mirar el catálogo. Acá eso estaría
+    mal: lo que vuelve a la tarjeta son $204.820 USD exactos, en la moneda de
+    la reserva, y prometer "$205.000" es prometer un número que no va a
+    coincidir con el resumen. Un peso de diferencia en un cartel de devolución
+    es un reclamo.
+  */
+  const plataDeLaReserva = (valor) =>
+    `$${Number(valor || 0).toLocaleString("es-AR")} ${String(reservaCancelando?.currency || "USD").toUpperCase()}`;
 
   // Tarjeta de una reserva: decide qué botones se muestran según el estado y el
   // rol (dueño o conductor).
@@ -283,7 +321,7 @@ export default function MyBookings() {
           </button>
         )}
         {canCancel && (
-          <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleCancel(b.id)}>
+          <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleCancel(b.id, isOwner)}>
             {actionLoading === `${b.id}-cancel` ? "..." : t("common.cancel")}
           </button>
         )}
@@ -414,10 +452,15 @@ export default function MyBookings() {
       <ConfirmarEscribiendo
         abierto={Boolean(cancelando)}
         titulo={t("bookings.confirmCancel")}
-        cuerpo={t("bookings.cancelBody")}
+        cuerpo={avisoCancelar
+          ? `${t("bookings.cancelBody")} ${t(avisoCancelar.clave, {
+            devuelve: plataDeLaReserva(avisoCancelar.devuelve),
+            retiene: plataDeLaReserva(avisoCancelar.retiene),
+          })}`
+          : t("bookings.cancelBody")}
         frase={t("bookings.cancelPhrase")}
         textoBoton={t("bookings.cancelDo")}
-        trabajando={actionLoading === `${cancelando}-cancel`}
+        trabajando={actionLoading === `${cancelando?.id}-cancel`}
         onConfirmar={confirmarCancelacion}
         onCerrar={() => setCancelando(null)}
       />
