@@ -951,6 +951,18 @@ export async function getTarjetasGuardadas() {
  * la que se pagó, el navegador, el detalle del procesador— a quien no es
  * administrador, así que esto se puede mostrar tal cual llega.
  */
+/**
+ * VOLVER A LIQUIDAR UNA RESERVA DEVUELTA. Solo un administrador.
+ *
+ * Suelta el depósito si sigue retenido y le transfiere al dueño si no se
+ * transfirió antes. Existe porque la devolución del auto no se cae cuando la
+ * liquidación falla —el auto volvió igual— y confirmar la devolución otra vez
+ * no se puede: el código ya se consumió.
+ */
+export async function settleBooking(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/settle`, { method: "POST" });
+}
+
 export async function getBookingLedger(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/ledger`);
 }

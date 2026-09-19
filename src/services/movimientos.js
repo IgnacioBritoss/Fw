@@ -100,6 +100,36 @@ export function garantiaDeLaReserva(reserva) {
   };
 }
 
+/**
+ * SI A UNA RESERVA DEVUELTA LE FALTA LIQUIDAR.
+ *
+ * ── Qué es liquidar ───────────────────────────────────────────────────────
+ * Al confirmarse la devolución, el servidor suelta el depósito retenido y le
+ * transfiere al dueño lo que le toca. Eso habla con el procesador y puede
+ * fallar por su cuenta —el caso más común es el dueño que todavía no terminó
+ * el alta de cobros, y entonces la transferencia se rechaza—.
+ *
+ * La devolución NO se cae por eso: el auto volvió igual. Pero la reserva queda
+ * cerrada con el dueño sin cobrar, y confirmar la devolución otra vez no se
+ * puede (el código ya se consumió). Alguien lo tiene que poder reintentar, y
+ * esto es lo que decide a cuáles ofrecérselo.
+ *
+ * ── Cómo se sabe, con lo que trae /admin/bookings ─────────────────────────
+ * `ownerTransferId` queda escrito cuando la transferencia sale. Una reserva
+ * COMPLETED, con plata para el dueño, y sin ese identificador, es una que no
+ * se liquidó.
+ *
+ * El caso de cero —una reserva sin nada que transferir— se descarta aparte:
+ * ahí nunca va a haber identificador y el botón quedaría prendido para
+ * siempre ofreciendo arreglar algo que no está roto.
+ */
+export function liquidacionPendiente(reserva) {
+  if (reserva?.status !== "COMPLETED") return false;
+  const alDueno = reserva?.ownerPayoutSnapshot;
+  if (!alDueno || alDueno <= 0) return false;
+  return !reserva?.ownerTransferId;
+}
+
 const MOTIVO_MINIMO = 10;
 const MOTIVO_MAXIMO = 500;
 

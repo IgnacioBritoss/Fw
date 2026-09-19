@@ -11,6 +11,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   comoSeLeeElMovimiento, paraMostrar, garantiaDeLaReserva, revisarCaptura,
+  liquidacionPendiente,
 } from "./movimientos.js";
 
 const hecho = (type, createdAt) => ({ id: type + createdAt, type, status: "PAID", amountMinor: 3000000, currency: "ars", createdAt });
@@ -131,4 +132,39 @@ test("EL MOTIVO TIENE QUE EXPLICAR ALGO", () => {
 test("los dos errores a la vez se avisan los dos", () => {
   const r = revisarCaptura({ monto: "", motivo: "", topeMinor: TOPE });
   assert.equal(Object.keys(r.errores).length, 2);
+});
+
+// ── La reserva devuelta a la que le falta liquidar ─────────────────────────
+
+test("una devuelta sin transferencia al dueño pide reintento", () => {
+  /*
+    Al confirmarse la devolucion el servidor suelta el deposito y le transfiere
+    al dueño. Eso habla con Stripe y puede fallar solo —el caso comun es el
+    dueño que no termino el alta de cobros—. La devolucion no se cae por eso,
+    asi que la reserva queda cerrada con el dueño sin cobrar y alguien lo tiene
+    que poder reintentar.
+  */
+  assert.equal(liquidacionPendiente({
+    status: "COMPLETED", ownerPayoutSnapshot: 200000, ownerTransferId: null,
+  }), true);
+});
+
+test("y una que si transfirio, no", () => {
+  assert.equal(liquidacionPendiente({
+    status: "COMPLETED", ownerPayoutSnapshot: 200000, ownerTransferId: "tr_1",
+  }), false);
+});
+
+test("una reserva que todavia no se devolvio no se liquida", () => {
+  for (const status of ["ACCEPTED", "IN_PROGRESS", "RETURN_PENDING", "CANCELLED_BY_RENTER"]) {
+    assert.equal(liquidacionPendiente({ status, ownerPayoutSnapshot: 200000 }), false, status);
+  }
+});
+
+test("sin plata para el dueño el boton no se prende nunca", () => {
+  // Ahi no va a haber identificador de transferencia jamas, y el boton
+  // quedaria ofreciendo arreglar algo que no esta roto.
+  assert.equal(liquidacionPendiente({ status: "COMPLETED", ownerPayoutSnapshot: 0 }), false);
+  assert.equal(liquidacionPendiente({ status: "COMPLETED" }), false);
+  assert.equal(liquidacionPendiente(null), false);
 });

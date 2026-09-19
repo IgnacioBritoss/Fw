@@ -55,6 +55,13 @@ const s = {
   qrBox: { background: "var(--fw-surface)", border: "1px solid var(--fw-border)", borderRadius: 16, padding: 28, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.06)" },
   tokenDisplay: { background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderRadius: 10, padding: "10px 16px", fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5, color: "var(--fw-text)", marginBottom: 12, wordBreak: "break-all" },
   tokenLabel: { fontSize: 12, color: "var(--fw-text-4)", marginBottom: 6 },
+  // Gris y no rojo, a propósito: el rojo dice "algo salió mal, hacé algo", y
+  // acá no hay nada que hacer ni nada que salió mal. El auto volvió.
+  pendiente: {
+    background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)",
+    borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-text-2)",
+    marginBottom: 20, textAlign: "left", lineHeight: 1.6,
+  },
   input: { width: "100%", padding: "12px 16px", border: "1.5px solid var(--fw-border)", borderRadius: 10, fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12 },
   btn: { width: "100%", padding: "14px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
   btnDisabled: { width: "100%", padding: "14px", background: "var(--fw-blue-line)", color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "not-allowed", marginBottom: 10 },
@@ -106,6 +113,13 @@ export default function QRFlow() {
   const [tokenInput, setTokenInput] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  /*
+    LA DEVOLUCIÓN QUEDÓ HECHA Y LA PLATA NO. No es un error y no se pinta como
+    uno: el auto volvió, el alquiler terminó, y lo que falta es que se suelte
+    el depósito y que le llegue al dueño. Callarlo sería peor, porque quien
+    devolvió el auto se queda esperando un depósito que no aparece.
+  */
+  const [pendiente, setPendiente] = useState(false);
   const [error, setError] = useState(null);
   /*
     LA ENTREGA DEL AUTO ES EL MOMENTO MÁS FÍSICO DE TODO EL ALQUILER: las dos
@@ -165,8 +179,27 @@ export default function QRFlow() {
     setConfirming(true);
     setError(null);
     try {
-      if (mode === "pickup") await confirmPickup(bookingId, limpio);
-      else await confirmReturn(bookingId, limpio);
+      if (mode === "pickup") {
+        await confirmPickup(bookingId, limpio);
+      } else {
+        /*
+          LA DEVOLUCIÓN Y LA PLATA SON DOS COSAS.
+
+          Al confirmar la devolución el servidor también suelta el depósito y
+          le transfiere al dueño, y eso puede fallar por su cuenta —el caso
+          más común es el dueño que todavía no terminó el alta de cobros—.
+          Antes eso volvía como un error y esta pantalla mostraba "error del
+          servidor" sobre una devolución que YA había quedado hecha: se
+          recargaba y estaba todo listo. Dos pantallas diciendo cosas
+          distintas sobre lo mismo.
+
+          Ahora el servidor contesta bien y avisa aparte que la liquidación
+          quedó pendiente. El auto volvió; lo que falta es plata, y eso se
+          dice sin llamarlo error.
+        */
+        const r = await confirmReturn(bookingId, limpio);
+        if (r?.settlement && r.settlement.ok === false) setPendiente(true);
+      }
       setConfirmed(true);
     } catch (err) {
       setError(err.message || tr("qr.errBadCode"));
@@ -212,6 +245,7 @@ export default function QRFlow() {
         <div style={s.sub}>
           {tr(mode === "pickup" ? "qr.pickupDoneNote" : "qr.returnDoneNote")}
         </div>
+        {pendiente && <div style={s.pendiente}>{tr("qr.liquidacionPendiente")}</div>}
         <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
       </div>
     );

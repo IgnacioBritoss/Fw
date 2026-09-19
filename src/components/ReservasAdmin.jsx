@@ -29,8 +29,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../i18n/core";
 import { shortDate } from "../i18n/dates";
-import { adminGetBookings, captureDeposit } from "../services/api";
-import { garantiaDeLaReserva, revisarCaptura } from "../services/movimientos";
+import { adminGetBookings, captureDeposit, settleBooking } from "../services/api";
+import { garantiaDeLaReserva, revisarCaptura, liquidacionPendiente } from "../services/movimientos";
 import Spinner from "./Spinner";
 
 const s = {
@@ -47,11 +47,60 @@ const s = {
   aviso: { fontSize: 12, color: "var(--fw-text-4)", marginTop: 6, lineHeight: 1.6 },
   cobrar: { marginTop: 12, padding: "10px 18px", background: "var(--fw-amber)", color: "#fff", border: "none", borderRadius: 9, fontSize: 13.5, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" },
   hecho: { marginTop: 10, fontSize: 12.5, color: "var(--fw-green-text-2)" },
+  liquidar: { marginTop: 10, padding: "9px 16px", background: "transparent", color: "var(--fw-blue-text)", border: "1.5px solid var(--fw-blue-line)", borderRadius: 9, fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" },
   vacio: { textAlign: "center", padding: "40px 0", color: "var(--fw-text-4)" },
 };
 
 const plata = (valor, moneda = "ARS") =>
   `$${Number(valor || 0).toLocaleString("es-AR")} ${String(moneda).toUpperCase()}`;
+
+/**
+ * REINTENTAR LA LIQUIDACIÓN DE UNA RESERVA DEVUELTA.
+ *
+ * Aparece solo donde hace falta: una reserva devuelta, con plata para el dueño,
+ * y sin la transferencia hecha (services/movimientos.js). Es el caso en que la
+ * devolución salió bien y la plata no, que el servidor ya no trata como un
+ * error de la devolución —el auto volvió igual— pero que hay que poder
+ * terminar, porque confirmar la devolución otra vez no se puede.
+ *
+ * No duplica nada: el servidor suelta el depósito solo si sigue retenido y
+ * transfiere solo si no transfirió antes.
+ */
+function Liquidar({ reserva, onListo }) {
+  const { t: tr } = useI18n();
+  const [mandando, setMandando] = useState(false);
+  const [fallo, setFallo] = useState(null);
+  const [listo, setListo] = useState(false);
+
+  if (!liquidacionPendiente(reserva)) return null;
+  if (listo) return <div style={s.hecho}>{tr("admin.settleDone")}</div>;
+
+  const mandar = async () => {
+    setMandando(true);
+    setFallo(null);
+    try {
+      await settleBooking(reserva.id);
+      setListo(true);
+      onListo?.();
+    } catch (err) {
+      // El mensaje del servidor tal cual: dice QUÉ rechazó Stripe, que es lo
+      // único que permite saber si falta el alta del dueño o es otra cosa.
+      setFallo(err.message || tr("admin.settleFailed"));
+    } finally {
+      setMandando(false);
+    }
+  };
+
+  return (
+    <div>
+      <div style={s.aviso}>{tr("admin.settlePending")}</div>
+      <button type="button" style={s.liquidar} disabled={mandando} onClick={mandar}>
+        {mandando ? tr("common.loading") : tr("admin.settleRetry")}
+      </button>
+      {fallo && <div style={s.error}>{fallo}</div>}
+    </div>
+  );
+}
 
 /** El formulario de cobro de la garantía, para UNA reserva. */
 function CobrarGarantia({ reserva, onCobrado }) {
@@ -194,6 +243,11 @@ export default function ReservasAdmin() {
               ? <div style={s.hecho}>{tr("captura.listo")}</div>
               : <CobrarGarantia reserva={r} onCobrado={() => { setCobrada(r.id); cargar(); }} />
           )}
+
+          {/* Fuera del desplegable de la garantía, porque no es lo mismo: la
+              garantía se cobra cuando hay un daño y es una decisión; esto es un
+              trabajo que quedó a medias y hay que terminar. */}
+          <Liquidar reserva={r} onListo={cargar} />
         </div>
       ))}
     </div>
