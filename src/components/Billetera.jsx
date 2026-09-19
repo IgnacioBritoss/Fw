@@ -1,10 +1,10 @@
 // ============================================================================
 //  Billetera — Vincular una tarjeta y verla guardada
 // ----------------------------------------------------------------------------
-//  Dos cosas en un archivo porque son la misma: el formulario donde se carga
-//  una tarjeta (`FormularioTarjeta`) y la lista de las que ya están
-//  (`Billetera`, que es la sección "Pagos" de Ajustes y también aparece dentro
-//  de la pantalla de pago).
+//  La lista de tarjetas guardadas de la sección "Pagos" de Ajustes. La tarjeta
+//  con la que se cargan los datos vive en components/TarjetaVirtual y es la
+//  MISMA que usa la pantalla de pago: acá no se cobra, así que sus campos son
+//  nuestros, pero el dibujo, los colores y el giro son los de allá.
 //
 //  ── QUÉ HACE Y QUÉ NO HACE ESTA PANTALLA ──────────────────────────────────
 //  HACE: reconocer la tarjeta mientras se escribe, avisar en el momento si el
@@ -14,7 +14,7 @@
 //  services/tarjeta.js con sus pruebas.
 //
 //  NO HACE: cobrar. El cobro lo hace Stripe con SUS campos, en el momento del
-//  pago (ver CamposDeStripe). Lo que queda guardado de una tarjeta es la ficha
+//  pago (ver TarjetaVirtual). Lo que queda guardado de una tarjeta es la ficha
 //  —marca, últimos cuatro, vencimiento y nombre—, que es lo mismo que muestra
 //  cualquier aplicación cuando dice "Visa ···· 4242". El número entero no se
 //  guarda en ningún lado, y las pruebas de tarjeta.js y billetera.js están
@@ -23,33 +23,17 @@
 import { useState } from "react";
 import { useI18n } from "../i18n/core";
 import { useAuth } from "../context/AuthContext";
-import {
-  marcaDeLaTarjeta, numeroConEspacios, soloDigitos, revisarTarjeta,
-  comoSeLee, vencimientoComoSeLee, estaVencida,
-} from "../services/tarjeta";
+import { comoSeLee, vencimientoComoSeLee, estaVencida } from "../services/tarjeta";
+import { TarjetaPropia } from "./TarjetaVirtual";
 import {
   leerTarjetas, agregarTarjeta, borrarTarjeta, elegirTarjeta,
 } from "../services/billetera";
 
 const s = {
-  campo: { marginBottom: 14 },
-  etiqueta: { display: "block", fontSize: 12.5, fontWeight: 600, color: "var(--fw-text-3)", marginBottom: 6 },
-  entrada: {
-    width: "100%", padding: "11px 12px", borderRadius: 10, fontSize: 15,
-    fontFamily: "inherit", background: "var(--fw-surface)", color: "var(--fw-text)",
-    border: "1.5px solid var(--fw-border)", outline: "none", boxSizing: "border-box",
-  },
-  error: { fontSize: 12, color: "var(--fw-red-text-2)", marginTop: 5 },
-  aviso: { fontSize: 12, color: "var(--fw-text-4)", marginTop: 5 },
-  fila: { display: "flex", gap: 12 },
   tarjeta: {
     display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
     borderRadius: 12, border: "1px solid var(--fw-border)",
     background: "var(--fw-surface)", marginBottom: 10,
-  },
-  boton: {
-    width: "100%", padding: "13px", background: "var(--fw-blue)", color: "#fff",
-    border: "none", borderRadius: 10, fontSize: 14.5, fontWeight: 700, cursor: "pointer",
   },
   botonSuave: {
     padding: "10px 16px", background: "transparent", color: "var(--fw-text-2)",
@@ -109,159 +93,6 @@ export function MarcaDeTarjeta({ marca, tamaño = 34 }) {
   );
 }
 
-/**
- * El vencimiento se escribe en UN campo, no en dos.
- *
- * En el plástico está escrito así —04/28— y dos campos separados obligan a
- * saltar de uno al otro con el dedo o con el tabulador en el medio de un número
- * que se lee de corrido. La barra se pone sola cuando se pasa el segundo
- * dígito, así que se teclea "0428" y aparece "04/28".
- */
-function partirVencimiento(texto) {
-  const d = soloDigitos(texto).slice(0, 4);
-  return { mes: d.slice(0, 2), anio: d.slice(2) };
-}
-function vencimientoEscrito(texto) {
-  const { mes, anio } = partirVencimiento(texto);
-  return anio ? `${mes}/${anio}` : mes;
-}
-
-/**
- * El formulario para vincular una tarjeta.
- *
- * `onGuardar` recibe la FICHA ya revisada (sin número). Quien lo use decide qué
- * hacer con ella: Ajustes la guarda en la billetera, la pantalla de pago la
- * guarda y sigue con el cobro.
- */
-export function FormularioTarjeta({ onGuardar, onCancelar, textoBoton }) {
-  const { t: tr } = useI18n();
-  const { user } = useAuth();
-  const nombreCuenta = user?.name || `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
-
-  const [numero, setNumero] = useState("");
-  const [vencimiento, setVencimiento] = useState("");
-  const [codigo, setCodigo] = useState("");
-  // El nombre viene puesto con el de la cuenta: es el caso normal —la tarjeta
-  // es de quien la está cargando— y se puede corregir si el plástico dice otra
-  // cosa. Empezar con el campo vacío sería pedir que escriba su propio nombre.
-  const [nombre, setNombre] = useState(nombreCuenta);
-  // Los errores aparecen recién cuando se intenta guardar. Marcar en rojo un
-  // número mientras se escribe es marcarlo en rojo siempre, porque hasta el
-  // último dígito está incompleto.
-  const [mostrarErrores, setMostrarErrores] = useState(false);
-
-  const marca = marcaDeLaTarjeta(numero);
-  const { mes, anio } = partirVencimiento(vencimiento);
-  const revisado = revisarTarjeta({ numero, mes, anio, codigo, nombre }, { nombreCuenta });
-  const errores = mostrarErrores ? revisado.errores : {};
-
-  /*
-    El borde rojo se escribe ENTERO y no solo el color.
-
-    React avisa —y tiene razón— cuando un estilo pisa una propiedad corta con
-    una larga: `s.entrada` trae `border` y agregarle `borderColor` deja al
-    navegador decidiendo cuál gana según el orden en que se apliquen, que no
-    está garantizado. Se reemplaza el borde completo y listo.
-  */
-  const borde = (campo) => (errores[campo]
-    ? { border: "1.5px solid var(--fw-red)" }
-    : {});
-
-  const guardar = (evento) => {
-    evento.preventDefault();
-    setMostrarErrores(true);
-    if (!revisado.ok) return;
-    onGuardar(revisado.tarjeta);
-  };
-
-  return (
-    <form onSubmit={guardar} noValidate>
-      <div style={s.campo}>
-        <label style={s.etiqueta} htmlFor="fw-tarjeta-numero">{tr("tarjeta.numero")}</label>
-        <div style={{ position: "relative" }}>
-          <input
-            id="fw-tarjeta-numero"
-            inputMode="numeric"
-            autoComplete="cc-number"
-            placeholder="4242 4242 4242 4242"
-            value={numeroConEspacios(numero)}
-            onChange={(e) => setNumero(soloDigitos(e.target.value))}
-            style={{ ...s.entrada, paddingRight: 56, ...borde("numero") }}
-          />
-          {/* El logo aparece con el PRIMER dígito. Ver tarjeta.js: los primeros
-              números son el emisor, así que no hace falta el número entero. */}
-          <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}>
-            <MarcaDeTarjeta marca={marca.id} tamaño={32} />
-          </div>
-        </div>
-        {errores.numero && <div style={s.error}>{tr(errores.numero)}</div>}
-      </div>
-
-      <div style={s.fila}>
-        <div style={{ ...s.campo, flex: 1 }}>
-          <label style={s.etiqueta} htmlFor="fw-tarjeta-vence">{tr("tarjeta.vencimiento")}</label>
-          <input
-            id="fw-tarjeta-vence"
-            inputMode="numeric"
-            autoComplete="cc-exp"
-            placeholder="MM/AA"
-            value={vencimientoEscrito(vencimiento)}
-            onChange={(e) => setVencimiento(e.target.value)}
-            style={{ ...s.entrada, ...borde("vencimiento") }}
-          />
-          {errores.vencimiento && <div style={s.error}>{tr(errores.vencimiento)}</div>}
-        </div>
-        <div style={{ ...s.campo, flex: 1 }}>
-          <label style={s.etiqueta} htmlFor="fw-tarjeta-codigo">{tr("tarjeta.codigo")}</label>
-          <input
-            id="fw-tarjeta-codigo"
-            inputMode="numeric"
-            autoComplete="cc-csc"
-            // Amex pide cuatro dígitos y el resto tres: el tope sale de la
-            // marca, así que quien tiene una Amex puede escribir el suyo entero.
-            placeholder={"0".repeat(marca.codigo)}
-            maxLength={marca.codigo}
-            value={soloDigitos(codigo).slice(0, marca.codigo)}
-            onChange={(e) => setCodigo(soloDigitos(e.target.value))}
-            style={{ ...s.entrada, ...borde("codigo") }}
-          />
-          {errores.codigo && <div style={s.error}>{tr(errores.codigo, { n: marca.codigo })}</div>}
-        </div>
-      </div>
-
-      <div style={s.campo}>
-        <label style={s.etiqueta} htmlFor="fw-tarjeta-nombre">{tr("tarjeta.nombre")}</label>
-        <input
-          id="fw-tarjeta-nombre"
-          autoComplete="cc-name"
-          placeholder={nombreCuenta || "NOMBRE APELLIDO"}
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          style={{ ...s.entrada, textTransform: "uppercase", ...borde("nombre") }}
-        />
-        {errores.nombre
-          ? <div style={s.error}>{tr(errores.nombre, { cuenta: nombreCuenta })}</div>
-          /* Un nombre recortado —"M REY" por "Martina Gabriela Rey"— es la misma
-             persona y pasa. Se avisa igual, porque quien lo ve tiene que poder
-             darse cuenta si se equivocó de tarjeta. */
-          : revisado.coincidencia === "parecido"
-            ? <div style={s.aviso}>{tr("tarjeta.nombreParecido", { cuenta: nombreCuenta })}</div>
-            : null}
-      </div>
-
-      <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-        {onCancelar && (
-          <button type="button" style={s.botonSuave} onClick={onCancelar}>{tr("common.cancel")}</button>
-        )}
-        <button type="submit" data-fw-accion style={{ ...s.boton, flex: 1 }}>
-          {textoBoton || tr("tarjeta.vincular")}
-        </button>
-      </div>
-      <div style={{ ...s.aviso, textAlign: "center", marginTop: 12 }}>{tr("tarjeta.queSeGuarda")}</div>
-    </form>
-  );
-}
-
 /** Un renglón de la lista: la tarjeta como la muestra cualquier aplicación. */
 function Renglon({ tarjeta, elegida, onElegir, onBorrar }) {
   const { t: tr } = useI18n();
@@ -269,7 +100,6 @@ function Renglon({ tarjeta, elegida, onElegir, onBorrar }) {
   return (
     <div style={{
       ...s.tarjeta,
-      // El borde entero, no solo el color: ver `borde()`, más arriba.
       border: `1px solid ${elegida ? "var(--fw-blue)" : "var(--fw-border)"}`,
       background: elegida ? "var(--fw-blue-bg)" : "var(--fw-surface)",
     }}>
@@ -336,9 +166,14 @@ export default function Billetera({ onCambio, compacta = false }) {
           padding: compacta ? 14 : 18, marginTop: tarjetas.length ? 12 : 0,
           background: "var(--fw-surface-2)",
         }}>
-          <FormularioTarjeta
+          {/* La MISMA tarjeta que en la pantalla de pago. Acá no se cobra
+              —solo se guarda la ficha— así que los campos son nuestros, pero
+              el dibujo, los colores y el giro son los mismos: son la misma
+              tarjeta, no dos parecidas. */}
+          <TarjetaPropia
             onGuardar={guardar}
             onCancelar={tarjetas.length ? () => setAgregando(false) : null}
+            nombreCuenta={user?.name || `${user?.firstName || ""} ${user?.lastName || ""}`.trim()}
           />
         </div>
       ) : (

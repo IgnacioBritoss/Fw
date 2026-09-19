@@ -1368,7 +1368,7 @@ export default {
   "pago.cambiarTarjeta": "Change",
   "pago.vinculaPrimero": "Save a card to pay. It stays saved for your next bookings.",
   "pago.porQueDeNuevo": "Stripe asks for the card details on every charge, inside its own fields: neither this app nor your browser stores them.",
-  "pago.modoPrueba": "Test mode: no real money is charged. You can use card 4242 4242 4242 4242, any future expiry date and any three digit code.",
+  "pago.modoPrueba": "Test mode: no real money is charged, and the expiry and code change nothing. The number decides the outcome: 4242 4242 4242 4242 succeeds, 4000 0000 0000 0002 is declined, and 4000 0025 0000 3155 opens the bank's confirmation.",
   "pago.cobroReal": "Stripe processes the payment. The card details never go through this app.",
   "pago.sinPasarela": "Card payments are not configured in this version of the site yet.",
   "pago.noCargoStripe": "The payment form could not be loaded. Check your connection and open this screen again.",
@@ -1461,4 +1461,7 @@ export default {
   "captura.error.motivoVacio": "Write why it is being charged.",
   "captura.error.motivoCorto": "The reason has to explain the damage: one word is not enough.",
   "captura.error.motivoLargo": "The reason is too long.",
+  "tarjeta.titular": "Cardholder",
+  "tarjeta.vence2": "Expires",
+  "tarjeta.verFrente": "Show the front",
 };

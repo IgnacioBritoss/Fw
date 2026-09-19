@@ -51,7 +51,8 @@
 //       servidor calcula el importe —el navegador no elige cuánto se paga— y
 //       devuelve un `clientSecret`, que sirve para pagar ese cobro y nada más.
 //    2. El navegador confirma con Stripe, con los datos de la tarjeta puestos
-//       en campos que son de Stripe (ver CamposDeStripe).
+//       en campos que son de Stripe, apoyados sobre la tarjeta que dibuja
+//       la aplicación (ver components/TarjetaVirtual).
 //    3. SE ESPERA AL SERVIDOR. Este es el paso que no se ve y que hay que
 //       hacer: cuando Stripe le contesta "listo" al navegador, el servidor
 //       todavía no sabe nada. Se entera por un aviso aparte que Stripe le
@@ -73,10 +74,8 @@ import {
 } from "../../services/api";
 import { tramosDelPago, esperarElCobro } from "../../services/pago";
 import { hayPasarela, esModoPrueba } from "../../services/stripe";
-import { tarjetaElegida, agregarTarjeta } from "../../services/billetera";
-import { comoSeLee, vencimientoComoSeLee } from "../../services/tarjeta";
-import { FormularioTarjeta, MarcaDeTarjeta } from "../../components/Billetera";
-import CamposDeStripe from "../../components/CamposDeStripe";
+import { tarjetaElegida } from "../../services/billetera";
+import { TarjetaDeStripe } from "../../components/TarjetaVirtual";
 import MovimientosDelPago from "../../components/MovimientosDelPago";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
@@ -127,8 +126,6 @@ const s = {
     que es justamente lo que esta pantalla tiene que evitar.
   */
   aviso: { background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-text-2)", marginBottom: 16 },
-  tarjetaFila: { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--fw-border)", background: "var(--fw-surface-2)", marginBottom: 14 },
-  cambiar: { background: "none", border: "none", padding: 0, fontFamily: "inherit", fontSize: 12.5, color: "var(--fw-blue-text)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2, flexShrink: 0 },
   step: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, padding: "9px 12px", borderRadius: 8, marginBottom: 8 },
   // El numerito del paso. Redondo y con borde, como una viñeta numerada: dice
   // "esto es una secuencia" antes de que nadie lea una palabra.
@@ -153,11 +150,19 @@ function Row({ label, value }) {
   ACÁ NO SE CONVIERTE LA MONEDA, A PROPÓSITO.
 
   En el resto de la app el precio se muestra en la moneda que eligió cada uno,
-  para poder dimensionarlo. Pero esta es la pantalla del cobro: lo que se debita
-  son pesos argentinos, y escribir "US$ 26" al lado del botón de pagar sería
-  decir que se cobra en dólares. Los números de acá son los de la operación.
+  para poder dimensionarlo. Pero esta es la pantalla del cobro: lo que se
+  debita es lo que dice el servidor, y convertirlo sería escribir al lado del
+  botón de pagar un número que no es el que se va a cobrar.
+
+  ── Y LA MONEDA TAMPOCO SE ESCRIBE A MANO ────────────────────────────────
+  Decía "ARS" fijo. Pero la moneda de una reserva la decide el SERVIDOR y no
+  siempre es esa: sale de una variable suya, y si no está cargada usa dólares.
+  O sea que esta pantalla podía estar diciendo "$87.780 ARS" mientras el cobro
+  salía en otra moneda, que es la peor clase de error posible al lado de un
+  botón que debita. Ahora dice la que el servidor informa.
 */
-const money = (value) => `$${Number(value || 0).toLocaleString("es-AR")} ARS`;
+const money = (value, moneda) =>
+  `$${Number(value || 0).toLocaleString("es-AR")} ${String(moneda || "ARS").toUpperCase()}`;
 
 /** Esperar de verdad. Se pasa a `esperarElCobro`, que no sabe de relojes. */
 const dormir = (ms) => new Promise(listo => setTimeout(listo, ms));
@@ -192,7 +197,7 @@ export default function Payment() {
   /*
     LA PASARELA: `{ stripe, tarjeta }`, o null mientras los campos no estén.
 
-    Lo manda CamposDeStripe cuando termina de montarlos. Null no es un error: es
+    Lo manda TarjetaVirtual cuando termina de montarlos. Null no es un error: es
     "todavía no", y también es lo que llega cuando no hay clave cargada. El
     botón de pagar mira esto para no salir a cobrar con campos que no existen.
   */
@@ -221,13 +226,7 @@ export default function Payment() {
     una lectura síncrona del navegador— así que se calcula, y el contador es lo
     que la vuelve a leer cuando se vincula o se cambia una tarjeta.
   */
-  const [cambiosDeTarjeta, setCambiosDeTarjeta] = useState(0);
-  const tarjeta = useMemo(
-    () => tarjetaElegida(user?.id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user?.id, cambiosDeTarjeta],
-  );
-  const [cambiandoTarjeta, setCambiandoTarjeta] = useState(false);
+  const tarjeta = useMemo(() => tarjetaElegida(user?.id), [user?.id]);
 
   // Trae la reserva y el estado del pago (montos ya calculados por el backend).
   const load = useCallback(async () => {
@@ -347,7 +346,6 @@ export default function Payment() {
       if (!hayPasarela()) {
         await mockConfirmPayment(bookingId, kind);
       } else {
-        if (!tarjeta) { setCambiandoTarjeta(true); return; }
         if (!pasarela) throw new Error(tr("pago.camposNoListos"));
         const resultado = await cobrarConStripe(kind);
         if (resultado.motivo === "rechazado") {
@@ -484,8 +482,8 @@ export default function Payment() {
             {startDate && <Row label={tr("payment.from")} value={longDate(startDate, lang)} />}
             {endDate && <Row label={tr("payment.to")} value={longDate(endDate, lang)} />}
             <Row label={tr("payment.days")} value={days} />
-            {deposit != null && <Row label={tr("payment.heldDeposit")} value={money(deposit)} />}
-            <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total)}</span></div>
+            {deposit != null && <Row label={tr("payment.heldDeposit")} value={money(deposit, payment?.currency ?? booking?.currency)} />}
+            <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total, payment?.currency ?? booking?.currency)}</span></div>
             {/* El registro de todo lo que pasó con la plata. Acá es donde más
                 falta hace: la reserva ya está paga, y si alguien pregunta por
                 un cobro, esto es lo único que lo contesta. */}
@@ -521,12 +519,12 @@ export default function Payment() {
         {endDate && <Row label={tr("payment.to")} value={longDate(endDate, lang)} />}
         <Row label={tr("payment.days")} value={days} />
         {booking?.pricePerDaySnapshot != null && (
-          <Row label={`${money(booking.pricePerDaySnapshot)} x ${days} ${tr(days === 1 ? "common.day" : "common.days")}`}
-            value={money(booking.rentalSubtotalSnapshot ?? booking.pricePerDaySnapshot * days)} />
+          <Row label={`${money(booking.pricePerDaySnapshot, payment?.currency ?? booking?.currency)} x ${days} ${tr(days === 1 ? "common.day" : "common.days")}`}
+            value={money(booking.rentalSubtotalSnapshot ?? booking.pricePerDaySnapshot * days, payment?.currency ?? booking?.currency)} />
         )}
-        {commission != null && <Row label={tr("car.fee")} value={money(commission)} />}
-        {insurance != null && <Row label={tr("payment.insurance")} value={money(insurance)} />}
-        <div style={s.totalRow}><span>Total</span><span style={{ color: "var(--fw-blue)" }}>{money(total)}</span></div>
+        {commission != null && <Row label={tr("car.fee")} value={money(commission, payment?.currency ?? booking?.currency)} />}
+        {insurance != null && <Row label={tr("payment.insurance")} value={money(insurance, payment?.currency ?? booking?.currency)} />}
+        <div style={s.totalRow}><span>Total</span><span style={{ color: "var(--fw-blue)" }}>{money(total, payment?.currency ?? booking?.currency)}</span></div>
       </div>
 
       {/*
@@ -561,7 +559,7 @@ export default function Payment() {
                 </span>
               </span>
               <strong style={{ color: tinta, flexShrink: 0 }}>
-                {money(t.monto)}{t.hecho ? " ✓" : ""}
+                {money(t.monto, payment?.currency ?? booking?.currency)}{t.hecho ? " ✓" : ""}
               </strong>
             </div>
           );
@@ -575,56 +573,18 @@ export default function Payment() {
       </div>
 
       {/*
-        CON QUÉ SE PAGA.
+        CON QUÉ PAGÁS: UNA SOLA TARJETA.
 
-        Tres estados y no uno: sin tarjeta vinculada se vincula acá mismo —no
-        tiene sentido mandar a otra pantalla a quien ya está pagando—, con
-        tarjeta se muestra cuál es y abajo los campos de Stripe, y si no hay
-        clave cargada la pantalla lo dice en vez de dibujar un formulario que no
-        lleva a ningún lado.
+        Antes había dos. Un formulario nuestro para "vincular" la tarjeta y,
+        abajo, los campos de Stripe para cobrarla: los dos pedían lo mismo, uno
+        atrás del otro, y el segundo no se podía saltear porque es el único que
+        cobra. Ahora es una sola, con nuestro dibujo y los campos de Stripe
+        apoyados encima (ver components/TarjetaVirtual).
       */}
       {hayPasarela() && (
         <div style={s.card}>
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--fw-text)" }}>{tr("pago.conQuePagas")}</div>
-
-          {tarjeta && !cambiandoTarjeta && (
-            <div style={s.tarjetaFila}>
-              <MarcaDeTarjeta marca={tarjeta.marca} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--fw-text)" }}>{comoSeLee(tarjeta)}</div>
-                <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 2 }}>
-                  {tarjeta.nombre} · {tr("tarjeta.vence", { fecha: vencimientoComoSeLee(tarjeta) })}
-                </div>
-              </div>
-              <button type="button" style={s.cambiar} onClick={() => setCambiandoTarjeta(true)}>{tr("pago.cambiarTarjeta")}</button>
-            </div>
-          )}
-
-          {(!tarjeta || cambiandoTarjeta) ? (
-            <>
-              <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 14 }}>
-                {tr("pago.vinculaPrimero")}
-              </div>
-              <FormularioTarjeta
-                textoBoton={tr("tarjeta.vincular")}
-                onCancelar={tarjeta ? () => setCambiandoTarjeta(false) : null}
-                onGuardar={(ficha) => {
-                  agregarTarjeta(user?.id, ficha);
-                  setCambiosDeTarjeta(n => n + 1);
-                  setCambiandoTarjeta(false);
-                }}
-              />
-            </>
-          ) : (
-            <>
-              <CamposDeStripe onListo={setPasarela} marcaEsperada={tarjeta?.marca} />
-              {/* Por qué se piden los datos en cada cobro, explicado donde
-                  aparece la pregunta y no en un archivo de ayuda. */}
-              <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 10, lineHeight: 1.6 }}>
-                {tr("pago.porQueDeNuevo")}
-              </div>
-            </>
-          )}
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: "var(--fw-text)" }}>{tr("pago.conQuePagas")}</div>
+          <TarjetaDeStripe onListo={setPasarela} nombre={tarjeta?.nombre || user?.name || ""} />
         </div>
       )}
 
@@ -650,7 +610,7 @@ export default function Payment() {
             distintos, y el segundo puede tardar unos segundos con la tarjeta ya
             debitada: decir siempre "procesando" haría pensar que se colgó. */}
         {esperando ? tr("pago.esperandoConfirmacion") : paying ? tr("payment.processing") : tramoActual
-          ? `${tr(tramoActual.kind === "DEPOSIT_HOLD" ? "payment.holdIt" : "bookings.pay")} ${tr(tramoActual.label)} · ${money(tramoActual.monto)}`
+          ? `${tr(tramoActual.kind === "DEPOSIT_HOLD" ? "payment.holdIt" : "bookings.pay")} ${tr(tramoActual.label)} · ${money(tramoActual.monto, payment?.currency ?? booking?.currency)}`
           : tr("payment.nothingDue")}
       </button>
       <div style={s.secureNote}>{tr("payment.serverAmounts")}</div>

@@ -1367,7 +1367,7 @@ export default {
   "pago.cambiarTarjeta": "Cambia",
   "pago.vinculaPrimero": "Salva una carta per poter pagare. Resta salvata per le prossime prenotazioni.",
   "pago.porQueDeNuevo": "I dati della carta li chiede Stripe a ogni addebito, dentro i suoi campi: né questo sito né il tuo browser li conservano.",
-  "pago.modoPrueba": "Modalità di prova: non viene addebitato denaro vero. Puoi usare la carta 4242 4242 4242 4242, qualsiasi scadenza futura e qualsiasi codice di tre cifre.",
+  "pago.modoPrueba": "Modalità di prova: non viene addebitato denaro vero, e la scadenza e il codice non cambiano nulla. A decidere il risultato è il numero: 4242 4242 4242 4242 va a buon fine, 4000 0000 0000 0002 viene rifiutata, e 4000 0025 0000 3155 apre la conferma della banca.",
   "pago.cobroReal": "Il pagamento lo elabora Stripe. I dati della carta non passano da questo sito.",
   "pago.sinPasarela": "Il pagamento con carta non è ancora configurato in questa versione del sito.",
   "pago.noCargoStripe": "Non è stato possibile caricare il modulo di pagamento. Controlla la connessione e riapri questa schermata.",
@@ -1460,4 +1460,7 @@ export default {
   "captura.error.motivoVacio": "Scrivi perché viene addebitato.",
   "captura.error.motivoCorto": "Il motivo deve spiegare il danno: una parola non basta.",
   "captura.error.motivoLargo": "Il motivo è troppo lungo.",
+  "tarjeta.titular": "Intestatario",
+  "tarjeta.vence2": "Scade",
+  "tarjeta.verFrente": "Vedi il fronte",
 };

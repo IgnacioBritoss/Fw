@@ -1371,7 +1371,7 @@ export default {
   "pago.cambiarTarjeta": "更换",
   "pago.vinculaPrimero": "请先保存一张银行卡才能付款。保存后下次预订可直接使用。",
   "pago.porQueDeNuevo": "每次扣款时由 Stripe 在其自有输入框中索取卡片信息：本应用和你的浏览器都不会保存这些信息。",
-  "pago.modoPrueba": "测试模式：不会扣取真实款项。可使用测试卡 4242 4242 4242 4242、任意未来有效期和任意三位安全码。",
+  "pago.modoPrueba": "测试模式：不会扣取真实款项，有效期和安全码不影响结果。决定结果的是卡号：4242 4242 4242 4242 成功，4000 0000 0000 0002 被拒绝，4000 0025 0000 3155 会弹出银行确认。",
   "pago.cobroReal": "付款由 Stripe 处理，卡片信息不会经过本应用。",
   "pago.sinPasarela": "本版本尚未配置银行卡支付。",
   "pago.noCargoStripe": "无法加载付款表单。请检查网络后重新进入此页面。",
@@ -1464,4 +1464,7 @@ export default {
   "captura.error.motivoVacio": "请写明扣款原因。",
   "captura.error.motivoCorto": "原因需要说明损坏情况，一个词不够。",
   "captura.error.motivoLargo": "原因过长。",
+  "tarjeta.titular": "持卡人",
+  "tarjeta.vence2": "有效期",
+  "tarjeta.verFrente": "查看正面",
 };

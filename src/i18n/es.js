@@ -1394,7 +1394,7 @@ export default {
   "pago.cambiarTarjeta": "Cambiar",
   "pago.vinculaPrimero": "Vinculá una tarjeta para poder pagar. Queda guardada para tus próximas reservas.",
   "pago.porQueDeNuevo": "Los datos de la tarjeta los pide Stripe en cada cobro, adentro de sus propios campos: ni esta aplicación ni tu navegador los guardan.",
-  "pago.modoPrueba": "Modo de prueba: no se cobra dinero real. Podés usar la tarjeta 4242 4242 4242 4242, cualquier vencimiento futuro y cualquier código de tres dígitos.",
+  "pago.modoPrueba": "Modo de prueba: no se cobra dinero real, y el vencimiento y el código no cambian nada. Lo que decide el resultado es el número: 4242 4242 4242 4242 sale bien, 4000 0000 0000 0002 sale rechazada, y 4000 0025 0000 3155 abre la confirmación del banco.",
   "pago.cobroReal": "El cobro lo procesa Stripe. Los datos de la tarjeta no pasan por esta aplicación.",
   "pago.sinPasarela": "El pago con tarjeta todavía no está configurado en esta versión del sitio.",
   "pago.noCargoStripe": "No se pudo cargar el formulario de pago. Revisá tu conexión y volvé a entrar a esta pantalla.",
@@ -1487,4 +1487,7 @@ export default {
   "captura.error.motivoVacio": "Escribí por qué se cobra.",
   "captura.error.motivoCorto": "El motivo tiene que explicar el daño: con una palabra no alcanza.",
   "captura.error.motivoLargo": "El motivo es demasiado largo.",
+  "tarjeta.titular": "Titular",
+  "tarjeta.vence2": "Vence",
+  "tarjeta.verFrente": "Ver el frente",
 };

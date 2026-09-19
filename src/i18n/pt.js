@@ -1367,7 +1367,7 @@ export default {
   "pago.cambiarTarjeta": "Trocar",
   "pago.vinculaPrimero": "Salve um cartão para poder pagar. Ele fica guardado para as próximas reservas.",
   "pago.porQueDeNuevo": "Os dados do cartão são pedidos pela Stripe em cada cobrança, dentro dos campos dela: nem este site nem seu navegador guardam esses dados.",
-  "pago.modoPrueba": "Modo de teste: nenhum dinheiro real é cobrado. Você pode usar o cartão 4242 4242 4242 4242, qualquer validade futura e qualquer código de três dígitos.",
+  "pago.modoPrueba": "Modo de teste: nenhum dinheiro real é cobrado, e a validade e o código não mudam nada. Quem decide o resultado é o número: 4242 4242 4242 4242 dá certo, 4000 0000 0000 0002 é recusado, e 4000 0025 0000 3155 abre a confirmação do banco.",
   "pago.cobroReal": "A cobrança é processada pela Stripe. Os dados do cartão não passam por este site.",
   "pago.sinPasarela": "O pagamento com cartão ainda não está configurado nesta versão do site.",
   "pago.noCargoStripe": "Não foi possível carregar o formulário de pagamento. Confira sua conexão e entre nesta tela de novo.",
@@ -1460,4 +1460,7 @@ export default {
   "captura.error.motivoVacio": "Escreva por que está sendo cobrado.",
   "captura.error.motivoCorto": "O motivo tem que explicar o dano: uma palavra não basta.",
   "captura.error.motivoLargo": "O motivo é longo demais.",
+  "tarjeta.titular": "Titular",
+  "tarjeta.vence2": "Validade",
+  "tarjeta.verFrente": "Ver a frente",
 };
