@@ -15,7 +15,7 @@ import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
   adminGetSettings, adminDeleteUser,
-  getAdminReports, resolveReport,
+  getAdminReports, getAdminOpenReportsCount, resolveReport,
   adminGetVerifications, adminGetVerificationDocuments,
   adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
@@ -55,6 +55,7 @@ const esperaAlAdmin = (v) =>
   Boolean(v?.status) && v.status !== "APPROVED" && v.status !== "REJECTED";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
+import ReservasAdmin from "../../components/ReservasAdmin";
 import { useI18n } from "../../i18n/core";
 import Avatar from "../../components/Avatar";
 import { initialsOf } from "../../services/people";
@@ -245,8 +246,14 @@ export default function Admin() {
 
     // Cantidad sin resolver, para el número al lado de la pestaña. Se pide en
     // cada cambio de pestaña, que es cuando puede haber cambiado.
-    getAdminReports("OPEN")
-      .then(data => setOpenReports(Array.isArray(data) ? data.length : 0))
+    /*
+      El numerito salía de bajarse la lista ENTERA de reportes abiertos y
+      contar cuántos eran, en cada cambio de pestaña. El servidor tiene una
+      ruta que contesta un número y que nadie llamaba: con cincuenta reportes
+      la diferencia es entre traer cincuenta fichas completas y traer "50".
+    */
+    getAdminOpenReportsCount()
+      .then(data => setOpenReports(Number(data?.open) || 0))
       .catch(() => setOpenReports(0));
     adminGetVerifications()
       .then(data => setPendingVerifications(
@@ -424,6 +431,11 @@ export default function Admin() {
           ["reports", openReports > 0 ? `${tr("admin.tabReports")} (${openReports})` : tr("admin.tabReports")],
           ["verifications", pendingVerifications > 0
             ? `${tr("admin.tabVerifications")} (${pendingVerifications})` : tr("admin.tabVerifications")],
+          // Las reservas de toda la plataforma. El servidor las servía desde
+          // siempre (/admin/bookings) y el panel no las mostraba, así que un
+          // reclamo por un daño llegaba por un reporte y no había forma de
+          // actuar sobre la garantía.
+          ["reservas", tr("admin.tabBookings")],
         ].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
@@ -593,6 +605,8 @@ export default function Admin() {
           Cada reporte trae la lectura de la IA: dice si lo denunciado tiene
           relación con la publicación, así el admin no tiene que leer de cero los
           que no tienen nada que ver. La decisión siempre la toma el admin. */}
+      {tab === "reservas" && <ReservasAdmin />}
+
       {tab === "reports" && (
         loadingReports ? <Spinner block label={tr("common.loading")} />
         : reports.length === 0 ? <div style={s.empty}>{tr("admin.noReports")}</div>

@@ -77,6 +77,7 @@ import { tarjetaElegida, agregarTarjeta } from "../../services/billetera";
 import { comoSeLee, vencimientoComoSeLee } from "../../services/tarjeta";
 import { FormularioTarjeta, MarcaDeTarjeta } from "../../components/Billetera";
 import CamposDeStripe from "../../components/CamposDeStripe";
+import MovimientosDelPago from "../../components/MovimientosDelPago";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
@@ -485,6 +486,12 @@ export default function Payment() {
             <Row label={tr("payment.days")} value={days} />
             {deposit != null && <Row label={tr("payment.heldDeposit")} value={money(deposit)} />}
             <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total)}</span></div>
+            {/* El registro de todo lo que pasó con la plata. Acá es donde más
+                falta hace: la reserva ya está paga, y si alguien pregunta por
+                un cobro, esto es lo único que lo contesta. */}
+            <div style={{ marginTop: 14 }}>
+              <MovimientosDelPago bookingId={bookingId} moneda={payment?.currency} />
+            </div>
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
@@ -561,6 +568,9 @@ export default function Payment() {
         })}
         <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 10 }}>
           {tr("payment.depositNote")}
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <MovimientosDelPago bookingId={bookingId} moneda={payment?.currency} />
         </div>
       </div>
 

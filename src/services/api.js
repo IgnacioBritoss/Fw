@@ -785,6 +785,18 @@ export async function getMyReports() {
 export async function getAdminReports(status) {
   return apiFetch(`/admin/reports${status ? `?status=${status}` : ""}`);
 }
+
+/**
+ * Cuántos reportes hay sin resolver. Devuelve `{ open }`.
+ *
+ * El número al lado de la pestaña salía de bajarse la lista ENTERA de reportes
+ * abiertos y contar cuántos eran, en cada cambio de pestaña. Esta ruta ya
+ * existía en el servidor para eso: contesta un número. Con cincuenta reportes
+ * la diferencia es entre traer cincuenta fichas completas y traer "50".
+ */
+export async function getAdminOpenReportsCount() {
+  return apiFetch("/admin/reports/open-count");
+}
 export async function resolveReport(reportId, action, note) {
   return apiFetch(`/admin/reports/${reportId}/resolve`, {
     method: "PATCH",
@@ -947,6 +959,24 @@ export async function createConnectOnboarding() {
   return apiFetch("/payments/connect/onboarding", { method: "POST" });
 }
 
+/**
+ * COBRAR PARTE DEL DEPÓSITO EN GARANTÍA POR UN DAÑO. Solo un administrador.
+ *
+ * El importe va en CENTAVOS y entero, como lo pide el servidor: recibirlo en
+ * pesos con decimales obligaría a redondear en dos lugares distintos, y un
+ * redondeo sobre plata de otra persona es lo que después nadie puede explicar.
+ * La conversión se hace una sola vez, en services/movimientos.js.
+ *
+ * El motivo es obligatorio y de diez caracteres para arriba porque es lo que
+ * va a leer quien alquiló cuando pregunte por qué le cobraron la garantía.
+ */
+export async function captureDeposit(bookingId, amountMinor, reason) {
+  return apiFetch(`/payments/bookings/${bookingId}/deposit-capture`, {
+    method: "POST",
+    body: JSON.stringify({ amountMinor, reason }),
+  });
+}
+
 // ── CONTRATO DIGITAL ───────────────────────────────────────────
 // Al aceptarse la reserva queda un contrato con los montos congelados, que
 // ambas partes aceptan y se puede descargar en PDF.
@@ -1048,6 +1078,12 @@ export async function adminUpdateUserRole(id, role) {
 // esas fotos: acá (cuentas admin) y GET /verification/identity/me (el propio
 // dueño). No aparecen en el perfil público de nadie.
 export async function adminGetVerifications() { return apiFetch("/admin/verifications"); }
+
+// Las reservas de toda la plataforma, con el auto y las dos partes. Es lo que
+// necesita un administrador para atender un reclamo: la reserva de la que le
+// están hablando, con quién la hizo y de quién era el auto.
+export async function adminGetBookings() { return apiFetch("/admin/bookings"); }
+export async function adminGetBooking(id) { return apiFetch(`/admin/bookings/${id}`); }
 
 /**
  * Las fotos de UNA solicitud, con URLs firmadas al momento.
