@@ -45,6 +45,7 @@ import Settings from "./pages/Settings/Settings";
 import Notifications from "./pages/Notifications/Notifications";
 import Favorites from "./pages/Favorites/Favorites";
 import QrFlow from "./pages/QRFlow/QrFlow";
+import VueltaDeStripe from "./pages/Connect/VueltaDeStripe";
 
 // Páginas de la app: se muestran dentro del Layout (con sidebar + topbar)
 const app = (el) => <Layout>{el}</Layout>;
@@ -112,6 +113,15 @@ export default function App() {
           {/* Retiro y devolución con QR/token: "Mis reservas" ya tenía el botón,
               pero esta ruta faltaba, así que no llevaba a ninguna parte. */}
           <Route path="/qr/:bookingId" element={priv(<QrFlow />)} />
+          {/*
+            LA VUELTA DEL ALTA DE COBRO. Estas dos direcciones las arma el
+            SERVIDOR y se las pasa a Stripe cuando el dueño empieza su alta
+            (payments.service.ts, createOwnerOnboarding). O sea que Stripe ya
+            devolvía gente acá... y acá no había nada: terminaban su alta y
+            caían en "no encontramos lo que buscás".
+          */}
+          <Route path="/connect/return" element={priv(<VueltaDeStripe />)} />
+          <Route path="/connect/refresh" element={priv(<VueltaDeStripe />)} />
 
           <Route path="*" element={app(<NotFound />)} />
         </Routes>

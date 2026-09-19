@@ -906,6 +906,47 @@ export async function getBookingPaymentStatus(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/status`);
 }
 
+/**
+ * El historial completo de los cobros de una reserva, en orden.
+ *
+ * Lo ven las dos partes. El servidor le saca los datos internos —la IP desde
+ * la que se pagó, el navegador, el detalle del procesador— a quien no es
+ * administrador, así que esto se puede mostrar tal cual llega.
+ */
+export async function getBookingLedger(bookingId) {
+  return apiFetch(`/payments/bookings/${bookingId}/ledger`);
+}
+
+// ── COBRAR SIENDO DUEÑO ────────────────────────────────────────────────
+/*
+  ESTO EXISTÍA EN EL SERVIDOR DESDE HACE RATO Y EL FRONT NO LO LLAMABA NUNCA.
+
+  Son las dos rutas que hacen que el dueño de un auto pueda RECIBIR la plata.
+  Sin el alta hecha, el servidor le crea igual una cuenta de cobro al
+  liquidar... pero una cuenta recién creada no puede recibir nada hasta que su
+  dueño complete sus datos con Stripe, así que la transferencia falla al final
+  de todo el alquiler, cuando ya no hay nada que hacer.
+
+  El comentario que el backend dejó escrito en getOwnerPayoutStatus es
+  textual: "El front lo necesita para poder decir 'todavía te falta completar
+  tus datos en Stripe' antes de que alguien publique un auto y descubra recién
+  al devolverlo que no puede cobrar".
+*/
+export async function getConnectStatus() {
+  return apiFetch("/payments/connect/status");
+}
+
+/**
+ * Arranca (o retoma) el alta del dueño con Stripe.
+ *
+ * Devuelve `{ accountId, onboardingUrl }`. La dirección es de Stripe y dura
+ * poco: se usa en el momento, no se guarda. Al terminar, Stripe devuelve a la
+ * persona a /connect/return de esta aplicación, que es una pantalla de acá.
+ */
+export async function createConnectOnboarding() {
+  return apiFetch("/payments/connect/onboarding", { method: "POST" });
+}
+
 // ── CONTRATO DIGITAL ───────────────────────────────────────────
 // Al aceptarse la reserva queda un contrato con los montos congelados, que
 // ambas partes aceptan y se puede descargar en PDF.

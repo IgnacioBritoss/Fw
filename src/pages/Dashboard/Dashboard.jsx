@@ -32,7 +32,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getMyListings, getMyBookings, acceptBooking, rejectBooking, updateListing,
+  getConnectStatus,
 } from "../../services/api";
+import { estadoDeCobro, convieneAvisar } from "../../services/cobros";
 import { itemsOf, normalizeListing, priceOf, categoryLabel } from "../../services/listings";
 import AvailabilityManager from "../../components/AvailabilityManager";
 import { format, parseISO } from "date-fns";
@@ -141,6 +143,26 @@ export default function Dashboard() {
 
   useEffect(() => { loadCars(); loadBookings(); }, [loadCars, loadBookings]);
 
+  /*
+    ¿ESTE DUEÑO PUEDE RECIBIR SU PLATA?
+
+    Se le pregunta al servidor, que ya tenía la respuesta y nadie le
+    preguntaba. Sin el alta completa con Stripe, la transferencia falla al
+    confirmar la devolución del auto: o sea al final de todo el alquiler,
+    cuando ya no hay nada que hacer (ver services/cobros.js).
+
+    Si la consulta falla no se muestra nada. Un cartel diciéndole a alguien que
+    no va a cobrar porque una consulta no salió sería mentirle sobre su plata.
+  */
+  const [cobro, setCobro] = useState(null);
+  useEffect(() => {
+    let vivo = true;
+    getConnectStatus()
+      .then(datos => { if (vivo) setCobro(datos); })
+      .catch(() => { if (vivo) setCobro(null); });
+    return () => { vivo = false; };
+  }, []);
+
   // Reservas donde soy el DUEÑO (las de mis autos).
   const ownerBookings = useMemo(
     () => bookings.filter(b => b.ownerId === user?.id),
@@ -223,6 +245,23 @@ export default function Dashboard() {
           </div>
           <button style={{ ...s.btn, background: "var(--fw-chip)" }} onClick={() => navigate("/kyc")}>
             {tr("profile.verifyNow")}
+          </button>
+        </div>
+      )}
+
+      {/*
+        El mismo cartel que el de la cuenta sin verificar, y por el mismo
+        motivo: es algo que se resuelve en dos minutos y que, sin avisar,
+        aparece como un error incomprensible mucho después. Solo se muestra si
+        hay autos publicados: a quien no publicó nada todavía no le hace falta.
+      */}
+      {convieneAvisar(estadoDeCobro(cobro), myCars.length) && (
+        <div style={s.warn}>
+          <div style={{ fontSize: 13, color: "var(--fw-amber-text)", flex: 1, minWidth: 200 }}>
+            {tr("cobros.avisoPanel")}
+          </div>
+          <button style={{ ...s.btn, background: "var(--fw-chip)" }} onClick={() => navigate("/ajustes")}>
+            {tr("cobros.configurar")}
           </button>
         </div>
       )}

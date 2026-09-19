@@ -15,6 +15,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import ChangeEmailCard from "../../components/ChangeEmailCard";
 import ReportIssueCard from "../../components/ReportIssueCard";
 import Billetera from "../../components/Billetera";
+import CobrosDelDueno from "../../components/CobrosDelDueno";
 import { useCurrency } from "../../context/CurrencyContext";
 import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
@@ -602,6 +603,23 @@ export default function Settings() {
                 {tr("settings.paymentsSub")}
               </div>
               <Billetera />
+
+              {/*
+                COBRAR TAMBIÉN ES UN MEDIO DE PAGO, Y FALTABA.
+
+                Arriba están las tarjetas con las que alguien PAGA sus
+                reservas. Esto es lo otro: si publicás un auto, cómo te llega
+                a vos la plata. El servidor lo tenía resuelto y el front no lo
+                preguntaba nunca, así que el alta con Stripe no se hacía y la
+                transferencia fallaba al final del alquiler.
+              */}
+              <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginTop: 32, marginBottom: 4 }}>
+                {tr("cobros.titulo")}
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--fw-text-4)", marginBottom: 14, lineHeight: 1.6 }}>
+                {tr("cobros.subtitulo")}
+              </div>
+              <CobrosDelDueno />
             </>
           ) : section === "reportar" ? (
             <>
