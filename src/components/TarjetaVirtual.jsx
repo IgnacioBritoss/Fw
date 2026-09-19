@@ -248,6 +248,34 @@ export function TarjetaDeStripe({ onListo, nombre = "" }) {
         style: estiloSobreLaTarjeta(tinta, tenue, true),
         showIcon: false,                 // el logo lo dibujamos nosotros, arriba
         placeholder: "•••• •••• •••• ••••",
+        /*
+          LINK APAGADO, Y NO ES POR ORGULLO.
+
+          Link es la billetera de Stripe: guarda la tarjeta de una persona del
+          lado de Stripe y después, en cualquier sitio que cobre con Stripe, la
+          deja pagar poniendo un código que le llega al teléfono. Viene
+          encendida de fábrica y aparece sola adentro del campo del número.
+
+          Se apaga por dos motivos, en este orden:
+
+          1. CUANDO PIDE EL CÓDIGO ABRE UN CARTEL SUYO, a pantalla completa y
+             con su propio diseño, encima de esta tarjeta. Es un iframe de
+             Stripe: no se puede mover, ni pintar, ni meter adentro del dibujo.
+             O sea que la única forma de tener esta tarjeta entera es que ese
+             cartel no exista.
+
+          2. LO QUE RESUELVE LO PODEMOS RESOLVER NOSOTROS, Y MEJOR. Guardar la
+             tarjeta para no reescribirla es una capacidad de Stripe que se
+             pide desde el servidor (`setup_future_usage`) y queda atada a
+             NUESTRO cliente. Hecho así, el saldo y el depósito no piden nada:
+             ni la tarjeta ni un código. Link pide un código en cada cobro
+             porque su billetera se usa desde cualquier sitio del mundo y
+             necesita comprobar quién sos; acá eso ya lo comprobó el login.
+
+          Lo único de Link que no podemos hacer es recordarte la tarjeta en
+          sitios de OTROS. Que no es un problema nuestro.
+        */
+        disableLink: true,
       });
       const vence = elements.create("cardExpiry", { style: estiloSobreLaTarjeta(tinta, tenue, false) });
       // Sobre la banda de la firma, que es blanca: tinta oscura.
