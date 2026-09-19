@@ -70,12 +70,13 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   getBookingById, getBookingPaymentStatus, crearIntentoDePago,
-  mockConfirmPayment, mockFailPayment,
+  mockConfirmPayment, mockFailPayment, getTarjetasGuardadas,
 } from "../../services/api";
 import { tramosDelPago, esperarElCobro, esClaveDeOtraCuenta } from "../../services/pago";
-import { hayPasarela, esModoPrueba } from "../../services/stripe";
+import { hayPasarela, esModoPrueba, cargarStripe } from "../../services/stripe";
 import { tarjetaElegida } from "../../services/billetera";
-import { TarjetaDeStripe } from "../../components/TarjetaVirtual";
+import { tarjetasGuardadas, comoSeLee } from "../../services/tarjeta";
+import { TarjetaDeStripe, TarjetaGuardada } from "../../components/TarjetaVirtual";
 import MovimientosDelPago from "../../components/MovimientosDelPago";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
@@ -126,6 +127,28 @@ const s = {
     que es justamente lo que esta pantalla tiene que evitar.
   */
   aviso: { background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)", borderRadius: 10, padding: 14, fontSize: 13, color: "var(--fw-text-2)", marginBottom: 16 },
+  // El renglón que explica por qué no hay nada que escribir, abajo de la
+  // tarjeta guardada. Del tamaño de una nota al pie: la tarjeta ya dijo lo
+  // importante, esto solo aclara que no falta un paso.
+  notaTarjeta: { fontSize: 12, color: "var(--fw-text-4)", marginTop: 12, textAlign: "center", lineHeight: 1.6 },
+  tarjetas: { display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 12 },
+  tarjetaOpcion: {
+    background: "var(--fw-surface-2)", border: "1px solid var(--fw-border)",
+    borderRadius: 999, padding: "6px 12px", fontSize: 12.5, fontFamily: "inherit",
+    color: "var(--fw-text-2)", cursor: "pointer",
+  },
+  tarjetaElegida: {
+    background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)",
+    borderRadius: 999, padding: "6px 12px", fontSize: 12.5, fontFamily: "inherit",
+    color: "var(--fw-blue-text)", fontWeight: 700, cursor: "pointer",
+  },
+  // Cambiar de tarjeta es una salida, no la acción de la pantalla: va como un
+  // enlace centrado y chico, para que no le compita al botón de pagar.
+  enlace: {
+    display: "block", margin: "12px auto 0", background: "none", border: "none",
+    color: "var(--fw-text-3)", fontFamily: "inherit", fontSize: 12.5,
+    cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2, padding: "4px 8px",
+  },
   step: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 13, padding: "9px 12px", borderRadius: 8, marginBottom: 8 },
   // El numerito del paso. Redondo y con borde, como una viñeta numerada: dice
   // "esto es una secuencia" antes de que nadie lea una palabra.
@@ -228,17 +251,58 @@ export default function Payment() {
   */
   const tarjeta = useMemo(() => tarjetaElegida(user?.id), [user?.id]);
 
+  /*
+    LAS TARJETAS QUE EL PROCESADOR YA TIENE GUARDADAS.
+
+    El alquiler se paga en TRES tramos y cada uno es un cobro aparte, así que
+    sin esto la misma persona escribe el mismo número, el mismo vencimiento y
+    el mismo código tres veces en esta misma pantalla y en el mismo minuto. La
+    tercera es la del depósito, que es la que más se abandona: justo la que
+    deja el auto entregado sin garantía.
+
+    La guarda Stripe al cobrar la seña y las devuelve GET /payments/methods.
+    Acá nunca hay un número de tarjeta: lo que llega es un identificador y las
+    señas para reconocerla —marca, últimos cuatro, vencimiento—.
+  */
+  const [guardadas, setGuardadas] = useState([]);
+  /*
+    CUÁL SE ESTÁ USANDO. Tres valores y los tres significan algo distinto:
+
+      null   todavía no se eligió: va la que el servidor puso primera, que es
+             la más nueva, o sea la que se acaba de usar.
+      ""     se pidió escribir otra: aparecen los campos de Stripe.
+      "pm_…" esa, de las guardadas.
+
+    Un booleano no alcanzaba: "no elegí" y "elegí escribir una nueva" son
+    distintos, y con un booleano la pantalla se olvidaba de la decisión cada
+    vez que se recargaban las tarjetas después de un cobro.
+  */
+  const [elegida, setElegida] = useState(null);
+
+  const laGuardada = useMemo(() => {
+    if (elegida === "") return null;
+    if (elegida) return guardadas.find(t => t.id === elegida) || null;
+    return guardadas[0] || null;
+  }, [elegida, guardadas]);
+
   // Trae la reserva y el estado del pago (montos ya calculados por el backend).
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [bookingData, paymentData] = await Promise.all([
+      const [bookingData, paymentData, tarjetas] = await Promise.all([
         getBookingById(bookingId),
         getBookingPaymentStatus(bookingId).catch(() => null),
+        // Se piden acá y no en un efecto aparte porque esta función también
+        // corre DESPUÉS de cada cobro: así el tramo siguiente ya encuentra
+        // guardada la tarjeta con la que se acaba de pagar el anterior, que es
+        // todo el punto. Nunca falla: sin tarjetas guardadas se escribe una,
+        // que es como se pagaba hasta ayer (ver getTarjetasGuardadas).
+        hayPasarela() ? getTarjetasGuardadas() : Promise.resolve([]),
       ]);
       setBooking(bookingData);
       setPayment(paymentData);
+      setGuardadas(tarjetasGuardadas(tarjetas));
     } catch (err) {
       setError(err.message || tr("payment.loadFailed"));
     } finally {
@@ -270,9 +334,25 @@ export default function Payment() {
       throw err;
     }
 
-    const { error: rechazo, paymentIntent } = await pasarela.stripe.confirmCardPayment(
-      cobro.clientSecret,
-      {
+    /*
+      CON QUÉ SE CONFIRMA: LA TARJETA GUARDADA, O LOS CAMPOS.
+
+      Con una tarjeta guardada no hay campos montados —no hay nada que
+      escribir—, así que tampoco hay un objeto de Stripe colgando de ellos. Se
+      pide el de la librería, que está memorizado: es el mismo que usan los
+      campos cuando están.
+
+      El identificador alcanza para cobrar y NO se vuelve a pedir el código de
+      seguridad. No es un atajo nuestro: el procesador ya lo verificó cuando
+      guardó la tarjeta y no lo guarda —nadie puede—, así que un campo acá
+      sería pedir un dato que no se compara contra nada.
+    */
+    const stripe = pasarela?.stripe || await cargarStripe();
+    if (!stripe) throw new Error(tr("pago.noCargoStripe"));
+
+    const conQue = laGuardada
+      ? { payment_method: laGuardada.id }
+      : {
         payment_method: {
           card: pasarela.tarjeta,
           billing_details: {
@@ -282,7 +362,11 @@ export default function Payment() {
             email: user?.email || undefined,
           },
         },
-      },
+      };
+
+    const { error: rechazo, paymentIntent } = await stripe.confirmCardPayment(
+      cobro.clientSecret,
+      conQue,
     );
 
     /*
@@ -357,7 +441,10 @@ export default function Payment() {
       if (!hayPasarela()) {
         await mockConfirmPayment(bookingId, kind);
       } else {
-        if (!pasarela) throw new Error(tr("pago.camposNoListos"));
+        // Los campos solo hacen falta cuando hay que escribir la tarjeta: con
+        // una guardada no hay ninguno montado y esperarlos sería esperar algo
+        // que no va a llegar nunca.
+        if (!laGuardada && !pasarela) throw new Error(tr("pago.camposNoListos"));
         const resultado = await cobrarConStripe(kind);
         if (resultado.motivo === "rechazado") {
           setError(tr("payment.failed"));
@@ -365,6 +452,21 @@ export default function Payment() {
         } else if (resultado.motivo === "demora") {
           setAviso(tr("pago.demora"));
         }
+        /*
+          COBRADO EL TRAMO, LA ELECCIÓN VUELVE A CERO.
+
+          "Escribir otra tarjeta" vale para ESTE cobro, no para los tres. Sin
+          esto, quien usa una tarjeta distinta para el saldo se encuentra el
+          formulario vacío otra vez en el depósito —y escribiendo de nuevo la
+          misma tarjeta que acaba de usar, que es exactamente lo que esta
+          pantalla vino a sacar—. Volviendo a cero, el tramo siguiente arranca
+          con la más nueva de las guardadas, que es la que se acaba de usar.
+
+          Solo cuando el cobro entró: un rechazo deja los campos donde estaban,
+          porque lo que hay que hacer con un rechazo es corregir, no empezar de
+          nuevo.
+        */
+        if (resultado.confirmado) setElegida(null);
       }
       // Se relee todo del servidor en vez de creerle a la respuesta: el estado
       // de la reserva cambia junto con el cobro y hay tramos que dependen de él.
@@ -595,7 +697,52 @@ export default function Payment() {
       {hayPasarela() && (
         <div style={s.card}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: "var(--fw-text)" }}>{tr("pago.conQuePagas")}</div>
-          <TarjetaDeStripe onListo={setPasarela} nombre={tarjeta?.nombre || user?.name || ""} />
+
+          {/*
+            Y SI YA LA ESCRIBIÓ UNA VEZ, NO LA ESCRIBE DE NUEVO.
+
+            Son tres tramos: sin esto, el mismo número, el mismo vencimiento y
+            el mismo código tres veces en esta misma pantalla. Se muestra la
+            tarjeta entera y no un renglón con "Visa ···· 4242" porque lo que
+            hay que reconocer es el plástico que se tiene en la mano: el color
+            y el logo lo dicen de un vistazo.
+          */}
+          {laGuardada ? (
+            <>
+              <TarjetaGuardada tarjeta={laGuardada} nombre={tarjeta?.nombre || user?.name || ""} />
+              <div style={s.notaTarjeta}>{tr("pago.noHaceFaltaDeNuevo")}</div>
+
+              {/* Con una sola guardada, elegir no es una decisión: es un
+                  renglón de más. Las opciones aparecen cuando hay opciones. */}
+              {guardadas.length > 1 && (
+                <div style={s.tarjetas}>
+                  {guardadas.map(t => (
+                    <button key={t.id} type="button"
+                      onClick={() => setElegida(t.id)}
+                      style={t.id === laGuardada.id ? s.tarjetaElegida : s.tarjetaOpcion}>
+                      {comoSeLee(t)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <button type="button" style={s.enlace} onClick={() => setElegida("")}>
+                {tr("pago.usarOtra")}
+              </button>
+            </>
+          ) : (
+            <>
+              <TarjetaDeStripe onListo={setPasarela} nombre={tarjeta?.nombre || user?.name || ""} />
+              {/* La vuelta atrás. Sin esto, pedir otra tarjeta es un camino de
+                  ida: se toca por curiosidad y hay que recargar la pantalla
+                  para recuperar la que ya estaba guardada. */}
+              {guardadas.length > 0 && (
+                <button type="button" style={s.enlace} onClick={() => setElegida(null)}>
+                  {tr("pago.volverALaGuardada")}
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
 

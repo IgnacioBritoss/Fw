@@ -14,6 +14,7 @@ import {
   marcaDeLaTarjeta, pasaLuhn, numeroConEspacios, revisarNumero,
   revisarVencimiento, revisarCodigo, coincideElNombre, normalizarNombre,
   revisarTarjeta, comoSeLee, vencimientoComoSeLee, estaVencida,
+  tarjetaGuardada, tarjetasGuardadas, numeroEnmascarado,
 } from "./tarjeta.js";
 
 const VISA = "4242424242424242";
@@ -251,4 +252,89 @@ test("una tarjeta guardada que ya vencio se detecta", () => {
   assert.equal(estaVencida({ mes: 4, anio: 2028 }, HOY), false);
   assert.equal(estaVencida({ mes: 4, anio: 2026 }, HOY), true);
   assert.equal(estaVencida({}, HOY), false);
+});
+
+// ── La tarjeta que el procesador ya tiene guardada ─────────────────────────
+
+/** Como viene de GET /payments/methods: los nombres son los de Stripe. */
+const DEL_SERVIDOR = { id: "pm_1abc", brand: "visa", last4: "4242", expMonth: 4, expYear: 2028 };
+
+test("una tarjeta guardada se traduce a la nuestra", () => {
+  assert.deepEqual(tarjetaGuardada(DEL_SERVIDOR), {
+    id: "pm_1abc", marca: "visa", ultimos: "4242", mes: 4, anio: 2028,
+  });
+  // Y se muestra con las mismas funciones que la que se acaba de escribir.
+  assert.equal(comoSeLee(tarjetaGuardada(DEL_SERVIDOR)), "Visa ···· 4242");
+  assert.equal(vencimientoComoSeLee(tarjetaGuardada(DEL_SERVIDOR)), "04/28");
+});
+
+test("una marca que no dibujamos sigue siendo una tarjeta", () => {
+  // Stripe devuelve mas marcas que las tres que esta pantalla pinta. Ninguna
+  // de esas es un error: son `otra`, que es la pintura gris.
+  for (const brand of ["discover", "jcb", "unionpay", "unknown", "", null]) {
+    assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, brand }).marca, "otra", `fallo con ${brand}`);
+  }
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, brand: "MasterCard" }).marca, "mastercard");
+});
+
+test("sin identificador o sin los ultimos cuatro no sirve", () => {
+  // Sin id no se puede cobrar con ella; sin los ultimos cuatro no se la puede
+  // mostrar sin inventar. Las dos cosas son "no la ofrezcas", no "error".
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, id: "" }), null);
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, id: "   " }), null);
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, last4: null }), null);
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, last4: "42" }), null);
+  assert.equal(tarjetaGuardada(null), null);
+  assert.equal(tarjetaGuardada(undefined), null);
+});
+
+test("un vencimiento que no vino no la descarta", () => {
+  // El vencimiento es para mostrarlo y para sacar las vencidas. Cobrar no
+  // depende de el: eso lo resuelve el identificador.
+  const sinFecha = tarjetaGuardada({ id: "pm_x", brand: "visa", last4: "4242" });
+  assert.deepEqual(sinFecha, { id: "pm_x", marca: "visa", ultimos: "4242", mes: null, anio: null });
+  assert.equal(estaVencida(sinFecha, HOY), false);
+  assert.equal(tarjetasGuardadas([{ id: "pm_x", brand: "visa", last4: "4242" }], HOY).length, 1);
+  // Un mes imposible se descarta como dato, pero no descarta la tarjeta.
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, expMonth: 13 }).mes, null);
+  assert.equal(tarjetaGuardada({ ...DEL_SERVIDOR, expMonth: 0 }).mes, null);
+});
+
+test("las vencidas no se ofrecen", () => {
+  /*
+    Stripe las sigue devolviendo, y hace bien: guardarlas es su trabajo.
+    Decidir cual se ofrece es el nuestro, y ofrecer una que el banco va a
+    rechazar es hacer perder un minuto para terminar en "rechazada".
+  */
+  const lista = [
+    DEL_SERVIDOR,
+    { id: "pm_vieja", brand: "mastercard", last4: "4444", expMonth: 4, expYear: 2026 },
+    { id: "", brand: "visa", last4: "1111", expMonth: 4, expYear: 2030 },
+  ];
+  assert.deepEqual(tarjetasGuardadas(lista, HOY).map(t => t.id), ["pm_1abc"]);
+});
+
+test("una lista que no es una lista no rompe la pantalla de cobro", () => {
+  // Esto es una comodidad: si el servidor contesta cualquier cosa, lo que
+  // tiene que pasar es que se escriba la tarjeta, no que no se pueda pagar.
+  for (const nada of [null, undefined, {}, "pm_1abc", 0]) {
+    assert.deepEqual(tarjetasGuardadas(nada, HOY), []);
+  }
+});
+
+test("el numero se dibuja con los grupos de SU marca", () => {
+  /*
+    Amex no tiene 16 digitos ni se agrupa de a cuatro: son 15 y van 4-6-5.
+    Dibujarla con cuatro grupos de cuatro es dibujar una tarjeta que no existe,
+    y se nota al lado del plastico.
+  */
+  assert.equal(numeroEnmascarado({ marca: "visa", ultimos: "4242" }), "•••• •••• •••• 4242");
+  assert.equal(numeroEnmascarado({ marca: "mastercard", ultimos: "4444" }), "•••• •••• •••• 4444");
+  assert.equal(numeroEnmascarado({ marca: "amex", ultimos: "0005" }), "•••• •••••• •0005");
+  assert.equal(numeroEnmascarado({ marca: "otra", ultimos: "1111" }), "•••• •••• •••• 1111");
+});
+
+test("sin los ultimos cuatro no se dibuja nada", () => {
+  assert.equal(numeroEnmascarado({ marca: "visa", ultimos: "" }), "");
+  assert.equal(numeroEnmascarado(null), "");
 });

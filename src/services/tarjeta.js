@@ -318,11 +318,101 @@ export function revisarTarjeta({ numero, mes, anio, codigo, nombre }, { nombreCu
   };
 }
 
+/**
+ * UNA TARJETA QUE EL PROCESADOR YA TIENE GUARDADA, traducida a la nuestra.
+ *
+ * ── Qué problema resuelve ─────────────────────────────────────────────────
+ * El alquiler se paga en TRES tramos —seña, saldo, depósito— y cada uno es un
+ * cobro aparte. Sin esto, la misma persona escribe el mismo número, el mismo
+ * vencimiento y el mismo código tres veces en la misma pantalla y en el mismo
+ * minuto. Cada vez que se escribe es una vez más que se puede tipear mal, y la
+ * tercera es la del depósito, que es la que más se abandona: justo la que deja
+ * el auto entregado sin garantía.
+ *
+ * El servidor (GET /payments/methods) devuelve lo que Stripe guardó: un
+ * identificador y las señas de la tarjeta. NO el número, que no existe de este
+ * lado. Con el identificador se confirma el cobro sin volver a pedir nada.
+ *
+ * ── Por qué hace falta traducir ───────────────────────────────────────────
+ * Stripe nombra las marcas a su manera y tiene más de las tres que esta
+ * pantalla dibuja: "discover", "jcb", "unionpay", "unknown". Todas esas son
+ * `otra` acá, que es la pintura gris y el logo de dos rayas — una tarjeta que
+ * no reconocemos sigue siendo una tarjeta.
+ *
+ * Devuelve null cuando falta lo imprescindible: sin identificador no se puede
+ * cobrar con ella, y sin los últimos cuatro no se la puede mostrar sin mentir.
+ */
+export function tarjetaGuardada(cruda) {
+  const id = String(cruda?.id ?? "").trim();
+  const ultimos = soloDigitos(cruda?.last4).slice(-4);
+  if (!id || ultimos.length !== 4) return null;
+
+  const marca = String(cruda?.brand ?? "").toLowerCase();
+  const mes = Number(cruda?.expMonth);
+  const anio = Number(cruda?.expYear);
+
+  return {
+    id,
+    marca: MARCAS.find(m => m.id === marca)?.id || OTRA.id,
+    ultimos,
+    // Sin vencimiento la tarjeta igual sirve para cobrar: el vencimiento acá
+    // es para mostrarlo y para descartar las vencidas, no para autorizar nada.
+    mes: Number.isInteger(mes) && mes >= 1 && mes <= 12 ? mes : null,
+    anio: Number.isInteger(anio) && anio > 0 ? anio : null,
+  };
+}
+
+/**
+ * La lista del servidor, limpia y sin las que ya vencieron.
+ *
+ * Las vencidas se sacan acá y no se muestran tachadas: ofrecer pagar con una
+ * tarjeta que el banco va a rechazar es hacerle perder el tiempo a alguien con
+ * un cartel de "rechazada" al final. Stripe las sigue devolviendo porque
+ * guardarlas es su trabajo; decidir cuál se ofrece es el nuestro.
+ *
+ * `hoy` entra por parámetro por lo mismo de siempre: una prueba atada al reloj
+ * de la máquina pasa hoy y falla en enero.
+ */
+export function tarjetasGuardadas(lista, hoy = new Date()) {
+  return (Array.isArray(lista) ? lista : [])
+    .map(t => tarjetaGuardada(t))
+    .filter(t => t && !estaVencida(t, hoy));
+}
+
 /** "Visa ···· 4242", que es como lo dice cualquier aplicación. */
 export function comoSeLee(tarjeta) {
   if (!tarjeta) return "";
   const marca = MARCAS.find(m => m.id === tarjeta.marca)?.nombre || OTRA.nombre;
   return `${marca} ···· ${tarjeta.ultimos || "----"}`;
+}
+
+/**
+ * EL NÚMERO COMO SE VE EN LA TARJETA cuando solo se conocen los últimos cuatro.
+ *
+ * "•••• •••• •••• 4242", y con Amex "•••• •••••• •4242", porque Amex no tiene
+ * 16 dígitos ni se agrupa de a cuatro: son 15 y van 4-6-5. Dibujar una Amex con
+ * cuatro grupos de cuatro es dibujar una tarjeta que no existe, y se nota al
+ * lado del plástico.
+ *
+ * El largo sale de los grupos de la marca, que suman exactamente el largo
+ * habitual. Los otros largos que admite una marca —Visa acepta 13 y 19— no se
+ * usan acá: esto es un dibujo, no una validación, y no hay forma de saber cuál
+ * era sin el número, que no lo tenemos ni lo queremos.
+ */
+export function numeroEnmascarado(tarjeta) {
+  const ultimos = soloDigitos(tarjeta?.ultimos).slice(-4);
+  if (ultimos.length !== 4) return "";
+  const marca = MARCAS.find(m => m.id === tarjeta?.marca) || OTRA;
+  const largo = marca.grupos.reduce((suma, g) => suma + g, 0);
+  const completo = "•".repeat(Math.max(0, largo - 4)) + ultimos;
+
+  const partes = [];
+  let desde = 0;
+  for (const g of marca.grupos) {
+    partes.push(completo.slice(desde, desde + g));
+    desde += g;
+  }
+  return partes.join(" ");
 }
 
 /** El vencimiento como se escribe: 04/28. */

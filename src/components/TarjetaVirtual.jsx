@@ -40,6 +40,7 @@ import { useI18n } from "../i18n/core";
 import { cargarStripe, hayPasarela } from "../services/stripe";
 import {
   marcaDeLaTarjeta, numeroConEspacios, soloDigitos, revisarTarjeta,
+  numeroEnmascarado, vencimientoComoSeLee,
 } from "../services/tarjeta";
 
 /*
@@ -168,13 +169,66 @@ export function Tarjeta3D({
             <span style={{ ...s.etiqueta, color: "#6b7280" }}>{tr("tarjeta.codigo")}</span>
             <div style={{ width: 74 }}>{codigo}</div>
           </div>
-          <button type="button" onClick={() => onGirar?.(false)}
-            style={{ ...s.girar, color: pintura.tenue, position: "absolute", left: 20, bottom: 16 }}>
-            {tr("tarjeta.verFrente")}
-          </button>
+          {/* La vuelta al frente solo existe si la tarjeta gira. Una guardada
+              no gira —no hay nada que completar atrás—, y sin esto queda un
+              botón que no hace nada: invisible, pero al que se llega con el
+              tabulador. */}
+          {onGirar && (
+            <button type="button" onClick={() => onGirar(false)}
+              style={{ ...s.girar, color: pintura.tenue, position: "absolute", left: 20, bottom: 16 }}>
+              {tr("tarjeta.verFrente")}
+            </button>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+// ── LA QUE YA ESTÁ: el mismo dibujo, sin nada que escribir ─────────────────
+
+/**
+ * LA TARJETA QUE EL PROCESADOR YA TIENE GUARDADA.
+ *
+ * El mismo dibujo, con los mismos colores, pero sin un solo campo: acá no hay
+ * nada que completar y ese es todo el punto. El alquiler se paga en tres
+ * tramos, y sin esto el mismo número se escribe tres veces en la misma
+ * pantalla y en el mismo minuto.
+ *
+ * Se muestra la tarjeta entera y no un renglón con "Visa ···· 4242" porque lo
+ * que hay que reconocer es el plástico que se tiene en la mano: el color y el
+ * logo lo dicen de un vistazo, que es lo que evita pagar con la tarjeta
+ * equivocada sin darse cuenta.
+ */
+export function TarjetaGuardada({ tarjeta, nombre = "" }) {
+  if (!tarjeta) return null;
+  return (
+    <Tarjeta3D
+      marca={tarjeta.marca}
+      dorso={false}
+      numero={
+        <span style={{
+          fontFamily: "'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace",
+          fontSize: 21, letterSpacing: ".08em",
+        }}>
+          {numeroEnmascarado(tarjeta)}
+        </span>
+      }
+      vence={
+        <span style={{
+          fontFamily: "'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace",
+          fontSize: 15, letterSpacing: ".04em",
+        }}>
+          {vencimientoComoSeLee(tarjeta)}
+        </span>
+      }
+      // El código de seguridad NO se pide de nuevo, y no es un atajo nuestro:
+      // el procesador ya lo verificó cuando se guardó la tarjeta y no lo
+      // guarda —nadie puede—, así que un campo acá sería pedir un dato que no
+      // se compara contra nada.
+      codigo={null}
+      nombre={<span style={{ fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase" }}>{nombre}</span>}
+    />
   );
 }
 

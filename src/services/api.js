@@ -919,6 +919,32 @@ export async function getBookingPaymentStatus(bookingId) {
 }
 
 /**
+ * LAS TARJETAS QUE YA NO HAY QUE VOLVER A ESCRIBIR.
+ *
+ * El alquiler se paga en tres tramos y cada uno es un cobro aparte, así que
+ * sin esto la misma persona escribe el mismo número tres veces en la misma
+ * pantalla. El servidor devuelve lo que Stripe guardó cuando se pagó la seña:
+ * un identificador y las señas de la tarjeta —marca, últimos cuatro,
+ * vencimiento—. El número no está: no lo tiene nadie de este lado.
+ *
+ * ── DEVUELVE LISTA VACÍA ANTES QUE FALLAR, Y ES LO IMPORTANTE ─────────────
+ * Esto es una comodidad, no un paso del cobro. Si el servidor contesta mal, si
+ * está en modo simulación, si la ruta todavía no está desplegada o si Stripe
+ * no responde, lo que tiene que pasar es que la tarjeta se escriba a mano —que
+ * es como se pagaba hasta ayer— y NO que la pantalla de pago muestre un error.
+ * Hacer que una comodidad pueda romper un cobro sería cambiar una molestia por
+ * un problema.
+ */
+export async function getTarjetasGuardadas() {
+  try {
+    const r = await apiFetch("/payments/methods");
+    return Array.isArray(r?.cards) ? r.cards : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * El historial completo de los cobros de una reserva, en orden.
  *
  * Lo ven las dos partes. El servidor le saca los datos internos —la IP desde
