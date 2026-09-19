@@ -72,7 +72,7 @@ import {
   getBookingById, getBookingPaymentStatus, crearIntentoDePago,
   mockConfirmPayment, mockFailPayment,
 } from "../../services/api";
-import { tramosDelPago, esperarElCobro } from "../../services/pago";
+import { tramosDelPago, esperarElCobro, esClaveDeOtraCuenta } from "../../services/pago";
 import { hayPasarela, esModoPrueba } from "../../services/stripe";
 import { tarjetaElegida } from "../../services/billetera";
 import { TarjetaDeStripe } from "../../components/TarjetaVirtual";
@@ -295,7 +295,18 @@ export default function Payment() {
       manda traducidos al idioma del navegador.
     */
     if (rechazo) {
-      const err = new Error(rechazo.message || tr("payment.failed"));
+      /*
+        SALVO CUANDO EL RECHAZO NO ES DEL COBRO SINO DE LA CONFIGURACIÓN.
+
+        "No such payment_intent" no habla de la tarjeta: significa que la clave
+        pública de esta aplicación y la clave secreta del servidor son de
+        cuentas de Stripe distintas. El servidor creó el intento en la suya y el
+        navegador lo fue a buscar a otra. Mostrado tal cual manda a revisar la
+        tarjeta, el importe y la reserva, que no tienen nada que ver.
+      */
+      const err = new Error(esClaveDeOtraCuenta(rechazo.message)
+        ? tr("pago.claveDeOtraCuenta")
+        : (rechazo.message || tr("payment.failed")));
       err.reintentable = true;
       throw err;
     }

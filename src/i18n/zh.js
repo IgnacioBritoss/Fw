@@ -1467,4 +1467,5 @@ export default {
   "tarjeta.titular": "持卡人",
   "tarjeta.vence2": "有效期",
   "tarjeta.verFrente": "查看正面",
+  "pago.claveDeOtraCuenta": "无法确认扣款：本应用的可公开密钥与服务器的私密密钥属于不同的 Stripe 账户。这不是你的银行卡的问题，两把密钥必须来自同一个账户。",
 };

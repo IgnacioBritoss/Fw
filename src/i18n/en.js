@@ -1464,4 +1464,5 @@ export default {
   "tarjeta.titular": "Cardholder",
   "tarjeta.vence2": "Expires",
   "tarjeta.verFrente": "Show the front",
+  "pago.claveDeOtraCuenta": "The charge could not be confirmed because this app's publishable key and the server's secret key belong to different Stripe accounts. This is not a problem with your card: both keys have to come from the same account.",
 };

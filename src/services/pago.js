@@ -103,6 +103,26 @@ export function tramosDelPago({
     });
 }
 
+/**
+ * SI EL RECHAZO DE STRIPE ES PORQUE LAS DOS CLAVES SON DE CUENTAS DISTINTAS.
+ *
+ * Hay dos claves en juego y tienen que ser de la MISMA cuenta de Stripe: la
+ * secreta, que vive en el servidor y crea el intento de cobro, y la pública,
+ * que viaja en el navegador y lo confirma. Si no coinciden, el servidor crea
+ * el intento perfectamente —contesta 201— y un segundo después el navegador va
+ * a buscarlo a otra cuenta, donde no existe.
+ *
+ * Stripe contesta eso con "No such payment_intent", que leído sin contexto
+ * parece un error del cobro y manda a revisar la tarjeta, el importe o la
+ * reserva. No es nada de eso: las dos claves no son del mismo par.
+ *
+ * Pasa cuando se rehace la cuenta de Stripe y se actualiza una sola de las
+ * dos. Es un rato perdido si no está dicho, así que se dice.
+ */
+export function esClaveDeOtraCuenta(mensaje) {
+  return /no such payment_intent/i.test(String(mensaje ?? ""));
+}
+
 /** El tramo que sigue: el primero sin cubrir, o null si no falta nada. */
 export function tramoPendiente(datos) {
   const tramos = tramosDelPago(datos);

@@ -1463,4 +1463,5 @@ export default {
   "tarjeta.titular": "Intestatario",
   "tarjeta.vence2": "Scade",
   "tarjeta.verFrente": "Vedi il fronte",
+  "pago.claveDeOtraCuenta": "L'addebito non si è potuto confermare perché la chiave pubblica di questa app e la chiave segreta del server sono di account Stripe diversi. Non è un problema della tua carta: le due chiavi devono essere dello stesso account.",
 };

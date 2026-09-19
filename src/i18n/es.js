@@ -1490,4 +1490,5 @@ export default {
   "tarjeta.titular": "Titular",
   "tarjeta.vence2": "Vence",
   "tarjeta.verFrente": "Ver el frente",
+  "pago.claveDeOtraCuenta": "El cobro no se pudo confirmar porque la clave pública de esta aplicación y la clave secreta del servidor son de cuentas de Stripe distintas. No es un problema de tu tarjeta: hay que poner las dos claves de la misma cuenta.",
 };

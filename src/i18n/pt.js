@@ -1463,4 +1463,5 @@ export default {
   "tarjeta.titular": "Titular",
   "tarjeta.vence2": "Validade",
   "tarjeta.verFrente": "Ver a frente",
+  "pago.claveDeOtraCuenta": "A cobrança não pôde ser confirmada porque a chave pública deste site e a chave secreta do servidor são de contas Stripe diferentes. Não é problema do seu cartão: as duas chaves precisam ser da mesma conta.",
 };

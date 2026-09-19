@@ -9,7 +9,9 @@
 // ============================================================================
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { tramosDelPago, tramoPendiente, esperarElCobro } from "./pago.js";
+import {
+  tramosDelPago, tramoPendiente, esperarElCobro, esClaveDeOtraCuenta,
+} from "./pago.js";
 
 const MONTOS = { sena: 30000, balance: 70000, deposit: 50000 };
 const cobro = (kind, status) => ({ kind, status, createdAt: "2026-09-18T10:00:00Z" });
@@ -147,4 +149,29 @@ test("devuelve el ultimo estado leido, para no volver a preguntar", async () => 
   const { dormir } = relojFalso();
   const r = await esperarElCobro({ kind: "SENA", pedirEstado: servidor([IMPAGO, SENA_OK]), dormir });
   assert.equal(r.estado.paymentStatus, "DEPOSIT_PAID");
+});
+
+// ── Las dos claves de Stripe, que tienen que ser de la misma cuenta ────────
+
+test("reconoce el rechazo por claves de cuentas distintas", () => {
+  /*
+    El servidor crea el intento con la clave SECRETA y el navegador lo confirma
+    con la PUBLICA. Si son de cuentas distintas, el servidor contesta 201 y un
+    segundo despues el navegador va a buscar el intento a otra cuenta, donde no
+    existe. Leido sin contexto, "No such payment_intent" manda a revisar la
+    tarjeta o el importe, que no tienen nada que ver.
+  */
+  assert.equal(esClaveDeOtraCuenta("No such payment_intent: 'pi_3UHOet4qdtS1iEzQ0XnbZDny'"), true);
+  assert.equal(esClaveDeOtraCuenta("no such payment_intent"), true);
+});
+
+test("y no confunde un rechazo normal con eso", () => {
+  for (const otro of [
+    "Tu tarjeta fue rechazada.",
+    "No such customer: 'cus_mock_2784d9c4b388427f'",
+    "Your card has insufficient funds.",
+    "", null, undefined,
+  ]) {
+    assert.equal(esClaveDeOtraCuenta(otro), false, `confundio: ${otro}`);
+  }
 });
