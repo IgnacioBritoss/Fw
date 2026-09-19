@@ -29,7 +29,8 @@ import {
 } from "../services/api";
 import { uploadImageToCloudinary } from "../services/cloudinary";
 import {
-  revisarReclamo, comoSeLeeLaRevision, comoSeLeeElReclamo, MAX_FOTOS,
+  revisarReclamo, comoSeLeeLaRevision, comoSeLeeElReclamo, comoSalioLaRevision,
+  MAX_FOTOS,
 } from "../services/reclamo";
 import { useI18n } from "../i18n/core";
 import Spinner from "./Spinner";
@@ -125,11 +126,16 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
   const [estado, setEstado] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [modo, setModo] = useState("elegir");      // elegir | reclamar | hecho
-  // Cómo terminó: los dos caminos llegan a la misma pantalla de "listo" y no
-  // dicen lo mismo. "La garantía se liberó" y "la plataforma lo va a revisar"
-  // son dos finales distintos, y contarlos con un solo texto obliga a escribir
-  // uno que no sirve para ninguno de los dos.
-  const [salioBien, setSalioBien] = useState(true);
+  /*
+    CÓMO TERMINÓ, con la clave del texto que corresponde.
+
+    Los dos caminos llegan a la misma pantalla de "listo" y no dicen lo mismo,
+    y el de "está todo bien" tiene además tres finales: la garantía se liberó,
+    no había nada retenido que liberar (una reserva vieja), o hay un reclamo
+    abierto que la mantiene. Decir "garantía liberada" en los tres sería
+    anunciar una devolución de plata que no se movió.
+  */
+  const [comoTermino, setComoTermino] = useState("reclamo.listoOk");
   const [mandando, setMandando] = useState(false);
   const [fallo, setFallo] = useState("");
   const [avisoNro, setAvisoNro] = useState(0);
@@ -188,8 +194,8 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
     setMandando(true);
     avisar("");
     try {
-      await confirmarRevisionOk(bookingId);
-      setSalioBien(true);
+      const r = await confirmarRevisionOk(bookingId);
+      setComoTermino(comoSalioLaRevision(r));
       setModo("hecho");
       onListo?.();
     } catch (err) {
@@ -218,7 +224,7 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
         claimedAmountMinor: revisado.montoMinor,
         evidenceUrls,
       });
-      setSalioBien(false);
+      setComoTermino("reclamo.listoReclamo");
       setModo("hecho");
       onListo?.();
     } catch (err) {
@@ -240,10 +246,10 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
             </svg>
           </div>
           <div style={{ fontWeight: 700, marginBottom: 6, color: "var(--fw-text)" }}>
-            {tr(salioBien ? "reclamo.listoOk" : "reclamo.listoReclamo")}
+            {tr(comoTermino)}
           </div>
           <div style={{ fontSize: 13, color: "var(--fw-text-3)", lineHeight: 1.6 }}>
-            {tr(salioBien ? "reclamo.listoOkNota" : "reclamo.listoReclamoNota")}
+            {tr(`${comoTermino}Nota`)}
           </div>
         </div>
       );

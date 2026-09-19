@@ -10,8 +10,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  revisarReclamo, comoSeLeeLaRevision, comoSeLeeElReclamo,
-  DESCRIPCION_MINIMA, MAX_FOTOS,
+  revisarReclamo, comoSeLeeLaRevision, comoSeLeeElReclamo, hayQueRevisar,
+  comoSalioLaRevision, DESCRIPCION_MINIMA, MAX_FOTOS, HORAS_DE_REVISION,
 } from "./reclamo.js";
 
 const TEXTO = "Rayon profundo en la puerta trasera izquierda, no estaba en las fotos del retiro.";
@@ -112,4 +112,63 @@ test("el reclamo se lee con lo que haya", () => {
   });
   assert.equal(comoSeLeeElReclamo({ capturedAmountMinor: 4000 }).cobrado, 40);
   assert.equal(comoSeLeeElReclamo().estado, "OPEN");
+});
+
+// ── Cuando ofrecer revisar el auto ─────────────────────────────────────────
+
+const AHORA = new Date("2026-10-12T12:00:00.000Z");
+const haceHoras = (h) => new Date(AHORA.getTime() - h * 3600000).toISOString();
+const DEVUELTA = { status: "COMPLETED", returnConfirmedAt: haceHoras(6), ownerInspectedAt: null };
+
+test("recien devuelta se ofrece revisar", () => {
+  assert.equal(hayQueRevisar(DEVUELTA, AHORA), true);
+});
+
+test("EL DUEÑO QUE YA REVISO NO REVISA DE NUEVO", () => {
+  /*
+    El agujero que esto tapa: el boton se ofrecia en toda reserva devuelta,
+    para siempre. Despues de decir "esta todo bien" seguia ahi, apretable
+    infinitas veces, y cada vez decia que la garantia se liberaba cuando ya
+    estaba liberada desde la primera.
+  */
+  assert.equal(hayQueRevisar({ ...DEVUELTA, ownerInspectedAt: haceHoras(1) }, AHORA), false);
+});
+
+test("pasado el plazo tampoco", () => {
+  assert.equal(hayQueRevisar({ ...DEVUELTA, returnConfirmedAt: haceHoras(HORAS_DE_REVISION + 1) }, AHORA), false);
+});
+
+test("pero si ya se cobro la garantia, si: adentro esta el detalle", () => {
+  // Esconderlo dejaria al dueño sin el comprobante de su propio reclamo.
+  const cobrada = {
+    ...DEVUELTA, returnConfirmedAt: haceHoras(200),
+    ownerInspectedAt: haceHoras(190), depositCapturedAmount: 60,
+  };
+  assert.equal(hayQueRevisar(cobrada, AHORA), true);
+});
+
+test("una reserva que no esta devuelta no se revisa", () => {
+  for (const status of ["ACCEPTED", "IN_PROGRESS", "CANCELLED_BY_RENTER"]) {
+    assert.equal(hayQueRevisar({ ...DEVUELTA, status }, AHORA), false);
+  }
+  // Ni una COMPLETED sin fecha de devolucion: sin ese dato no hay plazo que
+  // calcular, y ofrecer un boton que el servidor va a rechazar es peor.
+  assert.equal(hayQueRevisar({ ...DEVUELTA, returnConfirmedAt: null }, AHORA), false);
+  assert.equal(hayQueRevisar(null, AHORA), false);
+});
+
+// ── Que se le dice despues de "esta todo bien" ─────────────────────────────
+
+test("solo se dice que se libero la garantia si se libero", () => {
+  /*
+    El servidor no siempre suelta algo: una reserva devuelta antes de que
+    existiera la ventana ya tenia el deposito liberado. Anunciar una devolucion
+    de plata que no se movio es la peor mentira que puede decir una pantalla de
+    pagos.
+  */
+  assert.equal(comoSalioLaRevision({ liberado: true }), "reclamo.listoOk");
+  assert.equal(comoSalioLaRevision({ liberado: false, motivo: "sinRetencion" }), "reclamo.listoSinRetencion");
+  assert.equal(comoSalioLaRevision({ liberado: false, motivo: "reclamoAbierto" }), "reclamo.listoConReclamo");
+  assert.equal(comoSalioLaRevision({ liberado: false, motivo: "otra cosa" }), "reclamo.listoSinCambios");
+  assert.equal(comoSalioLaRevision(), "reclamo.listoSinCambios");
 });

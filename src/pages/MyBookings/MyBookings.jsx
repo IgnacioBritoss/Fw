@@ -34,6 +34,7 @@ import UserReputation from "../../components/UserReputation";
 import { tramoPendienteDeReserva } from "../../services/pago";
 import { decidirCancelacion, avisoDeCancelacion } from "../../services/cancelacion";
 import RevisarElAuto from "../../components/RevisarElAuto";
+import { hayQueRevisar } from "../../services/reclamo";
 import StatusChip from "../../components/StatusChip";
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import { useI18n } from "../../i18n/core";
@@ -335,11 +336,12 @@ export default function MyBookings() {
             {actionLoading === `${b.id}-cancel` ? "..." : t("common.cancel")}
           </button>
         )}
-        {/* El dueño revisa el auto que volvió. Se ofrece en todas las
-            devueltas y no solo mientras el plazo corre: pasada la ventana,
-            esta misma pantalla es donde el dueño ve en qué quedó el reclamo
-            que hizo. */}
-        {isOwner && b.status === "COMPLETED" && (
+        {/* El dueño revisa el auto que volvió, mientras corre el plazo y no
+            lo haya revisado ya. Antes se ofrecía en TODA reserva devuelta y
+            para siempre: se podía apretar infinitas veces, y cada una decía
+            que la garantía se liberaba cuando ya estaba liberada desde la
+            primera. La regla está en services/reclamo.js, con sus pruebas. */}
+        {isOwner && hayQueRevisar(b) && (
           <button style={s.btnQR} onClick={() => setRevisando(b)}>
             {t("reclamo.revisar")}
           </button>
