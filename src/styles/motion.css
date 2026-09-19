@@ -277,6 +277,55 @@
 }
 
 /* ============================================================================
+   EL COMPROBANTE SALIENDO DE LA IMPRESORA (components/Comprobante)
+   ----------------------------------------------------------------------------
+   El alquiler quedó pagado y sale el ticket. La caja CRECE
+   (`grid-template-rows` de 0fr a 1fr) con el papel recortado adentro y
+   anclado arriba, así que lo que va apareciendo es el papel DE ARRIBA HACIA
+   ABAJO: primero el encabezado, después los renglones, y el sello al final.
+
+   Que el papel se revele en ese orden no es un detalle: es el orden en que una
+   impresora imprime. Probé antes empujando el papel hacia abajo con un
+   `translate`, que suena a que "sale" — y hace lo contrario de lo que parece,
+   porque tapa el encabezado justo mientras se está imprimiendo. El papel no se
+   mueve: se va descubriendo.
+
+   Y va a SALTOS, con `steps()`. Un movimiento continuo se lee como un panel que
+   se despliega; el papel de una impresora térmica avanza de a un renglón, y ese
+   tironeo es lo único que hace que esto suene a máquina. Veintidós pasos en dos
+   segundos es aproximadamente un renglón de ticket por paso.
+
+   La vibración de la impresora dura lo mismo y después para: dieciséis vueltas
+   de 120ms. Sin contarlas, la máquina seguiría temblando para siempre al lado
+   de un papel ya impreso.
+
+   Por qué `grid-template-rows` y no una altura: una altura hay que saberla, y
+   el alto del ticket depende de cuántos renglones tenga la reserva. `0fr → 1fr`
+   la mide sola.
+   ========================================================================== */
+@keyframes fw-ticket-sale {
+  from { grid-template-rows: 0fr; }
+  to   { grid-template-rows: 1fr; }
+}
+
+@keyframes fw-impresora-vibra {
+  0%   { transform: translate3d(0, -.5px, 0); }
+  100% { transform: translate3d(0, .5px, 0); }
+}
+
+.fw-ticket-salida {
+  display: grid;
+  grid-template-rows: 0fr;
+  animation: fw-ticket-sale 2s steps(22, end) both;
+}
+
+/* El hijo del grid recorta lo que todavía no salió: es lo que convierte la
+   fila que crece en una ranura. */
+.fw-ticket-salida > * { overflow: hidden; }
+
+.fw-impresora-vibra { animation: fw-impresora-vibra .12s steps(2, end) 16 both; }
+
+/* ============================================================================
    MENOS MOVIMIENTO
    ----------------------------------------------------------------------------
    La preferencia del sistema de quien se marea con las animaciones. Acá NO se
@@ -315,4 +364,12 @@
      dice el fondo que se oscurece detrás. */
   .fw-modal { animation-name: fw-velo-entra; }
   [data-sc-spotlight]::after { display: none; }
+  /*
+    El ticket se queda quieto y entero. Acá no hay nada que conservar: la
+    impresión ES el movimiento, y una máquina temblando es justo lo que esta
+    preferencia pide que no pase. El comprobante igual está, que es lo que
+    importa.
+  */
+  .fw-ticket-salida { grid-template-rows: 1fr; animation: none; }
+  .fw-impresora-vibra { animation: none; }
 }

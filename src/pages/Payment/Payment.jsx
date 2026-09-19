@@ -78,6 +78,7 @@ import { tarjetaElegida } from "../../services/billetera";
 import { tarjetasGuardadas, comoSeLee } from "../../services/tarjeta";
 import { TarjetaDeStripe, TarjetaGuardada } from "../../components/TarjetaVirtual";
 import MovimientosDelPago from "../../components/MovimientosDelPago";
+import Comprobante from "../../components/Comprobante";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/Spinner";
 import { useI18n } from "../../i18n/core";
@@ -590,19 +591,30 @@ export default function Payment() {
           <div style={{ color: "var(--fw-text-3)", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
             {tr("payment.confirmedNote")}
           </div>
+          {/*
+            EL COMPROBANTE, IMPRIMIÉNDOSE.
+
+            Antes acá había otro recuadro con los mismos datos que los seis
+            recuadros de arriba, y se leía como una sección más de la página.
+            Todo lo que se paga en el mundo real termina en un papel: el ticket
+            dice "esto es la constancia" antes de que nadie lea un renglón, y
+            que salga de la ranura dice "se acaba de emitir". Ver
+            components/Comprobante.
+          */}
+          <div style={{ marginBottom: 22 }}>
+            <Comprobante
+              booking={booking}
+              payment={payment}
+              dias={days}
+              moneda={payment?.currency ?? booking?.currency}
+              money={money}
+            />
+          </div>
+          {/* El registro de todo lo que pasó con la plata. Acá es donde más
+              falta hace: la reserva ya está paga, y si alguien pregunta por
+              un cobro, esto es lo único que lo contesta. */}
           <div style={{ ...s.card, textAlign: "left" }}>
-            {vehicleLabel && <Row label={tr("payment.vehicle")} value={vehicleLabel} />}
-            {startDate && <Row label={tr("payment.from")} value={longDate(startDate, lang)} />}
-            {endDate && <Row label={tr("payment.to")} value={longDate(endDate, lang)} />}
-            <Row label={tr("payment.days")} value={days} />
-            {deposit != null && <Row label={tr("payment.heldDeposit")} value={money(deposit, payment?.currency ?? booking?.currency)} />}
-            <div style={s.totalRow}><span>{tr("payment.totalPaid")}</span><span>{money(total, payment?.currency ?? booking?.currency)}</span></div>
-            {/* El registro de todo lo que pasó con la plata. Acá es donde más
-                falta hace: la reserva ya está paga, y si alguien pregunta por
-                un cobro, esto es lo único que lo contesta. */}
-            <div style={{ marginTop: 14 }}>
-              <MovimientosDelPago bookingId={bookingId} moneda={payment?.currency} />
-            </div>
+            <MovimientosDelPago bookingId={bookingId} moneda={payment?.currency} />
           </div>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button style={{ padding: "12px 28px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }} onClick={() => navigate("/my-bookings")}>{tr("payment.seeBookings")}</button>
