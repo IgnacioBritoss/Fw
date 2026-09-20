@@ -292,12 +292,40 @@
 
    Y va a SALTOS, con `steps()`. Un movimiento continuo se lee como un panel que
    se despliega; el papel de una impresora térmica avanza de a un renglón, y ese
-   tironeo es lo único que hace que esto suene a máquina. Veintidós pasos en dos
-   segundos es aproximadamente un renglón de ticket por paso.
+   tironeo es lo único que hace que esto suene a máquina.
 
-   La vibración de la impresora dura lo mismo y después para: dieciséis vueltas
-   de 120ms. Sin contarlas, la máquina seguiría temblando para siempre al lado
-   de un papel ya impreso.
+   ── CUÁNTOS SALTOS: LOS CUENTA EL COMPONENTE, Y ESTO ERA UN PROBLEMA ──────
+   Acá decía `steps(22)` y `2s`, fijos, y era el motivo principal de que la
+   impresión pareciera "que va todo junto". El alto del ticket depende de
+   cuántas líneas tenga la reserva: repartido en veintidós saltos siempre, un
+   ticket corto avanzaba de a seis píxeles —un movimiento tan chico que el ojo
+   lo integra y ve un panel abriéndose de una— y uno largo de a treinta, que es
+   saltearse un renglón entero por paso.
+
+   Ahora el componente publica --fw-ticket-pasos (cuántos renglones tiene ESTE
+   ticket) y --fw-ticket-paso (lo que tarda uno). Con eso el salto mide siempre
+   más o menos un renglón y la impresión dura lo que tiene que durar: más en un
+   ticket con más cosas, que es lo que pasa con una impresora de verdad.
+
+   ── Y POR ESO EL ESTADO DE REPOSO ES `1fr` Y NO `0fr` ─────────────────────
+   Una `animation` que lleva un `var()` adentro se cae ENTERA si esa variable
+   trae algo que no sirve: no es que se ignore el `steps()`, es que la propiedad
+   completa queda en `none`. Con `0fr` escrito acá abajo, eso dejaba el ticket
+   en cero de alto para siempre: el comprobante desaparecido por una variable.
+
+   Escrito al revés —quieto en `1fr`, y que el `both` de la animación aplique el
+   `0fr` del primer fotograma mientras corre— se ve exactamente igual, y el día
+   que la animación no se aplique lo que queda es el ticket entero y quieto, que
+   es lo único que no se puede perder. Los valores de reserva del `var()` —20
+   pasos, 88ms— son la misma idea un escalón antes.
+
+   ── LA VIBRACIÓN VA AL MISMO COMPÁS ───────────────────────────────────────
+   La máquina tiembla una vez por renglón: el período de la vibración ES el
+   paso, y las vueltas son los pasos. Antes eran dos números sueltos —120ms,
+   dieciséis vueltas— contra un paso de 91ms, así que el temblor y el papel
+   corrían a velocidades distintas y ninguno de los dos explicaba al otro. Son
+   un mecanismo: si el tirón del papel y el golpe de la máquina no caen juntos,
+   no hay máquina.
 
    Por qué `grid-template-rows` y no una altura: una altura hay que saberla, y
    el alto del ticket depende de cuántos renglones tenga la reserva. `0fr → 1fr`
@@ -313,17 +341,39 @@
   100% { transform: translate3d(0, .5px, 0); }
 }
 
+/* El filo del papel que todavía está saliendo se apaga recién en el último
+   paso: cuando el papel ya salió entero, ese borde pasa a ser el corte dentado
+   y una barra gris le taparía los huecos. Ver `bordeLibre` en el componente. */
+@keyframes fw-ticket-borde {
+  0%, 90% { opacity: 1; }
+  100%    { opacity: 0; }
+}
+
 .fw-ticket-salida {
   display: grid;
-  grid-template-rows: 0fr;
-  animation: fw-ticket-sale 2s steps(22, end) both;
+  grid-template-rows: 1fr;
+  animation: fw-ticket-sale
+    calc(var(--fw-ticket-paso, 88ms) * var(--fw-ticket-pasos, 20))
+    steps(var(--fw-ticket-pasos, 20), end) both;
 }
 
 /* El hijo del grid recorta lo que todavía no salió: es lo que convierte la
    fila que crece en una ranura. */
 .fw-ticket-salida > * { overflow: hidden; }
 
-.fw-impresora-vibra { animation: fw-impresora-vibra .12s steps(2, end) 16 both; }
+/* Apagado en reposo, por lo mismo: si la animación no corre, lo que tiene que
+   quedar es el corte limpio y no una barra gris encima de los dientes. El `both`
+   lo prende en el primer fotograma mientras el papel está saliendo. */
+.fw-ticket-borde {
+  opacity: 0;
+  animation: fw-ticket-borde
+    calc(var(--fw-ticket-paso, 88ms) * var(--fw-ticket-pasos, 20)) linear both;
+}
+
+.fw-impresora-vibra {
+  animation: fw-impresora-vibra var(--fw-ticket-paso, 88ms) steps(2, end)
+    var(--fw-ticket-pasos, 20) both;
+}
 
 /* ============================================================================
    MENOS MOVIMIENTO
@@ -372,4 +422,7 @@
   */
   .fw-ticket-salida { grid-template-rows: 1fr; animation: none; }
   .fw-impresora-vibra { animation: none; }
+  /* El filo del papel que avanza tampoco tiene sentido cuando nada avanza.
+     Alcanza con sacarle la animación: en reposo ya está apagado. */
+  .fw-ticket-borde { animation: none; }
 }

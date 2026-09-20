@@ -34,12 +34,66 @@ const PAPEL = "#f7f5ef";
 const TINTA = "#1c1c1e";
 const TINTA_TENUE = "#6b6b70";
 
-/** El diente del borde arrancado, en píxeles. */
-const DIENTE = 14;
+/*
+  EL DIENTE DEL BORDE ARRANCADO
+  ----------------------------------------------------------------------------
+  Antes era UN número —catorce— y el diente salía cuadrado por consecuencia: el
+  mismo valor hacía de ancho y de hondo. Catorce de ancho son veintisiete
+  dientes a lo largo del ticket, grandes y en ángulo de cuarenta y cinco grados,
+  y eso no se lee como un papel arrancado: se lee como un borde decorativo de
+  guirnalda pegado abajo del comprobante.
+
+  Un corte de verdad lo hace una sierra chica, y la muesca que deja es más ANCHA
+  que HONDA. Por eso ahora son dos medidas: diez de ancho por seis de hondo, o
+  sea unos treinta y cuatro dientes chatos. Se ve que está cortado y no se ve un
+  adorno, que es exactamente la diferencia que hay que conseguir.
+*/
+const DIENTE_ANCHO = 10;
+const DIENTE_HONDO = 6;
+
+/*
+  La cuña del `conic-gradient` es la que dibuja cada diente, y su apertura tiene
+  que salir de las dos medidas o el diente no cierra: demasiado angosta deja la
+  punta sin llegar a la esquina del mosaico y quedan dientes separados por una
+  franja recta; demasiado ancha se pasa de largo, el navegador la recorta contra
+  el mosaico y la punta sale cortada al ras, que es un trapecio y no un diente.
+
+  El ángulo que las hace coincidir es el de la diagonal del medio diente, y eso
+  es una arcotangente. El `from 135deg` deja el centro de la cuña en 45.
+*/
+const MEDIA_CUNA = (Math.atan((DIENTE_ANCHO / 2) / DIENTE_HONDO) * 180) / Math.PI;
+const CUNA_DESDE = (45 - MEDIA_CUNA).toFixed(2);
+const CUNA_HASTA = (45 + MEDIA_CUNA).toFixed(2);
+
 const MASCARA_DENTADA = [
-  `linear-gradient(#000 0 0) 0 0 / 100% calc(100% - ${DIENTE}px) no-repeat`,
-  `conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 100% / ${DIENTE}px ${DIENTE}px repeat-x`,
+  `linear-gradient(#000 0 0) 0 0 / 100% calc(100% - ${DIENTE_HONDO}px) no-repeat`,
+  `conic-gradient(from 135deg at top, #0000 ${CUNA_DESDE}deg, #000 ${CUNA_DESDE}deg ${CUNA_HASTA}deg, #0000 ${CUNA_HASTA}deg) 0 100% / ${DIENTE_ANCHO}px ${DIENTE_HONDO}px repeat-x`,
 ].join(", ");
+
+/** Lo que tarda la impresora en sacar un renglón. */
+const MS_POR_RENGLON = 88;
+
+/**
+ * Cuántos renglones va a tener este ticket.
+ *
+ * ── POR QUÉ ESTO NO PUEDE SER UN NÚMERO FIJO ──────────────────────────────
+ * La animación avanza a saltos, y antes eran veintidós saltos siempre. Pero el
+ * alto del ticket depende de cuántas líneas tenga la reserva, así que veintidós
+ * saltos repartían un ticket corto en saltitos de seis píxeles —que no se ven, y
+ * ahí la impresión parecía un panel que se abre de una— y uno largo en tirones
+ * de treinta, que se saltean un renglón entero por paso.
+ *
+ * Contando los renglones, el salto mide siempre más o menos lo mismo: un
+ * renglón. Y la impresión dura lo que tiene que durar, que es más en un ticket
+ * con más cosas.
+ *
+ * No hace falta que el número sea exacto —los cortes de puntos y el sello no
+ * miden lo mismo que una línea de texto— sino que sea PROPORCIONAL. Los ocho de
+ * más son los renglones que no son líneas: el encabezado con la marca, el
+ * subtítulo y el número, el sello —que ocupa dos—, el pie, y el aire de arriba
+ * y de abajo.
+ */
+const renglonesDelTicket = (cuantasLineas) => cuantasLineas + 8;
 
 const s = {
   /*
@@ -61,8 +115,17 @@ const s = {
     pantalla, no dos.
   */
   marco: {
-    maxWidth: 380, margin: "0 auto", width: "100%",
-    filter: "drop-shadow(0 6px 14px rgba(10,14,25,.22))",
+    maxWidth: 400, margin: "0 auto", width: "100%",
+    /*
+      Son DOS sombras y cada una hace un trabajo distinto. La abierta despega el
+      conjunto de la pantalla; la corta y dura de adelante es la que dibuja el
+      contorno de los dientes, que con ocho píxeles de ancho quedaban
+      completamente disueltos dentro de la otra y se veían planos, pegados.
+    */
+    filter: [
+      "drop-shadow(0 1px 1px rgba(10,14,25,.34))",
+      "drop-shadow(0 7px 16px rgba(10,14,25,.22))",
+    ].join(" "),
   },
   /*
     LA IMPRESORA: una barra oscura con una ranura. Con cuatro elementos alcanza
@@ -75,7 +138,7 @@ const s = {
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   ranura: {
-    width: "86%", height: 6, borderRadius: 3, background: "#0c0e11",
+    width: "90%", height: 6, borderRadius: 3, background: "#0c0e11",
     boxShadow: "inset 0 2px 3px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.07)",
   },
   luz: {
@@ -83,11 +146,79 @@ const s = {
     borderRadius: "50%", background: "#3ddc84",
     boxShadow: "0 0 6px rgba(61,220,132,.9)",
   },
+  /*
+    EL PAPEL ES MÁS ANGOSTO QUE LA MÁQUINA, Y ESO SOLO ES MEDIO CENTÍMETRO.
+
+    Antes los dos medían exactamente lo mismo y arrancaban en la misma línea
+    vertical, y esa coincidencia era la que arruinaba todo: dos rectángulos del
+    mismo ancho, uno oscuro arriba y uno claro abajo, se leen como UNA caja de
+    dos colores que crece. Ningún rollo de papel es tan ancho como la impresora
+    que lo escupe, y el ojo lo sabe sin que nadie se lo explique.
+
+    Por eso la ranura también se agrandó: el papel tiene que salir de adentro de
+    ella, no de sus costados.
+  */
+  salida: { width: "86%", margin: "0 auto" },
+  /*
+    LA VENTANA por la que va apareciendo el papel. Es `relative` para que la
+    sombra de la ranura y el borde libre se cuelguen de sus bordes: los dos
+    tienen que quedarse quietos mientras la ventana crece, que es justamente lo
+    que los convierte en partes de la máquina y no en partes del ticket.
+  */
+  ventana: { position: "relative" },
+  /*
+    LA SOMBRA QUE LA RANURA TIRA SOBRE EL PAPEL. Un papel que sale de una
+    abertura no está iluminado parejo en el borde: los primeros milímetros
+    todavía están adentro. Sin esto, la juntura entre la barra oscura y el papel
+    es una línea recta perfecta, y una línea recta perfecta es lo que separa dos
+    rectángulos apilados, no lo que une una máquina con lo que está saliendo de
+    ella.
+  */
+  sombraDeLaRanura: {
+    position: "absolute", top: 0, left: 0, right: 0, height: 16,
+    pointerEvents: "none",
+    /*
+      EL z-index NO ES DECORATIVO Y SIN ÉL ESTO NO SE VE.
+
+      El papel lleva una `mask`, y un elemento enmascarado abre su propio
+      contexto de apilado: el navegador lo pinta como si tuviera z-index 0, o
+      sea en la misma tanda que estos dos avisos, que están posicionados y
+      también valen 0. Empatados, gana el que va después en el documento... y el
+      papel va después. Resultado: las dos sombras quedaban pintadas DEBAJO del
+      papel, o sea invisibles, y el ticket se veía exactamente igual que antes.
+    */
+    zIndex: 1,
+    background: "linear-gradient(180deg, rgba(12,14,17,.36), rgba(12,14,17,.07) 58%, rgba(12,14,17,0))",
+  },
+  /*
+    EL BORDE LIBRE, el filo del papel que todavía está saliendo.
+
+    Mientras imprime, la ventana corta el papel con una línea recta que a veces
+    parte un renglón por la mitad. Esa raya es el defecto más visible de toda la
+    animación: se lee como un recorte, no como una hoja. Una sombrita finita
+    pegada al borde de abajo la convierte en el canto del papel.
+
+    Y se apaga en el último paso —ver fw-ticket-borde en motion.css— porque al
+    terminar ese borde ya no es un filo que avanza: es el corte dentado, que
+    tiene su propia sombra y no quiere una barra gris rellenándole los huecos.
+  */
+  bordeLibre: {
+    position: "absolute", bottom: 0, left: 0, right: 0, height: 10,
+    pointerEvents: "none", zIndex: 1,
+    background: "linear-gradient(0deg, rgba(12,14,17,.20), rgba(12,14,17,0))",
+  },
   papel: {
-    background: PAPEL, color: TINTA,
+    backgroundColor: PAPEL,
+    /*
+      Una sombra tenue sobre la franja del corte: el papel arrancado no queda
+      plano, y sin nada de sombra los dientes se ven como un dibujo impreso
+      sobre el papel en vez de como el final del papel.
+    */
+    backgroundImage: `linear-gradient(0deg, rgba(28,28,30,.10), rgba(28,28,30,0) ${DIENTE_HONDO + 9}px)`,
+    color: TINTA,
     fontFamily: "'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace",
     fontSize: 12.5, lineHeight: 1.75, textAlign: "left",
-    padding: "18px 18px 26px",
+    padding: "18px 16px 20px",
     /*
       EL BORDE DE ABAJO, CORTADO. Es el detalle que convierte un rectángulo
       claro en un ticket: el papel se arranca del rollo y queda dentado.
@@ -138,9 +269,25 @@ export default function Comprobante({ booking, payment, dias, moneda, money, fec
   const { t: tr, lang } = useI18n();
   const lineas = lineasDelComprobante({ booking, payment, dias });
   const numero = numeroDeComprobante(booking?.id);
+  // Cuántos saltos tiene la impresión y cuánto dura cada uno. Los lee
+  // motion.css: el alto del ticket lo sabe el navegador, pero cuántos renglones
+  // tiene lo sabe esto.
+  const pasos = renglonesDelTicket(lineas.length);
 
+  /*
+    Los dos números de la impresión se publican en el marco de afuera y no en la
+    caja del papel, porque el que tiembla es la barra de la máquina: es hermana
+    del papel, no hija, y desde ahí abajo nunca los habría visto. Puestos arriba
+    los heredan los dos, que es la única forma de que golpeen juntos.
+  */
   return (
-    <div style={s.marco}>
+    <div
+      style={{
+        ...s.marco,
+        "--fw-ticket-pasos": pasos,
+        "--fw-ticket-paso": `${MS_POR_RENGLON}ms`,
+      }}
+    >
       <div className="fw-impresora-vibra" style={s.impresora}>
         <div style={s.ranura} />
         <div style={s.luz} />
@@ -151,10 +298,13 @@ export default function Comprobante({ booking, payment, dias, moneda, money, fec
         que el ticket se va descubriendo de arriba hacia abajo —el encabezado
         primero, el sello al final—, que es el orden en que una impresora
         imprime. Los saltos los da un `steps()`, que es lo que suena a rollo
-        avanzando. Ver styles/motion.css.
+        avanzando, y son tantos como renglones tenga ESTE ticket. Ver
+        styles/motion.css.
       */}
-      <div className="fw-ticket-salida">
-        <div>
+      <div className="fw-ticket-salida" style={s.salida}>
+        <div style={s.ventana}>
+          <div style={s.sombraDeLaRanura} />
+          <div className="fw-ticket-borde" style={s.bordeLibre} />
           <div style={s.papel}>
             <div style={s.marca}>FREEWHEEL</div>
             <div style={s.subtitulo}>{tr("comprobante.titulo")}</div>
