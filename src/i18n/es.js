@@ -397,6 +397,15 @@ export default {
   "chat.greeting": "Hola, soy Wili, el asistente. Puedo ayudarte con dudas sobre seguridad, pagos, cómo publicar tu auto, cancelaciones y más. ¿En qué puedo ayudarte?",
   "chat.placeholder": "Escribí tu pregunta...",
   "chat.send": "Enviar",
+  "chat.voice.start": "Preguntar hablando",
+  "chat.voice.stop": "Listo",
+  "chat.voice.cancel": "Descartar",
+  "chat.voice.recording": "Grabando",
+  "chat.voice.working": "Pasando a texto...",
+  "chat.voice.denied": "No se pudo usar el micrófono. Fijate el permiso del navegador.",
+  "chat.voice.short": "Fue muy corto. Probá de nuevo y hablá un poco más.",
+  "chat.voice.failed": "No se pudo pasar el audio a texto. Probá de nuevo.",
+  "chat.voice.empty": "No se entendió nada del audio. Probá en un lugar menos ruidoso.",
 
   // ── Perfil: rangos ───────────────────────────────────────────────────────
   "rank.new": "Sin historial",

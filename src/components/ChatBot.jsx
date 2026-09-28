@@ -13,6 +13,7 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import { useAsistente } from "../context/AssistantContext";
 import { useAuth } from "../context/AuthContext";
 import { useDraggableWindow } from "../hooks/useDraggableWindow";
+import useGrabadora, { segundosComoReloj, textoParaLaCaja } from "../hooks/useGrabadora";
 import { useI18n } from "../i18n/core";
 import RobotIcon from "./RobotIcon";
 
@@ -157,6 +158,56 @@ function Asistente() {
 
   const messagesRef = useRef(null); // contenedor de mensajes (para hacer scroll)
   const inputRef = useRef(null);    // caja de texto (para enfocarla)
+
+  /*
+    PREGUNTARLE A WILI HABLANDO.
+
+    El recorrido es grabar, subir, transcribir, y el texto CAE EN LA CAJA: no se
+    manda solo. Es a propósito. La transcripción se equivoca justo con lo que
+    esta aplicación tiene por todos lados —patentes, modelos, nombres propios—,
+    y una pregunta mal transcripta que se manda sola se lleva puesta la
+    respuesta: Wili contesta bien otra cosa, y desde afuera parece que el
+    asistente no entiende. Un segundo para corregir antes de mandar sale más
+    barato que eso.
+
+    Se sube a Cloudinary porque el backend transcribe desde una URL http (ver
+    AiTranscribeDto: @IsUrl y 2048 caracteres de tope), así que un audio en
+    base64 no entra. Queda el archivo dado vuelta, que no lo escucha nadie; el
+    backend tiene `npm run cloudinary:limpiar` para eso.
+  */
+  const grabadora = useGrabadora();
+  const [transcribiendo, setTranscribiendo] = useState(false);
+  const [avisoVoz, setAvisoVoz] = useState(null); // clave del diccionario, o null
+
+  const empezarAGrabar = async () => {
+    setAvisoVoz(null);
+    if (!(await grabadora.empezar())) setAvisoVoz("chat.voice.denied");
+  };
+
+  const terminarDeGrabar = async () => {
+    const audio = await grabadora.detener();
+    // Sin blob es que la grabación no llegó a durar nada: un toque sin querer.
+    if (!audio) { setAvisoVoz("chat.voice.short"); return; }
+
+    setTranscribiendo(true);
+    try {
+      const { uploadAudioToCloudinary } = await import("../services/cloudinary");
+      const { groqTranscribe } = await import("../services/groq");
+      const texto = await groqTranscribe(await uploadAudioToCloudinary(audio));
+      if (!String(texto ?? "").trim()) { setAvisoVoz("chat.voice.empty"); return; }
+      setInput((previo) => textoParaLaCaja(previo, texto));
+      inputRef.current?.focus();
+    } catch {
+      setAvisoVoz("chat.voice.failed");
+    } finally {
+      setTranscribiendo(false);
+    }
+  };
+
+  const descartarGrabacion = () => {
+    grabadora.cancelar();
+    setAvisoVoz(null);
+  };
 
   // Baja el scroll hasta el último mensaje.
   const scrollToBottom = (behavior = "auto") => {
@@ -509,12 +560,50 @@ function Asistente() {
     </div>
   );
 
-  // Barra inferior: caja de texto (envía con Enter) y botón de enviar.
+  /*
+    Mientras se graba, la caja de texto no está: está esta tira en su lugar.
+
+    Ocupar el mismo hueco en vez de agregar una fila arriba es lo que hace que
+    quede claro que el micrófono es la otra forma de escribir la pregunta, y no
+    un adjunto que se manda aparte. Y de paso la ventana no cambia de alto en el
+    celular, que es donde el teclado ya pelea por cada pixel.
+  */
+  const TiraDeGrabacion = (
+    <div
+      style={{
+        flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 14px", borderRadius: 24,
+        border: "1.5px solid var(--fw-red-line)", background: "var(--fw-red-bg)",
+      }}
+    >
+      <span
+        className="fw-grabando"
+        style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--fw-red-text-2)", flexShrink: 0 }}
+      />
+      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-red-text-2)", fontVariantNumeric: "tabular-nums" }}>
+        {segundosComoReloj(grabadora.segundos)}
+      </span>
+      <span style={{ fontSize: 12.5, color: "var(--fw-text-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {tr("chat.voice.recording")}
+      </span>
+      <button
+        onClick={descartarGrabacion}
+        style={{
+          marginLeft: "auto", flexShrink: 0, background: "none", border: "none",
+          color: "var(--fw-text-3)", fontFamily: "inherit", fontSize: 12.5,
+          cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2,
+          padding: "2px 4px",
+        }}
+      >
+        {tr("chat.voice.cancel")}
+      </button>
+    </div>
+  );
+
+  // Barra inferior: caja de texto (envía con Enter), micrófono y botón de enviar.
   const InputBar = (
     <div
       style={{
-        display: "flex",
-        gap: 8,
         padding: "12px 14px",
         paddingBottom: "max(12px, env(safe-area-inset-bottom))",
         borderTop: "1px solid var(--fw-line-soft)",
@@ -522,71 +611,130 @@ function Asistente() {
         flexShrink: 0,
       }}
     >
-      <input
-        ref={inputRef}
-        style={{
-          flex: 1,
-          padding: "10px 14px",
-          borderRadius: 24,
-          border: "1.5px solid var(--fw-border)",
-          fontSize: 16,
-          outline: "none",
-          color: "var(--fw-text)",
-        }}
-        placeholder={tr("chat.placeholder")}
-        value={input}
-        enterKeyHint="send"
-        onChange={(e) => setInput(e.target.value)}
-        onFocus={() => {
-          requestAnimationFrame(() => {
-            setViewport(getViewportData());
+      {/*
+        El renglón de aviso vive ARRIBA de la fila y no encima de los mensajes:
+        lo que dice es sobre lo que se está por escribir, no sobre la charla.
+        Mientras se transcribe dice qué está pasando, que es lo único que
+        justifica los segundos que tarda.
+      */}
+      {(transcribiendo || avisoVoz) && (
+        <div style={{ fontSize: 12, color: "var(--fw-text-3)", padding: "0 6px 8px", lineHeight: 1.4 }}>
+          {tr(transcribiendo ? "chat.voice.working" : avisoVoz)}
+        </div>
+      )}
 
-            setTimeout(() => {
-              setViewport(getViewportData());
-              scrollToBottom("auto");
-            }, 120);
-          });
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            send();
-          }
-        }}
-      />
+      <div style={{ display: "flex", gap: 8 }}>
+        {grabadora.grabando ? TiraDeGrabacion : (
+          <input
+            ref={inputRef}
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: 24,
+              border: "1.5px solid var(--fw-border)",
+              fontSize: 16,
+              outline: "none",
+              color: "var(--fw-text)",
+            }}
+            placeholder={tr("chat.placeholder")}
+            value={input}
+            enterKeyHint="send"
+            disabled={transcribiendo}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => {
+              requestAnimationFrame(() => {
+                setViewport(getViewportData());
 
-      <button
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: "50%",
-          background: "var(--fw-blue)",
-          color: "#fff",
-          border: "none",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-        onClick={() => send()}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M22 2L11 13"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
+                setTimeout(() => {
+                  setViewport(getViewportData());
+                  scrollToBottom("auto");
+                }, 120);
+              });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                send();
+              }
+            }}
           />
-          <path
-            d="M22 2L15 22L11 13L2 9L22 2Z"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+        )}
+
+        {/*
+          El micrófono no se dibuja donde no puede funcionar.
+
+          Sin HTTPS, y en algún navegador viejo, getUserMedia y MediaRecorder
+          directamente no existen. Un botón que al tocarlo solo puede disculparse
+          es peor que no tenerlo: promete algo que esa pantalla no da.
+        */}
+        {grabadora.soportado && (
+          <button
+            title={tr(grabadora.grabando ? "chat.voice.stop" : "chat.voice.start")}
+            aria-label={tr(grabadora.grabando ? "chat.voice.stop" : "chat.voice.start")}
+            disabled={transcribiendo}
+            onClick={() => (grabadora.grabando ? terminarDeGrabar() : empezarAGrabar())}
+            style={{
+              width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: transcribiendo ? "default" : "pointer",
+              opacity: transcribiendo ? 0.5 : 1,
+              background: grabadora.grabando ? "var(--fw-blue)" : "var(--fw-surface-2)",
+              border: grabadora.grabando ? "none" : "1.5px solid var(--fw-border)",
+              color: grabadora.grabando ? "#fff" : "var(--fw-text-2)",
+            }}
+          >
+            {grabadora.grabando ? (
+              // Un cuadrado: "cortá acá". Es el gesto que ya tiene aprendido
+              // cualquiera que haya grabado algo alguna vez.
+              <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="4" width="16" height="16" rx="2.5" fill="#fff" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="9" y="2.5" width="6" height="11" rx="3"
+                  stroke="currentColor" strokeWidth="2" />
+                <path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+        )}
+
+        <button
+          disabled={grabadora.grabando || transcribiendo}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            background: "var(--fw-blue)",
+            color: "#fff",
+            border: "none",
+            cursor: grabadora.grabando || transcribiendo ? "default" : "pointer",
+            opacity: grabadora.grabando || transcribiendo ? 0.5 : 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+          onClick={() => send()}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M22 2L11 13"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M22 2L15 22L11 13L2 9L22 2Z"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 
@@ -613,6 +761,19 @@ function Asistente() {
         .fw-dot-1 { animation: bounce .8s infinite 0s; }
         .fw-dot-2 { animation: bounce .8s infinite .15s; }
         .fw-dot-3 { animation: bounce .8s infinite .3s; }
+
+        @keyframes fw-grabando {
+          0%,100% { opacity: 1; }
+          50%     { opacity: .25; }
+        }
+
+        .fw-grabando { animation: fw-grabando 1s ease-in-out infinite; }
+
+        /* Quien pidió que no se mueva nada ve el punto fijo, no apagado: es el
+           único indicio de que el micrófono está abierto. */
+        @media (prefers-reduced-motion: reduce) {
+          .fw-grabando { animation: none; }
+        }
       `}</style>
 
       {/* Si está abierto: en celular ocupa toda la pantalla; en escritorio es
