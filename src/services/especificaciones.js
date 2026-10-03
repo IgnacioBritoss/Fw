@@ -31,26 +31,15 @@
 // Node pelado y exige la ruta completa. Es el primer servicio con pruebas que
 // importa otro archivo nuestro, así que acá aparece por primera vez.
 import { AUTOS, ALIAS_DE_MARCA, ALIAS_DE_MODELO } from "../data/autosArgentina.js";
+import { normalizar } from "./texto.js";
 
-/**
- * El texto con el que se compara: sin acentos, sin mayúsculas, sin espacios de
- * más y sin los signos que la gente mete al escribir un modelo ("HR-V", "Up!",
- * "C4 Cactus").
- *
- * Los guiones se vuelven espacios en vez de desaparecer: sin eso "hr-v" y
- * "hrv" terminan igual que "h r v", y peor, "t-cross" se confundiría con
- * "tcross" por un camino distinto al de la tabla de alias, que es la que tiene
- * que decidir esas cosas y no un accidente de normalización.
- */
-export function normalizar(texto) {
-  return String(texto ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")   // saca los acentos
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
+/*
+  `normalizar` se mudó a services/texto.js, porque ahora también lo usa el
+  asistente y ese no tiene por qué cargar la tabla de los autos. Se sigue
+  exportando desde acá: es parte de la interfaz de este archivo y hay pruebas y
+  pantallas que lo piden por este nombre.
+*/
+export { normalizar };
 
 /*
   LO QUE DEVUELVE UN ALIAS TAMBIÉN SE NORMALIZA.

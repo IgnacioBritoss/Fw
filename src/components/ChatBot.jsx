@@ -14,6 +14,10 @@ import { useAsistente } from "../context/AssistantContext";
 import { useAuth } from "../context/AuthContext";
 import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import useGrabadora, { segundosComoReloj, textoParaLaCaja } from "../hooks/useGrabadora";
+import {
+  respuestaGuardada, preguntaPorId, contarPregunta, cuentaGuardada,
+  preguntasDeLosBotones,
+} from "../services/asistente";
 import { useI18n } from "../i18n/core";
 import RobotIcon from "./RobotIcon";
 
@@ -46,15 +50,17 @@ const NOMBRE_IDIOMA = {
   es: "español", en: "inglés", pt: "portugués", it: "italiano", zh: "chino simplificado",
 };
 
-// Primer mensaje de bienvenida que ve el usuario al abrir el chat.
-// Preguntas frecuentes que se ofrecen como botones al iniciar la conversación.
-// Son claves: se traducen al dibujarse, igual que el saludo.
-const SUGGESTIONS = [
-  "chat.q.warranty",
-  "chat.q.accident",
-  "chat.q.cancel",
-  "chat.q.documents",
-];
+/*
+  LAS PREGUNTAS SUGERIDAS YA NO SON UNA LISTA FIJA DE CUATRO CLAVES.
+
+  Eran estas cuatro, siempre en el mismo orden, y lo que se tocaba iba a la IA
+  igual que cualquier otra cosa escrita a mano. Ahora salen de la tabla de
+  preguntas con respuesta propia (src/data/preguntasWili.js) y se acomodan a lo
+  que esta persona viene preguntando, con las cuatro de siempre como base.
+
+  Que el botón venga de la misma tabla que la respuesta es a propósito: así no
+  puede existir un botón que ofrezca una pregunta que no sabemos contestar.
+*/
 
 // Devuelve el alto y la posición del área visible de la pantalla. En el celular,
 // cuando aparece el teclado, "visualViewport" nos dice cuánto espacio queda
@@ -114,6 +120,9 @@ function Asistente() {
   const { isMobile } = useIsMobile();
   const location = useLocation();
   const isChat = location.pathname === "/chat";     // ¿estamos en la pantalla de chat?
+  // La cuenta, solo para separar por usuario lo que cada uno viene preguntando:
+  // en un navegador compartido los botones de uno no son los del otro.
+  const { user } = useAuth();
 
   const { t: tr, lang } = useI18n();
   /*
@@ -144,6 +153,12 @@ function Asistente() {
   const textoDe = (m) => (m.key ? tr(m.key) : m.text);
   const [input, setInput] = useState("");               // texto que se está escribiendo
   const [loading, setLoading] = useState(false);        // esperando respuesta de la IA
+  /*
+    Lo que esta persona viene preguntando, para ordenar los botones. Se lee del
+    navegador una sola vez, al montar: si se leyera en cada dibujado los botones
+    se reacomodarían mientras la charla está abierta, debajo del dedo.
+  */
+  const [cuenta, setCuenta] = useState(() => cuentaGuardada(user?.id));
   const [viewport, setViewport] = useState(getViewportData());
 
   // Genera (o reutiliza) un identificador único de sesión para esta charla.
@@ -274,19 +289,44 @@ function Asistente() {
     scrollToBottom("auto");
   }, [messages, loading, open]);
 
-  // Envía un mensaje del usuario a la IA y agrega la respuesta al historial.
-  // Arma la conversación (system prompt + todos los mensajes) y llama a groqChat.
-  // Si falla, muestra un mensaje amable (distinto si es por exceso de pedidos).
-  const send = async (text) => {
+  // Envía un mensaje del usuario y agrega la respuesta al historial. Primero se
+  // mira si es una de las preguntas que contestamos nosotros; si no, va a la IA.
+  //
+  // `idGuardado` llega cuando se tocó un botón de pregunta sugerida: ahí no hay
+  // nada que reconocer, el botón sabe qué pregunta es. Escrita a mano, la
+  // reconoce respuestaGuardada(). Ver services/asistente.js.
+  const send = async (text, idGuardado = null) => {
     const userText = (text || input).trim();
     if (!userText || loading) return; // no manda vacío ni si ya está esperando
 
     const newMessages = [...messages, { role: "user", text: userText }];
     setMessages(newMessages);
     setInput("");
-    setLoading(true);
     requestAnimationFrame(() => scrollToBottom("auto"));
 
+    /*
+      LA RESPUESTA PROPIA SALE ENSEGUIDA, Y NO PASA POR LA IA.
+
+      Sin espera, sin gastar cuota y sin depender de que el servicio de IA esté
+      arriba. Y sobre todo: con los plazos y los montos que de verdad aplica el
+      servidor, en vez de los que un modelo supone que aplica una plataforma de
+      alquiler de autos. Ver src/data/preguntasWili.js.
+
+      El contador se suma acá, con la pregunta ya reconocida: lo que se cuenta
+      es qué tema se preguntó, no el texto suelto que se escribió.
+    */
+    const guardada = idGuardado ? preguntaPorId(idGuardado) : respuestaGuardada(userText);
+    if (guardada) {
+      setCuenta(contarPregunta(guardada.id, user?.id));
+      setMessages((prev) => [...prev, { role: "assistant", text: tr(guardada.respuesta) }]);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus?.({ preventScroll: true });
+        scrollToBottom("auto");
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
       // Formato que espera la IA: primero las instrucciones, luego la charla.
       const groqMessages = [
@@ -530,10 +570,10 @@ function Asistente() {
         flexShrink: 0,
       }}
     >
-      {SUGGESTIONS.map((sg) => (
+      {preguntasDeLosBotones(cuenta).map((p) => (
         <button
-          key={sg}
-          onClick={() => send(tr(sg))}
+          key={p.id}
+          onClick={() => send(tr(p.pregunta), p.id)}
           /*
             LETRA OSCURA SOBRE FONDO CLARO, NO AZUL SOBRE AZUL.
 
@@ -554,7 +594,7 @@ function Asistente() {
             fontWeight: 600,
           }}
         >
-          {tr(sg)}
+          {tr(p.pregunta)}
         </button>
       ))}
     </div>
