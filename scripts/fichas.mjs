@@ -390,7 +390,45 @@ export const permitida = (ruta, prohibidas) => !prohibidas.some((p) => ruta.star
 
 // ── Bajar ──────────────────────────────────────────────────────────────────
 
+/*
+  EL ARCHIVO DE INTERNET PIDE QUE VAYAMOS MAS DESPACIO, Y HAY QUE HACERLE CASO.
+
+  La primera corrida con --viejos encontro 111 fichas archivadas de Ford y 165
+  de Chevrolet, y al bajarlas casi todas contestaron 429: "demasiados pedidos".
+  No es un error del codigo ni un bloqueo: es un servicio gratuito que guarda
+  la web entera diciendo que lo estamos apurando.
+
+  Asi que a archive.org se le pide con mas pausa que a una marca, y cuando
+  contesta 429 se espera y se reintenta, duplicando la espera cada vez. Tarda
+  mas, pero traer una ficha en el tercer intento es infinitamente mejor que no
+  traerla.
+*/
+const ESPERA_ARCHIVO_MS = 4000;
+const REINTENTOS_429 = 4;
+
+const esDelArchivo = (url) => String(url).includes("web.archive.org");
+
+async function traerConPaciencia(url, comoTexto) {
+  let espera = ESPERA_ARCHIVO_MS;
+  for (let intento = 0; intento <= REINTENTOS_429; intento++) {
+    const r = await fetch(url, {
+      headers: { "User-Agent": AGENTE },
+      signal: AbortSignal.timeout(comoTexto ? 25000 : 60000),
+    });
+    if (r.ok) return comoTexto ? r.text() : r.arrayBuffer();
+    // 429 es "mas despacio" y 503 suele ser el archivo sobrecargado: los dos
+    // se arreglan esperando. Un 404 no, y por eso no se reintenta.
+    if ((r.status !== 429 && r.status !== 503) || intento === REINTENTOS_429) {
+      throw new Error(`HTTP ${r.status}`);
+    }
+    await dormir(espera);
+    espera *= 2;
+  }
+  throw new Error("sin reintentos");
+}
+
 async function traerTexto(url) {
+  if (esDelArchivo(url)) return traerConPaciencia(url, true);
   const r = await fetch(url, { headers: { "User-Agent": AGENTE }, signal: AbortSignal.timeout(25000) });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.text();
@@ -823,16 +861,28 @@ for (const [marca, base] of aRecorrer) {
 
   for (const url of encontrados) {
     const nombre = decodeURIComponent(url.split("/").pop().split("?")[0]).replace(/[^\w.-]/g, "_");
-    const destino = join(CARPETA, `${marca}__${nombre}`);
+    /*
+      La misma ficha archivada varias veces se llama igual todas las veces
+      (far-ecosport-ficha-tecnica.pdf aparece una vez por año). Sin la fecha en
+      el nombre, cada copia pisa a la anterior y de diez quedaba una.
+    */
+    const fecha = esDelArchivo(url) ? (url.match(/\/web\/(\d{8})/)?.[1] ?? "") : "";
+    const guardado = fecha ? `${fecha}__${nombre}` : nombre;
+    const destino = join(CARPETA, `${marca}__${guardado}`);
     try {
-      const r = await fetch(url, { headers: { "User-Agent": AGENTE }, signal: AbortSignal.timeout(40000) });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const datos = await r.arrayBuffer();
+      let datos;
+      if (esDelArchivo(url)) {
+        datos = await traerConPaciencia(url, false);
+      } else {
+        const r = await fetch(url, { headers: { "User-Agent": AGENTE }, signal: AbortSignal.timeout(40000) });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        datos = await r.arrayBuffer();
+      }
       writeFileSync(destino, Buffer.from(datos));
 
       const lineas = await textoDelPdf(datos);
       const specs = sacarEspecificaciones(lineas);
-      informe[`${marca}/${nombre}`] = {
+      informe[`${marca}/${guardado}`] = {
         marca, url, archivo: destino,
         paginas: undefined,
         // La primera línea con contenido suele ser el título del documento, y
@@ -845,7 +895,9 @@ for (const [marca, base] of aRecorrer) {
     } catch (e) {
       console.log(`  falló  ${nombre.slice(0, 48).padEnd(50)} ${e.message}`);
     }
-    await dormir(ESPERA_MS);
+    // Al archivo se le da mas aire que a una marca: es gratuito y guarda la
+    // web entera, y ya nos dijo una vez que ibamos muy rapido.
+    await dormir(esDelArchivo(url) ? ESPERA_ARCHIVO_MS : ESPERA_MS);
   }
 }
 
