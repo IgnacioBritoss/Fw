@@ -40,6 +40,10 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// La tabla que esto viene a llenar. Se lee para saber QUÉ autos buscar: sin
+// eso, el recorrido se gasta el cupo en los modelos que el sitio liste primero.
+import { AUTOS } from "../src/data/autosArgentina.js";
+
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CARPETA = join(AQUI, "fichas");
 const INFORME = join(AQUI, "fichas.json");
@@ -169,6 +173,26 @@ const CARPETA_INTERESANTE = /ficha|tecnic|técnic|especificac|argentin|descarga|
 /** Tope de pedidos por marca, para no recorrer un gestor entero. */
 const NODOS_POR_MARCA = 45;
 
+/** Hasta cuántas páginas un sitio se considera chico y se mira entero. */
+const PAGINAS_CHICAS = 400;
+
+/** Una dirección lista para buscarle el nombre de un modelo adentro. */
+export const normalizarRuta = (u) => decodeURIComponent(String(u ?? ""))
+  .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
+
+/**
+ * Los modelos de esa marca que ya están en la tabla.
+ *
+ * Es lo que convierte esto de "recorrer un sitio" en "buscar algo": el sitio
+ * no sabe qué autos nos interesan, y la tabla sí.
+ */
+export function modelosDeLaTabla(marca, autos = AUTOS) {
+  const laMarca = normalizarRuta(marca);
+  return [...new Set(autos
+    .filter((a) => normalizarRuta(a.marca) === laMarca)
+    .map((a) => normalizarRuta(a.modelo)))];
+}
+
 /** Lo que tiene que decir una dirección para que valga la pena abrirla. */
 const SUENA_A_FICHA = /ficha|tecnic|técnic|especificac|datasheet|specs/i;
 
@@ -218,8 +242,38 @@ export async function rutasProhibidas(base) {
  * misma etiqueta `<loc>`, así que se sacan igual y después se distingue por la
  * extensión al seguirlos.
  */
-export function urlsDeSitemap(xml) {
-  return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
+export function urlsDeSitemap(xml, base = "") {
+  /*
+    LAS DIRECCIONES SE RESUELVEN CONTRA EL SITIO.
+
+    El sitemap de Citroën lista "www.citroen.com.ar/..." sin el https:// de
+    adelante. Pasado tal cual a fetch, revienta con "Failed to parse URL" y se
+    perdían las 106 páginas del sitio entero. Resolver contra la base arregla
+    eso y también las direcciones relativas, que son igual de válidas.
+  */
+  return [...String(xml ?? "").matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)]
+    .map((m) => {
+      const suelta = m[1];
+      /*
+        Tres formas y hay que distinguirlas, porque confundirlas da una
+        dirección rota que igual parece válida:
+
+          https://sitio.com.ar/x   completa, se usa tal cual
+          /x                       relativa, se resuelve contra el sitio
+          www.sitio.com.ar/x       le falta el esquema (el caso de Citroën)
+
+        La tercera es la traicionera: resuelta como relativa queda
+        "https://sitio.com.ar/www.sitio.com.ar/x", que es un 404 silencioso.
+        Se reconoce porque lo que va antes de la primera barra tiene un punto,
+        o sea que es un nombre de dominio y no una carpeta.
+      */
+      const esHost = !/^[a-z]+:\/\//i.test(suelta)
+        && !suelta.startsWith("/")
+        && suelta.split("/")[0].includes(".");
+      try { return new URL(esHost ? `https://${suelta}` : suelta, base || undefined).href; }
+      catch { return null; }
+    })
+    .filter(Boolean);
 }
 
 /**
@@ -561,7 +615,7 @@ for (const [marca, base] of aRecorrer) {
     vistos.add(cual);
     try {
       const xml = await traerTexto(cual);
-      const encontradas = urlsDeSitemap(xml);
+      const encontradas = urlsDeSitemap(xml, base);
       // Un sitemap puede ser un índice que apunta a otros sitemaps.
       for (const u of encontradas) {
         if (/\.xml(\.gz)?(\?|$)/i.test(u)) { if (vistos.size < 40) porProbar.push(u); }
@@ -594,10 +648,33 @@ for (const [marca, base] of aRecorrer) {
     nombra "ficha" en ninguna dirección y mete los datos adentro de la página
     del modelo, así que sin la segunda tanda se quedaba afuera entera.
   */
+  /*
+    PRIMERO LAS PÁGINAS DE LOS AUTOS QUE NOS IMPORTAN.
+
+    Ford publica sus fichas en PDF y funciona, pero la primera corrida bajó
+    Mustang, Transit, F-150 y Territory, y se quedó sin cupo antes de llegar a
+    la Ranger. El sitio no sabe cuáles nos sirven: eso lo sabe la tabla.
+
+    Así que el orden sale de los modelos que YA están cargados en
+    autosArgentina.js. Es la diferencia entre recorrer un sitio y buscar algo.
+  */
+  const losNuestros = modelosDeLaTabla(marca);
+  const nombra = (u) => losNuestros.some((m) => normalizarRuta(u).includes(m));
+
   const candidatas = [
-    ...paginas.filter((u) => SUENA_A_FICHA.test(decodeURIComponent(u))),
-    ...paginas.filter((u) => !SUENA_A_FICHA.test(decodeURIComponent(u)) && SUENA_A_MODELO.test(u)),
-  ].slice(0, PAGINAS_POR_MARCA);
+    ...paginas.filter((u) => nombra(u) && SUENA_A_FICHA.test(decodeURIComponent(u))),
+    ...paginas.filter((u) => nombra(u) && !SUENA_A_FICHA.test(decodeURIComponent(u))),
+    ...paginas.filter((u) => !nombra(u) && SUENA_A_FICHA.test(decodeURIComponent(u))),
+    /*
+      Y si el sitio es chico, se miran todas. Jeep lista /renegade.html y
+      /compass.html en la raíz, sin ninguna carpeta de por medio, así que el
+      filtro por ruta los descartaba a los dos. Con 313 páginas en total,
+      mirarlas no es recorrer nada grande.
+    */
+    ...paginas.filter((u) => !nombra(u) && !SUENA_A_FICHA.test(decodeURIComponent(u))
+      && (SUENA_A_MODELO.test(u) || paginas.length <= PAGINAS_CHICAS)),
+  ].filter((u, i, lista) => lista.indexOf(u) === i)
+    .slice(0, PAGINAS_POR_MARCA);
 
   if (!direcciones.size) {
     console.log("  sin sitemap utilizable, se prueba la home");

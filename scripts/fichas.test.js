@@ -23,6 +23,7 @@ import assert from "node:assert/strict";
 import {
   numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
   leerRobots, urlsDeSitemap, pdfsDeJson, hijosDeJson, lineasDeHtml,
+  modelosDeLaTabla, normalizarRuta,
 } from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
@@ -176,6 +177,58 @@ test("un indice de sitemaps se lee igual: son las mismas etiquetas", () => {
 test("un sitemap vacio o roto no rompe nada", () => {
   assert.deepEqual(urlsDeSitemap(""), []);
   assert.deepEqual(urlsDeSitemap("<html>pagina de error</html>"), []);
+});
+
+test("una direccion sin https:// se arregla, no se pega como ruta", () => {
+  /*
+    EL BUG DE CITROEN. Su sitemap lista "www.citroen.com.ar/c3.html" sin
+    esquema. Resuelto como ruta relativa quedaba
+    "https://www.citroen.com.ar/www.citroen.com.ar/c3.html", que es un 404 que
+    no parece un error. Se perdian las 106 paginas del sitio.
+  */
+  assert.deepEqual(
+    urlsDeSitemap("<loc>www.citroen.com.ar/c3.html</loc>", "https://www.citroen.com.ar"),
+    ["https://www.citroen.com.ar/c3.html"]);
+});
+
+test("una direccion relativa SI se resuelve contra el sitio", () => {
+  assert.deepEqual(
+    urlsDeSitemap("<loc>/renegade.html</loc>", "https://www.jeep.com.ar"),
+    ["https://www.jeep.com.ar/renegade.html"]);
+});
+
+test("una direccion completa se deja como esta", () => {
+  assert.deepEqual(
+    urlsDeSitemap("<loc>https://otro.com.ar/a</loc>", "https://www.jeep.com.ar"),
+    ["https://otro.com.ar/a"]);
+});
+
+// ── Buscar los autos que nos importan ──────────────────────────────────────
+
+test("los modelos a buscar salen de la tabla, no de lo que liste el sitio", () => {
+  /*
+    Ford publica sus fichas en PDF y anduvo, pero la primera corrida se gasto
+    el cupo en Mustang, Transit y F-150 y no llego a la Ranger. El sitio no
+    sabe cuales nos sirven; la tabla si.
+  */
+  const autos = [
+    { marca: "Ford", modelo: "Ranger" }, { marca: "Ford", modelo: "EcoSport" },
+    { marca: "Fiat", modelo: "Cronos" },
+  ];
+  assert.deepEqual(modelosDeLaTabla("Ford", autos), ["ranger", "ecosport"]);
+  assert.deepEqual(modelosDeLaTabla("ford", autos), ["ranger", "ecosport"]);
+  assert.deepEqual(modelosDeLaTabla("Chery", autos), []);
+});
+
+test("un modelo con espacios o acentos se busca como va en una direccion", () => {
+  const autos = [{ marca: "Volkswagen", modelo: "Gol Trend" }, { marca: "Citroen", modelo: "C4 Cactus" }];
+  assert.deepEqual(modelosDeLaTabla("Volkswagen", autos), ["gol-trend"]);
+  assert.deepEqual(modelosDeLaTabla("Citroën", autos), ["c4-cactus"]);
+});
+
+test("normalizarRuta deja la direccion comparable con un nombre de modelo", () => {
+  assert.ok(normalizarRuta("/crossovers-suvs-4x4/Territory/modelos/SEL/").includes("territory"));
+  assert.ok(normalizarRuta("https://x.com.ar/es/modelos/nuevo-t-cross.html").includes("t-cross"));
 });
 
 // ── El listado de la carpeta de fichas ─────────────────────────────────────
