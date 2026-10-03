@@ -25,7 +25,7 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { precioUsable } from "../../services/precio";
 import { fotosDeOtroAuto, rasgosDeclarados } from "../../services/mismoAuto";
-import { buscarEspecificaciones, comoFormulario } from "../../services/especificaciones";
+import { buscarVersiones, comoFormulario, estaVerificado } from "../../services/especificaciones";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
@@ -380,6 +380,15 @@ export default function PublishCar() {
     borra en cuanto se cambia de auto, porque deja de hablar de lo que se ve.
   */
   const [origenDeSpecs, setOrigenDeSpecs] = useState(null);
+  /*
+    Las versiones entre las que hay que elegir, cuando la tabla trae más de una.
+
+    El Corolla 2021 son seis versiones con pesos de 1.340 a 1.425 kg; el 208,
+    siete. Elegir una por la persona —"la más vendida"— es exactamente lo que
+    hacía que los números estuvieran mal. Se pregunta, y se pregunta SOLO
+    cuando hay algo que preguntar: con una sola versión no aparece nada.
+  */
+  const [versionesAElegir, setVersionesAElegir] = useState(null);
 
   const [vehicleForm, setVehicleForm] = useState(() => draft?.vehicleForm ?? EMPTY_VEHICLE);
 
@@ -397,6 +406,7 @@ export default function PublishCar() {
   */
   useEffect(() => {
     setOrigenDeSpecs(null);
+    setVersionesAElegir(null);
   }, [vehicleForm.brand, vehicleForm.model, vehicleForm.year]);
 
   // Atajos para actualizar un campo del formulario de vehículo (setV) o de listing (setL).
@@ -453,6 +463,19 @@ export default function PublishCar() {
     estimado por un modelo no merecen la misma confianza, y quien publica tiene
     que poder saber cuál está mirando antes de confirmar.
   */
+  /** Escribe en el formulario los datos de una versión de la tabla. */
+  const aplicarVersion = (auto) => {
+    // Una sola actualización y no una por campo: son doce, y doce `setV`
+    // seguidos son doce renders del formulario entero.
+    setVehicleForm((f) => ({ ...f, ...comoFormulario(auto) }));
+    setVersionesAElegir(null);
+    setOrigenDeSpecs({
+      tipo: estaVerificado(auto) ? "ficha" : "tabla",
+      version: `${auto.marca} ${auto.modelo} ${auto.version}`,
+      fuente: auto.fuente ?? null,
+    });
+  };
+
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
       avisar(tr("publish.errBeforeAi"));
@@ -460,15 +483,11 @@ export default function PublishCar() {
     }
     avisar("");
     setOrigenDeSpecs(null);
+    setVersionesAElegir(null);
 
-    const deLaTabla = buscarEspecificaciones(vehicleForm.brand, vehicleForm.model, vehicleForm.year);
-    if (deLaTabla) {
-      // Una sola actualización y no una por campo: son nueve, y nueve `setV`
-      // seguidos son nueve renders del formulario entero.
-      setVehicleForm((f) => ({ ...f, ...comoFormulario(deLaTabla) }));
-      setOrigenDeSpecs({ tipo: "tabla", version: `${deLaTabla.marca} ${deLaTabla.modelo} ${deLaTabla.version}` });
-      return;
-    }
+    const versiones = buscarVersiones(vehicleForm.brand, vehicleForm.model, vehicleForm.year);
+    if (versiones.length > 1) { setVersionesAElegir(versiones); return; }
+    if (versiones.length === 1) { aplicarVersion(versiones[0]); return; }
 
     const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
     let data;
@@ -1331,16 +1350,61 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
             hay que leerlos uno por uno o se pueden dar por buenos, y leída
             después de haberlos leído no sirve de nada.
           */}
+          {/*
+            ¿Cuál de estas es? Solo aparece cuando hay más de una versión
+            cargada para ese modelo y año. Con una sola no se pregunta nada.
+          */}
+          {versionesAElegir && (
+            <div style={{
+              marginBottom: 12, padding: "11px 12px", borderRadius: 8,
+              background: "var(--fw-blue-bg)", border: "1px solid var(--fw-blue-line)",
+            }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-blue-text)", marginBottom: 9 }}>
+                {tr("publish.whichVersion")}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {versionesAElegir.map((v) => (
+                  <button
+                    key={v.version}
+                    onClick={() => aplicarVersion(v)}
+                    style={{
+                      padding: "7px 12px", borderRadius: 20, cursor: "pointer",
+                      border: "1.5px solid var(--fw-blue-line)", background: "var(--fw-surface)",
+                      color: "var(--fw-text-2)", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                    }}
+                  >
+                    {v.version}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {origenDeSpecs && (
             <div style={{
               fontSize: 12, lineHeight: 1.5, marginBottom: 12, padding: "9px 12px", borderRadius: 8,
-              background: origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-bg)" : "var(--fw-surface-2)",
-              border: `1px solid ${origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-line)" : "var(--fw-border)"}`,
-              color: origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-text)" : "var(--fw-text-2)",
+              background: origenDeSpecs.tipo === "ficha" ? "var(--fw-blue-bg)" : "var(--fw-surface-2)",
+              border: `1px solid ${origenDeSpecs.tipo === "ficha" ? "var(--fw-blue-line)" : "var(--fw-border)"}`,
+              color: origenDeSpecs.tipo === "ficha" ? "var(--fw-blue-text)" : "var(--fw-text-2)",
             }}>
-              {origenDeSpecs.tipo === "tabla"
-                ? tr("publish.specsFromTable", { auto: origenDeSpecs.version })
-                : tr("publish.specsFromAi")}
+              {/*
+                Tres orígenes, tres carteles distintos, y la diferencia importa:
+
+                 · "ficha"  → sale de la ficha oficial de la marca. Se nombra el
+                              documento. Esto se puede dar por bueno.
+                 · "tabla"  → está cargado en Freewheel pero nadie lo verificó
+                              contra la ficha todavía. Hay que mirarlo.
+                 · "ia"     → lo estimó un modelo. Hay que mirarlo con más ganas.
+
+                Mirando los números no se distinguen, y no merecen la misma
+                confianza: por eso lo dice la pantalla y no se deja librado a
+                que cada uno adivine de dónde salió.
+              */}
+              {origenDeSpecs.tipo === "ficha"
+                ? tr("publish.specsFromSheet", { auto: origenDeSpecs.version, fuente: origenDeSpecs.fuente })
+                : origenDeSpecs.tipo === "tabla"
+                  ? tr("publish.specsFromTable", { auto: origenDeSpecs.version })
+                  : tr("publish.specsFromAi")}
             </div>
           )}
 

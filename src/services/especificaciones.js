@@ -75,28 +75,45 @@ export function modeloCanonico(marca, modelo) {
 }
 
 /**
- * El auto de la tabla, o null.
+ * TODAS las versiones de ese auto para ese año.
+ *
+ * Devuelve una lista y no un solo auto porque un modelo-año casi nunca es un
+ * solo auto. El Corolla 2021 son seis versiones con pesos de 1.340 a 1.425 kg;
+ * el 208 son siete. Elegir una por ellos —"la más vendida"— es justamente lo
+ * que hacia que los numeros estuvieran mal: no hay un peso del Corolla, hay el
+ * peso de CADA Corolla. Con la lista, la pantalla puede preguntar cuál es.
  *
  * `hasta: null` quiere decir que se sigue vendiendo, así que el rango llega
  * hasta hoy. Un año futuro NO entra: si alguien escribe 2030 es un error de
  * tipeo, y completarle el formulario con los datos de la generación actual
  * sería darle por buena la fecha.
  */
-export function buscarEspecificaciones(marca, modelo, anio) {
+export function buscarVersiones(marca, modelo, anio) {
   const año = Number(anio);
-  if (!Number.isInteger(año)) return null;
+  if (!Number.isInteger(año)) return [];
 
   const laMarca = marcaCanonica(marca);
   const elModelo = modeloCanonico(marca, modelo);
-  if (!laMarca || !elModelo) return null;
+  if (!laMarca || !elModelo) return [];
 
   const tope = new Date().getFullYear();
 
-  return AUTOS.find((auto) =>
+  return AUTOS.filter((auto) =>
     normalizar(auto.marca) === laMarca &&
     normalizar(auto.modelo) === elModelo &&
     año >= auto.desde &&
-    año <= (auto.hasta ?? tope)) ?? null;
+    año <= (auto.hasta ?? tope));
+}
+
+/**
+ * Una sola versión, para cuando no hay nada que elegir.
+ *
+ * Si el auto tiene más de una versión cargada devuelve null a propósito: quien
+ * llama tiene que preguntar cuál es, no quedarse con la primera.
+ */
+export function buscarEspecificaciones(marca, modelo, anio) {
+  const versiones = buscarVersiones(marca, modelo, anio);
+  return versiones.length === 1 ? versiones[0] : null;
 }
 
 /**
@@ -123,6 +140,17 @@ export function comoFormulario(auto) {
     trunkCapacityLiters: auto.baulL,
     fuelConsumptionLitersPer100Km: auto.consumoL100,
     weightKg: auto.pesoKg,
+    /*
+      El equipamiento solo viaja cuando la ficha dice que SÍ.
+
+      Nunca se manda `false`. No es lo mismo "la ficha dice que esta versión no
+      lo trae" que "la ficha no habla del tema", y desde acá no se distinguen:
+      las dos llegan como un campo ausente. Mandar `false` sería destildarle a
+      alguien una cámara que su auto sí tiene, que es peor que no tocar nada.
+    */
+    bluetooth: auto.bluetooth === true ? true : undefined,
+    rearCamera: auto.camara === true ? true : undefined,
+    parkingSensors: auto.sensores === true ? true : undefined,
   };
   return Object.fromEntries(
     Object.entries(campos)
@@ -130,6 +158,9 @@ export function comoFormulario(auto) {
       .map(([clave, valor]) => [clave, typeof valor === "number" ? String(valor) : valor]),
   );
 }
+
+/** Si los datos de esta versión salen de una ficha oficial. */
+export const estaVerificado = (auto) => Boolean(auto?.fuente);
 
 /** Cuántos autos hay cargados. Lo usa la pantalla de ajustes para mostrarlo. */
 export const CUANTOS_AUTOS = AUTOS.length;

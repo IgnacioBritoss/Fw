@@ -23,9 +23,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   normalizar, marcaCanonica, modeloCanonico,
-  buscarEspecificaciones, comoFormulario,
+  buscarVersiones, buscarEspecificaciones, comoFormulario, estaVerificado,
 } from "./especificaciones.js";
 import { AUTOS } from "../data/autosArgentina.js";
+
+/** La primera versión que coincide. Varias pruebas solo miran un dato del auto. */
+const unaDe = (marca, modelo, anio) => buscarVersiones(marca, modelo, anio)[0];
 
 // ── Normalizar lo que la gente escribe ─────────────────────────────────────
 
@@ -85,23 +88,45 @@ test("los modelos con guion de la tabla ahora SÍ se encuentran", () => {
 // ── Encontrar el auto ──────────────────────────────────────────────────────
 
 test("encuentra un auto de la tabla", () => {
-  const cronos = buscarEspecificaciones("Fiat", "Cronos", 2021);
+  const cronos = unaDe("Fiat", "Cronos", 2021);
   assert.equal(cronos.marca, "Fiat");
   assert.equal(cronos.categoria, "SEDAN");
   assert.equal(cronos.baulL, 525);
 });
 
 test("encuentra escrito como sea", () => {
-  assert.ok(buscarEspecificaciones("  fiat ", "CRONOS", 2021));
-  assert.ok(buscarEspecificaciones("VW", "Gol", 2018));
-  assert.ok(buscarEspecificaciones("Citroën", "C3", 2020));
+  assert.ok(unaDe("  fiat ", "CRONOS", 2021));
+  assert.ok(unaDe("VW", "Gol", 2018));
+  assert.ok(unaDe("Citroën", "C3", 2020));
 });
 
 test("elige la generación por el año", () => {
-  assert.equal(buscarEspecificaciones("Toyota", "Corolla", 2016).hp, 140);
-  assert.equal(buscarEspecificaciones("Toyota", "Corolla", 2022).hp, 170);
-  assert.equal(buscarEspecificaciones("Chevrolet", "Onix", 2015).cc, 1389);
-  assert.equal(buscarEspecificaciones("Chevrolet", "Onix", 2022).cc, 999);
+  assert.equal(unaDe("Toyota", "Corolla", 2016).hp, 140);
+  assert.equal(unaDe("Toyota", "Corolla", 2022).cc, 1987);
+  assert.equal(unaDe("Chevrolet", "Onix", 2015).cc, 1389);
+  // La generación nueva del Onix vino de catálogo, que no publica cilindrada.
+  assert.equal(unaDe("Chevrolet", "Onix", 2022).cc, null);
+});
+
+// ── Varias versiones del mismo auto ────────────────────────────────────────
+
+test("devuelve TODAS las versiones de ese modelo y año", () => {
+  const cronos = buscarVersiones("Fiat", "Cronos", 2021);
+  assert.equal(cronos.length, 3, "el Cronos MY21 son tres versiones");
+  assert.deepEqual(cronos.map((v) => v.pesoKg), [1136, 1225, 1258]);
+  assert.deepEqual([...new Set(cronos.map((v) => v.baulL))], [525], "el baúl es el mismo");
+});
+
+test("con varias versiones NO se queda con una sola", () => {
+  // Elegir por ellos "la más vendida" es justamente lo que hacía que los
+  // números estuvieran mal. Devuelve null para que la pantalla pregunte.
+  assert.equal(buscarEspecificaciones("Fiat", "Cronos", 2021), null);
+  assert.equal(buscarEspecificaciones("Toyota", "Corolla", 2022), null);
+});
+
+test("con una sola versión la devuelve sin preguntar nada", () => {
+  const kwid = buscarEspecificaciones("Renault", "Kwid", 2021);
+  assert.equal(kwid.hp, 66);
 });
 
 test("un modelo que dejó de venderse no aparece fuera de su rango", () => {
@@ -114,57 +139,78 @@ test("un modelo que dejó de venderse no aparece fuera de su rango", () => {
 // Esta es la parte que justifica que la búsqueda sea exacta.
 
 test("Corolla y Corolla Cross NO se confunden", () => {
-  const corolla = buscarEspecificaciones("Toyota", "Corolla", 2022);
-  const cross = buscarEspecificaciones("Toyota", "Corolla Cross", 2022);
-  assert.equal(corolla.categoria, "SEDAN");
-  assert.equal(cross.categoria, "SUV");
-  assert.notEqual(corolla.baulL, cross.baulL);
+  assert.equal(unaDe("Toyota", "Corolla", 2022).categoria, "SEDAN");
+  assert.equal(unaDe("Toyota", "Corolla Cross", 2022).categoria, "SUV");
+  assert.notEqual(unaDe("Toyota", "Corolla", 2022).baulL,
+    unaDe("Toyota", "Corolla Cross", 2022).baulL);
 });
 
 test("Onix y Onix Plus NO se confunden", () => {
-  assert.equal(buscarEspecificaciones("Chevrolet", "Onix", 2022).categoria, "HATCHBACK");
-  assert.equal(buscarEspecificaciones("Chevrolet", "Onix Plus", 2022).categoria, "SEDAN");
+  assert.equal(unaDe("Chevrolet", "Onix", 2022).categoria, "HATCHBACK");
+  assert.equal(unaDe("Chevrolet", "Onix Plus", 2022).categoria, "SEDAN");
 });
 
 test("un auto que no está en la tabla no devuelve nada", () => {
-  assert.equal(buscarEspecificaciones("Lamborghini", "Aventador", 2021), null);
-  assert.equal(buscarEspecificaciones("Fiat", "Modelo Inventado", 2021), null);
+  assert.deepEqual(buscarVersiones("Lamborghini", "Aventador", 2021), []);
+  assert.deepEqual(buscarVersiones("Fiat", "Modelo Inventado", 2021), []);
 });
 
 test("no inventa con un modelo parecido", () => {
   // "Coroll" no es "Corolla". Sin resultado se va a la IA, que es lo correcto.
-  assert.equal(buscarEspecificaciones("Toyota", "Coroll", 2022), null);
-  assert.equal(buscarEspecificaciones("Toyota", "Corola", 2022), null);
+  assert.deepEqual(buscarVersiones("Toyota", "Coroll", 2022), []);
+  assert.deepEqual(buscarVersiones("Toyota", "Corola", 2022), []);
 });
 
 test("un año imposible no devuelve nada", () => {
-  assert.equal(buscarEspecificaciones("Fiat", "Cronos", 2200), null);
-  assert.equal(buscarEspecificaciones("Fiat", "Cronos", "abc"), null);
-  assert.equal(buscarEspecificaciones("Fiat", "Cronos", null), null);
-  assert.equal(buscarEspecificaciones("Fiat", "Cronos", 1990), null);
+  assert.deepEqual(buscarVersiones("Fiat", "Cronos", 2200), []);
+  assert.deepEqual(buscarVersiones("Fiat", "Cronos", "abc"), []);
+  assert.deepEqual(buscarVersiones("Fiat", "Cronos", null), []);
+  assert.deepEqual(buscarVersiones("Fiat", "Cronos", 1990), []);
 });
 
 test("sin marca o sin modelo no devuelve nada", () => {
-  assert.equal(buscarEspecificaciones("", "Cronos", 2021), null);
-  assert.equal(buscarEspecificaciones("Fiat", "", 2021), null);
+  assert.deepEqual(buscarVersiones("", "Cronos", 2021), []);
+  assert.deepEqual(buscarVersiones("Fiat", "", 2021), []);
 });
 
 // ── Lo que se escribe en el formulario ─────────────────────────────────────
 
 test("comoFormulario usa los nombres de los campos y manda texto", () => {
-  const campos = comoFormulario(buscarEspecificaciones("Fiat", "Cronos", 2021));
+  const campos = comoFormulario(unaDe("Fiat", "Cronos", 2021));
   assert.equal(campos.category, "SEDAN");
   assert.equal(campos.fuel, "GASOLINE");
   assert.equal(campos.doors, "4");
   assert.equal(campos.trunkCapacityLiters, "525");
+  assert.equal(campos.engineDisplacementCC, "1332");
   assert.equal(typeof campos.horsePower, "string");
 });
 
 test("comoFormulario NO manda los datos que no tenemos", () => {
   // La Hilux no tiene litros de baúl: es una caja de carga, no un baúl.
-  const campos = comoFormulario(buscarEspecificaciones("Toyota", "Hilux", 2020));
+  const campos = comoFormulario(unaDe("Toyota", "Hilux", 2020));
   assert.equal("trunkCapacityLiters" in campos, false);
   assert.equal(campos.fuel, "DIESEL");
+});
+
+test("comoFormulario manda el equipamiento SOLO cuando la ficha dice que sí", () => {
+  // La ficha del Cronos MY21 da camara y sensores de serie en las tres
+  // versiones, asi que se tildan.
+  const cronos = comoFormulario(unaDe("Fiat", "Cronos", 2021));
+  assert.equal(cronos.rearCamera, true);
+  assert.equal(cronos.parkingSensors, true);
+
+  // El Corolla no trae esos datos en su ficha. NO se manda `false`: ausencia
+  // de dato no es lo mismo que "no lo tiene", y un false le destildaria a
+  // alguien una camara que su auto si tiene.
+  const corolla = comoFormulario(unaDe("Toyota", "Corolla", 2022));
+  assert.equal("rearCamera" in corolla, false);
+  assert.equal("parkingSensors" in corolla, false);
+});
+
+test("estaVerificado distingue lo que salio de una ficha", () => {
+  assert.equal(estaVerificado(unaDe("Fiat", "Cronos", 2021)), true);
+  assert.equal(estaVerificado(unaDe("Suzuki", "Jimny", 2021)), false);
+  assert.equal(estaVerificado(null), false);
 });
 
 test("comoFormulario con nada devuelve nada", () => {
@@ -216,15 +262,21 @@ test("los años de cada entrada tienen sentido", () => {
   }
 });
 
-test("dos generaciones del mismo auto NO se pisan de años", () => {
-  // Es el error que haría que la búsqueda devuelva cualquiera de las dos.
+test("dos generaciones de la MISMA versión no se pisan de años", () => {
+  /*
+    Varias versiones del mismo modelo comparten el rango de años a propósito
+    —ese es el punto de que la pantalla pregunte cuál es—, así que la clave
+    incluye la versión. Lo que sigue estando mal es que la MISMA versión
+    aparezca en dos generaciones que se solapan: ahí no habría forma de saber
+    cuál corresponde.
+  */
   const tope = new Date().getFullYear();
-  const porModelo = new Map();
+  const porVersion = new Map();
   for (const auto of AUTOS) {
-    const clave = `${normalizar(auto.marca)}|${normalizar(auto.modelo)}`;
-    porModelo.set(clave, [...(porModelo.get(clave) ?? []), auto]);
+    const clave = `${normalizar(auto.marca)}|${normalizar(auto.modelo)}|${normalizar(auto.version)}`;
+    porVersion.set(clave, [...(porVersion.get(clave) ?? []), auto]);
   }
-  for (const [clave, generaciones] of porModelo) {
+  for (const [clave, generaciones] of porVersion) {
     const ordenadas = [...generaciones].sort((a, b) => a.desde - b.desde);
     for (let i = 1; i < ordenadas.length; i++) {
       const previa = ordenadas[i - 1];
@@ -236,12 +288,40 @@ test("dos generaciones del mismo auto NO se pisan de años", () => {
   }
 });
 
-test("no hay dos entradas idénticas de marca, modelo y año de inicio", () => {
+test("no hay dos entradas idénticas de marca, modelo, versión y año", () => {
   const vistas = new Set();
   for (const auto of AUTOS) {
-    const clave = `${normalizar(auto.marca)}|${normalizar(auto.modelo)}|${auto.desde}`;
+    const clave = `${normalizar(auto.marca)}|${normalizar(auto.modelo)}|${normalizar(auto.version)}|${auto.desde}`;
     assert.equal(vistas.has(clave), false, `repetida: ${clave}`);
     vistas.add(clave);
+  }
+});
+
+test("sin ficha oficial NO se carga el peso", () => {
+  /*
+    LA REGLA QUE SALIO DE COMPARAR CONTRA NUEVE FICHAS.
+
+    De seis pesos que se pudieron verificar, los seis estaban mal. No por poco:
+    el Gol Trend decía 1000 kg y pesa 944. Es el dato que más cambia entre
+    versiones y el que peor se recuerda, asi que o sale de una ficha o no está.
+
+    Las demás cifras se portaron mejor (la potencia dio 8 de 8), por eso siguen
+    aunque no estén verificadas: el cartel de la pantalla avisa cuáles son.
+  */
+  for (const auto of AUTOS) {
+    if (auto.fuente) continue;
+    assert.equal(auto.pesoKg, null,
+      `${auto.marca} ${auto.modelo} ${auto.version}: tiene peso sin ficha que lo respalde`);
+  }
+});
+
+test("toda entrada verificada dice de qué ficha salió", () => {
+  for (const auto of AUTOS) {
+    if (!auto.fuente) continue;
+    assert.ok(/ficha|cat[aá]logo/i.test(auto.fuente),
+      `${auto.marca} ${auto.modelo}: la fuente no nombra el documento`);
+    assert.ok(auto.fuente.length > 20,
+      `${auto.marca} ${auto.modelo}: la fuente es demasiado vaga`);
   }
 });
 
