@@ -105,8 +105,26 @@ export function aNumero(valor) {
   return Number.isFinite(n) ? n : null;
 }
 
-/** ¿Este número puede ser un alquiler por día en pesos? */
-export function esPrecioCreible(precio, valorDelAuto = null) {
+/**
+ * Cuánto se le permite despegarse al precio del modelo de lo que se cobra de
+ * verdad en la plataforma por un auto parecido.
+ *
+ * Es a propósito muy ancho: no está para discutirle al modelo si un auto vale
+ * $40.000 o $70.000 —de eso no sabemos más que él— sino para atajar los errores
+ * de orden de magnitud, que son los que de verdad pasan: contestar en dólares
+ * (mil veces menos) o poner el valor del auto en el campo del alquiler
+ * (cientos de veces más). Tres veces arriba o abajo de la mediana deja pasar
+ * cualquier diferencia razonable y no deja pasar ninguna de esas dos.
+ */
+export const VECES_LA_MEDIANA = 3;
+
+/**
+ * ¿Este número puede ser un alquiler por día en pesos?
+ *
+ * `ancla` es la mediana de lo que se cobra en FreeWheel por un auto parecido,
+ * cuando hay con qué comparar. Ver services/comparables.js.
+ */
+export function esPrecioCreible(precio, valorDelAuto = null, ancla = null) {
   if (!Number.isFinite(precio) || precio < PISO_POR_DIA || precio > TECHO_POR_DIA) return false;
   // Con el valor del auto a mano se puede pedir más: un alquiler diario está
   // entre el 0,05% y el 1,5% de lo que vale el auto. Fuera de eso, alguno de los
@@ -114,6 +132,9 @@ export function esPrecioCreible(precio, valorDelAuto = null) {
   if (Number.isFinite(valorDelAuto) && valorDelAuto >= PISO_DEL_AUTO) {
     const porcion = precio / valorDelAuto;
     if (porcion < 0.0005 || porcion > 0.015) return false;
+  }
+  if (Number.isFinite(ancla) && ancla > 0) {
+    if (precio < ancla / VECES_LA_MEDIANA || precio > ancla * VECES_LA_MEDIANA) return false;
   }
   return true;
 }
@@ -134,6 +155,9 @@ export function esPrecioCreible(precio, valorDelAuto = null) {
  * porque una banda inventada presentada como del tasador es peor que no tenerla.
  */
 export function bandaUsable(min, max, recomendado, valorDelAuto = null) {
+  // La banda NO se controla contra la mediana de los comparables: una banda
+  // ancha es información útil ("hay de $30.000 a $90.000") y recortarla contra
+  // la mediana la haría parecer más angosta de lo que el mercado es.
   const sirve = (n) => Number.isFinite(n) && esPrecioCreible(n, valorDelAuto);
   if (sirve(min) && sirve(max) && min <= max && recomendado >= min && recomendado <= max) {
     return { precio_min: Math.round(min), precio_max: Math.round(max), banda: "ia" };
@@ -159,10 +183,19 @@ export function bandaUsable(min, max, recomendado, valorDelAuto = null) {
  *                   devuelve ningún número: ni el precio, ni el rango, ni lo que
  *                   sale el auto. La pantalla explica la situación con palabras.
  *                   Ver PISO_RENTABLE.
+ *   · "comparables" → nada de lo que dijo el modelo pasó el control, y se usó
+ *                   la mediana de lo que se cobra acá por un auto parecido. Es
+ *                   el último recurso de este archivo, no el camino principal:
+ *                   cuando los comparables son buenos, la pantalla ni llama a
+ *                   la IA. Ver services/comparables.js.
+ *
+ * `comparables` es el resumen que devuelve autosComparables(), o null. Se usa
+ * para dos cosas: descartar un precio del modelo que esté a más de tres veces
+ * de lo que se cobra de verdad, y como respaldo si no queda nada más.
  *
  * Lanza solo si no quedó ningún camino.
  */
-export function precioUsable(respuesta) {
+export function precioUsable(respuesta, comparables = null) {
   const datos = respuesta || {};
   const valor = aNumero(datos.valor_estimado);
   const valorCreible = Number.isFinite(valor) && valor >= PISO_DEL_AUTO && valor <= TECHO_DEL_AUTO
@@ -171,14 +204,22 @@ export function precioUsable(respuesta) {
   const min = aNumero(datos.precio_min);
   const max = aNumero(datos.precio_max);
 
+  // El ancla solo cuenta con la muestra mínima cumplida. Con uno o dos autos
+  // publicados no hay mediana que proteja y descartaría respuestas buenas.
+  const ancla = comparables?.alcanza && Number.isFinite(comparables.mediana)
+    ? comparables.mediana
+    : null;
+
   const candidatos = [
     ["ia", aNumero(datos.precio_recomendado)],
     ["rango", Number.isFinite(min) && Number.isFinite(max) ? Math.round((min + max) / 2) : null],
     ["valor", valorCreible ? Math.round(valorCreible * PORCION_POR_DIA) : null],
+    ["comparables", ancla],
   ];
 
   for (const [origen, precio] of candidatos) {
-    if (precio !== null && esPrecioCreible(precio, valorCreible)) {
+    // El respaldo de los comparables no se controla contra sí mismo.
+    if (precio !== null && esPrecioCreible(precio, valorCreible, origen === "comparables" ? null : ancla)) {
       /*
         LA CUENTA DIO BIEN Y EL NÚMERO NO SIRVE.
 
@@ -214,10 +255,15 @@ export function precioUsable(respuesta) {
           explicaba con total seguridad otra cosa. Una explicación que no explica
           lo que está arriba es peor que ninguna: hace desconfiar de las dos.
         */
-        justificacion: origen === "valor" ? null : datos.justificacion,
+        justificacion: origen === "valor" || origen === "comparables"
+          ? null
+          : datos.justificacion,
         valor_estimado: valorCreible ?? null,
         ...bandaUsable(min, max, redondeado, valorCreible),
         precio_recomendado: redondeado,
+        // El resumen viaja con la respuesta para que la pantalla pueda decir
+        // en cuántos autos se apoya el número, o al lado de cuántos quedó.
+        ...(comparables ? { comparables } : {}),
         origen,
       };
     }

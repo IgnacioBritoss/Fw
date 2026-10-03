@@ -260,3 +260,83 @@ test("un valor del auto disparatado no se muestra como si fuera un dato", () => 
   assert.equal(r.precio_recomendado, 36000);
   assert.equal(r.valor_estimado, null);
 });
+
+// ── El control contra lo que se cobra de verdad en la plataforma ───────────
+//
+//  Cuando hay autos parecidos publicados en FreeWheel, su mediana entra como
+//  ancla. No está para discutirle al modelo una diferencia razonable: está para
+//  atajar los errores de orden de magnitud. Ver services/comparables.js.
+
+const comparables = (mediana, muestra = 3) => ({
+  nivel: "mismoModelo", muestra, mediana, min: mediana, max: mediana,
+  desde: 2021, hasta: 2021, alcanza: muestra >= 3,
+});
+
+test("el ancla deja pasar cualquier diferencia razonable", () => {
+  // La mitad y el doble de la mediana son discusiones de precio, no errores.
+  assert.ok(esPrecioCreible(45000, null, 90000));
+  assert.ok(esPrecioCreible(90000, null, 45000));
+});
+
+test("y no deja pasar un error de orden de magnitud", () => {
+  // Contestó en dólares: mil veces menos.
+  assert.ok(!esPrecioCreible(45, null, 45000));
+  // Puso el valor del auto en el campo del alquiler: cientos de veces más.
+  assert.ok(!esPrecioCreible(12_000_000, null, 45000));
+});
+
+test("sin ancla el control no existe y nada cambia", () => {
+  assert.ok(esPrecioCreible(45000, null, null));
+  assert.ok(esPrecioCreible(45000));
+});
+
+test("con el precio del modelo descartado, el respaldo es la mediana real", () => {
+  /*
+    El caso que esto resuelve. El modelo contestó un precio en dólares y no
+    mandó ni rango ni valor del auto, así que antes esto tiraba y el botón
+    decía "la IA devolvió un precio fuera de lo razonable". Ahora, si hay tres
+    autos como este publicados, se usa lo que se cobra de verdad.
+  */
+  const r = precioUsable({ precio_recomendado: 40 }, comparables(48000));
+  assert.equal(r.origen, "comparables");
+  assert.equal(r.precio_recomendado, 48000);
+});
+
+test("la mediana NO le gana a un precio del modelo que es razonable", () => {
+  const r = precioUsable({ precio_recomendado: 52000 }, comparables(48000));
+  assert.equal(r.origen, "ia");
+  assert.equal(r.precio_recomendado, 52000);
+});
+
+test("con uno o dos autos publicados el ancla no se usa", () => {
+  // Con dos no hay mediana que proteja, y descartaría respuestas buenas.
+  const r = precioUsable({ precio_recomendado: 150000 }, comparables(48000, 2));
+  assert.equal(r.origen, "ia");
+  assert.equal(r.precio_recomendado, 150000);
+});
+
+test("el resumen de los comparables viaja con la respuesta", () => {
+  // La pantalla lo necesita para decir en cuántos autos se apoya el número.
+  const comp = comparables(48000);
+  const r = precioUsable({ precio_recomendado: 50000 }, comp);
+  assert.equal(r.comparables.muestra, 3);
+});
+
+test("la explicacion del modelo se tira si el numero salio de los comparables", () => {
+  const r = precioUsable(
+    { precio_recomendado: 40, justificacion: "40 dolares por dia es lo habitual" },
+    comparables(48000),
+  );
+  assert.equal(r.origen, "comparables");
+  assert.equal(r.justificacion, null);
+});
+
+test("abajo del piso rentable sigue sin devolverse ningun numero", () => {
+  // El piso manda igual: venga de la IA o de los comparables, un precio que
+  // nadie aceptaría no se propone.
+  const bajo = PISO_RENTABLE - 5000;
+  const r = precioUsable({ precio_recomendado: 20 }, comparables(bajo));
+  assert.equal(r.origen, "bajoElPiso");
+  assert.equal(r.precio_recomendado, null);
+  assert.equal(r.precio_min, null, "ni el rango, que son los numeros que molestan");
+});

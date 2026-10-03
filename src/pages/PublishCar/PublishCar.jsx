@@ -19,11 +19,15 @@ import { useAuth } from "../../context/AuthContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useOrdenArrastrando, moverEnLista } from "../../hooks/useOrdenArrastrando";
 import LocationPicker from "../../components/LocationPicker";
-import { createVehicle, createListing, createMediaAsset } from "../../services/api";
-import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel } from "../../services/listings";
+import { createVehicle, createListing, createMediaAsset, getListings } from "../../services/api";
+import { CATEGORIES, categoryLabel, transmissionLabel, fuelLabel, normalizeListing, itemsOf } from "../../services/listings";
 import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { precioUsable } from "../../services/precio";
+import {
+  autosComparables, alcanzaParaFijarElPrecio, precioDeComparables,
+  comparablesParaElPrompt,
+} from "../../services/comparables";
 import { fotosDeOtroAuto, rasgosDeclarados } from "../../services/mismoAuto";
 import { buscarVersiones, comoFormulario, estaVerificado } from "../../services/especificaciones";
 import { useI18n } from "../../i18n/core";
@@ -535,13 +539,58 @@ Si no sabés un dato, usá null.`;
     setOrigenDeSpecs({ tipo: "ia" });
   };
 
-  // IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
-  // acorde al auto y a la ubicación, y lo carga en el formulario. También cachea.
+  /*
+    QUÉ SE ESTÁ COBRANDO ACÁ POR UN AUTO COMO ESTE.
+
+    Se le pregunta al propio buscador por los autos de la misma marca y se
+    filtran en el navegador, con la tabla de apodos, para que "VW Gol" y
+    "Volkswagen Gol Trend" cuenten como el mismo modelo.
+
+    Si falla, devuelve null y no pasa nada: la sugerencia sigue el camino de
+    siempre. Esto no puede romper el botón.
+  */
+  const traerComparables = async () => {
+    try {
+      const respuesta = await getListings({ brand: vehicleForm.brand, limit: 60 });
+      const autos = itemsOf(respuesta).map(normalizeListing);
+      return autosComparables(autos, {
+        brand: vehicleForm.brand,
+        model: vehicleForm.model,
+        year: vehicleForm.year,
+        category: vehicleForm.category,
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  // IA #2 — Sugerir precio. Primero se mira qué se cobra en FreeWheel por un
+  // auto como este; solo si no hay con qué comparar se le pregunta al modelo.
   const fetchPricing = async (forzar = false) => {
     setPricingLoading(true);
     setPricingSuggestion(null);
     avisar("");
     const location = listingForm.locationText || "Argentina";
+
+    /*
+      EL PRECIO DE LOS AUTOS QUE YA ESTÁN PUBLICADOS GANA, Y NO SE GUARDA.
+
+      Si hay tres o más del mismo modelo, la mediana de sus precios es mejor que
+      cualquier estimación: son pesos de hoy, del mismo mercado, puestos por
+      dueños de verdad. Ahí no se llama a la IA —ni se gasta cuota, ni se espera,
+      ni hace falta que el servicio esté arriba— y tampoco se guarda en el
+      navegador: es un pedido liviano y el dato cambia cada vez que alguien
+      publica. Ver services/comparables.js.
+    */
+    const comp = await traerComparables();
+    if (alcanzaParaFijarElPrecio(comp)) {
+      const deComparables = precioDeComparables(comp);
+      setPricingSuggestion(deComparables);
+      setL("pricePerDay", String(deComparables.precio_recomendado));
+      setPricingLoading(false);
+      return;
+    }
+
     /*
       LA CLAVE DE LA MEMORIA LLEVA VERSIÓN, Y LO GUARDADO VENCE.
 
@@ -557,7 +606,7 @@ Si no sabés un dato, usá null.`;
 
       Y `forzar` es el botón "pedir otra": saltea todo esto y pregunta de nuevo.
     */
-    const cacheKey = `fw_price_v2_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.category}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
+    const cacheKey = `fw_price_v3_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}_${vehicleForm.category}_${vehicleForm.transmission}_${vehicleForm.fuel}_${normalizeLoc(location)}`;
     let data;
     if (!forzar) {
       const cached = localStorage.getItem(cacheKey);
@@ -592,6 +641,15 @@ Si no sabés un dato, usá null.`;
           El año sale del reloj: el anterior decía "en 2025" escrito a mano, y un
           año escrito a mano en un texto que habla de precios envejece mal.
         */
+        /*
+          Y SI IGUAL HAY QUE PREGUNTARLE, NO SE LE PREGUNTA A CIEGAS.
+
+          Los comparables que no alcanzaron para fijar el precio —uno o dos del
+          mismo modelo, o varios de la misma categoría— entran en el pedido como
+          ancla. Es justo lo que el modelo no puede saber: cuánto es un precio
+          normal en pesos argentinos este mes. Sin comparables la línea queda
+          vacía y el pedido es el de antes.
+        */
         const prompt = `Sos tasador de alquiler de autos entre particulares en Argentina. Estamos en ${ANIO_MAXIMO}.
 
 Auto: ${vehicleForm.year} ${vehicleForm.brand} ${vehicleForm.model}
@@ -608,6 +666,7 @@ Hacé esto en dos pasos, sin mostrarme el razonamiento:
 Ajustá por: la ubicación (en CABA y zonas turísticas se paga más que en el
 interior), la antigüedad (arriba de diez años baja bastante), la caja automática
 (se paga más) y el segmento (una SUV o una pickup se pagan más que un hatchback).
+${comparablesParaElPrompt(comp)}
 
 Devolvé SOLO un JSON válido, sin texto alrededor:
 {
@@ -655,7 +714,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
         }
         if (!data) throw ultimoFallo || new Error(tr("publish.errPriceAi"));
 
-        data = precioUsable(data);
+        data = precioUsable(data, comp);
         try {
           localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
         } catch { /* sin lugar para guardar: la sugerencia sirve igual */ }
@@ -1738,7 +1797,45 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                   <span style={s.aiBoxLabel}>{tr("publish.priceAdvised")}</span>
                   <span style={{ ...s.aiBoxValue, fontSize: 16 }}>${pricingSuggestion.precio_recomendado?.toLocaleString()} ARS{tr("common.perDay")}</span>
                 </div>
+                {/*
+                  DE DÓNDE SALIÓ EL NÚMERO, CUANDO SALIÓ DE ACÁ ADENTRO.
+
+                  Esto es lo contrario de una advertencia: el número está mejor
+                  respaldado que cualquier estimación, y hay que decirlo. Son
+                  autos de verdad, publicados en FreeWheel, a precios de este
+                  mes. Decirlo además explica por qué la sugerencia es siempre
+                  la misma y por qué no tarda.
+                */}
+                {pricingSuggestion.origen === "comparables" && (
+                  <div style={{ ...s.aiBoxNote, color: "var(--fw-green-text)" }}>
+                    {tr(
+                      pricingSuggestion.comparables?.nivel === "mismoModeloOtroAnio"
+                        ? "publish.priceFromPeersYears"
+                        : "publish.priceFromPeers",
+                      {
+                        count: pricingSuggestion.comparables?.muestra,
+                        desde: pricingSuggestion.comparables?.desde,
+                        hasta: pricingSuggestion.comparables?.hasta,
+                      },
+                    )}
+                  </div>
+                )}
                 {pricingSuggestion.justificacion && <div style={s.aiBoxNote}>{pricingSuggestion.justificacion}</div>}
+                {/*
+                  Y cuando el número lo estimó la IA pero hay algún auto parecido
+                  publicado, se cuenta igual: son dos o tres autos, no alcanzan
+                  para poner el precio, pero saber a qué precio están es lo más
+                  útil que esta caja puede decir.
+                */}
+                {pricingSuggestion.origen !== "comparables" && pricingSuggestion.comparables?.muestra > 0 && (
+                  <div style={s.aiBoxNote}>
+                    {tr(pricingSuggestion.comparables.muestra === 1 ? "publish.priceNearbyOne" : "publish.priceNearby", {
+                      count: pricingSuggestion.comparables.muestra,
+                      min: Math.round(pricingSuggestion.comparables.min).toLocaleString(),
+                      max: Math.round(pricingSuggestion.comparables.max).toLocaleString(),
+                    })}
+                  </div>
+                )}
                 {/* El rango que dio el modelo no servía (no contenía el precio,
                     o el máximo era el valor del auto) y se armó alrededor del
                     recomendado. Se dice, por lo mismo de siempre: un número
@@ -1770,14 +1867,20 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                     misma, sin ninguna forma de saber que estaba viniendo de la
                     memoria y no del modelo. Esto la saltea y pregunta de nuevo.
                   */}
-                  <button
-                    type="button"
-                    onClick={() => fetchPricing(true)}
-                    disabled={pricingLoading}
-                    style={{ background: "none", border: "none", padding: 0, fontFamily: "inherit", fontSize: 11.5, fontWeight: 600, color: "var(--fw-blue)", cursor: pricingLoading ? "not-allowed" : "pointer", textDecoration: "underline" }}
-                  >
-                    {tr("publish.priceAskAgain")}
-                  </button>
+                  {/* Con el precio sacado de los autos publicados no hay otra
+                      que pedir: volver a apretar da el mismo número, porque no
+                      hay nada que estimar. El botón prometería algo que no va
+                      a pasar. */}
+                  {pricingSuggestion.origen !== "comparables" && (
+                    <button
+                      type="button"
+                      onClick={() => fetchPricing(true)}
+                      disabled={pricingLoading}
+                      style={{ background: "none", border: "none", padding: 0, fontFamily: "inherit", fontSize: 11.5, fontWeight: 600, color: "var(--fw-blue)", cursor: pricingLoading ? "not-allowed" : "pointer", textDecoration: "underline" }}
+                    >
+                      {tr("publish.priceAskAgain")}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
