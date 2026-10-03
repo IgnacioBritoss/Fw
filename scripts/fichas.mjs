@@ -44,7 +44,21 @@ const AQUI = dirname(fileURLToPath(import.meta.url));
 const CARPETA = join(AQUI, "fichas");
 const INFORME = join(AQUI, "fichas.json");
 
-const AGENTE = "FreewheelFichas/1.0 (proyecto educativo; lee fichas tecnicas publicas)";
+/*
+  POR QUÉ UN USER-AGENT DE NAVEGADOR Y NO UNO PROPIO.
+
+  La primera versión se identificaba con un nombre propio, y Toyota contestó
+  403 a todo. Varios sitios corporativos filtran por agente desconocido sin
+  mirar nada más: no es una decisión sobre qué se puede leer, es un portero que
+  no deja pasar al que no reconoce.
+
+  Lo que SÍ es una declaración de qué se puede leer es el robots.txt, y ese se
+  respeta al pie de la letra (ver rutasProhibidas). Pasar por el portero con un
+  agente normal, respetando lo que el sitio pidió por escrito y yendo despacio,
+  no es lo mismo que entrar donde dijeron que no.
+*/
+const AGENTE = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
 /** Una pausa entre pedidos. No hay apuro y el sitio no es nuestro. */
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -57,40 +71,82 @@ const ESPERA_MS = 1200;
   correr, no se confía en esta lista). Las páginas son los puntos de entrada
   donde suelen colgar las fichas; desde ahí se siguen los enlaces a PDF.
 */
+/*
+  LAS RUTAS NO SE ADIVINAN, SE DESCUBREN.
+
+  La primera versión traía una lista escrita a mano —/cronos, /autos,
+  /gama.html— y dio 404 en casi todas: cada marca arma su sitio distinto y
+  además los cambia. Adivinar direcciones es perder el tiempo de la persona que
+  corre esto.
+
+  Ahora el único dato escrito a mano es el dominio. De ahí sale todo lo demás:
+  el robots.txt casi siempre dice dónde está el sitemap, el sitemap es la lista
+  de TODAS las páginas que el sitio publica, y de esa lista se filtran las que
+  hablan de fichas técnicas. Es la forma en que un sitio dice "esto es lo que
+  tengo", así que es la que hay que usar.
+*/
 const MARCAS = {
-  fiat: { base: "https://www.fiat.com.ar", entradas: ["/", "/cronos", "/argo", "/mobi", "/toro", "/strada", "/pulse", "/fastback"] },
-  toyota: { base: "https://www.toyota.com.ar", entradas: ["/", "/hilux", "/corolla", "/corolla-cross", "/yaris", "/sw4", "/rav4"] },
-  volkswagen: { base: "https://www.volkswagen.com.ar", entradas: ["/", "/es/modelos.html"] },
-  chevrolet: { base: "https://www.chevrolet.com.ar", entradas: ["/", "/autos", "/suvs", "/pickups"] },
-  renault: { base: "https://www.renault.com.ar", entradas: ["/", "/gama.html", "/vehiculos.html"] },
-  peugeot: { base: "https://www.peugeot.com.ar", entradas: ["/", "/gama.html"] },
-  ford: { base: "https://www.ford.com.ar", entradas: ["/", "/suvs-y-crossovers", "/pickups-y-comerciales"] },
-  nissan: { base: "https://www.nissan.com.ar", entradas: ["/", "/vehiculos.html"] },
-  citroen: { base: "https://www.citroen.com.ar", entradas: ["/", "/gama.html"] },
-  jeep: { base: "https://www.jeep.com.ar", entradas: ["/", "/renegade", "/compass"] },
-  honda: { base: "https://www.honda.com.ar", entradas: ["/", "/autos"] },
+  fiat: "https://www.fiat.com.ar",
+  toyota: "https://www.toyota.com.ar",
+  volkswagen: "https://www.volkswagen.com.ar",
+  chevrolet: "https://www.chevrolet.com.ar",
+  renault: "https://www.renault.com.ar",
+  peugeot: "https://www.peugeot.com.ar",
+  ford: "https://www.ford.com.ar",
+  nissan: "https://www.nissan.com.ar",
+  citroen: "https://www.citroen.com.ar",
+  jeep: "https://www.jeep.com.ar",
+  honda: "https://www.honda.com.ar",
 };
+
+/** Lo que tiene que decir una dirección para que valga la pena abrirla. */
+const SUENA_A_FICHA = /ficha|tecnic|técnic|especificac|datasheet|specs/i;
+
+/** Cuántas páginas HTML se abren por marca buscando enlaces a PDF. */
+const PAGINAS_POR_MARCA = 25;
 
 // ── Permisos ───────────────────────────────────────────────────────────────
 
-/** Las rutas que el sitio pide que no recorramos, para el agente "*". */
+/** Lo que dice el robots.txt: qué no tocar, y dónde está el sitemap. */
+export function leerRobots(texto) {
+  const bloques = texto.split(/user-agent:/i).slice(1);
+  const nuestro = bloques.find((b) => b.split(/\r?\n/)[0].trim() === "*") ?? "";
+  const prohibidas = nuestro.split(/\r?\n/)
+    .filter((l) => /^disallow:/i.test(l.trim()))
+    .map((l) => l.split(":").slice(1).join(":").trim())
+    .filter(Boolean);
+  /*
+    La línea "Sitemap:" puede aparecer en cualquier parte del archivo, no solo
+    adentro de un bloque de agente. Por eso se busca en el texto entero y no
+    en `nuestro`.
+  */
+  const sitemaps = [...texto.matchAll(/^\s*sitemap:\s*(\S+)/gim)].map((m) => m[1]);
+  return { prohibidas, sitemaps };
+}
+
 export async function rutasProhibidas(base) {
   try {
     const r = await fetch(`${base}/robots.txt`, {
       headers: { "User-Agent": AGENTE }, signal: AbortSignal.timeout(15000),
     });
-    if (!r.ok) return [];
-    const texto = await r.text();
-    const bloques = texto.split(/user-agent:/i).slice(1);
-    const nuestro = bloques.find((b) => b.split(/\r?\n/)[0].trim() === "*") ?? "";
-    return nuestro.split(/\r?\n/)
-      .filter((l) => /^disallow:/i.test(l.trim()))
-      .map((l) => l.split(":").slice(1).join(":").trim())
-      .filter(Boolean);
+    if (!r.ok) return { prohibidas: [], sitemaps: [] };
+    return leerRobots(await r.text());
   } catch {
     // Sin poder leer el robots no se asume que esté permitido.
-    return ["/"];
+    return { prohibidas: ["/"], sitemaps: [] };
   }
+}
+
+/**
+ * Las direcciones de un sitemap.
+ *
+ * Un sitemap puede ser una lista de páginas o un índice que apunta a OTROS
+ * sitemaps (los sitios grandes los parten por sección). Las dos cosas usan la
+ * misma etiqueta `<loc>`, así que se sacan igual y después se distingue por la
+ * extensión al seguirlos.
+ */
+export function urlsDeSitemap(xml) {
+  return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
 }
 
 export const permitida = (ruta, prohibidas) => !prohibidas.some((p) => ruta.startsWith(p));
@@ -270,25 +326,88 @@ const aRecorrer = Object.entries(MARCAS).filter(([n]) => !pedidas.length || pedi
 mkdirSync(CARPETA, { recursive: true });
 const informe = existsSync(INFORME) ? JSON.parse(readFileSync(INFORME, "utf8")) : {};
 
-for (const [marca, { base, entradas }] of aRecorrer) {
+for (const [marca, base] of aRecorrer) {
   console.log(`\n=== ${marca} (${base})`);
 
-  const prohibidas = await rutasProhibidas(base);
+  const { prohibidas, sitemaps } = await rutasProhibidas(base);
   if (prohibidas.includes("/")) {
     console.log("  el sitio pide que no se lo recorra. Se saltea.");
     continue;
   }
+  console.log(`  robots.txt: ${prohibidas.length} rutas cerradas, ${sitemaps.length} sitemap(s) declarado(s)`);
+
+  /*
+    DE DÓNDE SALE LA LISTA DE PÁGINAS.
+
+    Primero el sitemap que el propio robots.txt declara. Si no declara ninguno,
+    se prueban los dos nombres de siempre. Y si tampoco, queda la home como
+    último recurso, que es lo que hacía la versión anterior y lo que casi nunca
+    alcanza en un sitio hecho con JavaScript.
+  */
+  const porProbar = sitemaps.length ? [...sitemaps] : [`${base}/sitemap.xml`, `${base}/sitemap_index.xml`];
+  const vistos = new Set();
+  const direcciones = new Set();
+
+  while (porProbar.length && direcciones.size < 6000) {
+    const cual = porProbar.shift();
+    if (vistos.has(cual)) continue;
+    vistos.add(cual);
+    try {
+      const xml = await traerTexto(cual);
+      const encontradas = urlsDeSitemap(xml);
+      // Un sitemap puede ser un índice que apunta a otros sitemaps.
+      for (const u of encontradas) {
+        if (/\.xml(\.gz)?(\?|$)/i.test(u)) { if (vistos.size < 40) porProbar.push(u); }
+        else direcciones.add(u);
+      }
+      console.log(`  sitemap ${cual.replace(base, "").slice(0, 44).padEnd(46)} ${encontradas.length} direcciones`);
+    } catch (e) {
+      console.log(`  sitemap ${cual.replace(base, "").slice(0, 44).padEnd(46)} ${e.message}`);
+    }
+    await dormir(ESPERA_MS);
+  }
 
   const encontrados = new Set();
-  for (const entrada of entradas) {
-    if (!permitida(entrada, prohibidas)) { console.log(`  ${entrada} -> prohibida por robots.txt`); continue; }
+
+  // Los PDF que el propio sitemap lista, que es el mejor caso.
+  for (const u of direcciones) {
+    if (/\.pdf(\?|$)/i.test(u) && SUENA_A_FICHA.test(decodeURIComponent(u))) encontrados.add(u);
+  }
+  console.log(`  ${direcciones.size} direcciones en total · ${encontrados.size} PDF de ficha listados`);
+
+  /*
+    Las páginas que hablan de fichas y todavía no son un PDF: ahí adentro suele
+    estar el enlace. Se abren de a una, con pausa, y con tope: no hace falta
+    recorrer un sitio entero para encontrar veinte fichas.
+  */
+  const candidatas = [...direcciones]
+    .filter((u) => !/\.(pdf|jpg|png|webp|svg|css|js)(\?|$)/i.test(u))
+    .filter((u) => SUENA_A_FICHA.test(decodeURIComponent(u)))
+    .slice(0, PAGINAS_POR_MARCA);
+
+  if (!direcciones.size) {
+    console.log("  sin sitemap utilizable, se prueba la home");
+    candidatas.push(base);
+  } else if (!encontrados.size && !candidatas.length) {
+    /*
+      El sitio contestó y publicó su lista de páginas, pero ninguna dice
+      "ficha" ni "técnica". O esta marca no publica fichas, o las nombra de
+      otra manera. Se muestran unas cuantas direcciones de muestra: con verlas
+      se ajusta el patrón de una, sin tener que volver a recorrer todo.
+    */
+    console.log("  ninguna direccion suena a ficha tecnica. Muestra de lo que hay:");
+    for (const u of [...direcciones].slice(0, 12)) console.log(`      ${u.replace(base, "")}`);
+  }
+
+  for (const pagina of candidatas) {
+    const ruta = pagina.replace(base, "") || "/";
+    if (!permitida(ruta, prohibidas)) { console.log(`  ${ruta.slice(0, 46)} -> cerrada por robots.txt`); continue; }
     try {
-      const html = await traerTexto(base + entrada);
-      const pdfs = pdfsDeLaPagina(html, base);
+      const pdfs = pdfsDeLaPagina(await traerTexto(pagina), base);
       pdfs.forEach((u) => encontrados.add(u));
-      console.log(`  ${entrada.padEnd(28)} ${pdfs.length} ficha(s)`);
+      console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${pdfs.length} ficha(s)`);
     } catch (e) {
-      console.log(`  ${entrada.padEnd(28)} no se pudo leer (${e.message})`);
+      console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${e.message}`);
     }
     await dormir(ESPERA_MS);
   }

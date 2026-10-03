@@ -20,7 +20,10 @@
 // ============================================================================
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida } from "./fichas.mjs";
+import {
+  numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
+  leerRobots, urlsDeSitemap,
+} from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
 
@@ -125,4 +128,52 @@ test("no se entra a una ruta que el sitio pide no recorrer", () => {
 
 test("sin reglas, se puede entrar", () => {
   assert.equal(permitida("/cualquier/cosa", []), true);
+});
+
+test("del robots.txt salen las rutas cerradas Y donde esta el sitemap", () => {
+  const { prohibidas, sitemaps } = leerRobots(`
+    Sitemap: https://www.marca.com.ar/sitemap_index.xml
+
+    User-agent: Googlebot
+    Disallow: /solo-para-google
+
+    User-agent: *
+    Disallow: /admin
+    Disallow: /buscar
+    Allow: /
+  `);
+  assert.deepEqual(prohibidas, ["/admin", "/buscar"], "solo las reglas del agente *");
+  assert.deepEqual(sitemaps, ["https://www.marca.com.ar/sitemap_index.xml"]);
+});
+
+test("la linea Sitemap se encuentra aunque este en cualquier lado", () => {
+  // No pertenece a ningun bloque de agente, asi que se busca en todo el texto.
+  const { sitemaps } = leerRobots("User-agent: *\nDisallow:\n\nSitemap: https://x.com.ar/sm.xml\n");
+  assert.deepEqual(sitemaps, ["https://x.com.ar/sm.xml"]);
+});
+
+test("un robots sin sitemap no inventa ninguno", () => {
+  assert.deepEqual(leerRobots("User-agent: *\nDisallow: /nada\n").sitemaps, []);
+});
+
+// ── El sitemap ─────────────────────────────────────────────────────────────
+
+test("del sitemap salen las direcciones", () => {
+  const xml = `<?xml version="1.0"?>
+    <urlset><url><loc>https://x.com.ar/cronos</loc><lastmod>2026-01-01</lastmod></url>
+    <url><loc> https://x.com.ar/fichas/cronos.pdf </loc></url></urlset>`;
+  assert.deepEqual(urlsDeSitemap(xml),
+    ["https://x.com.ar/cronos", "https://x.com.ar/fichas/cronos.pdf"]);
+});
+
+test("un indice de sitemaps se lee igual: son las mismas etiquetas", () => {
+  const xml = `<sitemapindex><sitemap><loc>https://x.com.ar/sm-1.xml</loc></sitemap>
+    <sitemap><loc>https://x.com.ar/sm-2.xml</loc></sitemap></sitemapindex>`;
+  assert.equal(urlsDeSitemap(xml).length, 2);
+  assert.ok(urlsDeSitemap(xml).every((u) => u.endsWith(".xml")));
+});
+
+test("un sitemap vacio o roto no rompe nada", () => {
+  assert.deepEqual(urlsDeSitemap(""), []);
+  assert.deepEqual(urlsDeSitemap("<html>pagina de error</html>"), []);
 });
