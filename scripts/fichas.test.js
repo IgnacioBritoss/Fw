@@ -23,7 +23,7 @@ import assert from "node:assert/strict";
 import {
   numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
   leerRobots, urlsDeSitemap, pdfsDeJson, hijosDeJson, lineasDeHtml,
-  modelosDeLaTabla, normalizarRuta,
+  modelosDeLaTabla, normalizarRuta, pdfsDelArchivo,
 } from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
@@ -332,4 +332,57 @@ test("una pagina vacia o rota no rompe nada", () => {
   assert.deepEqual(lineasDeHtml(""), []);
   assert.deepEqual(lineasDeHtml(null), []);
   assert.deepEqual(lineasDeHtml("<div></div>"), []);
+});
+
+// ── Las fichas de los autos que ya no se venden ────────────────────────────
+//
+// Cuando una marca deja de vender un modelo le baja la ficha del sitio, asi
+// que el Etios, el EcoSport o el Corsa no se pueden encontrar recorriendo
+// toyota.com.ar ni ford.com.ar. Pero estuvieron publicados, y el Archivo de
+// Internet los guardo.
+
+const CDX = [
+  ["urlkey", "timestamp", "original", "mimetype", "statuscode", "digest", "length"],
+  ["ar,com,toyota)/ficha-etios.pdf", "20170310120000", "https://www.toyota.com.ar/ficha-etios.pdf", "application/pdf", "200", "X", "100"],
+  ["ar,com,toyota)/ficha-etios.pdf", "20190422090000", "https://www.toyota.com.ar/ficha-etios.pdf", "application/pdf", "200", "Y", "120"],
+  ["ar,com,toyota)/catalogo-precios.pdf", "20180101000000", "https://www.toyota.com.ar/catalogo-precios.pdf", "application/pdf", "200", "Z", "90"],
+  ["ar,com,toyota)/nota.html", "20180101000000", "https://www.toyota.com.ar/nota.html", "text/html", "200", "W", "80"],
+];
+
+test("del archivo salen solo los PDF que son una ficha", () => {
+  const r = pdfsDelArchivo(CDX);
+  assert.equal(r.length, 1, "el catalogo de precios y la nota no son fichas");
+  assert.equal(r[0].url, "https://www.toyota.com.ar/ficha-etios.pdf");
+});
+
+test("de cada ficha se toma la copia MAS NUEVA", () => {
+  // Es la ultima version antes de que la bajaran del sitio.
+  assert.equal(pdfsDelArchivo(CDX)[0].fecha, "20190422090000");
+  assert.match(pdfsDelArchivo(CDX)[0].enElArchivo, /20190422090000id_/);
+});
+
+test("se pide el archivo tal cual, sin la barra de navegacion", () => {
+  // Sin el sufijo "id_", archive.org devuelve el PDF envuelto en su visor y lo
+  // que llega no se puede leer como PDF.
+  assert.match(pdfsDelArchivo(CDX)[0].enElArchivo, /\/web\/\d+id_\/https/);
+});
+
+test("las columnas se buscan por nombre, no por posicion", () => {
+  // La API podria cambiar el orden; confiar en el indice fijo es fragil.
+  const alReves = [
+    ["original", "timestamp"],
+    ["https://x.com.ar/ficha-corsa.pdf", "20150101000000"],
+  ];
+  assert.equal(pdfsDelArchivo(alReves)[0].url, "https://x.com.ar/ficha-corsa.pdf");
+});
+
+test("una respuesta vacia o rota del archivo no rompe nada", () => {
+  assert.deepEqual(pdfsDelArchivo([]), []);
+  assert.deepEqual(pdfsDelArchivo([["timestamp", "original"]]), [], "solo la cabecera");
+  assert.deepEqual(pdfsDelArchivo("no es json"), []);
+  assert.deepEqual(pdfsDelArchivo(null), []);
+});
+
+test("acepta la respuesta como texto, que es como llega", () => {
+  assert.equal(pdfsDelArchivo(JSON.stringify(CDX)).length, 1);
 });

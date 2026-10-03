@@ -31,8 +31,11 @@
 //  falta se ve, el que está mal se publica.
 //
 //  USO:
-//      node scripts/fichas.mjs              todas las marcas
-//      node scripts/fichas.mjs fiat toyota  solo esas
+//      node scripts/fichas.mjs                  todas las marcas
+//      node scripts/fichas.mjs fiat toyota      solo esas
+//      node scripts/fichas.mjs toyota --viejos  tambien los modelos que ya no
+//                                               se venden, buscandolos en el
+//                                               Archivo de Internet
 //
 //  Deja los PDF en scripts/fichas/ y el informe en scripts/fichas.json.
 // ============================================================================
@@ -176,6 +179,9 @@ const NODOS_POR_MARCA = 45;
 /** Hasta cuántas páginas un sitio se considera chico y se mira entero. */
 const PAGINAS_CHICAS = 400;
 
+/** Cuántas fichas archivadas se bajan por marca. */
+const FICHAS_VIEJAS_POR_MARCA = 25;
+
 /** Una dirección lista para buscarle el nombre de un modelo adentro. */
 export const normalizarRuta = (u) => decodeURIComponent(String(u ?? ""))
   .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
@@ -201,6 +207,65 @@ const SUENA_A_MODELO = /\/(modelos?|automoviles?|autos?|vehiculos?|utilitarios|s
 
 /** Cuántas páginas HTML se abren por marca buscando enlaces a PDF. */
 const PAGINAS_POR_MARCA = 40;
+
+// ── El archivo de internet ─────────────────────────────────────────────────
+
+/*
+  LOS AUTOS QUE YA NO SE VENDEN NO ESTAN EN NINGUNA WEB DE MARCA.
+
+  Y son justo los que abundan en la calle: el Etios, el EcoSport, el Ka, el
+  Corsa, el Gol viejo, el Palio, el Clio. Cuando una marca deja de vender un
+  modelo le baja la ficha del sitio, asi que el bajador no los puede encontrar
+  por mas vueltas que se le den. Esa es la mitad del parque automotor argentino.
+
+  Pero las fichas estuvieron publicadas, y el Archivo de Internet las guardo.
+  archive.org tiene una API hecha para consultarse —la CDX— que lista todas las
+  direcciones que archivo de un dominio, con la fecha de cada copia. O sea que
+  se puede pedir "todos los PDF de toyota.com.ar que alguna vez existieron" y
+  bajar la copia guardada.
+
+  Esto NO es recorrer el sitio de la marca: es leer un archivo publico que
+  existe para esto. Y es la unica forma de conseguir la ficha de un auto que ya
+  no se fabrica.
+*/
+const ARCHIVO = "https://web.archive.org";
+
+/** Las direcciones de PDF que el archivo guardo de un dominio. */
+export function pdfsDelArchivo(json, suenaAFicha = SUENA_A_FICHA) {
+  let filas;
+  try { filas = typeof json === "string" ? JSON.parse(json) : json; }
+  catch { return []; }
+  if (!Array.isArray(filas) || filas.length < 2) return [];
+
+  /*
+    La primera fila son los nombres de las columnas, no un resultado. Se usa
+    para encontrar en que posicion vienen la fecha y la direccion, en vez de
+    confiar en un orden fijo que la API podria cambiar.
+  */
+  const cabecera = filas[0].map((c) => String(c).toLowerCase());
+  const iFecha = cabecera.indexOf("timestamp");
+  const iUrl = cabecera.indexOf("original");
+  if (iFecha < 0 || iUrl < 0) return [];
+
+  const vistas = new Map();
+  for (const fila of filas.slice(1)) {
+    const url = fila[iUrl];
+    if (!url || !/\.pdf(\?|$)/i.test(url)) continue;
+    if (!suenaAFicha.test(decodeURIComponent(url))) continue;
+    // De cada direccion, la copia MAS NUEVA: es la ultima version de la ficha
+    // antes de que la bajaran.
+    const previa = vistas.get(url);
+    if (!previa || String(fila[iFecha]) > previa) vistas.set(url, String(fila[iFecha]));
+  }
+
+  return [...vistas].map(([url, fecha]) => ({
+    url,
+    // El sufijo "id_" pide el archivo tal cual se guardo, sin la barra de
+    // navegacion que archive.org le agrega a las paginas.
+    enElArchivo: `${ARCHIVO}/web/${fecha}id_/${url}`,
+    fecha,
+  }));
+}
 
 // ── Permisos ───────────────────────────────────────────────────────────────
 
@@ -523,7 +588,14 @@ export function sacarEspecificaciones(lineas) {
 const ejecutado =
   process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (ejecutado) {
-const pedidas = process.argv.slice(2).map((s) => s.toLowerCase());
+const argumentos = process.argv.slice(2).map((s) => s.toLowerCase());
+/*
+  Con --viejos se busca tambien en el Archivo de Internet, que es donde estan
+  las fichas de los autos que ya no se venden. Va aparte porque es lento y la
+  mayoria de las corridas solo quieren lo que esta publicado hoy.
+*/
+const conArchivo = argumentos.includes("--viejos");
+const pedidas = argumentos.filter((a) => !a.startsWith("--"));
 const aRecorrer = Object.entries(MARCAS).filter(([n]) => !pedidas.length || pedidas.includes(n));
 
 mkdirSync(CARPETA, { recursive: true });
@@ -719,6 +791,32 @@ for (const [marca, base] of aRecorrer) {
       console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${pdfs.length} pdf · ${cuantos ? Object.keys(specs).join(", ") : "sin datos en la pagina"}`);
     } catch (e) {
       console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${e.message}`);
+    }
+    await dormir(ESPERA_MS);
+  }
+
+  /*
+    Las fichas de los modelos que ya no se venden, del Archivo de Internet.
+
+    Se piden al final y solo con --viejos: la consulta devuelve miles de filas
+    y hay que ser considerado con un servicio gratuito que guarda la web entera.
+  */
+  if (conArchivo) {
+    const dominio = new URL(base).hostname;
+    try {
+      const consulta = `${ARCHIVO}/cdx/search/cdx?url=${dominio}&matchType=domain` +
+        "&filter=mimetype:application/pdf&collapse=urlkey&output=json&limit=4000";
+      const guardadas = pdfsDelArchivo(await traerTexto(consulta));
+      // Primero las de los autos de la tabla, que es para lo que se busca.
+      const ordenadas = [
+        ...guardadas.filter((g) => nombra(g.url)),
+        ...guardadas.filter((g) => !nombra(g.url)),
+      ].slice(0, FICHAS_VIEJAS_POR_MARCA);
+      ordenadas.forEach((g) => encontrados.add(g.enElArchivo));
+      console.log(`  archivo: ${guardadas.length} fichas guardadas, se toman ${ordenadas.length}` +
+        (ordenadas.length ? ` (${ordenadas.filter((g) => nombra(g.url)).length} de autos de la tabla)` : ""));
+    } catch (e) {
+      console.log(`  archivo: no se pudo consultar (${e.message})`);
     }
     await dormir(ESPERA_MS);
   }
