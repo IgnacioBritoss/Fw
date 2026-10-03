@@ -710,6 +710,33 @@ export async function aiTranscribe(audioUrl) {
   }));
 }
 
+/*
+  LAS PREGUNTAS MÁS HECHAS AL ASISTENTE, DE TODO EL SITIO.
+
+  Estas dos NO pasan por `conServicioDeIa`, y es a propósito: el servicio propio
+  de IA es un proxy a Groq y no tiene base de datos. El contador vive en el
+  backend de siempre, que es el que tiene la tabla. Mandarlas al otro servicio
+  daría un 404 por cada pregunta.
+
+  Las dos son de las que NO PUEDEN ROMPER NADA. El asistente contesta igual sin
+  ellas: si la migración todavía no está aplicada en el deploy, el backend
+  devuelve un ranking vacío y el front se queda ordenando los botones con la
+  cuenta de su propio navegador. Quien las llama las envuelve en un try.
+*/
+
+/** Suma uno a una pregunta. Se llama DESPUÉS de haber contestado. */
+export async function aiQuestionAsked(questionId) {
+  return apiFetch("/ai/questions/asked", {
+    method: "POST",
+    body: JSON.stringify({ questionId }),
+  });
+}
+
+/** El ranking: `{ preguntas: [{ questionId, count }], minimo }`. */
+export async function aiQuestionsTop() {
+  return apiFetch("/ai/questions/top");
+}
+
 // ── RESEÑAS ────────────────────────────────────────────────────
 // Solo se puede reseñar una reserva COMPLETADA y PAGADA: es lo que hace que las
 // puntuaciones signifiquen algo. El promedio lo calcula y lo guarda el backend.

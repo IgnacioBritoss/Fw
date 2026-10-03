@@ -9,14 +9,19 @@
 //
 //   2. ORDENAR los botones de preguntas sugeridas por lo que más se pregunta.
 //
-//  ── SOBRE LO SEGUNDO, Y SIN VENDERLO DE MÁS ───────────────────────────────
+//  ── SOBRE LO SEGUNDO: HAY DOS CUENTAS, Y NO SE MEZCLAN ────────────────────
 //
-//  La cuenta es de ESTE navegador y de esta cuenta. No es "lo que más preguntan
-//  los usuarios del sitio": para eso haría falta guardarlo en el servidor, que
-//  hoy no tiene dónde (no hay tabla de preguntas en el backend). Así que los
-//  botones se acomodan a lo que viene preguntando esta persona, que igual es
-//  útil —el que alquila pregunta otras cosas que el que publica— pero NO es un
-//  ranking del sitio y no se muestra como si lo fuera.
+//   · La del SITIO. Vive en el backend (tabla AssistantQuestionCount) y es qué
+//     le pregunta la gente a FreeWheel. Es la que vale: ordenar los botones por
+//     lo que preguntan los usuarios de verdad era justamente lo que se quería.
+//   · La de ESTE NAVEGADOR. La que ya existía. Queda como respaldo.
+//
+//  Cuando el servidor trae algo, MANDA EL SERVIDOR. Cuando no trae nada —porque
+//  la migración todavía no está aplicada, porque el backend está caído, o
+//  simplemente porque ninguna pregunta llegó al mínimo— se usa la del navegador.
+//  Una o la otra, nunca sumadas: "cuántas veces lo pregunté yo" y "cuántas veces
+//  lo preguntó el sitio" son números de escalas distintas, y sumarlos da uno que
+//  no significa nada.
 //
 //  ── Y SOLO SE CUENTAN LAS QUE TENEMOS CONTESTADAS ─────────────────────────
 //
@@ -134,15 +139,59 @@ export function contarPregunta(id, usuarioId, deposito = globalThis.localStorage
 export const BOTONES_RESERVADOS = 2;
 
 /**
+ * El ranking del servidor, pasado a la forma de la cuenta local.
+ *
+ * Llega como `{ preguntas: [{ questionId, count }], minimo }` y se devuelve como
+ * `{ [id]: veces }`, que es lo que ya sabe leer preguntasDeLosBotones. Lo que no
+ * esté en nuestra tabla se descarta: el servidor tiene su propia copia de la
+ * lista de ids, y si alguna vez quedan desfasadas, el que manda sobre qué puede
+ * ir en un botón es el front, que es el que tiene las respuestas.
+ *
+ * El `minimo` del servidor no se vuelve a aplicar acá: el servidor ya devuelve
+ * solo las que lo superaron. Aplicarlo dos veces, con dos números distintos,
+ * sería dos reglas para lo mismo.
+ */
+export function cuentaDelServidor(respuesta) {
+  const lista = Array.isArray(respuesta?.preguntas) ? respuesta.preguntas : [];
+  const cuenta = {};
+  for (const fila of lista) {
+    const veces = Number(fila?.count);
+    if (preguntaPorId(fila?.questionId) && Number.isFinite(veces) && veces > 0) {
+      cuenta[fila.questionId] = veces;
+    }
+  }
+  return cuenta;
+}
+
+/**
+ * Cuál de las dos cuentas se usa para ordenar los botones.
+ *
+ * MANDA LA DEL SITIO cuando trae algo. Es lo que se buscaba: que los botones
+ * muestren lo que de verdad pregunta la gente, y no lo que preguntó el que está
+ * mirando la pantalla.
+ *
+ * Y cuando no trae nada se usa la de este navegador, que es el caso de todos los
+ * días por ahora: mientras la migración no esté aplicada en el deploy, el
+ * servidor contesta vacío y esto se comporta igual que antes. No se suman: "las
+ * veces que lo pregunté yo" y "las veces que lo preguntó el sitio" son escalas
+ * distintas y el total no significaría nada.
+ */
+export function cuentaQueManda(local = {}, delSitio = {}) {
+  return Object.keys(delSitio).length > 0 ? delSitio : local;
+}
+
+/**
  * Las preguntas que van en los botones, en orden.
  *
- * Adelante las más preguntadas por esta persona —hasta donde dejan los botones
- * reservados— y atrás las de siempre, también ordenadas por lo más preguntado y
- * desempatadas por el orden de la tabla, que es a propósito: dos listas que se
- * arman igual no se reacomodan de una vez a la otra sin motivo.
+ * Adelante las más preguntadas —hasta donde dejan los botones reservados— y
+ * atrás las de siempre, también ordenadas por lo más preguntado y desempatadas
+ * por el orden de la tabla, que es a propósito: dos listas que se arman igual no
+ * se reacomodan de una vez a la otra sin motivo.
  *
  * Una pregunta que no es de las de siempre sube solo si se preguntó al menos
- * REPETICIONES_PARA_SUBIR veces.
+ * REPETICIONES_PARA_SUBIR veces. Con el ranking del sitio eso ya viene filtrado
+ * por el mínimo del servidor, que es más alto; el de acá sigue valiendo para la
+ * cuenta del navegador.
  */
 export function preguntasDeLosBotones(cuenta = {}, cuantas = BOTONES) {
   const veces = (p) => Number(cuenta[p.id] || 0);

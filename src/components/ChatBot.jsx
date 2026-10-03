@@ -16,7 +16,7 @@ import { useDraggableWindow } from "../hooks/useDraggableWindow";
 import useGrabadora, { segundosComoReloj, textoParaLaCaja } from "../hooks/useGrabadora";
 import {
   respuestaGuardada, preguntaPorId, contarPregunta, cuentaGuardada,
-  preguntasDeLosBotones,
+  preguntasDeLosBotones, cuentaDelServidor, cuentaQueManda,
 } from "../services/asistente";
 import { useI18n } from "../i18n/core";
 import RobotIcon from "./RobotIcon";
@@ -159,6 +159,16 @@ function Asistente() {
     se reacomodarían mientras la charla está abierta, debajo del dedo.
   */
   const [cuenta, setCuenta] = useState(() => cuentaGuardada(user?.id));
+  /*
+    Lo que pregunta el SITIO, que es lo que de verdad se quería para ordenar los
+    botones. Vive en el backend; acá llega una vez, al montar.
+
+    Arranca vacío y se queda vacío si el pedido falla o si la migración todavía
+    no está aplicada en el deploy. Eso no es un problema: con el ranking vacío
+    los botones se ordenan con la cuenta de este navegador, que es exactamente lo
+    que hacían antes. Ver cuentaQueManda() en services/asistente.js.
+  */
+  const [delSitio, setDelSitio] = useState({});
   const [viewport, setViewport] = useState(getViewportData());
 
   // Genera (o reutiliza) un identificador único de sesión para esta charla.
@@ -279,6 +289,26 @@ function Asistente() {
     };
   }, []);
 
+  /*
+    El ranking del sitio se pide UNA VEZ, al montar, y no al abrir la ventana.
+
+    Abrirla y cerrarla es algo que se hace varias veces en una visita, y los
+    botones solo se dibujan al principio de la charla: pedirlo cada vez serían
+    varios viajes al servidor para ordenar lo mismo. Y si falla no se avisa nada
+    ni se reintenta: son cuatro botones, no vale una pantalla de error.
+  */
+  useEffect(() => {
+    let vigente = true;
+    (async () => {
+      try {
+        const { aiQuestionsTop } = await import("../services/api");
+        const ranking = await aiQuestionsTop();
+        if (vigente) setDelSitio(cuentaDelServidor(ranking));
+      } catch { /* sin ranking se ordenan con la cuenta de este navegador */ }
+    })();
+    return () => { vigente = false; };
+  }, []);
+
   useLayoutEffect(() => {
     if (!open) return;
     scrollToBottom("auto");
@@ -318,6 +348,17 @@ function Asistente() {
     const guardada = idGuardado ? preguntaPorId(idGuardado) : respuestaGuardada(userText);
     if (guardada) {
       setCuenta(contarPregunta(guardada.id, user?.id));
+      /*
+        Y se le avisa al servidor, que es el que lleva la cuenta del sitio.
+
+        Sin await y con el error tragado: esto va DESPUÉS de haber contestado, no
+        hay nadie esperándolo, y que no se pueda contar una pregunta no es motivo
+        para que el asistente deje de funcionar ni para mostrarle un error a
+        alguien que preguntó otra cosa.
+      */
+      import("../services/api")
+        .then(({ aiQuestionAsked }) => aiQuestionAsked(guardada.id))
+        .catch(() => {});
       setMessages((prev) => [...prev, { role: "assistant", text: tr(guardada.respuesta) }]);
       requestAnimationFrame(() => {
         inputRef.current?.focus?.({ preventScroll: true });
@@ -570,7 +611,7 @@ function Asistente() {
         flexShrink: 0,
       }}
     >
-      {preguntasDeLosBotones(cuenta).map((p) => (
+      {preguntasDeLosBotones(cuentaQueManda(cuenta, delSitio)).map((p) => (
         <button
           key={p.id}
           onClick={() => send(tr(p.pregunta), p.id)}

@@ -18,6 +18,7 @@ import assert from "node:assert/strict";
 import {
   respuestaGuardada, preguntaPorId, contarPregunta, cuentaGuardada,
   preguntasDeLosBotones, REPETICIONES_PARA_SUBIR, BOTONES_RESERVADOS,
+  cuentaDelServidor, cuentaQueManda,
 } from "./asistente.js";
 import { PREGUNTAS, BOTONES } from "../data/preguntasWili.js";
 
@@ -212,4 +213,75 @@ test("todo boton ofrece una pregunta que sabemos contestar", () => {
   for (const p of preguntasDeLosBotones({ delivery: 5, verify: 5 })) {
     assert.ok(preguntaPorId(p.id)?.respuesta, `${p.id} sin respuesta`);
   }
+});
+
+// ── El ranking del sitio, que es el que vale ───────────────────────────────
+//
+//  Vive en el backend (tabla AssistantQuestionCount) y es qué le pregunta la
+//  gente a FreeWheel. Lo de este navegador queda como respaldo para cuando el
+//  servidor no trae nada, que es el caso de todos los días hasta que la
+//  migración esté aplicada en el deploy.
+
+test("el ranking del servidor se lee a la forma de la cuenta local", () => {
+  const cuenta = cuentaDelServidor({
+    preguntas: [
+      { questionId: "delivery", count: 9 },
+      { questionId: "cancel", count: 4 },
+    ],
+    minimo: 3,
+  });
+  assert.deepEqual(cuenta, { delivery: 9, cancel: 4 });
+});
+
+test("una pregunta del servidor que este front NO conoce se descarta", () => {
+  // El servidor tiene su propia copia de la lista de ids. Si alguna vez quedan
+  // desfasadas, el que manda sobre qué puede ir en un botón es el front, que es
+  // el que tiene las respuestas: un botón sin respuesta es lo peor que puede
+  // pasar acá.
+  const cuenta = cuentaDelServidor({
+    preguntas: [
+      { questionId: "preguntaQueNoExiste", count: 99 },
+      { questionId: "cancel", count: 4 },
+    ],
+  });
+  assert.deepEqual(cuenta, { cancel: 4 });
+});
+
+test("una respuesta vacia, rota o que no llego no rompe nada", () => {
+  for (const respuesta of [null, undefined, {}, { preguntas: null }, { preguntas: "no" }]) {
+    assert.deepEqual(cuentaDelServidor(respuesta), {});
+  }
+  assert.deepEqual(cuentaDelServidor({ preguntas: [{ questionId: "cancel", count: "muchas" }] }), {});
+  assert.deepEqual(cuentaDelServidor({ preguntas: [{ questionId: "cancel", count: 0 }] }), {});
+});
+
+test("CON RANKING DEL SITIO, MANDA EL DEL SITIO", () => {
+  // Es lo que se pidió: que los botones muestren lo que pregunta la gente, no
+  // lo que preguntó el que está mirando la pantalla.
+  const manda = cuentaQueManda({ warranty: 50 }, { delivery: 9 });
+  assert.deepEqual(manda, { delivery: 9 });
+});
+
+test("sin ranking del sitio, manda la cuenta de este navegador", () => {
+  // El caso de todos los días hasta que la migración esté aplicada.
+  const manda = cuentaQueManda({ warranty: 50 }, {});
+  assert.deepEqual(manda, { warranty: 50 });
+  assert.deepEqual(cuentaQueManda({ warranty: 50 }), { warranty: 50 });
+  assert.deepEqual(cuentaQueManda(), {});
+});
+
+test("LAS DOS CUENTAS NO SE SUMAN", () => {
+  // "las veces que lo pregunté yo" y "las veces que lo preguntó el sitio" son
+  // escalas distintas: el total no significaría nada.
+  const manda = cuentaQueManda({ cancel: 4 }, { cancel: 10 });
+  assert.equal(manda.cancel, 10, "no 14");
+});
+
+test("el ranking del sitio ordena los botones igual que la cuenta local", () => {
+  // La misma función de siempre: lo único que cambia es de dónde salen los
+  // números. Así no hay dos maneras de ordenar los mismos cuatro botones.
+  const delSitio = cuentaDelServidor({ preguntas: [{ questionId: "verify", count: 12 }] });
+  const botones = preguntasDeLosBotones(cuentaQueManda({}, delSitio));
+  assert.equal(botones[0].id, "verify");
+  assert.equal(botones.length, BOTONES);
 });
