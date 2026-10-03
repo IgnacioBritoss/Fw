@@ -119,6 +119,30 @@ const MARCAS = {
 */
 const CARPETAS_DE_FICHAS = {
   fiat: ["/content/dam/fiat/argentina/ficha-tecnica"],
+  /*
+    PEUGEOT, CITROEN Y JEEP SON DEL MISMO GRUPO QUE FIAT.
+
+    Las cuatro son Stellantis y comparten el gestor de contenidos, asi que es
+    razonable que compartan tambien la forma de la carpeta. Esto NO es volver a
+    adivinar como al principio: antes se inventaban rutas de la nada, y acá se
+    copia la forma de una que funcionó, en sitios del mismo dueño y la misma
+    plataforma. Si no está, contesta 404 y no cuesta nada.
+
+    Se prueban dos nombres porque algunas filiales escriben la carpeta en
+    singular y otras en plural.
+  */
+  peugeot: [
+    "/content/dam/peugeot/argentina/ficha-tecnica",
+    "/content/dam/peugeot/argentina/fichas-tecnicas",
+  ],
+  citroen: [
+    "/content/dam/citroen/argentina/ficha-tecnica",
+    "/content/dam/citroen/argentina/fichas-tecnicas",
+  ],
+  jeep: [
+    "/content/dam/jeep/argentina/ficha-tecnica",
+    "/content/dam/jeep/argentina/fichas-tecnicas",
+  ],
 };
 
 /** Hasta qué profundidad se le pide el listado a una carpeta de AEM. */
