@@ -163,6 +163,18 @@ test("Corolla y Corolla Cross NO se confunden", () => {
     unaDe("Toyota", "Corolla Cross", 2022).baulL);
 });
 
+test("Ka y Ka Freestyle NO se confunden", () => {
+  // Son dos autos distintos y los dos están en la tabla. El riesgo es el de
+  // siempre: devolver el que no es llena el formulario con datos plausibles de
+  // otro auto y no se nota.
+  assert.equal(unaDe("Ford", "Ka", 2020).version, "1.5 SE");
+  assert.equal(unaDe("Ford", "Ka Freestyle", 2020).version, "1.5 SEL");
+  assert.equal(unaDe("Ford", "kafreestyle", 2020).version, "1.5 SEL");
+  // Y el Freestyle no existía en 2016, cuando el Ka sí.
+  assert.equal(unaDe("Ford", "Ka Freestyle", 2016), undefined);
+  assert.ok(unaDe("Ford", "Ka", 2016));
+});
+
 test("Onix y Onix Plus NO se confunden", () => {
   assert.equal(unaDe("Chevrolet", "Onix", 2022).categoria, "HATCHBACK");
   assert.equal(unaDe("Chevrolet", "Onix Plus", 2022).categoria, "SEDAN");

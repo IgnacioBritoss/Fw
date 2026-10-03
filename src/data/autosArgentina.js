@@ -442,13 +442,19 @@ export const AUTOS = [
     cc: 2298, hp: 160, baulL: null, consumoL100: 8.4, pesoKg: null },
 
   // ── Ford ────────────────────────────────────────────────────────────────
+  /*
+    Las cilindradas de estas dos filas estaban en null y ahora salieron de la
+    misma ficha de siempre. No es que la ficha cambió: la línea dice
+    "Cilindrada (cm3) 2,488 2,198 3,198", con la coma de miles a la inglesa, y
+    el lector la tiraba entera. Con el arreglo del parche anterior se leen.
+  */
   { marca: "Ford", modelo: "Ranger", desde: 2012, hasta: 2022, version: "2.2 TDCi XL cabina simple",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 3, puertas: 2,
-    cc: null, hp: 160, baulL: null, consumoL100: null, pesoKg: 1778,
+    cc: 2198, hp: 160, baulL: null, consumoL100: null, pesoKg: 1778,
     fuente: "Ficha técnica oficial Ford Argentina, Ranger 2020 (archivada)" },
   { marca: "Ford", modelo: "Ranger", desde: 2012, hasta: 2022, version: "3.2 TDCi Limited AT 4x4",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
-    cc: null, hp: 200, baulL: null, consumoL100: null, pesoKg: 2227,
+    cc: 3198, hp: 200, baulL: null, consumoL100: null, pesoKg: 2227,
     fuente: "Ficha técnica oficial Ford Argentina, Ranger 2020 (archivada)" },
   { marca: "Ford", modelo: "Ranger", desde: 2023, hasta: null, version: "2.0 TDCi XL doble cabina",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
@@ -457,8 +463,8 @@ export const AUTOS = [
   { marca: "Ford", modelo: "Ranger", desde: 2023, hasta: null, version: "2.0 TDCi XLT 4x4",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
     // Los 210 CV y los 2.249 kg son los mismos en la ficha de 2023 y en la
-    // actual. La cilindrada no la imprime ninguna de las dos para la 2.0.
-    cc: null, hp: 210, baulL: null, consumoL100: null, pesoKg: 2249,
+    // actual. La cilindrada tambien estaba escrita con la coma inglesa.
+    cc: 1996, hp: 210, baulL: null, consumoL100: null, pesoKg: 2249,
     fuente: "Ficha técnica oficial Ford Argentina, Nueva Ranger" },
   { marca: "Ford", modelo: "Ranger", desde: 2023, hasta: null, version: "3.0 V6 Limited 4x4",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
@@ -471,6 +477,11 @@ export const AUTOS = [
   { marca: "Ford", modelo: "Territory", desde: 2021, hasta: null, version: "1.8 turbo SEL",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1764, hp: 185, baulL: 448, consumoL100: null, pesoKg: 1675,
+    fuente: "Ficha técnica oficial Ford Argentina, Nueva Territory" },
+  { marca: "Ford", modelo: "Territory", desde: 2025, hasta: null, version: "1.5 híbrida Trend",
+    categoria: "SUV", combustible: "HYBRID", asientos: 5, puertas: 5,
+    // La ficha da la cilindrada del 1.8 naftero, no la del híbrido.
+    cc: null, hp: 150, baulL: 448, consumoL100: null, pesoKg: 1815,
     fuente: "Ficha técnica oficial Ford Argentina, Nueva Territory" },
   { marca: "Ford", modelo: "Maverick", desde: 2022, hasta: null, version: "2.0 turbo Lariat",
     categoria: "PICKUP", combustible: "GASOLINE", asientos: 5, puertas: 4,
@@ -487,6 +498,11 @@ export const AUTOS = [
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1496, hp: 184, baulL: 849, consumoL100: null, pesoKg: 1659,
     fuente: "Ficha técnica oficial Ford Argentina, Bronco Sport" },
+  { marca: "Ford", modelo: "Bronco Sport", desde: 2021, hasta: null, version: "2.0 turbo Badlands",
+    categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
+    // La ficha imprime una sola cilindrada, la del 1.5. La Badlands es la 2.0.
+    cc: null, hp: 253, baulL: 849, consumoL100: null, pesoKg: 1843,
+    fuente: "Ficha técnica oficial Ford Argentina, Bronco Sport" },
   { marca: "Ford", modelo: "EcoSport", desde: 2013, hasta: 2021, version: "1.5 Dragon SE",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     // La ficha de 2021 es más limpia que la de 2019: tiene tres columnas
@@ -499,9 +515,20 @@ export const AUTOS = [
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: null, hp: 170, baulL: 362, consumoL100: null, pesoKg: 1432,
     fuente: "Ficha técnica oficial Ford Argentina, EcoSport 2019 (archivada)" },
+  /*
+    El Ka queda sin `fuente` a propósito, aunque la ficha de 2020 apareció y
+    confirma sus 1.499 cc y sus 123 CV: el baúl y el consumo que tiene cargados
+    NO están en esa ficha, y una fila con `fuente` dice que TODOS sus números
+    salieron de ahí. Antes de ponerle el cartel, mejor que siga diciendo lo que
+    es. El Ka Freestyle sí, porque de esa ficha salió todo lo que tiene.
+  */
   { marca: "Ford", modelo: "Ka", desde: 2015, hasta: 2021, version: "1.5 SE",
     categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1499, hp: 123, baulL: 257, consumoL100: 6.4, pesoKg: null },
+  { marca: "Ford", modelo: "Ka Freestyle", desde: 2018, hasta: 2021, version: "1.5 SEL",
+    categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
+    cc: 1499, hp: 123, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Ford Argentina, Ka Freestyle 2021 (archivada)" },
   /*
     El Focus III salió de la lista de precios en 2019 y es de los autos que más
     abundan usados, así que la ficha estaba solo en el archivo de internet. Dos
@@ -693,5 +720,10 @@ export const ALIAS_DE_MODELO = {
   toyota: {
     "corolla sedan": "corolla",
     "corollacross": "corolla cross",
+  },
+  ford: {
+    // Escrito sin el espacio. "freestyle" solo NO se mapea a propósito: hubo
+    // un Ka Freestyle y una EcoSport Freestyle, y no se puede saber cuál es.
+    kafreestyle: "ka freestyle",
   },
 };
