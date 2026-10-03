@@ -108,6 +108,24 @@ test("elige la generación por el año", () => {
   assert.equal(unaDe("Chevrolet", "Onix", 2022).cc, null);
 });
 
+test("el restyling de la Hilux y de la SW4 no se le adelanta a los años viejos", () => {
+  /*
+    EL ERROR QUE ESTO CUIDA, Y ERA MÍO. La 2.8 de la Hilux estaba cargada con
+    204 CV para todo el rango 2016 en adelante. Los 204 llegaron recién con el
+    restyling de 2021: la ficha de 2017 y la de la SW4 de 2018 dan 177 CV para
+    el mismo motor. Un dueño de una Hilux 2018 publicaba 27 CV que no tiene, y
+    el número venía con el cartel de "ficha oficial" al lado.
+  */
+  const potencias = (marca, modelo, anio) =>
+    buscarVersiones(marca, modelo, anio).map((v) => v.hp);
+
+  assert.ok(potencias("Toyota", "Hilux", 2018).includes(177), "la 2.8 de 2018 da 177");
+  assert.ok(!potencias("Toyota", "Hilux", 2018).includes(204), "y NO 204");
+  assert.ok(potencias("Toyota", "Hilux", 2023).includes(204), "la de 2023 sí da 204");
+  assert.ok(potencias("Toyota", "SW4", 2018).includes(177));
+  assert.ok(!potencias("Toyota", "SW4", 2018).includes(204));
+});
+
 // ── Varias versiones del mismo auto ────────────────────────────────────────
 
 test("devuelve TODAS las versiones de ese modelo y año", () => {

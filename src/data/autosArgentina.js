@@ -19,20 +19,33 @@
 //
 //  ── DE DÓNDE SALEN ESTOS NÚMEROS, Y QUÉ CONFIANZA MERECEN ─────────────────
 //
-//  Son los valores de catálogo de la VERSIÓN MÁS VENDIDA de cada generación en
-//  Argentina, cargados a mano. NO salen de una base oficial: no hay un dataset
-//  abierto con especificaciones del mercado argentino por año y versión.
+//  Hay DOS CLASES DE FILA acá, y se distinguen por un solo campo, `fuente`:
 //
-//  Qué tan firme es cada cosa:
+//   · CON `fuente` → los números salieron de la ficha técnica oficial de la
+//     terminal, bajada por scripts/fichas.mjs. Si el modelo ya no se vende, la
+//     ficha se bajó del archivo de internet, y la fila dice "(archivada)" con
+//     el año de la copia. De cada ficha se carga SOLO lo que la ficha imprime:
+//     donde no da la cilindrada, queda `null`, aunque uno se la sepa de memoria.
+//
+//   · SIN `fuente` → valor de catálogo de la versión más vendida de esa
+//     generación, cargado a mano. Es lo que había antes de que existiera el
+//     scraper y es lo que todavía queda en los modelos cuya ficha no apareció.
+//
+//  El front muestra la diferencia: con ficha nombra la ficha, sin ficha avisa
+//  "sin verificar contra la ficha oficial". No es lo mismo y no se mezcla.
+//
+//  Qué tan firme es cada cosa, en las filas sin ficha:
 //
 //   · categoría, combustible, asientos, puertas  → son del modelo. Firmes.
 //   · baúl, cilindrada, potencia                 → son de la versión indicada
 //                                                  en `version`. Firmes para
 //                                                  esa versión.
-//   · peso y consumo                             → los que más varían entre
+//   · consumo                                    → el que más varía entre
 //                                                  versiones y entre ciclos de
-//                                                  medición. Tomalos como
-//                                                  orientativos.
+//                                                  medición. Orientativo.
+//   · peso                                       → NO se carga sin ficha. De
+//                                                  seis que había puesto de
+//                                                  memoria, acerté cero.
 //
 //  Donde no hay un número confiable va `null` y el campo se deja vacío, que es
 //  mejor que llenarlo con algo parecido: un dato vacío se nota y se completa, y
@@ -180,7 +193,23 @@ export const AUTOS = [
     cc: 2393, hp: 150, baulL: null, consumoL100: null, pesoKg: 1890,
     camara: true, bluetooth: true,
     fuente: "Ficha técnica oficial Toyota Argentina, 24/04/2025" },
-  { marca: "Toyota", modelo: "Hilux", desde: 2016, hasta: null, version: "2.8 TDI SRX doble cabina 4x4",
+  /*
+    La 2.8 NO dio siempre 204 CV. La ficha de 2017 —la que está en el archivo
+    de internet— da 177 CV para el mismo motor, igual que la de la SW4 de 2018.
+    Los 204 llegaron con el restyling de 2021. Estaba cargada como 204 para
+    todo el rango 2016 en adelante, que es decirle a un dueño de una Hilux 2018
+    que tiene 27 CV que no tiene.
+
+    Un detalle de esa ficha de 2017: imprime la cilindrada de la 2.8 como
+    "2.775". Las otras dos fichas de Toyota —la SW4 2018 y la Hilux 2025, mismo
+    motor 1GD— dicen 2.755, que es el valor real. Queda 2755: es un error de
+    tipeo del folleto, no un dato distinto.
+  */
+  { marca: "Toyota", modelo: "Hilux", desde: 2016, hasta: 2020, version: "2.8 TDI SR doble cabina 4x4",
+    categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
+    cc: 2755, hp: 177, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Toyota Argentina, Hilux 2017 (archivada)" },
+  { marca: "Toyota", modelo: "Hilux", desde: 2021, hasta: null, version: "2.8 TDI SRX doble cabina 4x4",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
     cc: 2755, hp: 204, baulL: null, consumoL100: null, pesoKg: 2025,
     camara: true, bluetooth: true,
@@ -246,6 +275,10 @@ export const AUTOS = [
   { marca: "Volkswagen", modelo: "Amarok", desde: 2011, hasta: null, version: "2.0 TDI Trendline",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
     cc: 1968, hp: 180, baulL: null, consumoL100: 8.3, pesoKg: null },
+  { marca: "Volkswagen", modelo: "Amarok", desde: 2011, hasta: 2022, version: "3.0 V6 TDI Highline 4x4 AT",
+    categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
+    cc: 2967, hp: 258, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Volkswagen Argentina, Amarok V6 MY22 (archivada)" },
   { marca: "Volkswagen", modelo: "T-Cross", desde: 2019, hasta: null, version: "1.6 MSI Trendline",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1598, hp: 110, baulL: 420, consumoL100: 7.1, pesoKg: null },
@@ -258,6 +291,18 @@ export const AUTOS = [
   { marca: "Volkswagen", modelo: "Vento", desde: 2011, hasta: 2021, version: "2.0 TSI Advance",
     categoria: "SEDAN", combustible: "GASOLINE", asientos: 5, puertas: 4,
     cc: 1984, hp: 211, baulL: 480, consumoL100: 8.5, pesoKg: null },
+  { marca: "Volkswagen", modelo: "Vento", desde: 2022, hasta: null, version: "2.0 TSI GLI 350",
+    categoria: "SEDAN", combustible: "GASOLINE", asientos: 5, puertas: 4,
+    cc: 1984, hp: 230, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Volkswagen Argentina, Nuevo Vento GLI 2023 (archivada)" },
+  { marca: "Volkswagen", modelo: "Tera", desde: 2025, hasta: null, version: "1.6 MSI Trend",
+    categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
+    cc: 1598, hp: 110, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Volkswagen Argentina, Tera MY26" },
+  { marca: "Volkswagen", modelo: "Tera", desde: 2025, hasta: null, version: "1.0 TSI Comfort",
+    categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
+    cc: 999, hp: 101, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Volkswagen Argentina, Tera MY26" },
   { marca: "Volkswagen", modelo: "Suran", desde: 2006, hasta: 2019, version: "1.6 Trendline",
     categoria: "VAN", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1598, hp: 101, baulL: 650, consumoL100: 7.4, pesoKg: null },
@@ -409,6 +454,12 @@ export const AUTOS = [
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
     cc: 1996, hp: 170, baulL: null, consumoL100: null, pesoKg: 1880,
     fuente: "Ficha técnica oficial Ford Argentina, Nueva Ranger XL" },
+  { marca: "Ford", modelo: "Ranger", desde: 2023, hasta: null, version: "2.0 TDCi XLT 4x4",
+    categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
+    // Los 210 CV y los 2.249 kg son los mismos en la ficha de 2023 y en la
+    // actual. La cilindrada no la imprime ninguna de las dos para la 2.0.
+    cc: null, hp: 210, baulL: null, consumoL100: null, pesoKg: 2249,
+    fuente: "Ficha técnica oficial Ford Argentina, Nueva Ranger" },
   { marca: "Ford", modelo: "Ranger", desde: 2023, hasta: null, version: "3.0 V6 Limited 4x4",
     categoria: "PICKUP", combustible: "DIESEL", asientos: 5, puertas: 4,
     cc: 2993, hp: 250, baulL: null, consumoL100: null, pesoKg: 2297,
@@ -423,16 +474,27 @@ export const AUTOS = [
     fuente: "Ficha técnica oficial Ford Argentina, Nueva Territory" },
   { marca: "Ford", modelo: "Maverick", desde: 2022, hasta: null, version: "2.0 turbo Lariat",
     categoria: "PICKUP", combustible: "GASOLINE", asientos: 5, puertas: 4,
-    cc: 1999, hp: 253, baulL: null, consumoL100: null, pesoKg: null,
-    fuente: "Ficha técnica oficial Ford Argentina, Nueva Maverick" },
+    // El consumo sale de la ficha de 2021, que lo imprime y la actual no.
+    cc: 1999, hp: 253, baulL: null, consumoL100: 7.2, pesoKg: null,
+    fuente: "Ficha técnica oficial Ford Argentina, Maverick 2021 (archivada)" },
+  { marca: "Ford", modelo: "Maverick", desde: 2025, hasta: null, version: "2.5 híbrida Lariat",
+    categoria: "PICKUP", combustible: "HYBRID", asientos: 5, puertas: 4,
+    // Los 163 CV son del motor naftero; la ficha no publica la potencia
+    // combinada con el eléctrico, así que no se inventa una.
+    cc: null, hp: 163, baulL: null, consumoL100: null, pesoKg: null,
+    fuente: "Ficha técnica oficial Ford Argentina, Nueva Maverick 2025" },
   { marca: "Ford", modelo: "Bronco Sport", desde: 2021, hasta: null, version: "1.5 turbo Big Bend",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1496, hp: 184, baulL: 849, consumoL100: null, pesoKg: 1659,
     fuente: "Ficha técnica oficial Ford Argentina, Bronco Sport" },
   { marca: "Ford", modelo: "EcoSport", desde: 2013, hasta: 2021, version: "1.5 Dragon SE",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
-    cc: null, hp: 123, baulL: 362, consumoL100: null, pesoKg: 1216,
-    fuente: "Ficha técnica oficial Ford Argentina, EcoSport 2019 (archivada)" },
+    // La ficha de 2021 es más limpia que la de 2019: tiene tres columnas
+    // (SE manual, Titanium manual, Titanium automática) en vez de diez, y
+    // trae la cilindrada y el consumo. Los 1.216 kg que estaban acá son el
+    // peso de la versión S, no de la SE: la SE pesa 1.227.
+    cc: 1497, hp: 123, baulL: 362, consumoL100: 9.0, pesoKg: 1227,
+    fuente: "Ficha técnica oficial Ford Argentina, EcoSport 2021 (archivada)" },
   { marca: "Ford", modelo: "EcoSport", desde: 2013, hasta: 2021, version: "2.0 GDI Titanium 4x4",
     categoria: "SUV", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: null, hp: 170, baulL: 362, consumoL100: null, pesoKg: 1432,
@@ -440,9 +502,20 @@ export const AUTOS = [
   { marca: "Ford", modelo: "Ka", desde: 2015, hasta: 2021, version: "1.5 SE",
     categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1499, hp: 123, baulL: 257, consumoL100: 6.4, pesoKg: null },
-  { marca: "Ford", modelo: "Focus", desde: 2013, hasta: 2019, version: "2.0 SE hatchback",
+  /*
+    El Focus III salió de la lista de precios en 2019 y es de los autos que más
+    abundan usados, así que la ficha estaba solo en el archivo de internet. Dos
+    cosas que yo tenía mal y la ficha corrige: la 2.0 da 170 CV, no 178, y el
+    baúl del cinco puertas es de 316 litros, no 372 (372 es el Focus II).
+  */
+  { marca: "Ford", modelo: "Focus", desde: 2013, hasta: 2019, version: "1.6 S hatchback",
     categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
-    cc: 1999, hp: 178, baulL: 372, consumoL100: 7.6, pesoKg: null },
+    cc: null, hp: 125, baulL: 316, consumoL100: null, pesoKg: 1354,
+    fuente: "Ficha técnica oficial Ford Argentina, Focus 2018 (archivada)" },
+  { marca: "Ford", modelo: "Focus", desde: 2013, hasta: 2019, version: "2.0 SE Plus AT hatchback",
+    categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
+    cc: null, hp: 170, baulL: 316, consumoL100: null, pesoKg: 1401,
+    fuente: "Ficha técnica oficial Ford Argentina, Focus 2018 (archivada)" },
   { marca: "Ford", modelo: "Fiesta", desde: 2011, hasta: 2019, version: "1.6 SE hatchback",
     categoria: "HATCHBACK", combustible: "GASOLINE", asientos: 5, puertas: 5,
     cc: 1596, hp: 120, baulL: 281, consumoL100: 6.8, pesoKg: null },

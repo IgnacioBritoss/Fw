@@ -46,6 +46,23 @@ test("un punto con uno o dos decimales ES decimal", () => {
   assert.deepEqual(numerosDe("1.332"), [1332]);
 });
 
+test("la coma de miles de los flyers de Volkswagen tambien se lee", () => {
+  /*
+    EL BUG QUE ESTO CUIDA. Volkswagen Argentina escribe los miles con coma, a
+    la inglesa. Leídos como decimales, 1,598 y 1,395 quedaban fuera del rango
+    de cilindrada y de esa línea sobrevivía solo el 999: el Polo entraba con
+    una sola de sus tres cilindradas. Línea textual del flyer del Nuevo Polo.
+  */
+  assert.deepEqual(
+    numerosDe("Cilindrada (cm³) 1,598 999 1,395 Climatizador automático"),
+    [1598, 999, 1395],
+  );
+  // Y la coma decimal de verdad sigue siendo decimal: un grupo de miles trae
+  // tres dígitos, y "10,5" trae uno.
+  assert.deepEqual(numerosDe("Tasa de compresión 10,5"), [10.5]);
+  assert.deepEqual(numerosDe("Potencia máxima - CV (kW) / rpm 140 (103) / 3.500"), [140, 103, 3500]);
+});
+
 test("aguanta líneas sin números y texto suelto", () => {
   assert.deepEqual(numerosDe("Combustible Nafta"), []);
   assert.deepEqual(numerosDe(""), []);

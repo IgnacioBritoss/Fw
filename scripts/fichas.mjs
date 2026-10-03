@@ -575,14 +575,25 @@ const CAMPOS = [
  * que "1.332" es un entero y "3.9" es un decimal. Sin esto, "3.9" se leía como
  * dos números —un 3 y un 9— y el consumo del Corolla salía "3/9".
  *
+ * Y HAY UNA TERCERA CONVENCIÓN. Los flyers de Volkswagen Argentina escriben
+ * los miles con coma, a la inglesa: "Cilindrada (cm³) 1,598 999 1,395". Leídos
+ * como decimales daban 1,598 y 1,395 —fuera de todo rango de cilindrada— y de
+ * esa línea solo sobrevivía el 999. La misma regla de los tres dígitos sirve
+ * para desambiguar: ninguna ficha escribe un dato con tres decimales, así que
+ * una coma seguida de exactamente tres dígitos es un separador de miles.
+ *
  * El orden de las alternativas importa: la primera que coincide gana, así que
  * las formas largas van antes que las cortas.
  */
 export function numerosDe(linea) {
-  const formas = /\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+,\d+|\d+\.\d{1,2}(?!\d)|\d+/g;
+  const formas =
+    /\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+,\d+|\d+\.\d{1,2}(?!\d)|\d+/g;
+  const milesConComa = /^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/;
   return [...linea.matchAll(formas)]
     .map((m) => {
       const t = m[0];
+      // Miles con coma: se tiran las comas y el punto, si está, es el decimal.
+      if (milesConComa.test(t)) return Number(t.replace(/,/g, ""));
       // Con coma decimal, los puntos son de miles. Sin coma, un punto seguido
       // de uno o dos dígitos es la parte decimal.
       const limpio = t.includes(",")
