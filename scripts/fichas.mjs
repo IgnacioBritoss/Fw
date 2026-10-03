@@ -124,6 +124,27 @@ const CARPETAS_DE_FICHAS = {
 /** Hasta qué profundidad se le pide el listado a una carpeta de AEM. */
 const NIVELES_JSON = [1, 2, 3];
 
+/*
+  CUANDO NO SE CONOCE LA CARPETA, SE LA BUSCA.
+
+  Con Fiat quedó probado que el listado JSON funciona: una sola llamada a
+  /content/dam/fiat/argentina/ficha-tecnica.1.json devolvió las 39 fichas. Pero
+  escribir a mano esa ruta para las otras diez marcas sería adivinar otra vez,
+  y adivinar ya falló dos veces.
+
+  Así que se baja por el árbol desde /content/dam, que es la raíz del gestor en
+  todos los AEM, pidiendo el listado de cada carpeta y metiéndose solo en las
+  que pueden llevar a una ficha argentina. Es el mismo mecanismo, usado para
+  encontrar la carpeta en vez de para leerla.
+*/
+const RAIZ_DAM = "/content/dam";
+
+/** Por qué carpetas vale la pena bajar. El resto del gestor no nos interesa. */
+const CARPETA_INTERESANTE = /ficha|tecnic|técnic|especificac|argentin|descarga|document|catalog|^ar$|^es[-_]?ar$/i;
+
+/** Tope de pedidos por marca, para no recorrer un gestor entero. */
+const NODOS_POR_MARCA = 45;
+
 /** Lo que tiene que decir una dirección para que valga la pena abrirla. */
 const SUENA_A_FICHA = /ficha|tecnic|técnic|especificac|datasheet|specs/i;
 
@@ -184,6 +205,26 @@ export function urlsDeSitemap(xml) {
  * Las claves que empiezan con "jcr:" o ":" son metadatos del gestor, no
  * contenido, y se saltean.
  */
+/**
+ * Qué cuelga de un listado JSON: los PDF y las carpetas por donde seguir.
+ *
+ * Separado de pdfsDeJson porque son dos preguntas distintas: aquella recorre
+ * hacia abajo todo lo que encuentra, y esta mira UN nivel para decidir a dónde
+ * ir. Mezclarlas haría que la exploración se meta en el gestor entero.
+ */
+export function hijosDeJson(objeto) {
+  const pdfs = [];
+  const carpetas = [];
+  if (!objeto || typeof objeto !== "object") return { pdfs, carpetas };
+  for (const [nombre, hijo] of Object.entries(objeto)) {
+    if (nombre.startsWith("jcr:") || nombre.startsWith(":")) continue;
+    if (!hijo || typeof hijo !== "object") continue;
+    if (/\.pdf$/i.test(nombre)) pdfs.push(nombre);
+    else carpetas.push(nombre);
+  }
+  return { pdfs, carpetas };
+}
+
 export function pdfsDeJson(objeto, rutaBase) {
   const salida = [];
   const recorrer = (nodo, ruta) => {
@@ -396,7 +437,38 @@ for (const [marca, base] of aRecorrer) {
     profundidad porque el gestor devuelve solo hasta donde se le pide, y las
     marcas separan las fichas en subcarpetas por año o por modelo.
   */
-  for (const carpeta of CARPETAS_DE_FICHAS[marca] ?? []) {
+  /*
+    Si no se conoce la carpeta de esta marca, se la busca bajando por el árbol
+    del gestor. Es la parte que evita tener que escribir once rutas a ciegas.
+  */
+  const carpetasDeEstaMarca = CARPETAS_DE_FICHAS[marca] ?? [];
+  if (!carpetasDeEstaMarca.length && permitida(RAIZ_DAM, prohibidas)) {
+    console.log("  carpeta desconocida: se busca bajando por el gestor");
+    const cola = [RAIZ_DAM];
+    const visitadas = new Set();
+    let pedidos = 0;
+
+    while (cola.length && pedidos < NODOS_POR_MARCA) {
+      const nodo = cola.shift();
+      if (visitadas.has(nodo) || !permitida(nodo, prohibidas)) continue;
+      visitadas.add(nodo);
+      pedidos++;
+      try {
+        const { pdfs, carpetas } = hijosDeJson(JSON.parse(await traerTexto(`${base}${nodo}.1.json`)));
+        pdfs.forEach((n) => { if (SUENA_A_FICHA.test(n)) encontrados.add(`${base}${nodo}/${n}`); });
+        for (const nombre of carpetas) {
+          // Desde la raíz se mira todo —ahí están las marcas—; más abajo, solo
+          // lo que puede llevar a una ficha argentina.
+          if (nodo === RAIZ_DAM || CARPETA_INTERESANTE.test(nombre)) cola.push(`${nodo}/${nombre}`);
+        }
+        if (pdfs.length) console.log(`    ${nodo.slice(-52).padEnd(54)} ${pdfs.length} pdf`);
+      } catch { /* una carpeta que no contesta no corta la búsqueda */ }
+      await dormir(ESPERA_MS);
+    }
+    console.log(`  explorado: ${pedidos} carpetas, ${encontrados.size} ficha(s) encontradas`);
+  }
+
+  for (const carpeta of carpetasDeEstaMarca) {
     if (!permitida(carpeta, prohibidas)) { console.log(`  ${carpeta} -> cerrada por robots.txt`); continue; }
     for (const nivel of NIVELES_JSON) {
       try {

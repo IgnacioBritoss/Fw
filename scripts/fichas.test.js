@@ -22,7 +22,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
-  leerRobots, urlsDeSitemap, pdfsDeJson,
+  leerRobots, urlsDeSitemap, pdfsDeJson, hijosDeJson,
 } from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
@@ -208,4 +208,24 @@ test("una carpeta sin PDF devuelve nada, y una respuesta rara tampoco rompe", ()
   assert.deepEqual(pdfsDeJson({ foto: { "a.jpg": {} } }, "https://x.com.ar/dam"), []);
   assert.deepEqual(pdfsDeJson(null, "https://x.com.ar/dam"), []);
   assert.deepEqual(pdfsDeJson("no es un objeto", "https://x.com.ar/dam"), []);
+});
+
+test("hijosDeJson separa los PDF de las carpetas por donde seguir", () => {
+  const { pdfs, carpetas } = hijosDeJson({
+    "jcr:primaryType": "sling:Folder",
+    "Ficha-Cronos.pdf": { "jcr:primaryType": "dam:Asset" },
+    argentina: { "jcr:primaryType": "sling:Folder" },
+    "logo.png": { "jcr:primaryType": "dam:Asset" },
+    "nombre-suelto": "no es un nodo",
+  });
+  assert.deepEqual(pdfs, ["Ficha-Cronos.pdf"]);
+  // El png es un archivo, no una carpeta, pero igual se lista como candidato:
+  // distinguirlo por extensión seria adivinar, y bajar por el devuelve vacio.
+  assert.ok(carpetas.includes("argentina"));
+  assert.ok(!carpetas.includes("nombre-suelto"), "lo que no es un nodo no se sigue");
+});
+
+test("hijosDeJson aguanta una respuesta que no es un listado", () => {
+  assert.deepEqual(hijosDeJson(null), { pdfs: [], carpetas: [] });
+  assert.deepEqual(hijosDeJson("<html>404</html>"), { pdfs: [], carpetas: [] });
 });
