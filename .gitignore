@@ -25,3 +25,19 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# Las fichas tecnicas que baja scripts/fichas.mjs.
+#
+# Son los PDF oficiales de las terminales, y pesan. Al 3 de octubre habia 142
+# archivos trackeados: 186 MB, en un repo cuyo codigo entero son unos pocos
+# MB. Se suman solos en cada corrida del scraper y nadie los lee desde el
+# repo: lo que se usa de ellos ya esta cargado a mano en
+# src/data/autosArgentina.js, con el nombre de la ficha en el campo `fuente`.
+# Si hace falta volver a mirar uno, se vuelve a bajar.
+#
+# El informe scripts/fichas.json SI queda trackeado a proposito: son 36 KB de
+# texto y es el unico registro de que linea de que ficha dio cada numero.
+#
+# Los que ya estaban trackeados no los saca esta regla: hay que sacarlos del
+# indice una vez, con  git rm -r --cached scripts/fichas
+scripts/fichas/
