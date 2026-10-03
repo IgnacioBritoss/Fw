@@ -1075,6 +1075,8 @@ export default {
   "publish.blockDatesNote": "Da \"Le mie auto\" puoi bloccare le date in cui non è disponibile.",
   "publish.errBeforeAi": "Inserisci marca, modello e anno prima di compilare automaticamente.",
   "publish.errSpecs": "Non è stato possibile ottenere le specifiche. Inseriscile a mano.",
+  "publish.specsFromTable": "Dati di catalogo della {auto}. Se la tua è un'altra versione, correggi quello che serve.",
+  "publish.specsFromAi": "Questi li ha stimati l'IA, quindi potrebbero non essere esatti: controllali prima di pubblicare.",
   "publish.errBadPrice": "Prezzo non valido",
   "publish.errPriceAi": "Non è stato possibile ottenere il suggerimento di prezzo. Inseriscilo a mano.",
   "publish.titleSuggestion": "{car} in ottime condizioni",

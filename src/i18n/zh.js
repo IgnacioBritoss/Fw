@@ -1079,6 +1079,8 @@ export default {
   "publish.blockDatesNote": "在\"我的车辆\"里可以锁定车辆不可租的日期。",
   "publish.errBeforeAi": "自动填写前请先填好品牌、型号和年份。",
   "publish.errSpecs": "无法获取规格，请手动填写。",
+  "publish.specsFromTable": "{auto} 的厂方数据。如果你的车是其他版本，请自行更正。",
+  "publish.specsFromAi": "这些由 AI 估算，可能不准确：发布前请核对。",
   "publish.errBadPrice": "价格无效",
   "publish.errPriceAi": "无法获取价格建议，请手动输入。",
   "publish.titleSuggestion": "{car}，车况极佳",

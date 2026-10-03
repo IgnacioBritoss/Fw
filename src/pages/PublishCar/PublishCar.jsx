@@ -25,6 +25,7 @@ import { uploadImageToCloudinary } from "../../services/cloudinary";
 import { groqChat, extractJSON, groqVision } from "../../services/groq";
 import { precioUsable } from "../../services/precio";
 import { fotosDeOtroAuto, rasgosDeclarados } from "../../services/mismoAuto";
+import { buscarEspecificaciones, comoFormulario } from "../../services/especificaciones";
 import { useI18n } from "../../i18n/core";
 import Spinner from "../../components/Spinner";
 import AutocompleteInput from "../../components/AutocompleteInput";
@@ -370,6 +371,15 @@ export default function PublishCar() {
   const [ahora, setAhora] = useState(() => Date.now());
   const [uploadHover, setUploadHover] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
+  /*
+    De dónde salieron las especificaciones que están en pantalla.
+
+    `{ tipo: "tabla", version }` cuando las puso data/autosArgentina.js, y
+    `{ tipo: "ia" }` cuando las estimó el modelo. No es lo mismo y se dice: un
+    dato de catálogo se confirma sin mirar, uno estimado hay que revisarlo. Se
+    borra en cuanto se cambia de auto, porque deja de hablar de lo que se ve.
+  */
+  const [origenDeSpecs, setOrigenDeSpecs] = useState(null);
 
   const [vehicleForm, setVehicleForm] = useState(() => draft?.vehicleForm ?? EMPTY_VEHICLE);
 
@@ -379,6 +389,15 @@ export default function PublishCar() {
   useEffect(() => {
     saveDraft({ step, vehicleForm, listingForm });
   }, [step, vehicleForm, listingForm]);
+
+  /*
+    Si se cambia de auto, el cartel de dónde salieron las specs deja de ser
+    cierto: seguiría diciendo "datos del Fiat Cronos 1.3" con un Gol escrito
+    arriba. Se borra y no se vuelve a mostrar hasta que se autocomplete de nuevo.
+  */
+  useEffect(() => {
+    setOrigenDeSpecs(null);
+  }, [vehicleForm.brand, vehicleForm.model, vehicleForm.year]);
 
   // Atajos para actualizar un campo del formulario de vehículo (setV) o de listing (setL).
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
@@ -417,15 +436,40 @@ export default function PublishCar() {
   const specWarnings = getSpecWarnings(vehicleForm);
   const anioFueraDeRango = specWarnings.some((w) => w.label === "publish.year");
 
-  // IA #1 — Autocompletar specs: le pide al modelo las especificaciones técnicas
-  // del auto (marca/modelo/año) y rellena el formulario. Cachea el resultado en
-  // localStorage para no volver a pedir lo mismo.
+  /*
+    Autocompletar specs: PRIMERO LA TABLA, DESPUÉS LA IA.
+
+    Para los autos que son el grueso de la flota argentina los datos están
+    cargados en data/autosArgentina.js, y preguntárselos a un modelo es gastar
+    una llamada y unos segundos en algo que ya sabemos —y aceptar que conteste
+    distinto cada vez: el mismo Cronos puede volver con 525 litros de baúl una
+    vez y 500 la siguiente—.
+
+    Con la tabla, esos autos se completan al instante, igual siempre, sin gastar
+    cuota y sin depender de que el servicio de IA esté arriba. La IA queda para
+    lo que de verdad la necesita: el auto que no está en la lista.
+
+    `origenDeSpecs` no es un adorno. Un número puesto por la tabla y uno
+    estimado por un modelo no merecen la misma confianza, y quien publica tiene
+    que poder saber cuál está mirando antes de confirmar.
+  */
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
       avisar(tr("publish.errBeforeAi"));
       return;
     }
     avisar("");
+    setOrigenDeSpecs(null);
+
+    const deLaTabla = buscarEspecificaciones(vehicleForm.brand, vehicleForm.model, vehicleForm.year);
+    if (deLaTabla) {
+      // Una sola actualización y no una por campo: son nueve, y nueve `setV`
+      // seguidos son nueve renders del formulario entero.
+      setVehicleForm((f) => ({ ...f, ...comoFormulario(deLaTabla) }));
+      setOrigenDeSpecs({ tipo: "tabla", version: `${deLaTabla.marca} ${deLaTabla.modelo} ${deLaTabla.version}` });
+      return;
+    }
+
     const cacheKey = `fw_specs_${vehicleForm.brand.trim().toLowerCase()}_${vehicleForm.model.trim().toLowerCase()}_${vehicleForm.year}`;
     let data;
     const cached = localStorage.getItem(cacheKey);
@@ -438,8 +482,6 @@ export default function PublishCar() {
   "puertas": número,
   "baul_litros": número,
   "peso_kg": número,
-  "ancho_mm": número,
-  "largo_mm": número,
   "consumo_l100km": número,
   "hp": número,
   "cilindrada_cc": número,
@@ -471,6 +513,7 @@ Si no sabés un dato, usá null.`;
     if (data.bluetooth === "Sí") setV("bluetooth", true);
     if (data.camara_reversa === "Sí") setV("rearCamera", true);
     if (data.sensor_estacionamiento === "Sí") setV("parkingSensors", true);
+    setOrigenDeSpecs({ tipo: "ia" });
   };
 
   // IA #2 — Sugerir precio: le pide al modelo un precio de alquiler por día
@@ -1280,6 +1323,26 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
               {aiLoading ? <Spinner size={14} label={tr("publish.filling")} /> : tr("publish.autofillAi")}
             </button>
           </div>
+
+          {/*
+            De dónde salió lo que está escrito abajo.
+
+            Va ARRIBA de los campos y no debajo: es la advertencia que decide si
+            hay que leerlos uno por uno o se pueden dar por buenos, y leída
+            después de haberlos leído no sirve de nada.
+          */}
+          {origenDeSpecs && (
+            <div style={{
+              fontSize: 12, lineHeight: 1.5, marginBottom: 12, padding: "9px 12px", borderRadius: 8,
+              background: origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-bg)" : "var(--fw-surface-2)",
+              border: `1px solid ${origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-line)" : "var(--fw-border)"}`,
+              color: origenDeSpecs.tipo === "tabla" ? "var(--fw-blue-text)" : "var(--fw-text-2)",
+            }}>
+              {origenDeSpecs.tipo === "tabla"
+                ? tr("publish.specsFromTable", { auto: origenDeSpecs.version })
+                : tr("publish.specsFromAi")}
+            </div>
+          )}
 
           <div style={s.specGrid}>
             {[

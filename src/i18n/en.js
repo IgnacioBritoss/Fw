@@ -1076,6 +1076,8 @@ export default {
   "publish.blockDatesNote": "From \"My cars\" you can block the dates when it is not available.",
   "publish.errBeforeAi": "Fill in brand, model and year before autofilling.",
   "publish.errSpecs": "The specifications could not be fetched. Fill them in manually.",
+  "publish.specsFromTable": "Catalogue data for the {auto}. If yours is a different version, correct whatever is off.",
+  "publish.specsFromAi": "These were estimated by the AI, so they may not be exact: check them before publishing.",
   "publish.errBadPrice": "Invalid price",
   "publish.errPriceAi": "The price suggestion could not be fetched. Enter it manually.",
   "publish.titleSuggestion": "{car} in excellent condition",
