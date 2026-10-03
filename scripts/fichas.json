@@ -1,4 +1,97 @@
 {
+  "volkswagen/es/modelos/tiguan.html": {
+    "marca": "volkswagen",
+    "url": "https://www.volkswagen.com.ar/es/modelos/tiguan.html",
+    "archivo": null,
+    "encabezado": [
+      "Tiguan | Volkswagen Argentina",
+      "Saltar al contenido principal",
+      "Saltar al pie de página",
+      "Volkswagen",
+      "Menú",
+      "Modelos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          150
+        ],
+        "linea": "Potencia 150 cv"
+      }
+    }
+  },
+  "volkswagen/es/modelos/vento.html": {
+    "marca": "volkswagen",
+    "url": "https://www.volkswagen.com.ar/es/modelos/vento.html",
+    "archivo": null,
+    "encabezado": [
+      "Vento GLI | Volkswagen Argentina",
+      "Saltar al contenido principal",
+      "Saltar al pie de página",
+      "Volkswagen",
+      "Menú",
+      "Modelos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          230
+        ],
+        "linea": "Potencia 230 Hp"
+      }
+    }
+  },
+  "volkswagen/es/modelos/nueva-amarok.html": {
+    "marca": "volkswagen",
+    "url": "https://www.volkswagen.com.ar/es/modelos/nueva-amarok.html",
+    "archivo": null,
+    "encabezado": [
+      "Amarok | Volkswagen Argentina",
+      "Saltar al contenido principal",
+      "Saltar al pie de página",
+      "Volkswagen",
+      "Menú",
+      "Modelos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          258,
+          272
+        ],
+        "linea": "Potencia 258 CV - 272 CV con Overboost"
+      }
+    }
+  },
+  "volkswagen/VW_Flyer_TeraMY26_OP.pdf": {
+    "marca": "volkswagen",
+    "url": "https://www.volkswagen.com.ar/idhub/content/dam/onehub_pkw/importers/ar/modelos/tera/2026/flyer-ficha-tecnica/VW_Flyer_TeraMY26_OP.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\volkswagen__VW_Flyer_TeraMY26_OP.pdf",
+    "encabezado": [
+      "Tera",
+      "Tera MY26 - Equipamiento y Especificaciones Técnicas",
+      "MECÁNICA Y FUNCIONAL TREND MSI MT COMFORT 170 TSI HIGH 170 TSI OUTFIT 170 TSI CONFORT TREND MSI MT COMFORT 170 TSI HIGH 170 TSI OUTFIT 170 TSI",
+      "Versión MSI 170 TSI Cantidad de puertas 5 5 5 5",
+      "Combustible Nafta Aire acondicionado X X X X",
+      "Cilindrada (cm³) 1.598 999 Climatizador automático 1 zona - - X X"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1598,
+          999
+        ],
+        "linea": "Cilindrada (cm³) 1.598 999 Climatizador automático 1 zona - - X X"
+      },
+      "hp": {
+        "valores": [
+          110,
+          101
+        ],
+        "linea": "Potencia (CV) 110 101 Respaldo asiento trasero plegable (1/3 - 2/3) - - X X"
+      }
+    }
+  },
   "ford/crossovers-suvs-4x4/territory/mas-informacion/": {
     "marca": "ford",
     "url": "https://www.ford.com.ar/crossovers-suvs-4x4/territory/mas-informacion/",
@@ -309,9 +402,10 @@
     "especificaciones": {
       "cc": {
         "valores": [
+          1996,
           2993
         ],
-        "linea": "Cilindrada del motor 2.993 cm 3 Cilindrada del motor 2.993 cm 3"
+        "linea": "Cilindrada (cm3) 1,996 2,993 1,996 2,993 1,996 2,993"
       },
       "hp": {
         "valores": [
@@ -354,7 +448,7 @@
         "valores": [
           1996
         ],
-        "linea": "Cilindrada del motor 1.996 cm 3 Cilindrada del motor 1.996 cm 3"
+        "linea": "Cilindrada (cm3) 1,996"
       },
       "hp": {
         "valores": [
@@ -404,1034 +498,519 @@
       }
     }
   },
-  "citroen/citroen-argentina/universo-citroen/concept-cars/c3-wrc.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/universo-citroen/concept-cars/c3-wrc.html",
-    "archivo": null,
+  "ford/20250613__far-bronco-sport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20250613095024id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/bronco-sport/2025/pdf/far-bronco-sport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20250613__far-bronco-sport-ficha-tecnica.pdf",
     "encabezado": [
-      "C3 WRC",
-      "Con motivo del Salón de París, la Marca revela mundialmente el concept C3 CMR, versión deportiva y muscular del nuevo CITROËN C3. Este nuevo concept car tiene el desafío de asegurar el retorno del equipo Citroën Racing al campeonato mundial de rally FIA.",
-      "El concept C3 WRC conserva los elementos de redondez, frescura y estilo del Nuevo C3: firma luminica de dos pisos, carroceria bi-tono con detalles que combinan con el color del techo, inspirados en el mundo de las carreras.&lt;br />",
-      "&lt;br />",
-      "Un parachoques oscuro y chevrones de cromo que se extienden a los LEDs diurnos, espejo de carreras de carbono amarillo y un chasis de 55 mm más grande que el Nuevo C3 permite una mayor libertad aerodinámica y un alerón para el parachoques delantero equipado para mejorarlo ... Un diseño deportivo y un tono afilado.&lt;/p>",
-      "\" text-desktop=\"&lt;p>El concept C3 WRC conserva los elementos de redondez, frescura y estilo del Nuevo C3: firma luminica de dos pisos, carroceria bi-tono con detalles que combinan con el color del techo, inspirados en el mundo de las carreras.&lt;br />"
+      "Nueva",
+      "Bronco Sport",
+      "Nueva Bronco Sport Características y Especificaciones",
+      "VERSIÓN BIG BEND BADLANDS VERSIÓN BIG BEND BADLANDS",
+      "Motor de combustión interna 1.5L Ecoboost 2.0L Ecoboost TECNOLOGÍA & SEGURIDAD",
+      "Capacidad de pasajeros 5 Sistema de apertura de puertas sin llave n n"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1496
+        ],
+        "linea": "Cilindrada del motor 1.496 cm 3 Cilindrada del motor 1.496 cm 3"
+      },
+      "hp": {
+        "valores": [
+          184,
+          253
+        ],
+        "linea": "Potencia Máxima (CV / rpm) 184/6000 253/5500 compatible con Android Auto & Apple Car Play inalámbrico"
+      },
+      "pesoKg": {
+        "valores": [
+          1659,
+          1843
+        ],
+        "linea": "Volante calefaccionado - n Peso en orden de marcha (Kg) 1659 1843"
+      }
+    }
+  },
+  "ford/20190216__far-nuevaecosport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20190216023325id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ecosport/2018/overview/far-nuevaecosport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20190216__far-nuevaecosport-ficha-tecnica.pdf",
+    "encabezado": [
+      "NUEVA ECOSPORT",
+      "KINETIC DESIGN ATTRACTION",
+      "NUEVA ECOSPORT",
+      "KINETIC DESIGN ATTRACTION Características y Especificaciones",
+      "VERSIONES 1.5 Dragon S 1.5 Dragon 1.5 Dragon SE 2.0 GDI 1.5 DV5 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI VERSIONES 1.5 Dragon S 1.5 Dragon 1.5 Dragon SE 2.0 GDI 1.5 DV5 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI",
+      "Carrocería 5 Puertas Butaca del conductor con ajuste lumbar - - - - - n n n n n"
     ],
     "especificaciones": {
       "hp": {
         "valores": [
-          380
+          123,
+          170,
+          100
         ],
-        "linea": "C3 WRC es principalmente un auto adaptado para el circuito, con todos los atributos de un futuro campeón: - Ampliar el diámetro de la brida de turbo a 36 mm ha "
+        "linea": "Potencia (CV/rpm) 123 / 6500 170 / 6500 100 / 3750 123 / 6500 170 / 6500 123 / 6500 170 / 6500 Columna de dirección regulable en altura y profundidad n n n n n "
+      },
+      "baulL": {
+        "valores": [
+          362
+        ],
+        "linea": "Capacidad de baúl 362 Radio (AM / FM) con conectividad USB y Bluetooth® n n n n n n n n n n"
+      },
+      "pesoKg": {
+        "valores": [
+          1216,
+          1227,
+          1255,
+          1320,
+          1265,
+          1242,
+          1432,
+          1252,
+          1302,
+          1330
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.216 1.227 1255 1320 1265 1242 1432 1252 1302 1330 Soporte para matafuegos n n n n n n n n n n"
       }
     }
   },
-  "citroen/citroen-argentina/universo-citroen/concept-cars/c4-cactus-airflow-2l.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/universo-citroen/concept-cars/c4-cactus-airflow-2l.html",
-    "archivo": null,
+  "ford/20240716__far-ecosport-cat-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20240716174633id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ecosport/2018/overview/pdf/far-ecosport-cat-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20240716__far-ecosport-cat-ficha-tecnica.pdf",
     "encabezado": [
-      "C4 CACTUS AIRFLOW 2L",
-      "CITROËN PRESENTA EN EL SALÓN DE PARÍS UN PROTOTIPO, EQUIPADO CON TECNOLOGÍA HYBRID AIR, QUE SÓLO CONSUME 2LTS/100 KM",
-      "Citroën es una marca creativa y tecnológica que aporta respuestas a las necesidades de cada época. Como un verdadero laboratorio de ideas, el concept C4 Cactus Airflow 2L, que será presentado en el Salón de París, hace hincapié en los puntos fuertes del C4 Cactus de serie. Dotado con tecnología Hybrid Air, este prototipo concentra diseño e innovaciones para reducir, de forma drástica, los costos de utilización relacionados con el consumo. Muestra todo el saber hacer de Citroën enfocado hacia el objetivo de ofrecer, a mediano plazo, un vehículo asequible con un consumo inferior a los 2 lts/100 km.",
-      "Como en el C4 Cactus de serie, Citroën se ha basado en su gran patrimonio de diseño para optar por soluciones de estilo radicales, inmediatamente reconocibles. Así, su perfil es único, moderno y diferente, gracias a su línea y a sus juegos gráficos, mientras que su frontal exhibe una mirada simpática y tecnológica y sus formas puras, lisas y sin agresividad, destacan por su sencillez.&lt;/p>",
-      "&lt;p>El diseño del Citroën C4 Cactus conjuga estética y funcionalidad, al asociar volúmenes fluidos y elementos gráficos impactantes, que hacen destacar su función original. Como parte de la búsqueda de eficacia aerodinámica el diseño cobra aún más importancia en el concept C4 Cactus Airflow 2L, hasta llegar a una línea fluida y única.&lt;/p>",
-      "&lt;p>Por este motivo, se han modificado o, incluso, se han creado, algunos elementos estilísticos, con el fin de optimizar la aerodinámica del vehículo. Se distinguen dos tipos de piezas, de geometría variable y de geometría fija.&lt;/p>"
+      "NUEVA ECOSPORT",
+      "NUEVA ECOSPORT Características y Especificaciones",
+      "VERSIONES 1.5 Dragon S 1.5 Dragon 1.5 Dragon SE 2.0 GDI 1.5 DV5 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI VERSIONES 1.5 Dragon S 1.5 Dragon 1.5 Dragon SE 2.0 GDI 1.5 DV5 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI",
+      "Carrocería 5 Puertas Butaca del conductor con ajuste lumbar - - - - - - - n n n",
+      "Tracción 4x2 4x4 4x2 Butaca del conductor con ajuste manual en altura n n n n n n n n n n",
+      "Combustible Nafta Diesel Nafta Cierre automático de puertas a 20 km/h n n n n n n n n n n"
     ],
     "especificaciones": {
+      "hp": {
+        "valores": [
+          123,
+          170,
+          100
+        ],
+        "linea": "Potencia (CV/rpm) 123 / 6500 170 / 6500 100 / 3750 123 / 6500 170 / 6500 123 / 6500 170 / 6500 Climatizador automático (EATC) - - - - - n n n n n"
+      },
+      "baulL": {
+        "valores": [
+          362
+        ],
+        "linea": "Capacidad de baúl 362 Luz en baúl n n n n n n n n n n"
+      },
+      "pesoKg": {
+        "valores": [
+          1216,
+          1227,
+          1255,
+          1320,
+          1265,
+          1242,
+          1432,
+          1252,
+          1302,
+          1330
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.216 1.227 1255 1320 1265 1242 1432 1252 1302 1330 Sistema “Follow me home” n n n n n n n n n n"
+      }
+    }
+  },
+  "ford/20240718__far-ecosport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20240718113949id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ecosport/2019/pdf/brochure/far-ecosport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20240718__far-ecosport-ficha-tecnica.pdf",
+    "encabezado": [
+      "NUEVA ECOSPORT",
+      "NUEVA ECOSPORT Características y Especificaciones",
+      "VERSIONES 1.5 Dragon S 1.5 Dragon SE 1.5 Dragon 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI VERSIONES 1.5 Dragon S 1.5 Dragon SE 1.5 Dragon 1.5 Dragon FREESTYLE 2.0 GDI 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI",
+      "Carrocería 5 Puertas Butaca del conductor con ajuste manual en altura n n n n n n n n",
+      "Tracción 4x2 4x4 4x2 Cierre automático de puertas a 20 km/h n n n n n n n n",
+      "Combustible Nafta Cierre centralizado de puertas n n n n n n n n"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          123,
+          170
+        ],
+        "linea": "Potencia (CV/rpm) 123 / 6500 123 / 6500 170 / 6500 123 / 6500 170 / 6500 Columna de dirección regulable en altura y profundidad n n n n n n n n"
+      },
+      "baulL": {
+        "valores": [
+          362
+        ],
+        "linea": "Capacidad de baúl 362 Radio (AM / FM) con conectividad USB y Bluetooth® n n n n n n n n"
+      },
+      "pesoKg": {
+        "valores": [
+          1216,
+          1227,
+          1255,
+          1242,
+          1432,
+          1252,
+          1302,
+          1330
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.216 1.227 1255 1242 1432 1252 1302 1330 Techo solar con apertura y cierre eléctrico - - - - - n n n"
+      }
+    }
+  },
+  "ford/20200521__far-ecosport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20200521192003id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ecosport/2019/pdf/far-ecosport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20200521__far-ecosport-ficha-tecnica.pdf",
+    "encabezado": [
+      "NUEVA ECOSPORT",
+      "NUEVA ECOSPORT Características y Especificaciones",
+      "VERSIONES 1.5 Dragon S 1.5 Dragon SE 1.5 Dragon FREESTYLE 1.5 Dragon 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI VERSIONES 1.5 Dragon S 1.5 Dragon SE 1.5 Dragon FREESTYLE 1.5 Dragon 1.5 Dragon 1.5 Dragon TITANIUM 2.0 GDI",
+      "Carrocería 5 Puertas Aire acondicionado manual ■ ■ ■ - - - -",
+      "Tracción 4x2 Asiento trasero 60/40 - plegable y rebatible ■ ■ ■ ■ ■ ■ ■",
+      "Combustible Butaca del conductor con ajuste manual en altura ■ ■ ■ ■ ■ ■ ■"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          123,
+          170
+        ],
+        "linea": "Potencia (CV/rpm) 123 / 6500 123 / 6500 123 / 6500 170 / 6500 Cierre/Apertura global remoto de puertas ■ ■ ■ ■ ■ ■ ■"
+      },
+      "baulL": {
+        "valores": [
+          362
+        ],
+        "linea": "Capacidad de baúl 362 Luz de cortesía ■ ■ ■ ■ ■ ■ ■"
+      },
+      "pesoKg": {
+        "valores": [
+          1216,
+          1227,
+          1255,
+          1242,
+          1252,
+          1302,
+          1330
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.216 1.227 1255 1242 1252 1302 1330 Sensores de estacionamiento trasero - - - ■ ■ ■ ■"
+      }
+    }
+  },
+  "ford/20210921__far-ecosport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20210921213157id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ecosport/2021/overview/pdf/far-ecosport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20210921__far-ecosport-ficha-tecnica.pdf",
+    "encabezado": [
+      "Ecosport",
+      "Características y Especificaciones",
+      "Ecosport",
+      "VERSIONES SE TITANIUM VERSIONES SE TITANIUM",
+      "Manual Manual Automática Manual Manual Automática",
+      "Carrocería 5 puertas Apoyabrazos central trasero con posavos - n n"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1497
+        ],
+        "linea": "Cilindrada del motor: 1.497 cm3 Cilindrada del motor: 1.497 cm3"
+      },
+      "hp": {
+        "valores": [
+          123
+        ],
+        "linea": "Potencia (CV/rpm) 123 / 6500 Levantacristal con sistema “One Touch\" (solo conductor) n - -"
+      },
+      "baulL": {
+        "valores": [
+          362
+        ],
+        "linea": "Capacidad de baúl 362 Sistema SYNC 3 con pantalla color multitáctil de 8\", compatible con Android Auto & Apple Car Play n n n"
+      },
+      "pesoKg": {
+        "valores": [
+          1227,
+          1252,
+          1302
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.227 1252 1302 Sensores de estacionamiento trasero n n n"
+      },
       "consumoL100": {
         "valores": [
-          4,
-          2,
-          3.1
+          9
         ],
-        "linea": "El Citroën C4 Cactus ya consigue resultados situados entre los mejores del mercado, con emisiones de CO2 a partir de 82 g/km y un consumo de 3,1 l/100 km en dié",
+        "linea": "Consumo de combustible 9 L/100Km Consumo de combustible 9 L/100Km",
         "revisar": true
       }
     }
   },
-  "citroen/citroen-argentina/vehiculos/particulares/basalt.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/basalt.html",
-    "archivo": null,
+  "ford/20230701__far-focus-ficha-tecnica-junio-2018.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20230701185410id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/focus/far-focus-ficha-tecnica-junio-2018.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20230701__far-focus-ficha-tecnica-junio-2018.pdf",
     "encabezado": [
-      "Basalt | Citroën Argentina",
-      "&lt;span class=&#34;font-h1&#34;>Basalt&lt;br>",
-      "&lt;/span>&lt;/p>",
-      "\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"0px 0px -38px 0px\" margin-mobile=\"0px 0px -28px 0px\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"46px\" font-size-overwrite-mobile=\"32px\">",
-      "SER COMÚN NUNCA FUE UNA OPCIÓN&lt;/span>\" font-style=\"font-body\" font-color=\"text-white\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-left\" margin-mobile=\"4px 0px\" padding-mobile=\"0px\" font-size-overwrite=\"16px\" font-size-overwrite-mobile=\"14px\">",
-      "&lt;span class=&#34;font-h2&#34;>Exclusivo hasta el último detalle&lt;/span>&lt;/p>"
+      "FOCUS",
+      "FOCUS",
+      "Características y Especificaciones",
+      "VERSIONES S SE SE PLUS TITANIUM VERSIONES S SE SE PLUS TITANIUM",
+      "Carrocería 5 Puertas Tapizados de asientos en cuero - n n n",
+      "Combustible NAFTA Climatizador automático bi zona - n n n"
     ],
     "especificaciones": {
       "hp": {
         "valores": [
-          96,
-          200,
-          120
+          125,
+          170
         ],
-        "linea": "&lt;span class=&#34;font-body&#34;>Basalt proporciona lo mejor en rendimiento, cuenta con dos motorizaciones disponibles: 1.3 96 CV MT o T200 120 CV CVT. La mot"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/basalt/descubre.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/basalt/descubre.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre",
-      "&lt;span class=&#34;font-body&#34;>Una apariencia imponente, elegante y exclusiva con logotipos oscurecidos, llantas de aleación 16&quot; negras y protectores de parachoques más sobrios. En el interior, el refinamiento continúa con la tapicería oscurecida y los detalles en rojo.&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;span class=&#34;font-body&#34;>Lo mejor en potencia y elegancia. Combina la grandeza y robustez de un SUV con líneas modernas, fluidas y dinámicas, creando un estilo incomparable. Su parte trasera acentúa aún más la eficiencia aerodinámica a un modelo que expresa mucha energía.&nbsp;&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;span class=&#34;font-body&#34;>Estilo que ilumina. Destaca su firma lumínica Citroën y faros DRL LED, el frontal de Basalt es una invitación al futuro, resaltando tu presencia para donde vayas. Con la grilla frontal en color negro brillante, junto a los skidplates tanto en su frontal como en la parte trasera, generan una estética bien interesante y condimentan el estilo de este SUV.&lt;/span>&lt;/p>"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          96,
-          200,
-          120
-        ],
-        "linea": "&lt;span class=&#34;font-body&#34;>Basalt proporciona lo mejor en rendimiento, cuenta con dos motorizaciones disponibles: 1.3 96 CV MT o T200 120 CV CVT. La mot"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/aircross.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/aircross.html",
-    "archivo": null,
-    "encabezado": [
-      "Aircross | Citroën Argentina",
-      "&lt;span class=&#34;font-h1&#34;>AIRCROSS XTR&lt;/span>&lt;/p>",
-      "\" font-color=\"text-white\" font-family=\"font-primary\" text-mobile=\"&lt;p style=&#34;text-align: center;&#34;>&lt;b>AIRCROSS XTR&lt;/b>&lt;/p>",
-      "\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"46px\" font-size-overwrite-mobile=\"32px\">",
-      "&lt;span class=&#34;font-h2&#34;>PARA QUIENES SE ANIMAN A ESCAPARSE&lt;/span>&lt;/p>",
-      "\" margin=\"-12px 0px\">"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          96,
-          200,
-          120
-        ],
-        "linea": "&lt;span class=&#34;font-body&#34;>El Aircross proporciona una experiencia de conducción única, cuenta con dos motorizaciones disponibles:&nbsp;1.3 de 96 CV MT "
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/aircross/descubre.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/aircross/descubre.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre",
-      "&lt;span class=&#34;font-body&#34;>El Aircross XTR es el SUV ideal para escapar de la rutina, respirar aire fresco y reconectar con lo que realmente importa. Combinando un diseño impactante, neumáticos mixtos, una carrocería bitono y un exclusivo interior en tono oscuro, es más que un simple vehículo: es el compañero perfecto para tus aventuras.&lt;/span>&lt;/p>",
-      "\" font-color=\"text-default\" font-family=\"font-primary\">",
-      "&lt;span class=&#34;font-body&#34;>Un diseño como nunca viste. Imponente y robusto, el Aircross destaca por su firma lumínica delantera en DRL LED en forma de Y complementada por una grilla central de gran porte con detalles en black piano y el protector inferior en color gris plata.&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;span class=&#34;font-body&#34;>El vehículo que refleja tu personalidad. Con un diseño atractivo y llamativo, el Aircross ofrece el color del techo en negro.&lt;/span>&lt;/p>"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          96,
-          200,
-          120
-        ],
-        "linea": "&lt;span class=&#34;font-body&#34;>El Aircross proporciona una experiencia de conducción única, cuenta con dos motorizaciones disponibles:&nbsp;1.3 de 96 CV MT "
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/c4.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c4.html",
-    "archivo": null,
-    "encabezado": [
-      "Nuevo C4 Híbrido | Citroën Argentina",
-      "PUEDE LLEVARTE LEJOS\" font-style=\"font-body\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-center\" text-mobile=\"TU ZONA DE CONFORT PUEDE LLEVARTE LEJOS\" margin-mobile=\"4px 0px\" padding-mobile=\"0px\" text-alignment-mobile=\"text-center\" font-size-overwrite=\"16px\" font-size-overwrite-mobile=\"14px\">",
-      "&lt;span class=&#34;font-body&#34;>El nuevo C4 híbrido redefine la presencia en las calles con un diseño más ancho y robusto. Propone un concepto moderno y con carácter, llevando adelante toda la potencia del diseño e identidad Citroën, con un diseño único, elegante y aerodinámico.&lt;/span>&lt;/p>",
-      "\" font-color=\"text-white\" font-family=\"font-primary\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"14px\">",
-      "&lt;span class=&#34;font-body&#34;>Está equipado con una motorización híbrida con un motor naftero electrificado. No necesitas enchufar el nuevo C4 híbrido para disfrutar del placer de conducir en modo eléctrico más del 50% del tiempo en la ciudad.​&lt;/span>&lt;/p>",
-      "&lt;p>&lt;span class=&#34;font-body&#34;>Con una potencia combinada de 145 CV, logra una eficiencia de consumo y reduce emisiones de CO².&lt;/span>&lt;/p>"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          145
-        ],
-        "linea": "&lt;p>&lt;span class=&#34;font-body&#34;>Con una potencia combinada de 145 CV, logra una eficiencia de consumo y reduce emisiones de CO².&lt;/span>&lt;/p>"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/c4/descubre.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c4/descubre.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre",
-      "&lt;span class=&#34;font-body&#34;>El frontal incorpora el nuevo logo de la marca, que se sitúa en el centro de la parrilla, dando una presencia más firme. El capó, por su parte, mantiene sus líneas originales al tiempo que se adapta para resaltar los chevrones, que están acabados en pintura Silver Chrome, añadiendo un toque de elegancia y refinamiento.​&lt;/span>&lt;/p>",
-      "\" font-family=\"font-primary\">",
-      "&lt;span class=&#34;font-body&#34;>Los finos y elegantes faros delanteros LED presentan una característica firma lumínica dividida en tres distintivos segmentos horizontales, que garantizan un reconocimiento instantáneo, incluso a la distancia.​&lt;/span>&lt;/p>",
-      "\" font-family=\"font-primary\">",
-      "&lt;span class=&#34;font-body&#34;>En el lateral, presenta una combinación perfecta de estética y funcionalidad. Su diseño aerodinámico no sólo es agradable a la vista, sino que también contribuye a mejorar el consumo.​&lt;/span>&lt;/p>"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          145
-        ],
-        "linea": "&lt;span class=&#34;font-body&#34;>Está equipado con una motorización híbrida, que combina un motor naftero turbo con un motor eléctrico, otorgando 145 CV de po"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/particulares/c5-aircross.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c5-aircross.html",
-    "archivo": null,
-    "encabezado": [
-      "Nuevo C5 Aircross | Citroën Argentina",
-      "C5 AIRCROSS\" font-style=\"font-h1\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-center\" margin-mobile=\"0px\" padding-mobile=\"0px\" font-size-overwrite=\"40px\">",
-      "&lt;span class=&#34;font-body&#34;>Combina un estilo musculoso y sólido que optimiza su eficiencia, impulsando la renovación del diseño Citroën con una identidad única y elegante. Transmite robustez y seguridad en la ruta, logrando un equilibrio perfecto entre volumen y modernidad.&lt;/span>&lt;/p>",
-      "\" font-color=\"text-white\" font-family=\"font-primary\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"14px\">",
-      "&lt;span class=&#34;font-body&#34;>Está equipado con un motor 1.6 turbo, que ofrece una respuesta ágil y eficiente en todo tipo de conducción. Con una potencia de 180 CV, se combina con una caja automática, brindando un manejo suave, dinámico y confortable.&lt;/span>&lt;/p>",
-      "\" font-color=\"text-white\" font-family=\"font-primary\" font-size-overwrite=\"14px\">"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          180
-        ],
-        "linea": "&lt;span class=&#34;font-body&#34;>Está equipado con un motor 1.6 turbo, que ofrece una respuesta ágil y eficiente en todo tipo de conducción. Con una potencia "
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy.html",
-    "archivo": null,
-    "encabezado": [
-      "Jumpy | Citroën Argentina",
-      "&lt;span class=&#34;font-h1&#34;>CITROËN JUMPY&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;span class=&#34;font-body&#34;>Citroën Jumpy cuenta con un diseño procedente del universo de los autos particulares y del mundo de los SUV. Su estilo es fluido, sin agresividad, ofreciendo seguridad y solidez.&lt;/span>&lt;/p>",
-      "&lt;p style=&#34;text-align: center;&#34;>&lt;span class=&#34;font-body&#34;>&nbsp;&lt;/span>&lt;/p>",
-      "&lt;p style=&#34;text-align: center;&#34;>&nbsp;&lt;/p>"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2189
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada:&nbsp;&lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
+        "linea": "Potencia (CV/rpm) 125 / 6.300 170 / 6.600 Espejo retrovisor interior fotocromático n n n n"
       },
-      "hp": {
+      "baulL": {
         "valores": [
-          150
+          316
         ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia:&nbsp;&lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-carga.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-carga.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre",
-      "&lt;span class=&#34;font-body&#34;>Redescubre Citroën Jumpy, el vehículo comercial ligero más versátil. Su segunda generación se presenta con un diseño moderno y características de confort y seguridad sin precedentes.&lt;/span>&lt;/p>",
-      "&lt;p>&lt;span class=&#34;font-body&#34;>Se beneficia de un nuevo frontal que actualiza su estilo y refuerza su personalidad.&lt;/span>&lt;/p>",
-      "&lt;p>&lt;span class=&#34;font-body&#34;>Facilita la vida a bordo con su tecnología y seguridad, ofreciendo al mismo tiempo una conducción placentera&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Equipado para 3 plazas delanteras y 3 plazas traseras con apoya cabezas individuales ajustables en altura.&lt;/span>&lt;/li>"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2189
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada:&nbsp;&lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
-      },
-      "hp": {
-        "valores": [
-          150
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia:&nbsp;&lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-mixta.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-mixta.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre Mixta",
-      "&lt;span class=&#34;font-body&#34;>Redescubre Citroën Jumpy Mixta, el vehículo comercial ligero más versátil. Su segunda generación se presenta con un diseño moderno y características de confort y seguridad sin precedentes.&lt;/span>&lt;/p>",
-      "&lt;p>&lt;span class=&#34;font-body&#34;>Se beneficia de un nuevo frontal que actualiza su estilo y refuerza su personalidad.&lt;/span>&lt;/p>",
-      "&lt;p>&lt;span class=&#34;font-body&#34;>Facilita la vida a bordo con su tecnología y seguridad, ofreciendo al mismo tiempo una conducción placentera&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Equipado para 3 plazas delanteras y 3 plazas traseras con apoya cabezas individuales ajustables en altura.&lt;/span>&lt;/li>"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2189
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: &lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
-      },
-      "hp": {
-        "valores": [
-          150
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: &lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/utilitarios/jumper.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumper.html",
-    "archivo": null,
-    "encabezado": [
-      "Jumper | Citroën Argentina",
-      "&lt;span class=&#34;font-h1&#34;>CITROËN JUMPER&lt;/span>&lt;/p>",
-      "\">",
-      "&lt;span class=&#34;font-body&#34;>En Citroën, la historia de los servicios públicos comienza a principios del siglo XX. La marca ha estado presente en el mercado de los vehículos comerciales desde 1928, con el lanzamiento, a lo largo de los años, de vehículos pioneros como el C4 Van, Type H, 2CV Van. Con esta herencia, trae, hoy y más que nunca, una solución adaptada a cada uso.&lt;/span>&lt;/p>",
-      "&lt;p style=&#34;text-align: center;&#34;>&lt;span class=&#34;font-body&#34;>&nbsp;&lt;/span>&lt;/p>",
-      "&lt;p style=&#34;text-align: center;&#34;>&nbsp;&lt;/p>"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2184
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: 2.184 cm3&lt;/span>&lt;/li>"
-      },
-      "hp": {
-        "valores": [
-          140
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: 140 CV / 3.500 rpm&lt;/span>&lt;/li>"
-      }
-    }
-  },
-  "citroen/citroen-argentina/vehiculos/utilitarios/jumper/descubre.html": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumper/descubre.html",
-    "archivo": null,
-    "encabezado": [
-      "Descubre",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Motor 2.2 HDi 140 CV con caja manual de 6 velocidades&lt;/span>&lt;/li>",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Tanque de combustible de 90 lts.&lt;/span>&lt;/li>",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Ayuda al arranque en pendiente, frenos ABS y ESP&lt;/span>&lt;/li>",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Doble airbag (conductor y pasajero)&lt;/span>&lt;/li>",
-      "&lt;li>&lt;span class=&#34;font-body&#34;>Posición de manejo confortable y apoyabrazos para el conductor&lt;/span>&lt;/li>"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2184
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: 2.184 cm3&lt;/span>&lt;/li>"
-      },
-      "hp": {
-        "valores": [
-          140
-        ],
-        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: 140 CV / 3.500 rpm&lt;/span>&lt;/li>"
-      }
-    }
-  },
-  "citroen/20251111-ft-jumpy.pdf": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/content/dam/citroen/argentina/fichas-tecnicas/jumpy/20251111-ft-jumpy.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\citroen__20251111-ft-jumpy.pdf",
-    "encabezado": [
-      "CITROËN",
-      "JUMPY",
-      "FICHA TÉCNICA",
-      "CITROËN JUMPY",
-      "JUMPY L3 HDI 150 MY26",
-      "A V I S O"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2184
-        ],
-        "linea": "Cilindrada (cm 3 ) 2.184"
-      },
-      "hp": {
-        "valores": [
-          150
-        ],
-        "linea": "Potencia máxima (CV/rpm) 150 / 3.500 S I N"
+        "linea": "Asiento de conductor con 6 ajustes eléctricos de posición - - - n Capacidad del baúl (L) 316"
       },
       "pesoKg": {
         "valores": [
-          1826
+          1354,
+          1370,
+          1401
         ],
-        "linea": "Peso en orden de marcha (kg) 1.826"
+        "linea": "Apoyabrazos central trasero con posavasos - - n n Peso en orden de marcha (Kg) (MT/AT) 1.354 1.370 1.370/1.401 1.370/1.401"
       }
     }
   },
-  "citroen/20250820_ft_jumper.pdf": {
-    "marca": "citroen",
-    "url": "https://www.citroen.com.ar/content/dam/citroen/argentina/fichas-tecnicas/jumper/20250820_ft_jumper.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\citroen__20250820_ft_jumper.pdf",
+  "ford/20240715__far-focus-ficha-tecnica_2017.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20240715130231id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/focus/far-focus-ficha-tecnica_2017.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20240715__far-focus-ficha-tecnica_2017.pdf",
     "encabezado": [
-      "CITROËN",
-      "JUMPER",
-      "FICHA TÉCNICA",
-      "CITROËN JUMPER",
-      "JUMPER L2H2 JUMPER L3H2",
-      "HDI 140 VAN MY26 HDI 140 VAN MY26"
+      "FOCUS",
+      "KINETIC DESIGN ATTRACTION",
+      "FOCUS",
+      "KINETIC DESIGN ATTRACTION Características y Especificaciones",
+      "VERSIONES S SE SE PLUS TITANIUM VERSIONES S SE SE PLUS TITANIUM",
+      "Carrocería 5 Puertas Tapizados de asientos en cuero - n n n"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          125,
+          170
+        ],
+        "linea": "Potencia (CV/rpm) 125 / 6.300 170 / 6.600 Espejo retrovisor interior fotocromático n n n n"
+      },
+      "baulL": {
+        "valores": [
+          316
+        ],
+        "linea": "Asiento de conductor con 6 ajustes eléctricos de posición - - - n Capacidad del baúl (L) 316"
+      },
+      "pesoKg": {
+        "valores": [
+          1354,
+          1370,
+          1401
+        ],
+        "linea": "Apoyabrazos central trasero con posavasos - - n n Peso en orden de marcha (Kg) (MT/AT) 1.354 1.370 1.370/1.401 1.370/1.401"
+      }
+    }
+  },
+  "ford/20210120__far-ka-freestyle-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20210120123301id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ka-freestyle/pdf/far-ka-freestyle-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20210120__far-ka-freestyle-ficha-tecnica.pdf",
+    "encabezado": [
+      "KA FREESTYLE",
+      "KA FREESTYLE Características y Especificaciones",
+      "VERSIONES SE SEL MT SEL AT VERSIONES SE SEL MT SEL AT",
+      "Largo (mm) 3954 Asiento de conductor con regulación en altura n n n",
+      "Ancho con espejos (mm) 1911 Apoyacabezas delanteros y traseros (3) ajustables n n n",
+      "Altura (mm) 1564 Asiento trasero rebatible n n n"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          2184
+          1499
         ],
-        "linea": "Cilindrada (cm 3 ) 2.184 2.184 S I N"
+        "linea": "Cilindrada (Cm3) 1499 Compatible con Android Auto y Apple Car Play n n n"
       },
       "hp": {
         "valores": [
-          140
+          123
         ],
-        "linea": "Potencia máxima (CV/rpm) 140 / 3.500 140 / 3.500 P R E V I O"
+        "linea": "Potencia máxima (CV) 123 @ 6000 Airbag frontal para conductor y acompañante n n n"
+      }
+    }
+  },
+  "ford/20201001__far-ka-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20201001014054id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/ka/pdf/far-ka-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20201001__far-ka-ficha-tecnica.pdf",
+    "encabezado": [
+      "KA",
+      "KA Características y Especificaciones",
+      "VERSIONES S SE SE AT SEL SEL AT VERSIONES S SE SE AT SEL SEL AT",
+      "Largo (mm) 3941 Asientos tapizados en cuero ecológico - - - n n",
+      "Ancho con espejos (mm) 1911 Asiento de conductor con regulación en altura n n n n n",
+      "Altura (mm) 1525 Apoyacabezas delanteros y traseros (3) ajustables n n n n n"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1499
+        ],
+        "linea": "Cilindrada (Cm3) 1499 Puerto USB n n n n n"
+      },
+      "hp": {
+        "valores": [
+          123
+        ],
+        "linea": "Potencia máxima (CV) 123 @ 6000 Airbag de cortina y laterales - - - n n"
+      }
+    }
+  },
+  "ford/20200521__far-ranger-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20200521131947id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/Nueva-ranger/2020/pdf/far-ranger-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20200521__far-ranger-ficha-tecnica.pdf",
+    "encabezado": [
+      "NUEVA RANGER",
+      "NUEVA RANGER Características y Especificaciones",
+      "MODELO",
+      "Tipo Cabina Simple Cabina Doble Cabina Simple Cabina Doble",
+      "Tracción 4x2 4x2 4x4 4x2 4x4 4x2 4x4",
+      "Versiones XL XL XLT XL XL XL XL XLS XLS AT XLT XLT AT XLS XLT XLT AT Limited Limited AT"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2488,
+          2198,
+          3198
+        ],
+        "linea": "Cilindrada (cm3) 2,488 2,198 3,198"
+      },
+      "hp": {
+        "valores": [
+          166,
+          160,
+          200
+        ],
+        "linea": "Potencia (CV / rpm) 166 / 5.500 160 / 3.200 200 / 3.000"
       },
       "pesoKg": {
         "valores": [
-          2190,
-          2260
+          1778,
+          1897,
+          1912,
+          1894,
+          1968,
+          2019,
+          2115,
+          2047,
+          2067,
+          2099,
+          2119,
+          2110,
+          2192,
+          2211,
+          2207,
+          2227
         ],
-        "linea": "Peso en orden de marcha (kg) 2.190 2.260"
+        "linea": "Peso en orden de marcha (Kg) 1.778 1.897 1.912 1.894 1.968 2.019 2.115 2.047 2.067 2.099 2.119 2.110 2.192 2.211 2.207 2.227"
       }
     }
   },
-  "jeep/compass.html": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/compass.html",
-    "archivo": null,
+  "ford/20230624__far-nueva-ranger-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20230624092707id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/Nueva-ranger/2023/pdf/far-nueva-ranger-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20230624__far-nueva-ranger-ficha-tecnica.pdf",
     "encabezado": [
-      "Nuevo Jeep® Compass – Jeep® Argentina",
-      "Skip to main content",
-      "Vehículos",
-      "Jeep ® Life",
-      "postventa (Open in a new window)",
-      "Desempeño"
+      "NUEVA",
+      "RANGER",
+      "NUEVA RANGER Características y Especificaciones",
+      "MODELO",
+      "Versión XL XL XLS XLS XLT XLT Limited Limited+",
+      "Tracción 4x2 4x4 4x2 4x4 (4WD)* 4x2 4x4 4x4 (4WD)*"
     ],
     "especificaciones": {
-      "hp": {
+      "cc": {
         "valores": [
-          272,
-          400
+          1996,
+          2993
         ],
-        "linea": "Para quienes buscan un nivel superior de potencia y adrenalina, la versión Blackhawk incorpora un motor 2.0L turbo alimentado con 272 CV y 400 Nm de torque, dis"
-      }
-    }
-  },
-  "jeep/compass/capability.html": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/compass/capability.html",
-    "archivo": null,
-    "encabezado": [
-      "Nuevo Jeep® Compass – Jeep® Argentina",
-      "Skip to main content",
-      "Vehículos",
-      "Jeep ® Life",
-      "postventa (Open in a new window)",
-      "Desempeño"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          270
-        ],
-        "linea": "Las dos motorizaciones disponibles satisfarán tu búsqueda de potencia y eficiencia, sin importar dónde estés. El nuevo motor T270 1.3L MultiAir® III Turbo es ex"
-      }
-    }
-  },
-  "jeep/compass-old/capability.html": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/compass-old/capability.html",
-    "archivo": null,
-    "encabezado": [
-      "Nuevo Jeep® Compass – Jeep® Argentina",
-      "Skip to main content",
-      "Vehículos",
-      "Jeep ® Life",
-      "postventa (Open in a new window)",
-      "Desempeño"
-    ],
-    "especificaciones": {
-      "hp": {
-        "valores": [
-          270
-        ],
-        "linea": "Las dos motorizaciones disponibles satisfarán tu búsqueda de potencia y eficiencia, sin importar dónde estés. El nuevo motor T270 1.3L MultiAir® III Turbo es ex"
-      }
-    }
-  },
-  "jeep/commander-old/capability.html": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/commander-old/capability.html",
-    "archivo": null,
-    "encabezado": [
-      "Jeep® Commander – Jeep® Argentina",
-      "Skip to main content",
-      "Vehículos",
-      "Jeep ® Life",
-      "postventa (Open in a new window)",
-      "Desempeño"
-    ],
-    "especificaciones": {
+        "linea": "Cilindrada (cm3) 1,996 2,993 1,996 2,993"
+      },
       "hp": {
         "valores": [
           170,
-          380
+          250,
+          210
         ],
-        "linea": "El motor diésel 2.0 Multijet II desarrolla una potencia de 170 CV y produce un torque máximo de 380 Nm. Este motor de última tecnología cuenta con un catalizado"
-      }
-    }
-  },
-  "jeep/Jeep-Compass-Ficha-Tecnica-2026.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/compass/ficha-tecnica/Jeep-Compass-Ficha-Tecnica-2026.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha-Tecnica-2026.pdf",
-    "encabezado": [
-      "SPORT T270 AT6 4X2",
-      "LIMITED T270 AT6 4X2",
-      "SERIE S T270 AT6 4X2",
-      "JEEP COMPASS BLACKHAWK 2.0L GME AT9 4X4",
-      "EQUIPAMIENTO Sport Limited Serie S Blackhawk Sport Limited Serie S Blackhawk",
-      "T270 AT6 T270 AT6 T270 AT6 GME AT9 T270 AT6 T270 AT6 T270 AT6 GME AT9"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1995
-        ],
-        "linea": "Climatizador automático bi-zona Asientos tapizados en cuero ecológico Cilindrada (Cm3) Válvulas 1.332 cm³ 1.995 cm³"
-      },
-      "hp": {
-        "valores": [
-          175,
-          272
-        ],
-        "linea": "Apoyabrazos central delantero Salidas de ventilación en plazas traseras Potencia (Cv@rpm) Disposicion y N° Cilindros 175cv @ 5.750 272 @5.200"
-      },
-      "baulL": {
-        "valores": [
-          390
-        ],
-        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) Capacidad tanque Combustible (lts) 390"
+        "linea": "Potencia (CV / rpm) 170 @ 3500 250 @ 3250 210 @ 3750 250 @ 3250"
       },
       "pesoKg": {
         "valores": [
-          1918,
-          1966,
-          1970
+          1998,
+          2120,
+          2092,
+          2297,
+          2150,
+          2249,
+          2310,
+          2388
         ],
-        "linea": "Peso en orden de marcha (Kgs) Cap 1918 1.966 1.970 1.970"
+        "linea": "Peso en orden de marcha (Kg) 1998 2120 2092 2297 2150 2249 2310 2388"
       }
     }
   },
-  "jeep/Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/renegade/Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf",
+  "ford/20240709__far-ficha-tecnica-nueva-ranger-julio.pdf": {
+    "marca": "ford",
+    "url": "https://web.archive.org/web/20240709021548id_/https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/Nueva-ranger/2024/pdf/far-ficha-tecnica-nueva-ranger-julio.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__20240709__far-ficha-tecnica-nueva-ranger-julio.pdf",
     "encabezado": [
-      "ALTITUDE 1.3T AT6 FWD",
-      "NIGHT EAGLE 1.3T AT6 FWD",
-      "SAHARA 1.3T AT6 FWD",
-      "JEEP RENEGADE WILLYS 1.3T AT9 4X4",
-      "EQUIPAMIENTO Altitude N. Eagle Sahara Willys Altitude N. Eagle Sahara Willys",
-      "Exterior Tecnología"
+      "NUEVA",
+      "RANGER",
+      "NUEVA RANGER Características y Especificaciones",
+      "MODELO",
+      "Versión XL XL XLS XLS XLT XLT Limited Limited+",
+      "Tracción 4x2 4x4 4x2 4x4 (4WD)* 4x2 4x4 4x4 (4WD)*"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1332
+          1996,
+          2993
         ],
-        "linea": "Asiento de conductor con regulación eléctrica Cilindrada (Cm3) 1.332 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
+        "linea": "Cilindrada (cm3) 1,996 2,993 1,996 2,993"
       },
       "hp": {
         "valores": [
-          175
+          170,
+          250,
+          210
         ],
-        "linea": "Revestimiento interior de techo color negro Potencia (Cv@rpm) 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          314
-        ],
-        "linea": "Control de tracción (TCS) Capacidad de baúl 314"
+        "linea": "Potencia (CV / rpm) 170 @ 3500 250 @ 3250 210 @ 3750 250 @ 3250"
       },
       "pesoKg": {
         "valores": [
-          1536,
-          1551,
-          1567,
-          1695
+          2073,
+          2155,
+          2092,
+          2297,
+          2145,
+          2249,
+          2310,
+          2388
         ],
-        "linea": "Cinturones inerciales de 3 puntas (x5) Peso en orden de marcha (Kgs) 1.536 1.551 1.567 1.695"
-      }
-    }
-  },
-  "jeep/Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/wrangler/vlp/modelizer/rubicon4/2025/junio/Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf",
-    "encabezado": [
-      "RUBICON 2.0T AT8 4x4 2P",
-      "RUBICON 2.0T AT8 4X4",
-      "JEEP WRANGLER",
-      "RUBICON",
-      "2P 4P",
-      "Exterior"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1995
-        ],
-        "linea": "Paragolpes, guardabarros y techo color negro Cilindrada (Cm3) 1.995"
-      },
-      "hp": {
-        "valores": [
-          272
-        ],
-        "linea": "Puertas Desmontables Potencia Máxima (Cv @ rpm) 272 @ 5.200"
-      },
-      "pesoKg": {
-        "valores": [
-          1796,
-          2631
-        ],
-        "linea": "Asientos tapizados en cuero Peso en orden de marcha (kg) 1.796 2.631"
-      }
-    }
-  },
-  "jeep/Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf": {
-    "marca": "jeep",
-    "url": "https://contactofca.com.ar/fichas-tecnicas/Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf",
-    "encabezado": [
-      "J E E P ® C O M P A S S",
-      "SPORT T2 4X2",
-      "LONGITU T2 4X2",
-      "LONGITU PLUS T2 0 4X2",
-      "JEEP COMPASS L PLUS T2 0 4X2",
-      "EQUIPAMIENTO"
-    ],
-    "especificaciones": {}
-  },
-  "jeep/Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf": {
-    "marca": "jeep",
-    "url": "https://contactofca.com.ar/fichas-tecnicas/Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf",
-    "encabezado": [
-      "J E E P ® C O M P A S S D I E S E L",
-      "®",
-      "TRAILHAWK",
-      "JEEP COMPASS DIESEL TD350 AT9 4X4",
-      "EQUIPAMIENTO TRAILHAWK",
-      "Exterior TD350 AT9 Tecnología"
-    ],
-    "especificaciones": {}
-  },
-  "jeep/Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf",
-    "encabezado": [
-      "SPORT T2 4X2",
-      "LONGITU T2 4X2",
-      "LIMITED T270 AT6 4X2",
-      "JEEP COMPASS SERIE S T270 AT6 4X2",
-      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
-      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Asientos tapizados en cuero ecológico Cilindrada (Cm3) 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          175
-        ],
-        "linea": "Asiento conductor con regulación manual Potencia (Cv@rpm) 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          390
-        ],
-        "linea": "Airbags de rodilla para el conductor Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
-      },
-      "pesoKg": {
-        "valores": [
-          1918,
-          1957,
-          1966,
-          1970
-        ],
-        "linea": "Control de estabilidad (ESC) Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
-      }
-    }
-  },
-  "jeep/Jeep-Compass_Ficha_tec_Diesel.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass_Ficha_tec_Diesel.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass_Ficha_tec_Diesel.pdf",
-    "encabezado": [
-      "TRAILHAWK TD350 AT9 4X4",
-      "JEEP COMPASS",
-      "EQUIPAMIENTO",
-      "Exterior Tecnología",
-      "Llantas de aleación 17” Cierre centralizado sensible a la velocidad",
-      "Rueda de auxilio full size Central multimedia Uconnect® 10,1”"
-    ],
-    "especificaciones": {}
-  },
-  "jeep/Ficha-Tecnica-Compass.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/mayo/Ficha-Tecnica-Compass.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Ficha-Tecnica-Compass.pdf",
-    "encabezado": [
-      "SPORT T2 4X2",
-      "LONGITU T2 4X2",
-      "LIMITED T270 AT6 4X2",
-      "JEEP COMPASS SERIE S T270 AT6 4X2",
-      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
-      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (Cm3) 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          175
-        ],
-        "linea": "Potencia (Cv@rpm) 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          390
-        ],
-        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
-      },
-      "pesoKg": {
-        "valores": [
-          1918,
-          1957,
-          1966,
-          1970
-        ],
-        "linea": "Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
-      }
-    }
-  },
-  "jeep/Jeep-Renegade_Ficha_Tecnica_Nafta.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/renegade/Jeep-Renegade_Ficha_Tecnica_Nafta.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade_Ficha_Tecnica_Nafta.pdf",
-    "encabezado": [
-      "SPORT 1.8L MT5/AT6 FWD",
-      "LONGITUDE 1.3T AT6 FWD",
-      "SERIE-S 1.3T AT6 FWD",
-      "JEEP RENEGADE",
-      "TRAILHAWK 1.3T AT9 4X4",
-      "EQUIPAMIENTO Sport Longitude Serie-S Trailhawk Tecnología Sport Longitude Serie-S Trailhawk"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1747,
-          1332
-        ],
-        "linea": "Asientos tapizados en cuero Cilindrada (Cm3): 1.747 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          130,
-          175
-        ],
-        "linea": "Asiento conductor y pasajero con regulación manual Potencia (Cv@rpm): 130cv @ 5.250 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          1381
-        ],
-        "linea": "Control de mitigación de rolido (ERM) Capacidad de baúl (Asiento trasero rebatido) (lts) 1.381"
-      },
-      "pesoKg": {
-        "valores": [
-          1406,
-          1453,
-          1492,
-          1643
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.406 / 1.453 1.492 1.492 1.643"
-      }
-    }
-  },
-  "jeep/Jeep_Commander_Ficha_Tecnica_29-01-26.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/commander/ficha-tecnica/Jeep_Commander_Ficha_Tecnica_29-01-26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica_29-01-26.pdf",
-    "encabezado": [
-      "LIMITED T270 1.3T AT6 4X2",
-      "OVERLAND GME 2.0T AT9 4X4",
-      "JEEP COMMANDER BLACKHAWK GME 2.0T AT9 4X4",
-      "EQUIPAMIENTO",
-      "Limited Overland Blackhawk Limited Overland Blackhawk",
-      "T270 GME GME T270 GME GME"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1995
-        ],
-        "linea": "Cilindrada (Cm3) 1.332 1.995"
-      },
-      "hp": {
-        "valores": [
-          175,
-          272
-        ],
-        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 272cv @5.200"
-      },
-      "baulL": {
-        "valores": [
-          233
-        ],
-        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
-      },
-      "pesoKg": {
-        "valores": [
-          1685,
-          1885,
-          1908
-        ],
-        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
-      }
-    }
-  },
-  "jeep/commander-infografia.pdf": {
-    "marca": "jeep",
-    "url": "https://contactofca.com.ar/fichas-producto/commander-infografia.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__commander-infografia.pdf",
-    "encabezado": [
-      "MOTORES JEEP TURBODIESEL",
-      "®",
-      "Sistema de Reducción",
-      "Catalítica Selectiva (SCR)",
-      "Una tecnología de tratamiento de gases de escape para lograr reducir",
-      "las emisiones contaminantes liberadas producto de la combustión de gasoil."
-    ],
-    "especificaciones": {}
-  },
-  "jeep/Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf": {
-    "marca": "jeep",
-    "url": "https://contactofca.com.ar/fichas-tecnicas/Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf",
-    "encabezado": [
-      "J E E P",
-      "R E N E G A D E",
-      "J E E P",
-      "RENEGADE",
-      "R E N E G A D E",
-      "J E E P"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1747,
-          1332
-        ],
-        "linea": "Cilindrada (Cm3) 1.747 cm³ 1.332 cm³ 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          130,
-          175
-        ],
-        "linea": "Potencia (Cv@rpm) 130cv @ 5.250 175cv @ 5.750 175cv @ 5.750"
-      }
-    }
-  },
-  "jeep/Jeep_Commander_Ficha_Tecnica_20-07-26.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/commander/ficha-tecnica/Jeep_Commander_Ficha_Tecnica_20-07-26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica_20-07-26.pdf",
-    "encabezado": [
-      "LIMITED T270 1.3T AT6 4X2",
-      "OVERLAND GME 2.0T AT9 4X4",
-      "JEEP COMMANDER BLACKHAWK GME 2.0T AT9 4X4",
-      "EQUIPAMIENTO",
-      "Limited Overland Blackhawk Limited Overland Blackhawk",
-      "T270 GME GME T270 GME GME"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1995
-        ],
-        "linea": "Cilindrada (Cm3) 1.332 1.995"
-      },
-      "hp": {
-        "valores": [
-          175,
-          272
-        ],
-        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 272cv @5.200"
-      },
-      "baulL": {
-        "valores": [
-          233
-        ],
-        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
-      },
-      "pesoKg": {
-        "valores": [
-          1685,
-          1885,
-          1908
-        ],
-        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
-      }
-    }
-  },
-  "jeep/Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf",
-    "encabezado": [
-      "SPORT T2 4X2",
-      "LONGITU T2 4X2",
-      "LIMITED T270 AT6 4X2",
-      "JEEP COMPASS SERIE S T270 AT6 4X2",
-      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
-      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (Cm3) 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          175
-        ],
-        "linea": "Potencia (Cv@rpm) 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          390
-        ],
-        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
-      },
-      "pesoKg": {
-        "valores": [
-          1918,
-          1957,
-          1966,
-          1970
-        ],
-        "linea": "Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
-      }
-    }
-  },
-  "jeep/Jeep_Commander_Ficha_Tecnica.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/commander/desc-general/Jeep_Commander_Ficha_Tecnica.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica.pdf",
-    "encabezado": [
-      "LIMITED 1.3 AT6 4X2",
-      "LIMITED 2.0 TD AT9 4X4",
-      "JEEP COMMANDER OVERLAND 2.0 TD AT9 4X4",
-      "EQUIPAMIENTO",
-      "Limited Limited Overland",
-      "T270 TD380"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1956
-        ],
-        "linea": "Asiento pasajero con regulación eléctrica en 6 direcciones Cilindrada (Cm3) 1.332 1.956"
-      },
-      "hp": {
-        "valores": [
-          175,
-          170
-        ],
-        "linea": "Tercera fila de asientos reclinable Potencia (Cv@rpm) 175cv @ 5.750 170cv @ 3.750"
-      },
-      "baulL": {
-        "valores": [
-          233
-        ],
-        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
-      },
-      "pesoKg": {
-        "valores": [
-          1685,
-          1885,
-          1908
-        ],
-        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
-      }
-    }
-  },
-  "jeep/Jeep-Renegade-MY25.pdf": {
-    "marca": "jeep",
-    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/renegade-willys/home-willys/ficha-tecnica/mayo/Jeep-Renegade-MY25.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade-MY25.pdf",
-    "encabezado": [
-      "SPORT 1.3T AT6 FWD",
-      "LONGITUDE 1.3T AT6 FWD",
-      "SERIE-S 1.3T AT6 FWD",
-      "JEEP RENEGADE WILLYS 1.3T AT9 4X4",
-      "EQUIPAMIENTO Sport Longitude Serie-S Willys Sport Longitude Serie-S Willys",
-      "Exterior Tecnología"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (Cm3) 1.332 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
-      },
-      "hp": {
-        "valores": [
-          175
-        ],
-        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
-      },
-      "baulL": {
-        "valores": [
-          1381
-        ],
-        "linea": "Asistente de arranque en pendientes (HSA) Capacidad de baúl (Asiento trasero rebatido) (lts) 1381"
-      },
-      "pesoKg": {
-        "valores": [
-          1492,
-          1718
-        ],
-        "linea": "Asistente de descenso en pendientes (HDC) Peso en orden de marcha (Kgs) 1.492 1.492 1.492 1.718"
+        "linea": "Peso en orden de marcha (Kg) 2073 2155 2092 2297 2145 2249 2310 2388"
       }
     }
   }
