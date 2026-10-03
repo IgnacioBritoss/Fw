@@ -22,7 +22,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
-  leerRobots, urlsDeSitemap, pdfsDeJson, hijosDeJson,
+  leerRobots, urlsDeSitemap, pdfsDeJson, hijosDeJson, lineasDeHtml,
 } from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
@@ -228,4 +228,55 @@ test("hijosDeJson separa los PDF de las carpetas por donde seguir", () => {
 test("hijosDeJson aguanta una respuesta que no es un listado", () => {
   assert.deepEqual(hijosDeJson(null), { pdfs: [], carpetas: [] });
   assert.deepEqual(hijosDeJson("<html>404</html>"), { pdfs: [], carpetas: [] });
+});
+
+// ── Leer la ficha de la pagina ─────────────────────────────────────────────
+
+test("una tabla HTML deja la etiqueta y el valor en la misma linea", () => {
+  /*
+    LO QUE ESTO CUIDA. Si se tiran las etiquetas de golpe, cada celda cae en su
+    propio renglon y ningun patron encuentra nada: "Cilindrada" por un lado y
+    "1.332" por el otro. Hay que cerrar la FILA con un salto y la CELDA con un
+    espacio.
+  */
+  const html = `<table>
+    <tr><td>Cilindrada</td><td>1.332 cm3</td></tr>
+    <tr><th>Potencia máxima</th><td>99 CV</td></tr>
+  </table>`;
+  const lineas = lineasDeHtml(html);
+  assert.ok(lineas.some((l) => /Cilindrada\s+1\.332/.test(l)), lineas.join(" | "));
+  assert.ok(lineas.some((l) => /Potencia máxima\s+99/.test(l)));
+});
+
+test("una lista de definiciones tambien", () => {
+  const lineas = lineasDeHtml("<dl><dt>Capacidad de baúl</dt><dd>525 lts</dd></dl>");
+  assert.ok(lineas.some((l) => /Capacidad de baúl\s+525/.test(l)), lineas.join(" | "));
+});
+
+test("de una pagina de ficha salen los mismos numeros que de un PDF", () => {
+  const html = `<html><body>
+    <script>var basura = {cilindrada: 9999};</script>
+    <table><tr><td>Cilindrada (cc)</td><td>1.332</td></tr>
+    <tr><td>Potencia máxima (CV)</td><td>99</td></tr>
+    <tr><td>Capacidad de baúl (lts)</td><td>300</td></tr>
+    <tr><td>Peso en orden de marcha (kg)</td><td>1.114</td></tr></table>
+  </body></html>`;
+  const s = sacarEspecificaciones(lineasDeHtml(html));
+  assert.equal(s.cc.valores[0], 1332);
+  assert.equal(s.hp.valores[0], 99);
+  assert.equal(s.baulL.valores[0], 300);
+  assert.equal(s.pesoKg.valores[0], 1114);
+});
+
+test("lo que esta adentro de un script no cuenta como dato", () => {
+  // Las paginas traen configuracion y analitica en etiquetas script. Si se
+  // leyera, saldrian numeros que no tienen nada que ver con el auto.
+  const lineas = lineasDeHtml("<script>var cilindrada = 9999;</script><p>Cilindrada 1.332</p>");
+  assert.ok(!lineas.join(" ").includes("9999"));
+});
+
+test("una pagina vacia o rota no rompe nada", () => {
+  assert.deepEqual(lineasDeHtml(""), []);
+  assert.deepEqual(lineasDeHtml(null), []);
+  assert.deepEqual(lineasDeHtml("<div></div>"), []);
 });

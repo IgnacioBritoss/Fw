@@ -148,8 +148,11 @@ const NODOS_POR_MARCA = 45;
 /** Lo que tiene que decir una dirección para que valga la pena abrirla. */
 const SUENA_A_FICHA = /ficha|tecnic|técnic|especificac|datasheet|specs/i;
 
+/** Y la página de un modelo, donde varias marcas meten la ficha adentro. */
+const SUENA_A_MODELO = /\/(modelos?|automoviles?|autos?|vehiculos?|utilitarios|suvs?|pickups?|camionetas?)\//i;
+
 /** Cuántas páginas HTML se abren por marca buscando enlaces a PDF. */
-const PAGINAS_POR_MARCA = 25;
+const PAGINAS_POR_MARCA = 40;
 
 // ── Permisos ───────────────────────────────────────────────────────────────
 
@@ -259,6 +262,37 @@ export function pdfsDeLaPagina(html, base) {
     // El nombre del archivo tiene que hablar de una ficha. Sin este filtro se
     // bajan los folletos, las listas de precios y los manuales de garantía.
     .filter((u) => /ficha|tecnic|técnic|especificac|datasheet|specs/i.test(decodeURIComponent(u)));
+}
+
+// ── Leer una página ────────────────────────────────────────────────────────
+
+/**
+ * El texto de una página, fila por fila.
+ *
+ * NO ES "SACARLE LAS ETIQUETAS Y LISTO". Una ficha técnica en HTML es una
+ * tabla o una lista de definiciones, y lo que hace falta es que la etiqueta y
+ * su valor queden en la MISMA línea: "Cilindrada 1.332". Si se tiran las
+ * etiquetas de golpe, cada celda cae en su propio renglón y ningún patrón
+ * encuentra nada.
+ *
+ * Por eso el cierre de fila (`</tr>`, `</li>`, `</p>`) se vuelve un salto de
+ * línea y el de celda (`</td>`, `</dd>`) un espacio. Es la misma idea con la
+ * que se reconstruyen las filas de un PDF, pero acá la estructura ya está
+ * escrita y no hay que deducirla de las coordenadas.
+ */
+export function lineasDeHtml(html) {
+  return String(html ?? "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/(tr|li|p|h[1-6]|div|section|table|dl)\s*>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(td|th|dt|dd|span|strong|b|em)\s*>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .split("\n")
+    .map((l) => l.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 }
 
 // ── Leer el PDF ────────────────────────────────────────────────────────────
@@ -527,10 +561,19 @@ for (const [marca, base] of aRecorrer) {
     estar el enlace. Se abren de a una, con pausa, y con tope: no hace falta
     recorrer un sitio entero para encontrar veinte fichas.
   */
-  const candidatas = [...direcciones]
-    .filter((u) => !/\.(pdf|jpg|png|webp|svg|css|js)(\?|$)/i.test(u))
-    .filter((u) => SUENA_A_FICHA.test(decodeURIComponent(u)))
-    .slice(0, PAGINAS_POR_MARCA);
+  const paginas = [...direcciones].filter((u) => !/\.(pdf|jpg|png|webp|svg|css|js)(\?|$)/i.test(u));
+  /*
+    Primero las que dicen ser una ficha, y después las de cada modelo.
+
+    El orden importa porque hay tope: /automoviles/duster/ficha-tecnica.html
+    vale más que /es/modelos/polo.html, pero las dos sirven. Volkswagen no
+    nombra "ficha" en ninguna dirección y mete los datos adentro de la página
+    del modelo, así que sin la segunda tanda se quedaba afuera entera.
+  */
+  const candidatas = [
+    ...paginas.filter((u) => SUENA_A_FICHA.test(decodeURIComponent(u))),
+    ...paginas.filter((u) => !SUENA_A_FICHA.test(decodeURIComponent(u)) && SUENA_A_MODELO.test(u)),
+  ].slice(0, PAGINAS_POR_MARCA);
 
   if (!direcciones.size) {
     console.log("  sin sitemap utilizable, se prueba la home");
@@ -550,9 +593,29 @@ for (const [marca, base] of aRecorrer) {
     const ruta = pagina.replace(base, "") || "/";
     if (!permitida(ruta, prohibidas)) { console.log(`  ${ruta.slice(0, 46)} -> cerrada por robots.txt`); continue; }
     try {
-      const pdfs = pdfsDeLaPagina(await traerTexto(pagina), base);
+      const html = await traerTexto(pagina);
+      const pdfs = pdfsDeLaPagina(html, base);
       pdfs.forEach((u) => encontrados.add(u));
-      console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${pdfs.length} ficha(s)`);
+
+      /*
+        LA FICHA PUEDE SER LA PÁGINA, NO UN ARCHIVO.
+
+        Solo Fiat publica PDF. Renault, Chevrolet y Volkswagen escriben las
+        especificaciones en la página misma —/automoviles/duster/ficha-tecnica
+        .html es la ficha, no un enlace a la ficha—. Buscando unicamente PDF se
+        abrían esas páginas y se salía con las manos vacías.
+      */
+      const lineas = lineasDeHtml(html);
+      const specs = sacarEspecificaciones(lineas);
+      const cuantos = Object.keys(specs).length;
+      if (cuantos) {
+        informe[`${marca}${ruta}`] = {
+          marca, url: pagina, archivo: null,
+          encabezado: lineas.slice(0, 6),
+          especificaciones: specs,
+        };
+      }
+      console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${pdfs.length} pdf · ${cuantos ? Object.keys(specs).join(", ") : "sin datos en la pagina"}`);
     } catch (e) {
       console.log(`  ${ruta.slice(0, 46).padEnd(48)} ${e.message}`);
     }
