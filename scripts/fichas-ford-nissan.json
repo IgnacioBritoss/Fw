@@ -1,0 +1,1461 @@
+{
+  "fiat/ARGO_Ficha_tecnica_completa_v4.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/ARGO_Ficha_tecnica_completa_v4.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__ARGO_Ficha_tecnica_completa_v4.pdf",
+    "encabezado": [
+      "DRIVE PRECISION MT PRECISION AT HGT DRIVE PRECISION MT PRECISION AT HGT",
+      "CARROCERIA 5 puertas TRANSMISIÓN",
+      "Delantera",
+      "Tracción",
+      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
+      "Caja de cambios Automática secuencial"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1747
+        ],
+        "linea": "Cilindrada total (cm³) 1.332 1.747 NEUMÁTICOS 185/60 R15 185/60 R15 // 195/55 R16 205/50 R17"
+      },
+      "hp": {
+        "valores": [
+          99,
+          130
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
+      },
+      "baulL": {
+        "valores": [
+          300
+        ],
+        "linea": "Capacidad de baúl (lts) 300"
+      },
+      "pesoKg": {
+        "valores": [
+          1114,
+          1207,
+          1223
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.114 1.207 1.223"
+      }
+    }
+  },
+  "fiat/Ficha_Tecnica_Nueva_Fiorino_2022.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Nueva_Fiorino_2022.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Nueva_Fiorino_2022.pdf",
+    "encabezado": [
+      "S: DE SERIE S: DE SERIE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR CONFORT",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (lts) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/FT_Fiorino_2024.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_2024.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_2024.pdf",
+    "encabezado": [
+      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR MT5 CONFORT MT5",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (kg) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/Ficha_Tecnica_Mobi-22-07-22.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Mobi-22-07-22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Mobi-22-07-22.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "CARROCERIA 5 PUERTAS FRENOS",
+      "Delantero / Trasero Disco ventilado / TamborA tambor",
+      "MOTOR FIRE 1.0 8V",
+      "Combustible Nafta",
+      "TRANSMISIÓN"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          999
+        ],
+        "linea": "Cilindrada (cm³) 999"
+      },
+      "hp": {
+        "valores": [
+          70
+        ],
+        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
+      },
+      "baulL": {
+        "valores": [
+          247
+        ],
+        "linea": "Capacidad de baÚL (lts) 247"
+      },
+      "pesoKg": {
+        "valores": [
+          952
+        ],
+        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-500x-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500x-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500x-MY20.pdf",
+    "encabezado": [
+      "CARACTERÍSTICAS TÉCNICAS",
+      "POP STAR CROSS PLUS",
+      "CARROCERIA 5 puertas 5 puertas",
+      "MOTOR 1,4 Turbo MultiAir 1,4 Turbo MultiAir",
+      "Combustible Nafta",
+      "Número de cilindros 4 en línea"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          140,
+          170
+        ],
+        "linea": "Potencia máxima (CV / rpm) 140 / 5.000 170 / 5.500"
+      },
+      "baulL": {
+        "valores": [
+          350
+        ],
+        "linea": "Capacidad de baúl (lt) 350"
+      },
+      "pesoKg": {
+        "valores": [
+          1320,
+          1430
+        ],
+        "linea": "Peso en orden de marcha (kg) 1320 1430"
+      }
+    }
+  },
+  "fiat/FICHA_TECNICA_Toro_MY23_.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FICHA_TECNICA_Toro_MY23_.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FICHA_TECNICA_Toro_MY23_.pdf",
+    "encabezado": [
+      "FREEDOM / VOLCANO / FREEDOM / VOLCANO /",
+      "FREEDOM VOLCANO FREEDOM VOLCANO",
+      "ULTRA / RANCH ULTRA / RANCH",
+      "MOTOR 170 E-TorQ EVO 270 Firefly Turbo 350 Multijet NEUMÁTICOS",
+      "Nº de cilindros 4 en línea 225/65 R17 ATR // 225/60 R18 ATR",
+      "Dimensiones / Rodado 215 / 65 R16 ON ROAD 225/60 R18 ON ROAD"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1747,
+          1332,
+          1956
+        ],
+        "linea": "Cilindrada (cc) 1747 1.332 1.956 Llantas tipo Aleación"
+      },
+      "hp": {
+        "valores": [
+          130,
+          175,
+          170
+        ],
+        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 175 / 5.750 170 / 3.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1688,
+          1732,
+          1905
+        ],
+        "linea": "DISTRIBUCIÓN Peso en orden de marcha (kg) 1.688 1.732 1.905"
+      }
+    }
+  },
+  "fiat/FT_Fiorino_MY26.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_MY26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_MY26.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1128
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.128"
+      }
+    }
+  },
+  "fiat/FIORINO_Ficha_tecnica-01-04-22.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica-01-04-22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica-01-04-22.pdf",
+    "encabezado": [
+      "S: DE SERIE S: DE SERIE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR CONFORT",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (lts) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-500-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500-MY20.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "SPORT LOUNGE CABRIO",
+      "MOTOR FIRE 1.4 16v",
+      "N° de cilindros 4 en línea",
+      "N° de válvulas por cilindro 4",
+      "Relación de compresión 10,8 : 1"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada (cc) 1368"
+      },
+      "hp": {
+        "valores": [
+          100,
+          74
+        ],
+        "linea": "Potencia máxima CV (Kw) / rpm 100 (74) / 6.000"
+      },
+      "baulL": {
+        "valores": [
+          185
+        ],
+        "linea": "Capacidad del baúl (lts) 185"
+      },
+      "pesoKg": {
+        "valores": [
+          930,
+          970
+        ],
+        "linea": "Peso en orden de marcha (kg) 930 970"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica_Mobi_004.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica_Mobi_004.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica_Mobi_004.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "CARROCERIA 5 PUERTAS FRENOS",
+      "Delantero / Trasero Disco ventilado / TamborA tambor",
+      "MOTOR FIRE 1.0 8V",
+      "Combustible Nafta",
+      "TRANSMISIÓN"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          999
+        ],
+        "linea": "Cilindrada (cm³) 999"
+      },
+      "hp": {
+        "valores": [
+          70
+        ],
+        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
+      },
+      "baulL": {
+        "valores": [
+          247
+        ],
+        "linea": "Capacidad de baÚL (lts) 247"
+      },
+      "pesoKg": {
+        "valores": [
+          952
+        ],
+        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
+      }
+    }
+  },
+  "fiat/FichatecnicaNuevoFiorinoFebrero2020.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichatecnicaNuevoFiorinoFebrero2020.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichatecnicaNuevoFiorinoFebrero2020.pdf",
+    "encabezado": [
+      "NUEVO FIAT FIORINO",
+      "CARACTERISTICAS TECNICAS",
+      "MOTOR 1.4 8v Fire Evo",
+      "N° de cilindros 4 en línea",
+      "N° de válvulas por cilindro 2",
+      "Relación de compresión 12,35 : 1"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada Total (cc) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1117
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.117"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Ducato-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Ducato-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Ducato-MY20.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "FURGON",
+      "FURGON",
+      "FURGON CORTO FURGON MEDIO MAXICARGO",
+      "Versión MAXICARGO CHASIS",
+      "L1H1 L2H1 VIDRIADO"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2287
+        ],
+        "linea": "Cilindrada (cm3) 2.287"
+      },
+      "hp": {
+        "valores": [
+          130
+        ],
+        "linea": "Potencia máx: CV / r.p.m. 130 / 3.600"
+      },
+      "pesoKg": {
+        "valores": [
+          2122,
+          2171,
+          2296,
+          2331,
+          1910
+        ],
+        "linea": "Peso en orden de marcha (kg) 2.122 2.171 2.296 2.331 1.910"
+      }
+    }
+  },
+  "fiat/FT_Fiorino_2025.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_2025.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_2025.pdf",
+    "encabezado": [
+      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR MT5 CONFORT MT5",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (kg) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-500abarth-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500abarth-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500abarth-MY20.pdf",
+    "encabezado": [
+      "FIAT 500 ABARTH 595 TURISMO 165cv",
+      "FIAT 500 ABARTH",
+      "1,4 16 Turbo T-jet 165cv",
+      "Motor 165cv",
+      "Tipo Motor Turbo T-jet",
+      "N° de cilindros y disposición 4 en línea, transversal delantera"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          165,
+          121
+        ],
+        "linea": "Potencia CV (Kw) / r.p.m. 165 (121) / 5.500"
+      },
+      "baulL": {
+        "valores": [
+          185,
+          550
+        ],
+        "linea": "Capacidad del baúl (dm3) Min / Max 185 / 550"
+      }
+    }
+  },
+  "fiat/FichaTecnica_Fiat500Abarth.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Fiat500Abarth.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Fiat500Abarth.pdf",
+    "encabezado": [
+      "FIAT 500 ABARTH",
+      "FIAT 500 ABARTH",
+      "1,4 16 TURBO T-JET 165CV",
+      "MOTOR 165CV",
+      "Tipo Motor NTurbo T-jet",
+      "N° de cilindros y disposición 4 en línea, transversal delantera"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          165,
+          121
+        ],
+        "linea": "Potencia CV (Kw) / r.p.m. 165 (121) / 5.500"
+      },
+      "baulL": {
+        "valores": [
+          185,
+          550
+        ],
+        "linea": "Capacidad del baúl (dm3) Min / Max 185 / 550"
+      }
+    }
+  },
+  "fiat/FT-Fiorino-MY27.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY27.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY27.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1203
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.203"
+      }
+    }
+  },
+  "fiat/Ficha_Tecnica_Toro_MCA_new.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Toro_MCA_new.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Toro_MCA_new.pdf",
+    "encabezado": [
+      "FREEDOM / VOLCANO / FREEDOM / VOLCANO /",
+      "FREEDOM VOLCANO FREEDOM VOLCANO",
+      "ULTRA / RANCH ULTRA / RANCH",
+      "MOTOR 170 E-TorQ EVO 270 Firefly Turbo 350 Multijet NEUMÁTICOS",
+      "Nº de cilindros 4 en línea 225/65 R17 ATR // 225/60 R18 ATR",
+      "Dimensiones / Rodado 215 / 65 R16 ON ROAD 225/60 R18 ON ROAD"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1747,
+          1332,
+          1956
+        ],
+        "linea": "Cilindrada (cc) 1747 1.332 1.956 Llantas tipo Aleación"
+      },
+      "hp": {
+        "valores": [
+          130,
+          175,
+          170
+        ],
+        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 175 / 5.750 170 / 3.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1688,
+          1732,
+          1905
+        ],
+        "linea": "DISTRIBUCIÓN Peso en orden de marcha (kg) 1.688 1.732 1.905"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Ducato.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Ducato.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Ducato.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "FURGON",
+      "FURGON",
+      "FURGON CORTO FURGON MEDIO MAXICARGO",
+      "Versión MAXICARGO CHASIS",
+      "L1H1 L2H1 VIDRIADO"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2287
+        ],
+        "linea": "Cilindrada (cm3) 2.287"
+      },
+      "hp": {
+        "valores": [
+          130
+        ],
+        "linea": "Potencia máx: CV / r.p.m. 130 / 3.600"
+      },
+      "pesoKg": {
+        "valores": [
+          2122,
+          2171,
+          2296,
+          2331,
+          1910
+        ],
+        "linea": "Peso en orden de marcha (kg) 2.122 2.171 2.296 2.331 1.910"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-NuevaStrada-MY21.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-NuevaStrada-MY21.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-NuevaStrada-MY21.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TECNICAS",
+      "ENDURANCE FREEDOM VOLCANO",
+      "MOTOR 1.4 Fire 1.4 Fire 1.3 FireFly",
+      "Carrocería Cabina Plus Cabina Doble Cabina Doble Cabina Doble",
+      "N° de cilindros 4 en línea 4 en línea",
+      "N° de válvulas por cilindro 2 2"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368,
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.368 1.332"
+      },
+      "hp": {
+        "valores": [
+          85,
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750 99 / 6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1083,
+          1151,
+          1161,
+          1172
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172"
+      }
+    }
+  },
+  "fiat/FIORINO_Ficha_tecnica_11-03.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica_11-03.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica_11-03.pdf",
+    "encabezado": [
+      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR MT5 CONFORT MT5",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (kg) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/Ficha_Tecnica_Mobi-24-08-22.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Mobi-24-08-22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Mobi-24-08-22.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "CARROCERIA 5 PUERTAS FRENOS",
+      "Delantero / Trasero Disco ventilado / TamborA tambor",
+      "MOTOR FIRE 1.0 8V",
+      "Combustible Nafta",
+      "TRANSMISIÓN"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          999
+        ],
+        "linea": "Cilindrada (cm³) 999"
+      },
+      "hp": {
+        "valores": [
+          70
+        ],
+        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
+      },
+      "baulL": {
+        "valores": [
+          247
+        ],
+        "linea": "Capacidad de baÚL (lts) 247"
+      },
+      "pesoKg": {
+        "valores": [
+          952
+        ],
+        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
+      }
+    }
+  },
+  "fiat/FT_Fiorino_MY27.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_MY27.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_MY27.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1203
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.203"
+      }
+    }
+  },
+  "fiat/FichaTecnica_Strada_new.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Strada_new.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Strada_new.pdf",
+    "encabezado": [
+      "ENDURANCE FREEDOM VOLCANO RANCH ENDURANCE FREEDOM VOLCANO RANCH",
+      "MOTOR 1.4 FIRE 1.3 FIREFLY TRANSMISIÓN 1.4 FIRE 1.3 FIREFLY",
+      "Carrocería Cabina plus Cabina doble Cabina doble Cabina doble Cabina doble Tracción 4X2, Tracción delantera",
+      "Nº de cilindros 4 en línea 4 en línea",
+      "Caja de cambios",
+      "Manual de 5 vel. CVT de 7 vel."
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368,
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.368 1.332"
+      },
+      "hp": {
+        "valores": [
+          85,
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85/5.750 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1083,
+          1151,
+          1161,
+          1172,
+          1232
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172 1.232"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Mobi-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Mobi-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Mobi-MY20.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TÉCNICAS",
+      "CARROCERIA 5 puertas",
+      "MOTOR Fire 1.0 8v",
+      "Combustible Nafta",
+      "N° de cilindros 4 en línea",
+      "N° de válvulas por cilindro 2"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          999
+        ],
+        "linea": "Cilindrada (cm³) 999"
+      },
+      "hp": {
+        "valores": [
+          70
+        ],
+        "linea": "Potencia máxima (CV / rpm) 70 / 6.000"
+      },
+      "baulL": {
+        "valores": [
+          235
+        ],
+        "linea": "Capacidad de baúl (lts) 235"
+      },
+      "pesoKg": {
+        "valores": [
+          885
+        ],
+        "linea": "Peso en orden de marcha (kg) 885"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Cronos-MY21.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Cronos-MY21.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Cronos-MY21.pdf",
+    "encabezado": [
+      "CARACTERÍSTICAS TÉCNICAS",
+      "DRIVE PRECISION PRECISION AT",
+      "CARROCERIA 4 puertas",
+      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
+      "Combustible Nafta",
+      "Número de cilindros 4 en línea"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1747
+        ],
+        "linea": "Cilindrada total (cm³) 1.332 1.747"
+      },
+      "hp": {
+        "valores": [
+          99,
+          130
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
+      },
+      "baulL": {
+        "valores": [
+          525
+        ],
+        "linea": "Capacidad de baúl (lt) 525"
+      },
+      "pesoKg": {
+        "valores": [
+          1136,
+          1225,
+          1258
+        ],
+        "linea": "Peso en orden de marcha (kg) 1136 1225 1258"
+      }
+    }
+  },
+  "fiat/Ficha_Tecnica_FIAT_Cronos_MY23.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_FIAT_Cronos_MY23.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_FIAT_Cronos_MY23.pdf",
+    "encabezado": [
+      "#ELAUTODELOSARGENTINOS",
+      "ATTRACTIVE DRIVE DRIVE PRECISION ATTRACTIVE DRIVE DRIVE PRECISION",
+      "MOTOR MT MT CVT CVT TRANSMISIÓN MT MT CVT CVT",
+      "Número de cilindros 4 en línea",
+      "Tracción 4X2, Tracción delantera",
+      "N° de válvulas por cilindro 2"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "baulL": {
+        "valores": [
+          525
+        ],
+        "linea": "Inyección Electrónica multipunto Capacidad de baúl (lts) 525"
+      },
+      "pesoKg": {
+        "valores": [
+          1121,
+          1155,
+          1183,
+          1196
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.121 1.155 1.183 1.196"
+      }
+    }
+  },
+  "fiat/FT-Fiorino-MY26.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY26.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1128
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.128"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Fiorino-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Fiorino-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Fiorino-MY20.pdf",
+    "encabezado": [
+      "NUEVO FIAT FIORINO",
+      "CARACTERISTICAS TECNICAS",
+      "MOTOR 1.4 8v Fire Evo",
+      "N° de cilindros 4 en línea",
+      "N° de válvulas por cilindro 2",
+      "Relación de compresión 12,35 : 1"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada Total (cc) 1.368"
+      },
+      "hp": {
+        "valores": [
+          87
+        ],
+        "linea": "Potencia máxima (CV / rpm) 87 / 5.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1117
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.117"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Toro-MY21.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Toro-MY21.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Toro-MY21.pdf",
+    "encabezado": [
+      "CARACTERISTICAS TECNICAS",
+      "MOTOR E-TorQ EVO 1.8 Multijet 2.0 16v",
+      "Carrocería Cabina Doble, 4 puertas Cabina Doble, 4 puertas",
+      "N° de cilindros 4 en línea 4 en línea",
+      "N° de válvulas por cilindro 4 4",
+      "Relación de compresión 11,2:1 16,5:1"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1747,
+          1956
+        ],
+        "linea": "Cilindrada (cc) 1.747 1.956"
+      },
+      "hp": {
+        "valores": [
+          130,
+          170
+        ],
+        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 170 / 3.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1660,
+          1876
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.660 1.876"
+      }
+    }
+  },
+  "fiat/FT-Fiorino-MY26-23012026.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY26-23012026.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY26-23012026.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1203
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.203"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica_Fiorino.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica_Fiorino.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica_Fiorino.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1203
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.203"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Uno-MY20.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Uno-MY20.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Uno-MY20.pdf",
+    "encabezado": [
+      "FICHA TECNICA NUEVO UNO",
+      "VERSIONES Attractive",
+      "CARROCERIA 5 puertas",
+      "MOTOR 1.4 8v",
+      "Combustible Nafta",
+      "Número de cilindros 4 en línea"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total 1.368 cm³"
+      },
+      "hp": {
+        "valores": [
+          87
+        ],
+        "linea": "Potencia máxima / régimen 87 cv / 5.500 rpm"
+      },
+      "baulL": {
+        "valores": [
+          280
+        ],
+        "linea": "Capacidad de baúl (L) 280"
+      },
+      "pesoKg": {
+        "valores": [
+          988
+        ],
+        "linea": "Peso en orden de marcha (Kg) 988"
+      }
+    }
+  },
+  "fiat/FichaTecnica_Cronos2B.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Cronos2B.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Cronos2B.pdf",
+    "encabezado": [
+      "#ELAUTOARGENTINO",
+      "ATTRACTIVE & DRIVE PRECISION PRECISION AT ATTRACTIVE & DRIVE PRECISION PRECISION AT",
+      "CARROCERIA 4 puertas TRANSMISIÓN",
+      "Tracción Delantera",
+      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
+      "Automática secuencial"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1747
+        ],
+        "linea": "Cilindrada total (cm³) 1.332 1.747 NEUMÁTICOS 185/60 R15 195/55 R16 // 205/45 R17"
+      },
+      "hp": {
+        "valores": [
+          99,
+          130
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
+      },
+      "baulL": {
+        "valores": [
+          525
+        ],
+        "linea": "Capacidad de baúl (lts) 525"
+      },
+      "pesoKg": {
+        "valores": [
+          1136,
+          1225,
+          1258
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.136 1.225 1.258"
+      }
+    }
+  },
+  "fiat/FicTec_Fiat_Pulse.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FicTec_Fiat_Pulse.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FicTec_Fiat_Pulse.pdf",
+    "encabezado": [
+      "DRIVE 1.3L GSE IMPETUS 1.0L T3 DRIVE 1.3L GSE IMPETUS 1.0L T3",
+      "MOTOR MT5 CVT CVT TRANSMISIÓN MT5 CVT CVT",
+      "Número de cilindros 4 en línea 3 en línea",
+      "4X2, Tracción delantera",
+      "Tracción",
+      "N° de válvulas por cilindro 2 4"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          999
+        ],
+        "linea": "Cilindrada (cc) 1.332 999"
+      },
+      "hp": {
+        "valores": [
+          99,
+          120
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 120 / 5.750"
+      },
+      "pesoKg": {
+        "valores": [
+          1140,
+          1187,
+          1234
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.140 1.187 1.234"
+      }
+    }
+  },
+  "fiat/FT_Strada.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Strada.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Strada.pdf",
+    "encabezado": [
+      "ENDURANCE 1.4 FREEDOM 1.4 VOLCANO 1.3 RANCH 1.3 ENDURANCE 1.4 FREEDOM 1.4 VOLCANO 1.3 RANCH 1.3",
+      "MOTOR 1.4 FIRE 1.3 FIREFLY TRANSMISIÓN 1.4 FIRE 1.3 FIREFLY",
+      "Cabina plus Cabina doble Cabina doble",
+      "Carrocería Tracción 4X2, Tracción delantera",
+      "Nº de cilindros 4 en línea",
+      "4 en línea"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 MT CABINA MT CABINA MT CABINA MT CABINA CVT CABINA CVT CABINA"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1083,
+          1151,
+          1161,
+          1172,
+          1220,
+          1232
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172 1220 1.232"
+      }
+    }
+  },
+  "fiat/FIORINO_Ficha_tecnica_08-03.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica_08-03.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica_08-03.pdf",
+    "encabezado": [
+      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR MT5 CONFORT MT5",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (kg) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  },
+  "fiat/FT-Fiorino_MY26.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino_MY26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino_MY26.pdf",
+    "encabezado": [
+      "ENDURANCE 1.3L",
+      "MOTOR MT5 TRANSMISIÓN",
+      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
+      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
+      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
+      "Potencia máxima (CV / rpm) 99/6.000"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+      },
+      "hp": {
+        "valores": [
+          99
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1203
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.203"
+      }
+    }
+  },
+  "fiat/Ficha-Tecnica-Fiat-Argo-MY21.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Argo-MY21.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Argo-MY21.pdf",
+    "encabezado": [
+      "CARACTERÍSTICAS TÉCNICAS",
+      "DRIVE PRECISION MT PRECISION AT HGT",
+      "CARROCERIA 5 puertas",
+      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
+      "Combustible Nafta",
+      "Número de cilindros 4 en línea"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1747
+        ],
+        "linea": "Cilindrada total (cm³) 1.332 1.747"
+      },
+      "hp": {
+        "valores": [
+          99,
+          130
+        ],
+        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
+      },
+      "baulL": {
+        "valores": [
+          300
+        ],
+        "linea": "Capacidad de baúl (lt) 300"
+      },
+      "pesoKg": {
+        "valores": [
+          1114,
+          1207,
+          1223
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.114 1.207 1.223"
+      }
+    }
+  },
+  "fiat/FIORINO_Ficha_tecnica-13-04-22.pdf": {
+    "marca": "fiat",
+    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica-13-04-22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica-13-04-22.pdf",
+    "encabezado": [
+      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
+      "ENDURANCE 1.4L ENDURANCE 1.4L",
+      "EXTERIOR MT5 CONFORT MT5",
+      "Apertura de puertas a 90º y 180º Aire acondicionado S",
+      "S",
+      "Molduras laterales protectoras S Asientos rebatibles S"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1368
+        ],
+        "linea": "Cilindrada total (cm³) 1.368"
+      },
+      "hp": {
+        "valores": [
+          85
+        ],
+        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+      },
+      "baulL": {
+        "valores": [
+          650
+        ],
+        "linea": "Capacidad de baúl (kg) 650"
+      },
+      "pesoKg": {
+        "valores": [
+          1138
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.138"
+      }
+    }
+  }
+}

@@ -1,1460 +1,1437 @@
 {
-  "fiat/ARGO_Ficha_tecnica_completa_v4.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/ARGO_Ficha_tecnica_completa_v4.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__ARGO_Ficha_tecnica_completa_v4.pdf",
+  "ford/crossovers-suvs-4x4/territory/mas-informacion/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/territory/mas-informacion/",
+    "archivo": null,
     "encabezado": [
-      "DRIVE PRECISION MT PRECISION AT HGT DRIVE PRECISION MT PRECISION AT HGT",
-      "CARROCERIA 5 puertas TRANSMISIÓN",
-      "Delantera",
-      "Tracción",
-      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
-      "Caja de cambios Automática secuencial"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1747
-        ],
-        "linea": "Cilindrada total (cm³) 1.332 1.747 NEUMÁTICOS 185/60 R15 185/60 R15 // 195/55 R16 205/50 R17"
-      },
-      "hp": {
-        "valores": [
-          99,
-          130
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
-      },
-      "baulL": {
-        "valores": [
-          300
-        ],
-        "linea": "Capacidad de baúl (lts) 300"
-      },
-      "pesoKg": {
-        "valores": [
-          1114,
-          1207,
-          1223
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.114 1.207 1.223"
-      }
-    }
-  },
-  "fiat/Ficha_Tecnica_Nueva_Fiorino_2022.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Nueva_Fiorino_2022.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Nueva_Fiorino_2022.pdf",
-    "encabezado": [
-      "S: DE SERIE S: DE SERIE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR CONFORT",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (lts) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
-      }
-    }
-  },
-  "fiat/FT_Fiorino_2024.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_2024.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_2024.pdf",
-    "encabezado": [
-      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR MT5 CONFORT MT5",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (kg) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
-      }
-    }
-  },
-  "fiat/Ficha_Tecnica_Mobi-22-07-22.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Mobi-22-07-22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Mobi-22-07-22.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "CARROCERIA 5 PUERTAS FRENOS",
-      "Delantero / Trasero Disco ventilado / TamborA tambor",
-      "MOTOR FIRE 1.0 8V",
-      "Combustible Nafta",
-      "TRANSMISIÓN"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          999
-        ],
-        "linea": "Cilindrada (cm³) 999"
-      },
-      "hp": {
-        "valores": [
-          70
-        ],
-        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
-      },
-      "baulL": {
-        "valores": [
-          247
-        ],
-        "linea": "Capacidad de baÚL (lts) 247"
-      },
-      "pesoKg": {
-        "valores": [
-          952
-        ],
-        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-500x-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500x-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500x-MY20.pdf",
-    "encabezado": [
-      "CARACTERÍSTICAS TÉCNICAS",
-      "POP STAR CROSS PLUS",
-      "CARROCERIA 5 puertas 5 puertas",
-      "MOTOR 1,4 Turbo MultiAir 1,4 Turbo MultiAir",
-      "Combustible Nafta",
-      "Número de cilindros 4 en línea"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          140,
-          170
-        ],
-        "linea": "Potencia máxima (CV / rpm) 140 / 5.000 170 / 5.500"
-      },
-      "baulL": {
-        "valores": [
-          350
-        ],
-        "linea": "Capacidad de baúl (lt) 350"
-      },
-      "pesoKg": {
-        "valores": [
-          1320,
-          1430
-        ],
-        "linea": "Peso en orden de marcha (kg) 1320 1430"
-      }
-    }
-  },
-  "fiat/FICHA_TECNICA_Toro_MY23_.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FICHA_TECNICA_Toro_MY23_.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FICHA_TECNICA_Toro_MY23_.pdf",
-    "encabezado": [
-      "FREEDOM / VOLCANO / FREEDOM / VOLCANO /",
-      "FREEDOM VOLCANO FREEDOM VOLCANO",
-      "ULTRA / RANCH ULTRA / RANCH",
-      "MOTOR 170 E-TorQ EVO 270 Firefly Turbo 350 Multijet NEUMÁTICOS",
-      "Nº de cilindros 4 en línea 225/65 R17 ATR // 225/60 R18 ATR",
-      "Dimensiones / Rodado 215 / 65 R16 ON ROAD 225/60 R18 ON ROAD"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1747,
-          1332,
-          1956
-        ],
-        "linea": "Cilindrada (cc) 1747 1.332 1.956 Llantas tipo Aleación"
-      },
-      "hp": {
-        "valores": [
-          130,
-          175,
-          170
-        ],
-        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 175 / 5.750 170 / 3.750"
-      },
-      "pesoKg": {
-        "valores": [
-          1688,
-          1732,
-          1905
-        ],
-        "linea": "DISTRIBUCIÓN Peso en orden de marcha (kg) 1.688 1.732 1.905"
-      }
-    }
-  },
-  "fiat/FT_Fiorino_MY26.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_MY26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_MY26.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1128
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.128"
-      }
-    }
-  },
-  "fiat/FIORINO_Ficha_tecnica-01-04-22.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica-01-04-22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica-01-04-22.pdf",
-    "encabezado": [
-      "S: DE SERIE S: DE SERIE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR CONFORT",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (lts) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-500-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500-MY20.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "SPORT LOUNGE CABRIO",
-      "MOTOR FIRE 1.4 16v",
-      "N° de cilindros 4 en línea",
-      "N° de válvulas por cilindro 4",
-      "Relación de compresión 10,8 : 1"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada (cc) 1368"
-      },
-      "hp": {
-        "valores": [
-          100,
-          74
-        ],
-        "linea": "Potencia máxima CV (Kw) / rpm 100 (74) / 6.000"
-      },
-      "baulL": {
-        "valores": [
-          185
-        ],
-        "linea": "Capacidad del baúl (lts) 185"
-      },
-      "pesoKg": {
-        "valores": [
-          930,
-          970
-        ],
-        "linea": "Peso en orden de marcha (kg) 930 970"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica_Mobi_004.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica_Mobi_004.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica_Mobi_004.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "CARROCERIA 5 PUERTAS FRENOS",
-      "Delantero / Trasero Disco ventilado / TamborA tambor",
-      "MOTOR FIRE 1.0 8V",
-      "Combustible Nafta",
-      "TRANSMISIÓN"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          999
-        ],
-        "linea": "Cilindrada (cm³) 999"
-      },
-      "hp": {
-        "valores": [
-          70
-        ],
-        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
-      },
-      "baulL": {
-        "valores": [
-          247
-        ],
-        "linea": "Capacidad de baÚL (lts) 247"
-      },
-      "pesoKg": {
-        "valores": [
-          952
-        ],
-        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
-      }
-    }
-  },
-  "fiat/FichatecnicaNuevoFiorinoFebrero2020.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichatecnicaNuevoFiorinoFebrero2020.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichatecnicaNuevoFiorinoFebrero2020.pdf",
-    "encabezado": [
-      "NUEVO FIAT FIORINO",
-      "CARACTERISTICAS TECNICAS",
-      "MOTOR 1.4 8v Fire Evo",
-      "N° de cilindros 4 en línea",
-      "N° de válvulas por cilindro 2",
-      "Relación de compresión 12,35 : 1"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada Total (cc) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "pesoKg": {
-        "valores": [
-          1117
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.117"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Ducato-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Ducato-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Ducato-MY20.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "FURGON",
-      "FURGON",
-      "FURGON CORTO FURGON MEDIO MAXICARGO",
-      "Versión MAXICARGO CHASIS",
-      "L1H1 L2H1 VIDRIADO"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          2287
-        ],
-        "linea": "Cilindrada (cm3) 2.287"
-      },
-      "hp": {
-        "valores": [
-          130
-        ],
-        "linea": "Potencia máx: CV / r.p.m. 130 / 3.600"
-      },
-      "pesoKg": {
-        "valores": [
-          2122,
-          2171,
-          2296,
-          2331,
-          1910
-        ],
-        "linea": "Peso en orden de marcha (kg) 2.122 2.171 2.296 2.331 1.910"
-      }
-    }
-  },
-  "fiat/FT_Fiorino_2025.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_2025.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_2025.pdf",
-    "encabezado": [
-      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR MT5 CONFORT MT5",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (kg) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-500abarth-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-500abarth-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-500abarth-MY20.pdf",
-    "encabezado": [
-      "FIAT 500 ABARTH 595 TURISMO 165cv",
-      "FIAT 500 ABARTH",
-      "1,4 16 Turbo T-jet 165cv",
-      "Motor 165cv",
-      "Tipo Motor Turbo T-jet",
-      "N° de cilindros y disposición 4 en línea, transversal delantera"
+      "Nueva SUV 4x4 Ford Territory | Ford Argentina",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
     ],
     "especificaciones": {
       "hp": {
-        "valores": [
-          165,
-          121
-        ],
-        "linea": "Potencia CV (Kw) / r.p.m. 165 (121) / 5.500"
-      },
-      "baulL": {
         "valores": [
           185,
-          550
+          320
         ],
-        "linea": "Capacidad del baúl (dm3) Min / Max 185 / 550"
+        "linea": "Sentí la potencia y dinamismo del motor 1.8 EcoBoost con 185 CV y 320Nm de torque, te ofrece una reacción inmediata y una performance superior que transforma tu"
       }
     }
   },
-  "fiat/FichaTecnica_Fiat500Abarth.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Fiat500Abarth.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Fiat500Abarth.pdf",
+  "ford/crossovers-suvs-4x4/territory/modelos/sel/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/territory/modelos/sel/",
+    "archivo": null,
     "encabezado": [
-      "FIAT 500 ABARTH",
-      "FIAT 500 ABARTH",
-      "1,4 16 TURBO T-JET 165CV",
-      "MOTOR 165CV",
-      "Tipo Motor NTurbo T-jet",
-      "N° de cilindros y disposición 4 en línea, transversal delantera"
+      "SUV Territory SEL | Ford Argentina",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
     ],
     "especificaciones": {
       "hp": {
-        "valores": [
-          165,
-          121
-        ],
-        "linea": "Potencia CV (Kw) / r.p.m. 165 (121) / 5.500"
-      },
-      "baulL": {
         "valores": [
           185,
-          550
+          320
         ],
-        "linea": "Capacidad del baúl (dm3) Min / Max 185 / 550"
-      }
-    }
-  },
-  "fiat/FT-Fiorino-MY27.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY27.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY27.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+        "linea": "Motor 1.8L EcoBoost con 185 CV de potencia y 320 Nm de torque, combinado con una transmisión automática de doble embrague y 7 marchas."
       },
-      "hp": {
+      "baulL": {
         "valores": [
-          99
+          448
         ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
+        "linea": "Capacidad de baúl (L) 448"
       },
       "pesoKg": {
         "valores": [
-          1203
+          1675,
+          1705
         ],
-        "linea": "Peso en orden de marcha (kg) 1.203"
+        "linea": "Peso en orden de marcha (kg) 1675 ; 1705"
       }
     }
   },
-  "fiat/Ficha_Tecnica_Toro_MCA_new.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Toro_MCA_new.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Toro_MCA_new.pdf",
+  "ford/crossovers-suvs-4x4/nueva-ranger-raptor/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/nueva-ranger-raptor/",
+    "archivo": null,
     "encabezado": [
-      "FREEDOM / VOLCANO / FREEDOM / VOLCANO /",
-      "FREEDOM VOLCANO FREEDOM VOLCANO",
-      "ULTRA / RANCH ULTRA / RANCH",
-      "MOTOR 170 E-TorQ EVO 270 Firefly Turbo 350 Multijet NEUMÁTICOS",
-      "Nº de cilindros 4 en línea 225/65 R17 ATR // 225/60 R18 ATR",
-      "Dimensiones / Rodado 215 / 65 R16 ON ROAD 225/60 R18 ON ROAD"
+      "Ford Argentina - Ranger Raptor",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          397,
+          583
+        ],
+        "linea": "La Ranger Raptor cuenta con un motor naftero Ecoboost 3.0L V6 Bi-Turbo brindando 397 CV de potencia y 583 Newton metros de torque. La motorización más potente d"
+      }
+    }
+  },
+  "ford/crossovers-suvs-4x4/bronco-sport/models/badlands/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/bronco-sport/models/badlands/",
+    "archivo": null,
+    "encabezado": [
+      "Descubrí la nueva Bronco Sport Badlands | Ford Argentina",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          253,
+          375
+        ],
+        "linea": "El motor 2.0L Ecoboost entrega 253 CV y 375 Nm de torque, combinando potencia y eficiencia. Su diseño turboalimentado asegura respuesta ágil y rendimiento óptim"
+      },
+      "pesoKg": {
+        "valores": [
+          1843
+        ],
+        "linea": "Peso en orden de marcha (Kg) 1.843"
+      }
+    }
+  },
+  "ford/crossovers-suvs-4x4/bronco-sport/models/big-bend/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/bronco-sport/models/big-bend/",
+    "archivo": null,
+    "encabezado": [
+      "Conocé la nueva Bronco Sport Big Bend | Ford Argentina",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          184
+        ],
+        "linea": "Potencia Máxima (CV / rpm) 184/6.000"
+      },
+      "pesoKg": {
+        "valores": [
+          1659
+        ],
+        "linea": "Peso en orden de marcha (Kg) 1.659"
+      }
+    }
+  },
+  "ford/crossovers-suvs-4x4/nueva-ranger/models/limited-4x4/": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/crossovers-suvs-4x4/nueva-ranger/models/limited-4x4/",
+    "archivo": null,
+    "encabezado": [
+      "Ranger Limited 4x4 | Ford Argentina",
+      "Utilizamos cookies para ofrecer una mejor experiencia de navegación y mostrarte contenidos personalizados. Podés aceptar todas o configurar tus preferencias. Para más información, consultá nuestra Política de Privacidad .",
+      "Cotizar",
+      "Concesionarios",
+      "Ir al contenido",
+      "Vehículos"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          210,
+          500
+        ],
+        "linea": "La Nueva Ranger combina la tecnología en performance más avanzada con el ADN Raza Fuerte. El ícono de la Raza Fuerte, totalmente renovada y mejorada. Cuenta con"
+      }
+    }
+  },
+  "ford/far-bronco-sport-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/bronco-sport/2025/pdf/far-bronco-sport-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-bronco-sport-ficha-tecnica.pdf",
+    "encabezado": [
+      "Nueva",
+      "Bronco Sport",
+      "Nueva Bronco Sport Características y Especificaciones",
+      "VERSIÓN BIG BEND BADLANDS VERSIÓN BIG BEND BADLANDS",
+      "Motor de combustión interna 1.5L Ecoboost 2.0L Ecoboost TECNOLOGÍA & SEGURIDAD",
+      "Capacidad de pasajeros 5 Sistema de apertura de puertas sin llave n n"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1747,
-          1332,
-          1956
+          1496
         ],
-        "linea": "Cilindrada (cc) 1747 1.332 1.956 Llantas tipo Aleación"
+        "linea": "Cilindrada del motor 1.496 cm 3 Cilindrada del motor 1.496 cm 3"
       },
       "hp": {
         "valores": [
-          130,
-          175,
+          184,
+          253
+        ],
+        "linea": "Potencia Máxima (CV / rpm) 184/6000 253/5500 compatible con Android Auto & Apple Car Play inalámbrico"
+      },
+      "pesoKg": {
+        "valores": [
+          1659,
+          1843
+        ],
+        "linea": "Volante calefaccionado - n Peso en orden de marcha (Kg) 1659 1843"
+      }
+    }
+  },
+  "ford/far-nueva-territory-ficha-tecnica-v2-agosto-2026.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/territory/2025/pdf/far-nueva-territory-ficha-tecnica-v2-agosto-2026.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-nueva-territory-ficha-tecnica-v2-agosto-2026.pdf",
+    "encabezado": [
+      "Nueva",
+      "Territory",
+      "Nueva Territory",
+      "Características y Especificaciones",
+      "VERSIÓN SEL TREND HÍBRIDA TITANIUM PLATINUM VERSIÓN SEL TREND HÍBRIDA TITANIUM PLATINUM",
+      "Carrocería 5 Puertas 5 Puertas 5 Puertas 5 Puertas TECNOLOGÍA"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1764
+        ],
+        "linea": "Cilindrada del motor 1.764 cm 3 Cilindrada del motor 1.764 cm 3"
+      },
+      "hp": {
+        "valores": [
+          185,
+          150
+        ],
+        "linea": "Potencia máxima del motor de combustión interna (CV / rpm) 185 @ 5500 150 @ 5800 185 @ 5500 185 @ 5500 Sistema de audio con controles al volante y 8 parlantes -"
+      },
+      "baulL": {
+        "valores": [
+          448
+        ],
+        "linea": "Selector de transmisión \"Rotary Shifter\" ■ ■ ■ ■ Capacidad de baúl (L) 448 448 448 448"
+      },
+      "pesoKg": {
+        "valores": [
+          1675,
+          1705,
+          1815
+        ],
+        "linea": "Climatizador automático bi-zona con salida de aire para plazas traseras - ■ ■ ■ Peso en orden de marcha (kg) 1675 ; 1705 1815 1675 ; 1705 1675 ; 1705"
+      }
+    }
+  },
+  "ford/far-nueva-maverick-ficha-tecnica.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/maverick/2025/pdf/far-nueva-maverick-ficha-tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-nueva-maverick-ficha-tecnica.pdf",
+    "encabezado": [
+      "NUEVA",
+      "MAVERICK",
+      "NUEVA MAVERICK Características y Especificaciones",
+      "VERSIÓN XLT TREMOR LARIAT HÍBRIDA VERSIÓN XLT TREMOR LARIAT HÍBRIDA",
+      "MOTOR XLT Encendido automático de luces ■ ■ ■",
+      "Modelo 2.0L EcoBoost (Naftero ciclo Atkinson) 2.5L Híbrido Selector de cambios rotativo \"Rotary Shifter\" ■ ■ ■ ■ ■ ■"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1999
+        ],
+        "linea": "Cilindrada del motor 1.999 cm 3 Cilindrada del motor 1.999 cm 3"
+      },
+      "hp": {
+        "valores": [
+          253,
+          163
+        ],
+        "linea": "Potencia Máxima del Motor de Combustión Interna (CV @ RPM) 253@5500 163@6250 Tablero de instrumentos con pantalla digital de 8\" ■ ■ ■"
+      }
+    }
+  },
+  "ford/far-ficha-tecnica-ranger-raptor-2025.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/raptor/2023/brochure/far-ficha-tecnica-ranger-raptor-2025.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-ficha-tecnica-ranger-raptor-2025.pdf",
+    "encabezado": [
+      "RANGER",
+      "RAPTOR",
+      "RANGER RAPTOR Características y Especificaciones",
+      "MODELO RAPTOR CABINA DOBLE 4x4 MODELO RAPTOR CABINA DOBLE 4x4",
+      "MOTOR EQUIPAMIENTO INTERIOR & CONFORT",
+      "Combustible Nafta Asiento conductor c/ajuste electrónico en 10 direcciones n"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2956
+        ],
+        "linea": "Cilindrada (cm3) 2.956 cm3 Asientos exclusivos con diseño deportivo - Raptor n"
+      },
+      "hp": {
+        "valores": [
+          292,
+          397
+        ],
+        "linea": "Potencia (CV / rpm) 292 kW (397 cv) @ 6.250 rpm (Continua) /6.500 rpm (Intermitente) Asientos delanteros calefaccionados n"
+      },
+      "pesoKg": {
+        "valores": [
+          2495
+        ],
+        "linea": "Peso en orden de marcha (Kg) 2495 Levas al volante"
+      }
+    }
+  },
+  "ford/far-ficha-tecnica-nueva-ranger.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/Nueva-ranger/2026/pdf/far-ficha-tecnica-nueva-ranger.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-ficha-tecnica-nueva-ranger.pdf",
+    "encabezado": [
+      "RANGER®",
+      "RANGER® Características y Especificaciones",
+      "MODELO",
+      "Versión XLS Black Black XLS XLT XLT XLT Limited Limited+",
+      "Tracción 4x2 4x2 4x4 4x4 (4WD)* 4x2 4x4 4x4 (4WD)* 4x4 4x4 (4WD)*",
+      "MOTOR"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2993
+        ],
+        "linea": "Cilindrada del motor 2.993 cm 3 Cilindrada del motor 2.993 cm 3"
+      },
+      "hp": {
+        "valores": [
+          170,
+          250,
+          210
+        ],
+        "linea": "Potencia (CV / rpm) 170 @ 3500 250 @ 3250 210 @ 3750 250 @ 3250 210 @ 3750 250 @ 3250"
+      },
+      "pesoKg": {
+        "valores": [
+          2092,
+          2127,
+          2222,
+          2297,
+          2145,
+          2249,
+          2305,
+          2310,
+          2388
+        ],
+        "linea": "Peso en orden de marcha (Kg) 2092 2127 2222 2297 2145 2249 2305 2310 2388"
+      }
+    }
+  },
+  "ford/far-ficha-tecnica-nueva-ranger-xl.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/Nueva-ranger/2026/pdf/far-ficha-tecnica-nueva-ranger-xl.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-ficha-tecnica-nueva-ranger-xl.pdf",
+    "encabezado": [
+      "NUEVA",
+      "RANGER® XL",
+      "NUEVA RANGER® XL Características y Especificaciones",
+      "MODELO",
+      "Versión XL Chasis MT XL Cabina Simple MT XL Cabina Doble MT XL Cabina Doble AT",
+      "Tracción 4x4 4x2 4x4 4x2 4x4 4x2 4x4"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1996
+        ],
+        "linea": "Cilindrada del motor 1.996 cm 3 Cilindrada del motor 1.996 cm 3"
+      },
+      "hp": {
+        "valores": [
           170
         ],
-        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 175 / 5.750 170 / 3.750"
+        "linea": "Potencia (CV / rpm) 170 @ 3500"
       },
       "pesoKg": {
         "valores": [
-          1688,
-          1732,
-          1905
+          1880,
+          1921,
+          2028,
+          2073,
+          2155,
+          2064,
+          2162
         ],
-        "linea": "DISTRIBUCIÓN Peso en orden de marcha (kg) 1.688 1.732 1.905"
+        "linea": "Peso en orden de marcha (Kg) 1880 1921 2028 2073 2155 2064 2162"
       }
     }
   },
-  "fiat/Ficha-Tecnica-Ducato.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Ducato.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Ducato.pdf",
+  "ford/far-ficha-tecnica-maverick.pdf": {
+    "marca": "ford",
+    "url": "https://www.ford.com.ar/content/dam/Ford/website-assets/latam/ar/nameplate/maverick/landing/pdf/far-ficha-tecnica-maverick.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\ford__far-ficha-tecnica-maverick.pdf",
     "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "FURGON",
-      "FURGON",
-      "FURGON CORTO FURGON MEDIO MAXICARGO",
-      "Versión MAXICARGO CHASIS",
-      "L1H1 L2H1 VIDRIADO"
+      "NUEVA",
+      "MAVERICK",
+      "NUEVA MAVERICK Características y Especificaciones",
+      "VERSIÓN XLT LARIAT FX4 LARIAT HÍBRIDA VERSIÓN XLT LARIAT FX4 LARIAT HÍBRIDA",
+      "MOTOR CONFORT",
+      "Modelo 2.0L EcoBoost 2.5L Híbrido (Naftero ciclo Atkinson) Sistema de Gestión de Terrenos con 5 modos de manejo ■ ■ ■"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          2287
+          1999
         ],
-        "linea": "Cilindrada (cm3) 2.287"
+        "linea": "Cilindrada del motor 1.999 cm 3 Cilindrada del motor 1.999 cm 3"
       },
       "hp": {
         "valores": [
-          130
+          253,
+          164
         ],
-        "linea": "Potencia máx: CV / r.p.m. 130 / 3.600"
-      },
-      "pesoKg": {
-        "valores": [
-          2122,
-          2171,
-          2296,
-          2331,
-          1910
-        ],
-        "linea": "Peso en orden de marcha (kg) 2.122 2.171 2.296 2.331 1.910"
+        "linea": "Potencia Máxima del Motor de Combustión Interna (CV @ RPM) 253@5500 164@5600 Apertura de puerta sin llave \"Key Less\" - ■ ■"
       }
     }
   },
-  "fiat/Ficha-Tecnica-NuevaStrada-MY21.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-NuevaStrada-MY21.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-NuevaStrada-MY21.pdf",
+  "citroen/citroen-argentina/universo-citroen/concept-cars/c3-wrc.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/universo-citroen/concept-cars/c3-wrc.html",
+    "archivo": null,
     "encabezado": [
-      "CARACTERISTICAS TECNICAS",
-      "ENDURANCE FREEDOM VOLCANO",
-      "MOTOR 1.4 Fire 1.4 Fire 1.3 FireFly",
-      "Carrocería Cabina Plus Cabina Doble Cabina Doble Cabina Doble",
-      "N° de cilindros 4 en línea 4 en línea",
-      "N° de válvulas por cilindro 2 2"
+      "C3 WRC",
+      "Con motivo del Salón de París, la Marca revela mundialmente el concept C3 CMR, versión deportiva y muscular del nuevo CITROËN C3. Este nuevo concept car tiene el desafío de asegurar el retorno del equipo Citroën Racing al campeonato mundial de rally FIA.",
+      "El concept C3 WRC conserva los elementos de redondez, frescura y estilo del Nuevo C3: firma luminica de dos pisos, carroceria bi-tono con detalles que combinan con el color del techo, inspirados en el mundo de las carreras.&lt;br />",
+      "&lt;br />",
+      "Un parachoques oscuro y chevrones de cromo que se extienden a los LEDs diurnos, espejo de carreras de carbono amarillo y un chasis de 55 mm más grande que el Nuevo C3 permite una mayor libertad aerodinámica y un alerón para el parachoques delantero equipado para mejorarlo ... Un diseño deportivo y un tono afilado.&lt;/p>",
+      "\" text-desktop=\"&lt;p>El concept C3 WRC conserva los elementos de redondez, frescura y estilo del Nuevo C3: firma luminica de dos pisos, carroceria bi-tono con detalles que combinan con el color del techo, inspirados en el mundo de las carreras.&lt;br />"
     ],
     "especificaciones": {
-      "cc": {
-        "valores": [
-          1368,
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.368 1.332"
-      },
       "hp": {
         "valores": [
-          85,
-          99
+          380
         ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750 99 / 6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1083,
-          1151,
-          1161,
-          1172
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172"
+        "linea": "C3 WRC es principalmente un auto adaptado para el circuito, con todos los atributos de un futuro campeón: - Ampliar el diámetro de la brida de turbo a 36 mm ha "
       }
     }
   },
-  "fiat/FIORINO_Ficha_tecnica_11-03.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica_11-03.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica_11-03.pdf",
+  "citroen/citroen-argentina/universo-citroen/concept-cars/c4-cactus-airflow-2l.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/universo-citroen/concept-cars/c4-cactus-airflow-2l.html",
+    "archivo": null,
     "encabezado": [
-      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR MT5 CONFORT MT5",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
+      "C4 CACTUS AIRFLOW 2L",
+      "CITROËN PRESENTA EN EL SALÓN DE PARÍS UN PROTOTIPO, EQUIPADO CON TECNOLOGÍA HYBRID AIR, QUE SÓLO CONSUME 2LTS/100 KM",
+      "Citroën es una marca creativa y tecnológica que aporta respuestas a las necesidades de cada época. Como un verdadero laboratorio de ideas, el concept C4 Cactus Airflow 2L, que será presentado en el Salón de París, hace hincapié en los puntos fuertes del C4 Cactus de serie. Dotado con tecnología Hybrid Air, este prototipo concentra diseño e innovaciones para reducir, de forma drástica, los costos de utilización relacionados con el consumo. Muestra todo el saber hacer de Citroën enfocado hacia el objetivo de ofrecer, a mediano plazo, un vehículo asequible con un consumo inferior a los 2 lts/100 km.",
+      "Como en el C4 Cactus de serie, Citroën se ha basado en su gran patrimonio de diseño para optar por soluciones de estilo radicales, inmediatamente reconocibles. Así, su perfil es único, moderno y diferente, gracias a su línea y a sus juegos gráficos, mientras que su frontal exhibe una mirada simpática y tecnológica y sus formas puras, lisas y sin agresividad, destacan por su sencillez.&lt;/p>",
+      "&lt;p>El diseño del Citroën C4 Cactus conjuga estética y funcionalidad, al asociar volúmenes fluidos y elementos gráficos impactantes, que hacen destacar su función original. Como parte de la búsqueda de eficacia aerodinámica el diseño cobra aún más importancia en el concept C4 Cactus Airflow 2L, hasta llegar a una línea fluida y única.&lt;/p>",
+      "&lt;p>Por este motivo, se han modificado o, incluso, se han creado, algunos elementos estilísticos, con el fin de optimizar la aerodinámica del vehículo. Se distinguen dos tipos de piezas, de geometría variable y de geometría fija.&lt;/p>"
     ],
     "especificaciones": {
-      "cc": {
+      "consumoL100": {
         "valores": [
-          1368
+          4,
+          2,
+          3.1
         ],
-        "linea": "Cilindrada total (cm³) 1.368"
-      },
-      "hp": {
-        "valores": [
-          85
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (kg) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
+        "linea": "El Citroën C4 Cactus ya consigue resultados situados entre los mejores del mercado, con emisiones de CO2 a partir de 82 g/km y un consumo de 3,1 l/100 km en dié",
+        "revisar": true
       }
     }
   },
-  "fiat/Ficha_Tecnica_Mobi-24-08-22.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_Mobi-24-08-22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_Mobi-24-08-22.pdf",
+  "citroen/citroen-argentina/vehiculos/particulares/basalt.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/basalt.html",
+    "archivo": null,
     "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "CARROCERIA 5 PUERTAS FRENOS",
-      "Delantero / Trasero Disco ventilado / TamborA tambor",
-      "MOTOR FIRE 1.0 8V",
-      "Combustible Nafta",
-      "TRANSMISIÓN"
+      "Basalt | Citroën Argentina",
+      "&lt;span class=&#34;font-h1&#34;>Basalt&lt;br>",
+      "&lt;/span>&lt;/p>",
+      "\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"0px 0px -38px 0px\" margin-mobile=\"0px 0px -28px 0px\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"46px\" font-size-overwrite-mobile=\"32px\">",
+      "SER COMÚN NUNCA FUE UNA OPCIÓN&lt;/span>\" font-style=\"font-body\" font-color=\"text-white\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-left\" margin-mobile=\"4px 0px\" padding-mobile=\"0px\" font-size-overwrite=\"16px\" font-size-overwrite-mobile=\"14px\">",
+      "&lt;span class=&#34;font-h2&#34;>Exclusivo hasta el último detalle&lt;/span>&lt;/p>"
     ],
     "especificaciones": {
-      "cc": {
-        "valores": [
-          999
-        ],
-        "linea": "Cilindrada (cm³) 999"
-      },
       "hp": {
         "valores": [
-          70
-        ],
-        "linea": "Potencia máxima (CV / rpm) 70 / 6.250"
-      },
-      "baulL": {
-        "valores": [
-          247
-        ],
-        "linea": "Capacidad de baÚL (lts) 247"
-      },
-      "pesoKg": {
-        "valores": [
-          952
-        ],
-        "linea": "Comando de distribución Correa dentada Peso en orden de marcha (kg) 952"
-      }
-    }
-  },
-  "fiat/FT_Fiorino_MY27.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Fiorino_MY27.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Fiorino_MY27.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1203
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.203"
-      }
-    }
-  },
-  "fiat/FichaTecnica_Strada_new.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Strada_new.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Strada_new.pdf",
-    "encabezado": [
-      "ENDURANCE FREEDOM VOLCANO RANCH ENDURANCE FREEDOM VOLCANO RANCH",
-      "MOTOR 1.4 FIRE 1.3 FIREFLY TRANSMISIÓN 1.4 FIRE 1.3 FIREFLY",
-      "Carrocería Cabina plus Cabina doble Cabina doble Cabina doble Cabina doble Tracción 4X2, Tracción delantera",
-      "Nº de cilindros 4 en línea 4 en línea",
-      "Caja de cambios",
-      "Manual de 5 vel. CVT de 7 vel."
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368,
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.368 1.332"
-      },
-      "hp": {
-        "valores": [
-          85,
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 85/5.750 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1083,
-          1151,
-          1161,
-          1172,
-          1232
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172 1.232"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Mobi-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Mobi-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Mobi-MY20.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TÉCNICAS",
-      "CARROCERIA 5 puertas",
-      "MOTOR Fire 1.0 8v",
-      "Combustible Nafta",
-      "N° de cilindros 4 en línea",
-      "N° de válvulas por cilindro 2"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          999
-        ],
-        "linea": "Cilindrada (cm³) 999"
-      },
-      "hp": {
-        "valores": [
-          70
-        ],
-        "linea": "Potencia máxima (CV / rpm) 70 / 6.000"
-      },
-      "baulL": {
-        "valores": [
-          235
-        ],
-        "linea": "Capacidad de baúl (lts) 235"
-      },
-      "pesoKg": {
-        "valores": [
-          885
-        ],
-        "linea": "Peso en orden de marcha (kg) 885"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Cronos-MY21.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Cronos-MY21.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Cronos-MY21.pdf",
-    "encabezado": [
-      "CARACTERÍSTICAS TÉCNICAS",
-      "DRIVE PRECISION PRECISION AT",
-      "CARROCERIA 4 puertas",
-      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
-      "Combustible Nafta",
-      "Número de cilindros 4 en línea"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1747
-        ],
-        "linea": "Cilindrada total (cm³) 1.332 1.747"
-      },
-      "hp": {
-        "valores": [
-          99,
-          130
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
-      },
-      "baulL": {
-        "valores": [
-          525
-        ],
-        "linea": "Capacidad de baúl (lt) 525"
-      },
-      "pesoKg": {
-        "valores": [
-          1136,
-          1225,
-          1258
-        ],
-        "linea": "Peso en orden de marcha (kg) 1136 1225 1258"
-      }
-    }
-  },
-  "fiat/Ficha_Tecnica_FIAT_Cronos_MY23.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha_Tecnica_FIAT_Cronos_MY23.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha_Tecnica_FIAT_Cronos_MY23.pdf",
-    "encabezado": [
-      "#ELAUTODELOSARGENTINOS",
-      "ATTRACTIVE DRIVE DRIVE PRECISION ATTRACTIVE DRIVE DRIVE PRECISION",
-      "MOTOR MT MT CVT CVT TRANSMISIÓN MT MT CVT CVT",
-      "Número de cilindros 4 en línea",
-      "Tracción 4X2, Tracción delantera",
-      "N° de válvulas por cilindro 2"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "baulL": {
-        "valores": [
-          525
-        ],
-        "linea": "Inyección Electrónica multipunto Capacidad de baúl (lts) 525"
-      },
-      "pesoKg": {
-        "valores": [
-          1121,
-          1155,
-          1183,
-          1196
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.121 1.155 1.183 1.196"
-      }
-    }
-  },
-  "fiat/FT-Fiorino-MY26.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY26.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1128
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.128"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Fiorino-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Fiorino-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Fiorino-MY20.pdf",
-    "encabezado": [
-      "NUEVO FIAT FIORINO",
-      "CARACTERISTICAS TECNICAS",
-      "MOTOR 1.4 8v Fire Evo",
-      "N° de cilindros 4 en línea",
-      "N° de válvulas por cilindro 2",
-      "Relación de compresión 12,35 : 1"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada Total (cc) 1.368"
-      },
-      "hp": {
-        "valores": [
-          87
-        ],
-        "linea": "Potencia máxima (CV / rpm) 87 / 5.750"
-      },
-      "pesoKg": {
-        "valores": [
-          1117
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.117"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Toro-MY21.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Toro-MY21.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Toro-MY21.pdf",
-    "encabezado": [
-      "CARACTERISTICAS TECNICAS",
-      "MOTOR E-TorQ EVO 1.8 Multijet 2.0 16v",
-      "Carrocería Cabina Doble, 4 puertas Cabina Doble, 4 puertas",
-      "N° de cilindros 4 en línea 4 en línea",
-      "N° de válvulas por cilindro 4 4",
-      "Relación de compresión 11,2:1 16,5:1"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1747,
-          1956
-        ],
-        "linea": "Cilindrada (cc) 1.747 1.956"
-      },
-      "hp": {
-        "valores": [
-          130,
-          170
-        ],
-        "linea": "Potencia máxima (CV / rpm) 130 / 6.000 170 / 3.750"
-      },
-      "pesoKg": {
-        "valores": [
-          1660,
-          1876
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.660 1.876"
-      }
-    }
-  },
-  "fiat/FT-Fiorino-MY26-23012026.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino-MY26-23012026.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino-MY26-23012026.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1203
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.203"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica_Fiorino.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica_Fiorino.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica_Fiorino.pdf",
-    "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332
-        ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
-      },
-      "hp": {
-        "valores": [
-          99
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1203
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.203"
-      }
-    }
-  },
-  "fiat/Ficha-Tecnica-Fiat-Uno-MY20.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Uno-MY20.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Uno-MY20.pdf",
-    "encabezado": [
-      "FICHA TECNICA NUEVO UNO",
-      "VERSIONES Attractive",
-      "CARROCERIA 5 puertas",
-      "MOTOR 1.4 8v",
-      "Combustible Nafta",
-      "Número de cilindros 4 en línea"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1368
-        ],
-        "linea": "Cilindrada total 1.368 cm³"
-      },
-      "hp": {
-        "valores": [
-          87
-        ],
-        "linea": "Potencia máxima / régimen 87 cv / 5.500 rpm"
-      },
-      "baulL": {
-        "valores": [
-          280
-        ],
-        "linea": "Capacidad de baúl (L) 280"
-      },
-      "pesoKg": {
-        "valores": [
-          988
-        ],
-        "linea": "Peso en orden de marcha (Kg) 988"
-      }
-    }
-  },
-  "fiat/FichaTecnica_Cronos2B.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FichaTecnica_Cronos2B.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FichaTecnica_Cronos2B.pdf",
-    "encabezado": [
-      "#ELAUTOARGENTINO",
-      "ATTRACTIVE & DRIVE PRECISION PRECISION AT ATTRACTIVE & DRIVE PRECISION PRECISION AT",
-      "CARROCERIA 4 puertas TRANSMISIÓN",
-      "Tracción Delantera",
-      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
-      "Automática secuencial"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          1747
-        ],
-        "linea": "Cilindrada total (cm³) 1.332 1.747 NEUMÁTICOS 185/60 R15 195/55 R16 // 205/45 R17"
-      },
-      "hp": {
-        "valores": [
-          99,
-          130
-        ],
-        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
-      },
-      "baulL": {
-        "valores": [
-          525
-        ],
-        "linea": "Capacidad de baúl (lts) 525"
-      },
-      "pesoKg": {
-        "valores": [
-          1136,
-          1225,
-          1258
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.136 1.225 1.258"
-      }
-    }
-  },
-  "fiat/FicTec_Fiat_Pulse.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FicTec_Fiat_Pulse.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FicTec_Fiat_Pulse.pdf",
-    "encabezado": [
-      "DRIVE 1.3L GSE IMPETUS 1.0L T3 DRIVE 1.3L GSE IMPETUS 1.0L T3",
-      "MOTOR MT5 CVT CVT TRANSMISIÓN MT5 CVT CVT",
-      "Número de cilindros 4 en línea 3 en línea",
-      "4X2, Tracción delantera",
-      "Tracción",
-      "N° de válvulas por cilindro 2 4"
-    ],
-    "especificaciones": {
-      "cc": {
-        "valores": [
-          1332,
-          999
-        ],
-        "linea": "Cilindrada (cc) 1.332 999"
-      },
-      "hp": {
-        "valores": [
-          99,
+          96,
+          200,
           120
         ],
-        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 120 / 5.750"
-      },
-      "pesoKg": {
-        "valores": [
-          1140,
-          1187,
-          1234
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.140 1.187 1.234"
+        "linea": "&lt;span class=&#34;font-body&#34;>Basalt proporciona lo mejor en rendimiento, cuenta con dos motorizaciones disponibles: 1.3 96 CV MT o T200 120 CV CVT. La mot"
       }
     }
   },
-  "fiat/FT_Strada.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT_Strada.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT_Strada.pdf",
+  "citroen/citroen-argentina/vehiculos/particulares/basalt/descubre.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/basalt/descubre.html",
+    "archivo": null,
     "encabezado": [
-      "ENDURANCE 1.4 FREEDOM 1.4 VOLCANO 1.3 RANCH 1.3 ENDURANCE 1.4 FREEDOM 1.4 VOLCANO 1.3 RANCH 1.3",
-      "MOTOR 1.4 FIRE 1.3 FIREFLY TRANSMISIÓN 1.4 FIRE 1.3 FIREFLY",
-      "Cabina plus Cabina doble Cabina doble",
-      "Carrocería Tracción 4X2, Tracción delantera",
-      "Nº de cilindros 4 en línea",
-      "4 en línea"
+      "Descubre",
+      "&lt;span class=&#34;font-body&#34;>Una apariencia imponente, elegante y exclusiva con logotipos oscurecidos, llantas de aleación 16&quot; negras y protectores de parachoques más sobrios. En el interior, el refinamiento continúa con la tapicería oscurecida y los detalles en rojo.&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;span class=&#34;font-body&#34;>Lo mejor en potencia y elegancia. Combina la grandeza y robustez de un SUV con líneas modernas, fluidas y dinámicas, creando un estilo incomparable. Su parte trasera acentúa aún más la eficiencia aerodinámica a un modelo que expresa mucha energía.&nbsp;&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;span class=&#34;font-body&#34;>Estilo que ilumina. Destaca su firma lumínica Citroën y faros DRL LED, el frontal de Basalt es una invitación al futuro, resaltando tu presencia para donde vayas. Con la grilla frontal en color negro brillante, junto a los skidplates tanto en su frontal como en la parte trasera, generan una estética bien interesante y condimentan el estilo de este SUV.&lt;/span>&lt;/p>"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          96,
+          200,
+          120
+        ],
+        "linea": "&lt;span class=&#34;font-body&#34;>Basalt proporciona lo mejor en rendimiento, cuenta con dos motorizaciones disponibles: 1.3 96 CV MT o T200 120 CV CVT. La mot"
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/particulares/aircross.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/aircross.html",
+    "archivo": null,
+    "encabezado": [
+      "Aircross | Citroën Argentina",
+      "&lt;span class=&#34;font-h1&#34;>AIRCROSS XTR&lt;/span>&lt;/p>",
+      "\" font-color=\"text-white\" font-family=\"font-primary\" text-mobile=\"&lt;p style=&#34;text-align: center;&#34;>&lt;b>AIRCROSS XTR&lt;/b>&lt;/p>",
+      "\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"46px\" font-size-overwrite-mobile=\"32px\">",
+      "&lt;span class=&#34;font-h2&#34;>PARA QUIENES SE ANIMAN A ESCAPARSE&lt;/span>&lt;/p>",
+      "\" margin=\"-12px 0px\">"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          96,
+          200,
+          120
+        ],
+        "linea": "&lt;span class=&#34;font-body&#34;>El Aircross proporciona una experiencia de conducción única, cuenta con dos motorizaciones disponibles:&nbsp;1.3 de 96 CV MT "
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/particulares/aircross/descubre.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/aircross/descubre.html",
+    "archivo": null,
+    "encabezado": [
+      "Descubre",
+      "&lt;span class=&#34;font-body&#34;>El Aircross XTR es el SUV ideal para escapar de la rutina, respirar aire fresco y reconectar con lo que realmente importa. Combinando un diseño impactante, neumáticos mixtos, una carrocería bitono y un exclusivo interior en tono oscuro, es más que un simple vehículo: es el compañero perfecto para tus aventuras.&lt;/span>&lt;/p>",
+      "\" font-color=\"text-default\" font-family=\"font-primary\">",
+      "&lt;span class=&#34;font-body&#34;>Un diseño como nunca viste. Imponente y robusto, el Aircross destaca por su firma lumínica delantera en DRL LED en forma de Y complementada por una grilla central de gran porte con detalles en black piano y el protector inferior en color gris plata.&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;span class=&#34;font-body&#34;>El vehículo que refleja tu personalidad. Con un diseño atractivo y llamativo, el Aircross ofrece el color del techo en negro.&lt;/span>&lt;/p>"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          96,
+          200,
+          120
+        ],
+        "linea": "&lt;span class=&#34;font-body&#34;>El Aircross proporciona una experiencia de conducción única, cuenta con dos motorizaciones disponibles:&nbsp;1.3 de 96 CV MT "
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/particulares/c4.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c4.html",
+    "archivo": null,
+    "encabezado": [
+      "Nuevo C4 Híbrido | Citroën Argentina",
+      "PUEDE LLEVARTE LEJOS\" font-style=\"font-body\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-center\" text-mobile=\"TU ZONA DE CONFORT PUEDE LLEVARTE LEJOS\" margin-mobile=\"4px 0px\" padding-mobile=\"0px\" text-alignment-mobile=\"text-center\" font-size-overwrite=\"16px\" font-size-overwrite-mobile=\"14px\">",
+      "&lt;span class=&#34;font-body&#34;>El nuevo C4 híbrido redefine la presencia en las calles con un diseño más ancho y robusto. Propone un concepto moderno y con carácter, llevando adelante toda la potencia del diseño e identidad Citroën, con un diseño único, elegante y aerodinámico.&lt;/span>&lt;/p>",
+      "\" font-color=\"text-white\" font-family=\"font-primary\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"14px\">",
+      "&lt;span class=&#34;font-body&#34;>Está equipado con una motorización híbrida con un motor naftero electrificado. No necesitas enchufar el nuevo C4 híbrido para disfrutar del placer de conducir en modo eléctrico más del 50% del tiempo en la ciudad.​&lt;/span>&lt;/p>",
+      "&lt;p>&lt;span class=&#34;font-body&#34;>Con una potencia combinada de 145 CV, logra una eficiencia de consumo y reduce emisiones de CO².&lt;/span>&lt;/p>"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          145
+        ],
+        "linea": "&lt;p>&lt;span class=&#34;font-body&#34;>Con una potencia combinada de 145 CV, logra una eficiencia de consumo y reduce emisiones de CO².&lt;/span>&lt;/p>"
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/particulares/c4/descubre.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c4/descubre.html",
+    "archivo": null,
+    "encabezado": [
+      "Descubre",
+      "&lt;span class=&#34;font-body&#34;>El frontal incorpora el nuevo logo de la marca, que se sitúa en el centro de la parrilla, dando una presencia más firme. El capó, por su parte, mantiene sus líneas originales al tiempo que se adapta para resaltar los chevrones, que están acabados en pintura Silver Chrome, añadiendo un toque de elegancia y refinamiento.​&lt;/span>&lt;/p>",
+      "\" font-family=\"font-primary\">",
+      "&lt;span class=&#34;font-body&#34;>Los finos y elegantes faros delanteros LED presentan una característica firma lumínica dividida en tres distintivos segmentos horizontales, que garantizan un reconocimiento instantáneo, incluso a la distancia.​&lt;/span>&lt;/p>",
+      "\" font-family=\"font-primary\">",
+      "&lt;span class=&#34;font-body&#34;>En el lateral, presenta una combinación perfecta de estética y funcionalidad. Su diseño aerodinámico no sólo es agradable a la vista, sino que también contribuye a mejorar el consumo.​&lt;/span>&lt;/p>"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          145
+        ],
+        "linea": "&lt;span class=&#34;font-body&#34;>Está equipado con una motorización híbrida, que combina un motor naftero turbo con un motor eléctrico, otorgando 145 CV de po"
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/particulares/c5-aircross.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/particulares/c5-aircross.html",
+    "archivo": null,
+    "encabezado": [
+      "Nuevo C5 Aircross | Citroën Argentina",
+      "C5 AIRCROSS\" font-style=\"font-h1\" font-color=\"text-white\" font-family=\"font-primary\" margin=\"8px 0px\" padding=\"0px\" text-alignment=\"text-center\" margin-mobile=\"0px\" padding-mobile=\"0px\" font-size-overwrite=\"40px\">",
+      "&lt;span class=&#34;font-body&#34;>Combina un estilo musculoso y sólido que optimiza su eficiencia, impulsando la renovación del diseño Citroën con una identidad única y elegante. Transmite robustez y seguridad en la ruta, logrando un equilibrio perfecto entre volumen y modernidad.&lt;/span>&lt;/p>",
+      "\" font-color=\"text-white\" font-family=\"font-primary\" font-color-overwrite=\"#FFFFFF\" font-size-overwrite=\"14px\">",
+      "&lt;span class=&#34;font-body&#34;>Está equipado con un motor 1.6 turbo, que ofrece una respuesta ágil y eficiente en todo tipo de conducción. Con una potencia de 180 CV, se combina con una caja automática, brindando un manejo suave, dinámico y confortable.&lt;/span>&lt;/p>",
+      "\" font-color=\"text-white\" font-family=\"font-primary\" font-size-overwrite=\"14px\">"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          180
+        ],
+        "linea": "&lt;span class=&#34;font-body&#34;>Está equipado con un motor 1.6 turbo, que ofrece una respuesta ágil y eficiente en todo tipo de conducción. Con una potencia "
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy.html",
+    "archivo": null,
+    "encabezado": [
+      "Jumpy | Citroën Argentina",
+      "&lt;span class=&#34;font-h1&#34;>CITROËN JUMPY&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;span class=&#34;font-body&#34;>Citroën Jumpy cuenta con un diseño procedente del universo de los autos particulares y del mundo de los SUV. Su estilo es fluido, sin agresividad, ofreciendo seguridad y solidez.&lt;/span>&lt;/p>",
+      "&lt;p style=&#34;text-align: center;&#34;>&lt;span class=&#34;font-body&#34;>&nbsp;&lt;/span>&lt;/p>",
+      "&lt;p style=&#34;text-align: center;&#34;>&nbsp;&lt;/p>"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1332
+          2189
         ],
-        "linea": "Cilindrada (cc) 1.332 MT CABINA MT CABINA MT CABINA MT CABINA CVT CABINA CVT CABINA"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada:&nbsp;&lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
       },
       "hp": {
         "valores": [
-          99
+          150
         ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1083,
-          1151,
-          1161,
-          1172,
-          1220,
-          1232
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.083 1.151 1.161 1.172 1220 1.232"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia:&nbsp;&lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
       }
     }
   },
-  "fiat/FIORINO_Ficha_tecnica_08-03.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica_08-03.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica_08-03.pdf",
+  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-carga.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-carga.html",
+    "archivo": null,
     "encabezado": [
-      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR MT5 CONFORT MT5",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
+      "Descubre",
+      "&lt;span class=&#34;font-body&#34;>Redescubre Citroën Jumpy, el vehículo comercial ligero más versátil. Su segunda generación se presenta con un diseño moderno y características de confort y seguridad sin precedentes.&lt;/span>&lt;/p>",
+      "&lt;p>&lt;span class=&#34;font-body&#34;>Se beneficia de un nuevo frontal que actualiza su estilo y refuerza su personalidad.&lt;/span>&lt;/p>",
+      "&lt;p>&lt;span class=&#34;font-body&#34;>Facilita la vida a bordo con su tecnología y seguridad, ofreciendo al mismo tiempo una conducción placentera&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Equipado para 3 plazas delanteras y 3 plazas traseras con apoya cabezas individuales ajustables en altura.&lt;/span>&lt;/li>"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1368
+          2189
         ],
-        "linea": "Cilindrada total (cm³) 1.368"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada:&nbsp;&lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
       },
       "hp": {
         "valores": [
-          85
+          150
         ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
-      },
-      "baulL": {
-        "valores": [
-          650
-        ],
-        "linea": "Capacidad de baúl (kg) 650"
-      },
-      "pesoKg": {
-        "valores": [
-          1138
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia:&nbsp;&lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
       }
     }
   },
-  "fiat/FT-Fiorino_MY26.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FT-Fiorino_MY26.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FT-Fiorino_MY26.pdf",
+  "citroen/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-mixta.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumpy/descubre-mixta.html",
+    "archivo": null,
     "encabezado": [
-      "ENDURANCE 1.3L",
-      "MOTOR MT5 TRANSMISIÓN",
-      "N° de cilindros 4 en línea Tracción 4X2, Tracción delantera",
-      "N° valvulas por cilindros 2 Caja de cambios Manual de 5 vel.",
-      "Cilindrada (cc) 1.332 Embrague Monodisco seco",
-      "Potencia máxima (CV / rpm) 99/6.000"
+      "Descubre Mixta",
+      "&lt;span class=&#34;font-body&#34;>Redescubre Citroën Jumpy Mixta, el vehículo comercial ligero más versátil. Su segunda generación se presenta con un diseño moderno y características de confort y seguridad sin precedentes.&lt;/span>&lt;/p>",
+      "&lt;p>&lt;span class=&#34;font-body&#34;>Se beneficia de un nuevo frontal que actualiza su estilo y refuerza su personalidad.&lt;/span>&lt;/p>",
+      "&lt;p>&lt;span class=&#34;font-body&#34;>Facilita la vida a bordo con su tecnología y seguridad, ofreciendo al mismo tiempo una conducción placentera&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Equipado para 3 plazas delanteras y 3 plazas traseras con apoya cabezas individuales ajustables en altura.&lt;/span>&lt;/li>"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1332
+          2189
         ],
-        "linea": "Cilindrada (cc) 1.332 Embrague Monodisco seco"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: &lt;b>2.189 cm³&lt;/b>&lt;/span>&lt;/li>"
       },
       "hp": {
         "valores": [
-          99
+          150
         ],
-        "linea": "Potencia máxima (CV / rpm) 99/6.000"
-      },
-      "pesoKg": {
-        "valores": [
-          1203
-        ],
-        "linea": "Peso en orden de marcha (kg) 1.203"
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: &lt;b>150 CV&lt;/b>&lt;/span>&lt;/li>"
       }
     }
   },
-  "fiat/Ficha-Tecnica-Fiat-Argo-MY21.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Argo-MY21.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__Ficha-Tecnica-Fiat-Argo-MY21.pdf",
+  "citroen/citroen-argentina/vehiculos/utilitarios/jumper.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumper.html",
+    "archivo": null,
     "encabezado": [
-      "CARACTERÍSTICAS TÉCNICAS",
-      "DRIVE PRECISION MT PRECISION AT HGT",
-      "CARROCERIA 5 puertas",
-      "MOTOR 1.3 FIREFLY 1.8 E-TORQ EVO",
-      "Combustible Nafta",
-      "Número de cilindros 4 en línea"
+      "Jumper | Citroën Argentina",
+      "&lt;span class=&#34;font-h1&#34;>CITROËN JUMPER&lt;/span>&lt;/p>",
+      "\">",
+      "&lt;span class=&#34;font-body&#34;>En Citroën, la historia de los servicios públicos comienza a principios del siglo XX. La marca ha estado presente en el mercado de los vehículos comerciales desde 1928, con el lanzamiento, a lo largo de los años, de vehículos pioneros como el C4 Van, Type H, 2CV Van. Con esta herencia, trae, hoy y más que nunca, una solución adaptada a cada uso.&lt;/span>&lt;/p>",
+      "&lt;p style=&#34;text-align: center;&#34;>&lt;span class=&#34;font-body&#34;>&nbsp;&lt;/span>&lt;/p>",
+      "&lt;p style=&#34;text-align: center;&#34;>&nbsp;&lt;/p>"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2184
+        ],
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: 2.184 cm3&lt;/span>&lt;/li>"
+      },
+      "hp": {
+        "valores": [
+          140
+        ],
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: 140 CV / 3.500 rpm&lt;/span>&lt;/li>"
+      }
+    }
+  },
+  "citroen/citroen-argentina/vehiculos/utilitarios/jumper/descubre.html": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/citroen-argentina/vehiculos/utilitarios/jumper/descubre.html",
+    "archivo": null,
+    "encabezado": [
+      "Descubre",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Motor 2.2 HDi 140 CV con caja manual de 6 velocidades&lt;/span>&lt;/li>",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Tanque de combustible de 90 lts.&lt;/span>&lt;/li>",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Ayuda al arranque en pendiente, frenos ABS y ESP&lt;/span>&lt;/li>",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Doble airbag (conductor y pasajero)&lt;/span>&lt;/li>",
+      "&lt;li>&lt;span class=&#34;font-body&#34;>Posición de manejo confortable y apoyabrazos para el conductor&lt;/span>&lt;/li>"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2184
+        ],
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Cilindrada: 2.184 cm3&lt;/span>&lt;/li>"
+      },
+      "hp": {
+        "valores": [
+          140
+        ],
+        "linea": "&lt;li>&lt;span class=&#34;font-body&#34;>Potencia: 140 CV / 3.500 rpm&lt;/span>&lt;/li>"
+      }
+    }
+  },
+  "citroen/20251111-ft-jumpy.pdf": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/content/dam/citroen/argentina/fichas-tecnicas/jumpy/20251111-ft-jumpy.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\citroen__20251111-ft-jumpy.pdf",
+    "encabezado": [
+      "CITROËN",
+      "JUMPY",
+      "FICHA TÉCNICA",
+      "CITROËN JUMPY",
+      "JUMPY L3 HDI 150 MY26",
+      "A V I S O"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2184
+        ],
+        "linea": "Cilindrada (cm 3 ) 2.184"
+      },
+      "hp": {
+        "valores": [
+          150
+        ],
+        "linea": "Potencia máxima (CV/rpm) 150 / 3.500 S I N"
+      },
+      "pesoKg": {
+        "valores": [
+          1826
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.826"
+      }
+    }
+  },
+  "citroen/20250820_ft_jumper.pdf": {
+    "marca": "citroen",
+    "url": "https://www.citroen.com.ar/content/dam/citroen/argentina/fichas-tecnicas/jumper/20250820_ft_jumper.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\citroen__20250820_ft_jumper.pdf",
+    "encabezado": [
+      "CITROËN",
+      "JUMPER",
+      "FICHA TÉCNICA",
+      "CITROËN JUMPER",
+      "JUMPER L2H2 JUMPER L3H2",
+      "HDI 140 VAN MY26 HDI 140 VAN MY26"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          2184
+        ],
+        "linea": "Cilindrada (cm 3 ) 2.184 2.184 S I N"
+      },
+      "hp": {
+        "valores": [
+          140
+        ],
+        "linea": "Potencia máxima (CV/rpm) 140 / 3.500 140 / 3.500 P R E V I O"
+      },
+      "pesoKg": {
+        "valores": [
+          2190,
+          2260
+        ],
+        "linea": "Peso en orden de marcha (kg) 2.190 2.260"
+      }
+    }
+  },
+  "jeep/compass.html": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/compass.html",
+    "archivo": null,
+    "encabezado": [
+      "Nuevo Jeep® Compass – Jeep® Argentina",
+      "Skip to main content",
+      "Vehículos",
+      "Jeep ® Life",
+      "postventa (Open in a new window)",
+      "Desempeño"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          272,
+          400
+        ],
+        "linea": "Para quienes buscan un nivel superior de potencia y adrenalina, la versión Blackhawk incorpora un motor 2.0L turbo alimentado con 272 CV y 400 Nm de torque, dis"
+      }
+    }
+  },
+  "jeep/compass/capability.html": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/compass/capability.html",
+    "archivo": null,
+    "encabezado": [
+      "Nuevo Jeep® Compass – Jeep® Argentina",
+      "Skip to main content",
+      "Vehículos",
+      "Jeep ® Life",
+      "postventa (Open in a new window)",
+      "Desempeño"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          270
+        ],
+        "linea": "Las dos motorizaciones disponibles satisfarán tu búsqueda de potencia y eficiencia, sin importar dónde estés. El nuevo motor T270 1.3L MultiAir® III Turbo es ex"
+      }
+    }
+  },
+  "jeep/compass-old/capability.html": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/compass-old/capability.html",
+    "archivo": null,
+    "encabezado": [
+      "Nuevo Jeep® Compass – Jeep® Argentina",
+      "Skip to main content",
+      "Vehículos",
+      "Jeep ® Life",
+      "postventa (Open in a new window)",
+      "Desempeño"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          270
+        ],
+        "linea": "Las dos motorizaciones disponibles satisfarán tu búsqueda de potencia y eficiencia, sin importar dónde estés. El nuevo motor T270 1.3L MultiAir® III Turbo es ex"
+      }
+    }
+  },
+  "jeep/commander-old/capability.html": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/commander-old/capability.html",
+    "archivo": null,
+    "encabezado": [
+      "Jeep® Commander – Jeep® Argentina",
+      "Skip to main content",
+      "Vehículos",
+      "Jeep ® Life",
+      "postventa (Open in a new window)",
+      "Desempeño"
+    ],
+    "especificaciones": {
+      "hp": {
+        "valores": [
+          170,
+          380
+        ],
+        "linea": "El motor diésel 2.0 Multijet II desarrolla una potencia de 170 CV y produce un torque máximo de 380 Nm. Este motor de última tecnología cuenta con un catalizado"
+      }
+    }
+  },
+  "jeep/Jeep-Compass-Ficha-Tecnica-2026.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/compass/ficha-tecnica/Jeep-Compass-Ficha-Tecnica-2026.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha-Tecnica-2026.pdf",
+    "encabezado": [
+      "SPORT T270 AT6 4X2",
+      "LIMITED T270 AT6 4X2",
+      "SERIE S T270 AT6 4X2",
+      "JEEP COMPASS BLACKHAWK 2.0L GME AT9 4X4",
+      "EQUIPAMIENTO Sport Limited Serie S Blackhawk Sport Limited Serie S Blackhawk",
+      "T270 AT6 T270 AT6 T270 AT6 GME AT9 T270 AT6 T270 AT6 T270 AT6 GME AT9"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
           1332,
-          1747
+          1995
         ],
-        "linea": "Cilindrada total (cm³) 1.332 1.747"
+        "linea": "Climatizador automático bi-zona Asientos tapizados en cuero ecológico Cilindrada (Cm3) Válvulas 1.332 cm³ 1.995 cm³"
       },
       "hp": {
         "valores": [
-          99,
-          130
+          175,
+          272
         ],
-        "linea": "Potencia máxima (CV / rpm) 99 / 6.000 130 / 5.250"
+        "linea": "Apoyabrazos central delantero Salidas de ventilación en plazas traseras Potencia (Cv@rpm) Disposicion y N° Cilindros 175cv @ 5.750 272 @5.200"
       },
       "baulL": {
         "valores": [
-          300
+          390
         ],
-        "linea": "Capacidad de baúl (lt) 300"
+        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) Capacidad tanque Combustible (lts) 390"
       },
       "pesoKg": {
         "valores": [
-          1114,
-          1207,
-          1223
+          1918,
+          1966,
+          1970
         ],
-        "linea": "Peso en orden de marcha (kg) 1.114 1.207 1.223"
+        "linea": "Peso en orden de marcha (Kgs) Cap 1918 1.966 1.970 1.970"
       }
     }
   },
-  "fiat/FIORINO_Ficha_tecnica-13-04-22.pdf": {
-    "marca": "fiat",
-    "url": "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/FIORINO_Ficha_tecnica-13-04-22.pdf",
-    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\fiat__FIORINO_Ficha_tecnica-13-04-22.pdf",
+  "jeep/Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/renegade/Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade_Ficha_Tecnica_Nafta-SIN-LONGITUD-13-08-26.pdf",
     "encabezado": [
-      "S: DE SERIE O: OPCIONAL -: NO DISPONIBLE S: DE SERIE O: OPCIONAL -: NO DISPONIBLE",
-      "ENDURANCE 1.4L ENDURANCE 1.4L",
-      "EXTERIOR MT5 CONFORT MT5",
-      "Apertura de puertas a 90º y 180º Aire acondicionado S",
-      "S",
-      "Molduras laterales protectoras S Asientos rebatibles S"
+      "ALTITUDE 1.3T AT6 FWD",
+      "NIGHT EAGLE 1.3T AT6 FWD",
+      "SAHARA 1.3T AT6 FWD",
+      "JEEP RENEGADE WILLYS 1.3T AT9 4X4",
+      "EQUIPAMIENTO Altitude N. Eagle Sahara Willys Altitude N. Eagle Sahara Willys",
+      "Exterior Tecnología"
     ],
     "especificaciones": {
       "cc": {
         "valores": [
-          1368
+          1332
         ],
-        "linea": "Cilindrada total (cm³) 1.368"
+        "linea": "Asiento de conductor con regulación eléctrica Cilindrada (Cm3) 1.332 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
       },
       "hp": {
         "valores": [
-          85
+          175
         ],
-        "linea": "Potencia máxima (CV / rpm) 85 / 5.750"
+        "linea": "Revestimiento interior de techo color negro Potencia (Cv@rpm) 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
       },
       "baulL": {
         "valores": [
-          650
+          314
         ],
-        "linea": "Capacidad de baúl (kg) 650"
+        "linea": "Control de tracción (TCS) Capacidad de baúl 314"
       },
       "pesoKg": {
         "valores": [
-          1138
+          1536,
+          1551,
+          1567,
+          1695
         ],
-        "linea": "Peso en orden de marcha (kg) 1.138"
+        "linea": "Cinturones inerciales de 3 puntas (x5) Peso en orden de marcha (Kgs) 1.536 1.551 1.567 1.695"
+      }
+    }
+  },
+  "jeep/Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/wrangler/vlp/modelizer/rubicon4/2025/junio/Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Wrangler_Ficha_tecnica_20-07-26pdf.pdf",
+    "encabezado": [
+      "RUBICON 2.0T AT8 4x4 2P",
+      "RUBICON 2.0T AT8 4X4",
+      "JEEP WRANGLER",
+      "RUBICON",
+      "2P 4P",
+      "Exterior"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1995
+        ],
+        "linea": "Paragolpes, guardabarros y techo color negro Cilindrada (Cm3) 1.995"
+      },
+      "hp": {
+        "valores": [
+          272
+        ],
+        "linea": "Puertas Desmontables Potencia Máxima (Cv @ rpm) 272 @ 5.200"
+      },
+      "pesoKg": {
+        "valores": [
+          1796,
+          2631
+        ],
+        "linea": "Asientos tapizados en cuero Peso en orden de marcha (kg) 1.796 2.631"
+      }
+    }
+  },
+  "jeep/Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf": {
+    "marca": "jeep",
+    "url": "https://contactofca.com.ar/fichas-tecnicas/Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Compass_Ficha_Tecnica_Naftera_MY22.pdf",
+    "encabezado": [
+      "J E E P ® C O M P A S S",
+      "SPORT T2 4X2",
+      "LONGITU T2 4X2",
+      "LONGITU PLUS T2 0 4X2",
+      "JEEP COMPASS L PLUS T2 0 4X2",
+      "EQUIPAMIENTO"
+    ],
+    "especificaciones": {}
+  },
+  "jeep/Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf": {
+    "marca": "jeep",
+    "url": "https://contactofca.com.ar/fichas-tecnicas/Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Compass_Ficha_Tecnica_Diesel_MY22.pdf",
+    "encabezado": [
+      "J E E P ® C O M P A S S D I E S E L",
+      "®",
+      "TRAILHAWK",
+      "JEEP COMPASS DIESEL TD350 AT9 4X4",
+      "EQUIPAMIENTO TRAILHAWK",
+      "Exterior TD350 AT9 Tecnología"
+    ],
+    "especificaciones": {}
+  },
+  "jeep/Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha_tecnica_Nafta_2024.pdf",
+    "encabezado": [
+      "SPORT T2 4X2",
+      "LONGITU T2 4X2",
+      "LIMITED T270 AT6 4X2",
+      "JEEP COMPASS SERIE S T270 AT6 4X2",
+      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
+      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Asientos tapizados en cuero ecológico Cilindrada (Cm3) 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          175
+        ],
+        "linea": "Asiento conductor con regulación manual Potencia (Cv@rpm) 175cv @ 5.750"
+      },
+      "baulL": {
+        "valores": [
+          390
+        ],
+        "linea": "Airbags de rodilla para el conductor Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
+      },
+      "pesoKg": {
+        "valores": [
+          1918,
+          1957,
+          1966,
+          1970
+        ],
+        "linea": "Control de estabilidad (ESC) Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
+      }
+    }
+  },
+  "jeep/Jeep-Compass_Ficha_tec_Diesel.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass_Ficha_tec_Diesel.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass_Ficha_tec_Diesel.pdf",
+    "encabezado": [
+      "TRAILHAWK TD350 AT9 4X4",
+      "JEEP COMPASS",
+      "EQUIPAMIENTO",
+      "Exterior Tecnología",
+      "Llantas de aleación 17” Cierre centralizado sensible a la velocidad",
+      "Rueda de auxilio full size Central multimedia Uconnect® 10,1”"
+    ],
+    "especificaciones": {}
+  },
+  "jeep/Ficha-Tecnica-Compass.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/mayo/Ficha-Tecnica-Compass.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Ficha-Tecnica-Compass.pdf",
+    "encabezado": [
+      "SPORT T2 4X2",
+      "LONGITU T2 4X2",
+      "LIMITED T270 AT6 4X2",
+      "JEEP COMPASS SERIE S T270 AT6 4X2",
+      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
+      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (Cm3) 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          175
+        ],
+        "linea": "Potencia (Cv@rpm) 175cv @ 5.750"
+      },
+      "baulL": {
+        "valores": [
+          390
+        ],
+        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
+      },
+      "pesoKg": {
+        "valores": [
+          1918,
+          1957,
+          1966,
+          1970
+        ],
+        "linea": "Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
+      }
+    }
+  },
+  "jeep/Jeep-Renegade_Ficha_Tecnica_Nafta.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/renegade/Jeep-Renegade_Ficha_Tecnica_Nafta.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade_Ficha_Tecnica_Nafta.pdf",
+    "encabezado": [
+      "SPORT 1.8L MT5/AT6 FWD",
+      "LONGITUDE 1.3T AT6 FWD",
+      "SERIE-S 1.3T AT6 FWD",
+      "JEEP RENEGADE",
+      "TRAILHAWK 1.3T AT9 4X4",
+      "EQUIPAMIENTO Sport Longitude Serie-S Trailhawk Tecnología Sport Longitude Serie-S Trailhawk"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1747,
+          1332
+        ],
+        "linea": "Asientos tapizados en cuero Cilindrada (Cm3): 1.747 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          130,
+          175
+        ],
+        "linea": "Asiento conductor y pasajero con regulación manual Potencia (Cv@rpm): 130cv @ 5.250 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
+      },
+      "baulL": {
+        "valores": [
+          1381
+        ],
+        "linea": "Control de mitigación de rolido (ERM) Capacidad de baúl (Asiento trasero rebatido) (lts) 1.381"
+      },
+      "pesoKg": {
+        "valores": [
+          1406,
+          1453,
+          1492,
+          1643
+        ],
+        "linea": "Peso en orden de marcha (kg) 1.406 / 1.453 1.492 1.492 1.643"
+      }
+    }
+  },
+  "jeep/Jeep_Commander_Ficha_Tecnica_29-01-26.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/commander/ficha-tecnica/Jeep_Commander_Ficha_Tecnica_29-01-26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica_29-01-26.pdf",
+    "encabezado": [
+      "LIMITED T270 1.3T AT6 4X2",
+      "OVERLAND GME 2.0T AT9 4X4",
+      "JEEP COMMANDER BLACKHAWK GME 2.0T AT9 4X4",
+      "EQUIPAMIENTO",
+      "Limited Overland Blackhawk Limited Overland Blackhawk",
+      "T270 GME GME T270 GME GME"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1995
+        ],
+        "linea": "Cilindrada (Cm3) 1.332 1.995"
+      },
+      "hp": {
+        "valores": [
+          175,
+          272
+        ],
+        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 272cv @5.200"
+      },
+      "baulL": {
+        "valores": [
+          233
+        ],
+        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
+      },
+      "pesoKg": {
+        "valores": [
+          1685,
+          1885,
+          1908
+        ],
+        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
+      }
+    }
+  },
+  "jeep/commander-infografia.pdf": {
+    "marca": "jeep",
+    "url": "https://contactofca.com.ar/fichas-producto/commander-infografia.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__commander-infografia.pdf",
+    "encabezado": [
+      "MOTORES JEEP TURBODIESEL",
+      "®",
+      "Sistema de Reducción",
+      "Catalítica Selectiva (SCR)",
+      "Una tecnología de tratamiento de gases de escape para lograr reducir",
+      "las emisiones contaminantes liberadas producto de la combustión de gasoil."
+    ],
+    "especificaciones": {}
+  },
+  "jeep/Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf": {
+    "marca": "jeep",
+    "url": "https://contactofca.com.ar/fichas-tecnicas/Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Ficha_Tecnica_Nueva_JeepRenegade_2022.pdf",
+    "encabezado": [
+      "J E E P",
+      "R E N E G A D E",
+      "J E E P",
+      "RENEGADE",
+      "R E N E G A D E",
+      "J E E P"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1747,
+          1332
+        ],
+        "linea": "Cilindrada (Cm3) 1.747 cm³ 1.332 cm³ 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          130,
+          175
+        ],
+        "linea": "Potencia (Cv@rpm) 130cv @ 5.250 175cv @ 5.750 175cv @ 5.750"
+      }
+    }
+  },
+  "jeep/Jeep_Commander_Ficha_Tecnica_20-07-26.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/commander/ficha-tecnica/Jeep_Commander_Ficha_Tecnica_20-07-26.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica_20-07-26.pdf",
+    "encabezado": [
+      "LIMITED T270 1.3T AT6 4X2",
+      "OVERLAND GME 2.0T AT9 4X4",
+      "JEEP COMMANDER BLACKHAWK GME 2.0T AT9 4X4",
+      "EQUIPAMIENTO",
+      "Limited Overland Blackhawk Limited Overland Blackhawk",
+      "T270 GME GME T270 GME GME"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1995
+        ],
+        "linea": "Cilindrada (Cm3) 1.332 1.995"
+      },
+      "hp": {
+        "valores": [
+          175,
+          272
+        ],
+        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 272cv @5.200"
+      },
+      "baulL": {
+        "valores": [
+          233
+        ],
+        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
+      },
+      "pesoKg": {
+        "valores": [
+          1685,
+          1885,
+          1908
+        ],
+        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
+      }
+    }
+  },
+  "jeep/Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/compass/Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Compass-Ficha_tecnica_Nafta_2025.pdf",
+    "encabezado": [
+      "SPORT T2 4X2",
+      "LONGITU T2 4X2",
+      "LIMITED T270 AT6 4X2",
+      "JEEP COMPASS SERIE S T270 AT6 4X2",
+      "EQUIPAMIENTO Sport Longitude Longitude Plus Limited Serie S Sport Longitude Longitude Plus Limited Serie S",
+      "T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6 T270 AT6"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (Cm3) 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          175
+        ],
+        "linea": "Potencia (Cv@rpm) 175cv @ 5.750"
+      },
+      "baulL": {
+        "valores": [
+          390
+        ],
+        "linea": "Capacidad de baúl (Asiento trasero en posición normal) (lts) 390"
+      },
+      "pesoKg": {
+        "valores": [
+          1918,
+          1957,
+          1966,
+          1970
+        ],
+        "linea": "Peso en orden de marcha (Kgs) 1918 1.957 1.966 1.970"
+      }
+    }
+  },
+  "jeep/Jeep_Commander_Ficha_Tecnica.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2023/commander/desc-general/Jeep_Commander_Ficha_Tecnica.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep_Commander_Ficha_Tecnica.pdf",
+    "encabezado": [
+      "LIMITED 1.3 AT6 4X2",
+      "LIMITED 2.0 TD AT9 4X4",
+      "JEEP COMMANDER OVERLAND 2.0 TD AT9 4X4",
+      "EQUIPAMIENTO",
+      "Limited Limited Overland",
+      "T270 TD380"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332,
+          1956
+        ],
+        "linea": "Asiento pasajero con regulación eléctrica en 6 direcciones Cilindrada (Cm3) 1.332 1.956"
+      },
+      "hp": {
+        "valores": [
+          175,
+          170
+        ],
+        "linea": "Tercera fila de asientos reclinable Potencia (Cv@rpm) 175cv @ 5.750 170cv @ 3.750"
+      },
+      "baulL": {
+        "valores": [
+          233
+        ],
+        "linea": "ABS con distribución electrónica de fuerza de freando (EBD) Capacidad de baúl (Normal: 7 Pasajeros) (lts) 233 233 233"
+      },
+      "pesoKg": {
+        "valores": [
+          1685,
+          1885,
+          1908
+        ],
+        "linea": "Control de mitigación de rolido (ERM) Peso en orden de marcha (Kgs) 1685 1885 1908"
+      }
+    }
+  },
+  "jeep/Jeep-Renegade-MY25.pdf": {
+    "marca": "jeep",
+    "url": "https://www.jeep.com.ar/content/dam/cross-regional/latam/jeep/es_ar/2025/renegade-willys/home-willys/ficha-tecnica/mayo/Jeep-Renegade-MY25.pdf",
+    "archivo": "C:\\Users\\brito\\Downloads\\Fw\\scripts\\fichas\\jeep__Jeep-Renegade-MY25.pdf",
+    "encabezado": [
+      "SPORT 1.3T AT6 FWD",
+      "LONGITUDE 1.3T AT6 FWD",
+      "SERIE-S 1.3T AT6 FWD",
+      "JEEP RENEGADE WILLYS 1.3T AT9 4X4",
+      "EQUIPAMIENTO Sport Longitude Serie-S Willys Sport Longitude Serie-S Willys",
+      "Exterior Tecnología"
+    ],
+    "especificaciones": {
+      "cc": {
+        "valores": [
+          1332
+        ],
+        "linea": "Cilindrada (Cm3) 1.332 cm³ 1.332 cm³ 1.332 cm³ 1.332 cm³"
+      },
+      "hp": {
+        "valores": [
+          175
+        ],
+        "linea": "Potencia (Cv@rpm) 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750 175cv @ 5.750"
+      },
+      "baulL": {
+        "valores": [
+          1381
+        ],
+        "linea": "Asistente de arranque en pendientes (HSA) Capacidad de baúl (Asiento trasero rebatido) (lts) 1381"
+      },
+      "pesoKg": {
+        "valores": [
+          1492,
+          1718
+        ],
+        "linea": "Asistente de descenso en pendientes (HDC) Peso en orden de marcha (Kgs) 1.492 1.492 1.492 1.718"
       }
     }
   }
