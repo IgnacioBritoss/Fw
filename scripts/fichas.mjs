@@ -99,6 +99,31 @@ const MARCAS = {
   honda: "https://www.honda.com.ar",
 };
 
+/*
+  LAS CARPETAS DONDE UNA MARCA GUARDA SUS FICHAS.
+
+  Esto es lo ÚNICO que se escribe a mano, y solo cuando se conoce de verdad una
+  dirección real. La de Fiat salió de una ficha que ya teníamos en la mano:
+
+      fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica/Ficha-Tecnica-Fiat-Cronos-MY21.pdf
+
+  Ese "/content/dam/" es Adobe Experience Manager, el gestor de contenidos que
+  usan casi todas las automotrices. Tiene una propiedad muy útil: cualquier
+  carpeta se puede pedir como JSON agregándole ".N.json", y contesta con la
+  lista de lo que tiene adentro. O sea que con una sola dirección conocida se
+  descubren todas las fichas de esa marca.
+
+  NO SE AGREGAN CARPETAS ADIVINADAS. Adivinar rutas ya falló una vez y dio 404
+  en cadena. Acá va solo lo que se comprobó; cuando una carpeta nueva conteste,
+  se suma.
+*/
+const CARPETAS_DE_FICHAS = {
+  fiat: ["/content/dam/fiat/argentina/ficha-tecnica"],
+};
+
+/** Hasta qué profundidad se le pide el listado a una carpeta de AEM. */
+const NIVELES_JSON = [1, 2, 3];
+
 /** Lo que tiene que decir una dirección para que valga la pena abrirla. */
 const SUENA_A_FICHA = /ficha|tecnic|técnic|especificac|datasheet|specs/i;
 
@@ -147,6 +172,31 @@ export async function rutasProhibidas(base) {
  */
 export function urlsDeSitemap(xml) {
   return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map((m) => m[1]);
+}
+
+/**
+ * Los PDF que cuelgan de un listado JSON de Adobe Experience Manager.
+ *
+ * La respuesta es un objeto donde cada clave es el nombre de un hijo de la
+ * carpeta. Los que terminan en .pdf son archivos; los demás son subcarpetas y
+ * se recorren también, porque las marcas suelen separar por año o por modelo.
+ *
+ * Las claves que empiezan con "jcr:" o ":" son metadatos del gestor, no
+ * contenido, y se saltean.
+ */
+export function pdfsDeJson(objeto, rutaBase) {
+  const salida = [];
+  const recorrer = (nodo, ruta) => {
+    if (!nodo || typeof nodo !== "object") return;
+    for (const [nombre, hijo] of Object.entries(nodo)) {
+      if (nombre.startsWith("jcr:") || nombre.startsWith(":")) continue;
+      const camino = `${ruta}/${nombre}`;
+      if (/\.pdf$/i.test(nombre)) salida.push(camino);
+      else if (hijo && typeof hijo === "object") recorrer(hijo, camino);
+    }
+  };
+  recorrer(objeto, rutaBase);
+  return [...new Set(salida)];
 }
 
 export const permitida = (ruta, prohibidas) => !prohibidas.some((p) => ruta.startsWith(p));
@@ -336,6 +386,33 @@ for (const [marca, base] of aRecorrer) {
   }
   console.log(`  robots.txt: ${prohibidas.length} rutas cerradas, ${sitemaps.length} sitemap(s) declarado(s)`);
 
+  const encontrados = new Set();
+
+  /*
+    PRIMERO LA CARPETA CONOCIDA, SI LA HAY.
+
+    Es el camino bueno cuando existe: una sola llamada devuelve todas las
+    fichas de la marca, sin recorrer el sitio. Se prueban varios niveles de
+    profundidad porque el gestor devuelve solo hasta donde se le pide, y las
+    marcas separan las fichas en subcarpetas por año o por modelo.
+  */
+  for (const carpeta of CARPETAS_DE_FICHAS[marca] ?? []) {
+    if (!permitida(carpeta, prohibidas)) { console.log(`  ${carpeta} -> cerrada por robots.txt`); continue; }
+    for (const nivel of NIVELES_JSON) {
+      try {
+        const crudo = await traerTexto(`${base}${carpeta}.${nivel}.json`);
+        const pdfs = pdfsDeJson(JSON.parse(crudo), base + carpeta);
+        pdfs.forEach((u) => encontrados.add(u));
+        console.log(`  carpeta ${carpeta.slice(-34).padEnd(36)} nivel ${nivel}: ${pdfs.length} ficha(s)`);
+        // Con que un nivel conteste alcanza; los más profundos repiten.
+        if (pdfs.length) break;
+      } catch (e) {
+        console.log(`  carpeta ${carpeta.slice(-34).padEnd(36)} nivel ${nivel}: ${e.message}`);
+      }
+      await dormir(ESPERA_MS);
+    }
+  }
+
   /*
     DE DÓNDE SALE LA LISTA DE PÁGINAS.
 
@@ -367,9 +444,7 @@ for (const [marca, base] of aRecorrer) {
     await dormir(ESPERA_MS);
   }
 
-  const encontrados = new Set();
-
-  // Los PDF que el propio sitemap lista, que es el mejor caso.
+  // Los PDF que el propio sitemap lista, que es el otro buen caso.
   for (const u of direcciones) {
     if (/\.pdf(\?|$)/i.test(u) && SUENA_A_FICHA.test(decodeURIComponent(u))) encontrados.add(u);
   }

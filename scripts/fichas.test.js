@@ -22,7 +22,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   numerosDe, sacarEspecificaciones, pdfsDeLaPagina, permitida,
-  leerRobots, urlsDeSitemap,
+  leerRobots, urlsDeSitemap, pdfsDeJson,
 } from "./fichas.mjs";
 
 // ── Leer los números ───────────────────────────────────────────────────────
@@ -176,4 +176,36 @@ test("un indice de sitemaps se lee igual: son las mismas etiquetas", () => {
 test("un sitemap vacio o roto no rompe nada", () => {
   assert.deepEqual(urlsDeSitemap(""), []);
   assert.deepEqual(urlsDeSitemap("<html>pagina de error</html>"), []);
+});
+
+// ── El listado de la carpeta de fichas ─────────────────────────────────────
+
+test("del listado JSON salen los PDF, incluso en subcarpetas", () => {
+  // Las marcas separan las fichas por año o por modelo, asi que hay que bajar.
+  const nodo = {
+    "jcr:primaryType": "sling:Folder",
+    ":type": "dam/folder",
+    "Ficha-Tecnica-Cronos-MY21.pdf": { "jcr:primaryType": "dam:Asset" },
+    my22: {
+      "jcr:primaryType": "sling:Folder",
+      "Ficha-Tecnica-Argo-MY22.pdf": { "jcr:primaryType": "dam:Asset" },
+    },
+  };
+  const pdfs = pdfsDeJson(nodo, "https://www.fiat.com.ar/content/dam/fiat/argentina/ficha-tecnica");
+  assert.equal(pdfs.length, 2);
+  assert.ok(pdfs.some((u) => u.endsWith("/Ficha-Tecnica-Cronos-MY21.pdf")));
+  assert.ok(pdfs.some((u) => u.endsWith("/my22/Ficha-Tecnica-Argo-MY22.pdf")));
+});
+
+test("los metadatos del gestor no se confunden con archivos", () => {
+  // Todo lo que empieza con "jcr:" o ":" es del gestor de contenidos, no es
+  // contenido. Sin saltearlos, el recorrido se mete en los metadatos.
+  const pdfs = pdfsDeJson({ "jcr:createdBy": "admin", ":items": {}, "x.pdf": {} }, "https://x.com.ar/dam");
+  assert.deepEqual(pdfs, ["https://x.com.ar/dam/x.pdf"]);
+});
+
+test("una carpeta sin PDF devuelve nada, y una respuesta rara tampoco rompe", () => {
+  assert.deepEqual(pdfsDeJson({ foto: { "a.jpg": {} } }, "https://x.com.ar/dam"), []);
+  assert.deepEqual(pdfsDeJson(null, "https://x.com.ar/dam"), []);
+  assert.deepEqual(pdfsDeJson("no es un objeto", "https://x.com.ar/dam"), []);
 });
