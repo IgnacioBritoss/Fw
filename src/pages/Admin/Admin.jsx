@@ -171,17 +171,29 @@ export default function Admin() {
   const [borrando, setBorrando] = useState(null);
   const [borrandoAhora, setBorrandoAhora] = useState(false);
 
-  // Portón de seguridad: si no es admin, no muestra el panel.
-  if (!user || user.role !== "ADMIN") {
-    return (
-      <div style={s.accessDenied}>
-        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{tr("admin.denied")}</div>
-        <div style={{ color: "var(--fw-text-3)", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
-        <button style={{ padding: "10px 24px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
-          onClick={() => navigate("/")}>{tr("common.goHome")}</button>
-      </div>
-    );
-  }
+  /*
+    EL PORTÓN DE SEGURIDAD SE DECIDE ACÁ Y SE DIBUJA ABAJO DE TODOS LOS HOOKS.
+
+    Antes era un `if (!user || user.role !== "ADMIN") return <sin permiso>`
+    puesto acá arriba, antes del useEffect que carga cada pestaña. Eso le daba al
+    componente DOS cantidades de hooks: 26 cuando sos admin y 25 cuando no.
+
+    React cuenta los hooks de cada render y exige que sean siempre los mismos.
+    Así que en cuanto el rol cambiaba con el panel abierto, tiraba "Rendered
+    fewer hooks than expected" y la aplicación entera quedaba en blanco, no solo
+    esta pantalla.
+
+    Y el rol cambia con el panel abierto más seguido de lo que parece, porque al
+    abrir la app la cuenta se relee UNA VEZ contra el servidor (ver refreshUser
+    en context/AuthContext.jsx). Alcanza con que el navegador tenga guardado
+    ADMIN y /users/me conteste otra cosa —una cuenta a la que le sacaron el rol,
+    una sesión vieja, o una respuesta donde `role` no viene— para que la pantalla
+    se vaya a blanco en vez de mostrar "no tenés permiso".
+
+    El portón sigue cerrado igual: lo único que cambia es que ahora se decide
+    antes y se dibuja después, con todos los hooks ya llamados.
+  */
+  const esAdmin = user?.role === "ADMIN";
 
   // Muestra un cartel de aviso (éxito o error) que se oculta solo a los 4s.
   const showAlert = (msg, type = "ok") => {
@@ -205,6 +217,9 @@ export default function Admin() {
 
   // Al cambiar de pestaña, carga las publicaciones o los usuarios según corresponda.
   useEffect(() => {
+    // Sin ser admin no se pide nada: antes esto no corría porque el portón
+    // devolvía antes de llegar acá, y todas estas rutas contestan 403.
+    if (!esAdmin) return;
     if (tab === "listings") {
       setLoadingListings(true);
       adminGetListings()
@@ -260,7 +275,20 @@ export default function Admin() {
         (Array.isArray(data) ? data : []).filter(esperaAlAdmin).length,
       ))
       .catch(() => setPendingVerifications(0));
-  }, [tab, tr]);
+  }, [tab, tr, esAdmin]);
+
+  // Acá sí: ya se llamaron todos los hooks, así que salir en este punto no
+  // cambia cuántos hubo.
+  if (!esAdmin) {
+    return (
+      <div style={s.accessDenied}>
+        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{tr("admin.denied")}</div>
+        <div style={{ color: "var(--fw-text-3)", marginBottom: 24 }}>{tr("admin.deniedNote")}</div>
+        <button style={{ padding: "10px 24px", background: "var(--fw-blue)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
+          onClick={() => navigate("/")}>{tr("common.goHome")}</button>
+      </div>
+    );
+  }
 
   /** Aprueba o rechaza una verificación y refresca la lista. */
   const doReviewVerification = async (id, status, label) => {
