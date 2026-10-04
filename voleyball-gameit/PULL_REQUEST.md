@@ -39,8 +39,18 @@ ganar por 2 opcional y tiempo con punto de oro.
 - [x] Código, imágenes y sonidos propios (los sonidos se sintetizan con Web Audio, sin archivos). Sin marcas ni
       personajes ajenos.
 - [x] `npm run check -- voleyball` y `npm run build` pasan.
-- [ ] Dejé tildado "Allow edits by maintainers".
+- [x] Dejé tildado "Allow edits by maintainers".
 
 ## Capturas
 
-<!-- Arrastrá acá las de la carpeta capturas/: juego-pc.png, remate.png, celular.png, celular-horizontal.png y online.png -->
+| Computadora | Remate |
+| --- | --- |
+| ![Partido 2 contra 2 en computadora](https://raw.githubusercontent.com/IgnacioBritoss/Fw/bd489ce0420ef7acd7604bf78eb8b14c5fe4ab97/voleyball-gameit/capturas/juego-pc.png) | ![Remate con el cartel del punto](https://raw.githubusercontent.com/IgnacioBritoss/Fw/bd489ce0420ef7acd7604bf78eb8b14c5fe4ab97/voleyball-gameit/capturas/remate.png) |
+
+| Celular vertical | Celular horizontal |
+| --- | --- |
+| ![Celular vertical, modo Playa](https://raw.githubusercontent.com/IgnacioBritoss/Fw/bd489ce0420ef7acd7604bf78eb8b14c5fe4ab97/voleyball-gameit/capturas/celular.png) | ![Celular horizontal, controles a los costados](https://raw.githubusercontent.com/IgnacioBritoss/Fw/bd489ce0420ef7acd7604bf78eb8b14c5fe4ab97/voleyball-gameit/capturas/celular-horizontal.png) |
+
+Online, con el chat que relata cada punto:
+
+![Partido online con chat](https://raw.githubusercontent.com/IgnacioBritoss/Fw/bd489ce0420ef7acd7604bf78eb8b14c5fe4ab97/voleyball-gameit/capturas/online.png)
