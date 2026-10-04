@@ -1,22 +1,26 @@
-Título sugerido: **Nuevo juego: Voleyball (vóley con la movilidad de Clashball, bots y online)**
+Título sugerido: **Nuevo juego: Voleyball (vóley de costado como el de HaxBall, con bots y online)**
 
 ## Qué juego es
 
-**Voleyball**, id `voleyball` (`public/games/voleyball/`, servidor en `server/games/voleyball.js`). Vóley 2D en tiempo real
-armado sobre Clashball: los jugadores se mueven con la misma física de HaxBall y la pelota vuela en 3D, rápida y
-bombeada, por encima de la red. Reglas de vóley: punto por jugada, saca el que hace el punto (si recupera el saque, rota
-quién saca), 3 toques por equipo (el bloqueo no cuenta), afuera y por fuera de las antenas es punto contra el último que
-la tocó, ganar por 2 opcional y tiempo con punto de oro.
+**Voleyball**, id `voleyball` (`public/games/voleyball/`, servidor en `server/games/voleyball.js`). Vóley de costado
+como los servidores de vóley de HaxBall, armado sobre Clashball: los jugadores flotan y se mueven con la misma física de
+HaxBall y no pasan al otro lado de la red; la pelota cae con gravedad, los atraviesa y solo se le pega con la patada
+(Espacio). Es punto cuando la pelota toca el piso. Reglas de vóley: punto por jugada, saca el que hace el punto (si
+recupera el saque, rota quién saca), 3 toques por equipo (el saque cuenta como el primero y el bloqueo no cuenta),
+ganar por 2 opcional y tiempo con punto de oro.
 
 ## Cómo se juega
 
-- **Computadora:** flechas o WASD para moverse; X o Espacio para saltar y pegar; Esc pausa. Joystick de consola también.
+- **Computadora:** flechas o WASD para moverse; Espacio o X para pegar; Esc pausa. Joystick de consola también.
   2 jugadores en el mismo teclado: J1 con WASD + Espacio/C, J2 con flechas + Enter/./Ctrl derecho.
-- **Celular:** joystick a la izquierda y botón PEGAR a la derecha; en vertical la cancha se gira con tu equipo abajo.
-- **Toques:** sin apretar, la pelota rebota en el jugador y sube (recepción hacia el armador, armado cerca de la red,
-  tercer toque por arriba). Apretando se salta y se pega hacia el lado contrario a donde se la toca (como la patada de
-  Clashball); las flechas al pegar eligen la profundidad. En el aire, cerca de la red y con la pelota alta es un remate
-  (o una finta); si la pelota viene del rival por arriba de la red, un bloqueo. El saque se apunta con las flechas.
+- **Celular:** joystick a la izquierda y botón PEGAR a la derecha. En vertical la cancha se ve más de cerca y la cámara
+  sigue la pelota; en horizontal los controles quedan a los costados.
+- **El golpe:** como la patada de HaxBall, sale desde el centro del jugador hacia la pelota: desde abajo sube, desde el
+  costado sale para el otro lado y desde arriba es un remate. Apretando queda armado y sale apenas la pelota está al
+  alcance; hay que soltar para volver a pegar. Cerca de la red, devolviendo un ataque, es un bloqueo.
+- **La pelota:** rebota en las paredes de los costados y en la red; arriba no hay techo (si sale del mapa, una flecha en
+  el borde de arriba la sigue). Su sombra en la arena muestra dónde está. En el saque espera quieta y unos puntitos
+  muestran por dónde va a salir.
 - **Modos:** vs CPU de 1v1 a 4v4 con bots en Fácil, Normal y Difícil; Práctica (una máquina te saca siempre); 2 jugadores
   en el mismo teclado; online con salas públicas o con código, juego rápido, espectadores, bots, chat que relata cada
   punto, pausa y revancha. Variantes Clásico, Playa (pelota que flota) y Turbo; canchas Chica, Clásica y Grande.
@@ -39,4 +43,4 @@ la tocó, ganar por 2 opcional y tiempo con punto de oro.
 
 ## Capturas
 
-<!-- Arrastrá acá las de la carpeta capturas/: juego-pc.png, remate.png, celular.png y online.png -->
+<!-- Arrastrá acá las de la carpeta capturas/: juego-pc.png, remate.png, celular.png, celular-horizontal.png y online.png -->

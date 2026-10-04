@@ -2132,8 +2132,8 @@ body.is-touch .chat {
 * Es la misma de Clashball (reproducción fiel del motor de HaxBall): paso fijo de 60 ticks por
 * segundo, unidades en píxeles por tick, posición con la velocidad anterior y después
 * velocidad = amortiguación · (velocidad + gravedad), y las mismas respuestas de colisión
-* disco-disco, disco-plano, disco-segmento y disco-vértice. Acá mueve a los jugadores sobre la
-* arena; la pelota vuela en 3D y la simula match.js.
+* disco-disco, disco-plano, disco-segmento y disco-vértice. Acá mueve a los jugadores (que flotan
+* en la cancha vista de costado); la pelota, que los atraviesa, la simula match.js.
 */
 /** Banderas de colisión (cGroup / cMask), con los mismos valores que HaxBall. */
 const F = {
@@ -2343,44 +2343,24 @@ const PLAYER_PHYSICS = Object.freeze({
 	bCoef: .5,
 	invMass: .5,
 	damping: .96,
-	acceleration: .1,
-	airAcceleration: .03,
-	airDamping: .985,
-	jump: 3.1,
-	gravity: .15,
-	reach: 36,
-	range: 9
+	acceleration: .11,
+	kickingAcceleration: .08,
+	kickingDamping: .96
 });
 const BALL_PHYSICS = Object.freeze({
-	r: 8,
-	gravity: .12
+	r: 9,
+	gravity: .085,
+	damping: .995,
+	bCoef: .55,
+	floorBCoef: .45
 });
-/** Velocidades de los golpes (antes de multiplicar por la velocidad del modo). */
-const HIT = Object.freeze({
-	bumpV: 3.3,
-	bumpVk: .1,
-	bumpVmax: 4.5,
-	bumpMaxH: 2.6,
-	bumpOver: 3,
-	setLift: .4,
-	passZ: 26,
-	nudge: 1.6,
-	carry: .35,
-	hitH: 3,
-	hitV: 3.8,
-	hitVmax: 6.4,
-	hitCarry: .75,
-	spikeH: 7.2,
-	spikeCarry: .5,
-	tipH: 2.2,
-	tipV: 1.8,
-	blockH: 2.4,
-	serveT: [
-		84,
-		74,
-		64
-	],
-	serveZ: 30
+/** El golpe: como la patada de HaxBall, sale desde el centro del jugador hacia la pelota. */
+const KICK = Object.freeze({
+	strength: 6,
+	carry: .5,
+	run: .5,
+	range: 5,
+	max: 10
 });
 const MODES = {
 	classic: {
@@ -2402,9 +2382,12 @@ const MODES = {
 			es: "Pelota liviana que flota: más fácil de sostener",
 			en: "Light floaty ball: easier rallies"
 		},
-		speed: .89,
-		ball: { gravity: .095 },
-		player: { acceleration: .095 }
+		ball: { gravity: .065 },
+		kick: { strength: 5.3 },
+		player: {
+			acceleration: .1,
+			kickingAcceleration: .07
+		}
 	},
 	turbo: {
 		name: {
@@ -2415,40 +2398,53 @@ const MODES = {
 			es: "Saques y remates bombazo, todo más rápido",
 			en: "Rocket serves and spikes, all faster"
 		},
-		speed: 1.16,
-		ball: { gravity: .161 },
-		player: { acceleration: .112 }
+		ball: { gravity: .12 },
+		kick: {
+			strength: 7.2,
+			max: 11.5
+		},
+		player: {
+			acceleration: .13,
+			kickingAcceleration: .095
+		}
 	}
 };
+/**
+* cw: de la red a la pared; height: del piso al borde de arriba del mapa; serve: fuerza extra del
+* saque, para que desde el fondo llegue a toda la cancha rival.
+*/
 const COURTS = {
 	small: {
 		name: {
 			es: "Chica",
 			en: "Small"
 		},
-		cw: 180,
-		ch: 105
+		cw: 240,
+		height: 290,
+		serve: .95
 	},
 	classic: {
 		name: {
 			es: "Clásica",
 			en: "Classic"
 		},
-		cw: 240,
-		ch: 135
+		cw: 300,
+		height: 310,
+		serve: 1.1
 	},
 	big: {
 		name: {
 			es: "Grande",
 			en: "Big"
 		},
-		cw: 300,
-		ch: 165
+		cw: 370,
+		height: 330,
+		serve: 1.18
 	}
 };
 /** Cancha sugerida según jugadores por equipo. */
 function autoCourt(perTeam) {
-	if (perTeam <= 2) return "small";
+	if (perTeam <= 1) return "small";
 	if (perTeam <= 3) return "classic";
 	return "big";
 }
@@ -2457,46 +2453,38 @@ const resolveCourt = (id, perTeam) => COURTS[id] ? id : autoCourt(perTeam);
 function buildCourt(id, modeId = "classic") {
 	const def = COURTS[id] || COURTS.classic;
 	const mode = MODES[modeId] || MODES.classic;
-	const { cw, ch } = def;
-	const width = cw + 78;
-	const height = ch + 62;
+	const { cw, height } = def;
+	const ball = {
+		...BALL_PHYSICS,
+		...mode.ball || {}
+	};
 	const st = {
 		id: COURTS[id] ? id : "classic",
 		mode: MODES[modeId] ? modeId : "classic",
 		cw,
-		ch,
-		width,
 		height,
-		netH: 40,
-		netY: ch + 8,
-		postY: ch + 26,
-		serveX: cw + 32,
+		netH: 100,
+		serveX: Math.min(cw - 52, 250),
+		serveY: -112,
 		planes: [],
-		speed: mode.speed || 1,
 		player: {
 			...PLAYER_PHYSICS,
 			...mode.player || {}
 		},
-		ball: {
-			...BALL_PHYSICS,
-			...mode.ball || {}
-		},
-		hit: HIT
+		ball,
+		kick: {
+			...KICK,
+			serve: def.serve,
+			...mode.kick || {}
+		}
 	};
 	const o = { bCoef: 0 };
-	st.planes.push(plane(0, 1, -height, o), plane(0, -1, -height, o), plane(1, 0, -width, o), plane(-1, 0, -width, o));
+	st.planes.push(plane(0, -1, 0, o), plane(0, 1, -height, o), plane(1, 0, -cw, o), plane(-1, 0, -cw, o));
 	st.planes.push(plane(-1, 0, 0, {
 		cMask: F.red,
 		bCoef: .1
 	}), plane(1, 0, 0, {
 		cMask: F.blue,
-		bCoef: .1
-	}));
-	st.planes.push(plane(-1, 0, cw, {
-		cMask: F.redKO,
-		bCoef: .1
-	}), plane(1, 0, cw, {
-		cMask: F.blueKO,
 		bCoef: .1
 	}));
 	return st;
@@ -2507,27 +2495,25 @@ function buildCourt(id, modeId = "classic") {
 * Voleyball — un partido. Mismo código en el servidor (autoritativo), en el cliente online
 * (predicción) y en los modos sin conexión.
 *
-* Los jugadores se mueven con la física de Clashball (HaxBall) y no pueden cruzar la red. La pelota
-* vuela en 3D: posición sobre la arena (x, y) y altura (z) con gravedad; la red es una pared de
-* altura `netH` entre las antenas, con una faja arriba en la que la pelota puede picar y seguir.
+* Vista de costado como los mapas de vóley de HaxBall (ver courts.js): los jugadores flotan y se
+* mueven con la física de Clashball, no pueden pasar al otro lado de la red y la pelota cae con
+* gravedad, los atraviesa y rebota en las paredes de los costados y en la red. Arriba no hay techo:
+* si se la manda muy alto sale del mapa y vuelve a caer.
 *
-* Reglas del vóley:
-*  - estado 0 saque: el que saca espera detrás de su línea de fondo con la pelota y saca al apretar
-*    (las flechas eligen hacia dónde y qué tan fuerte). Si tarda más de 8 s saca solo. Si un equipo
-*    no tiene jugadores (práctica), saca siempre una máquina desde ese lado.
-*  - estado 1 en juego: cada equipo tiene hasta 3 toques para pasarla (el bloqueo no cuenta). Si pica
-*    dentro de una cancha, punto del otro equipo; si pica afuera o cruza por fuera de las antenas,
-*    punto contra el último que la tocó; el 4.º toque es falta.
+* El golpe es la patada de HaxBall: al apretar queda armado y, apenas la pelota está al alcance, sale
+* desde el centro del jugador hacia la pelota (por debajo la levanta, desde arriba la remata). Conserva
+* parte de la velocidad que traía y suma un poco si el jugador va hacia ella. Hay que soltar para
+* volver a pegar.
+*
+* Reglas:
+*  - estado 0 saque: la pelota espera quieta en el fondo de la cancha del que saca y sale cuando él le
+*    pega. Si tarda más de 7 s saca solo. Si un equipo no tiene jugadores (práctica), saca siempre una
+*    máquina desde ese lado.
+*  - estado 1 en juego: el punto se define solo en el piso: si la pelota lo toca, punto para el equipo
+*    del otro lado. Cada equipo tiene hasta 3 toques (el saque cuenta como el primero y el bloqueo no
+*    cuenta); el 4.º es falta.
 *  - estado 2 punto: festejo y saca el equipo que hizo el punto; si recupera el saque, rota quién saca.
 *  - estado 3 final.
-* Golpes:
-*  - sin apretar, la pelota rebota en el jugador y sube (pase): el 1.er toque va hacia la zona del
-*    armador, el 2.º sube cerca de la red para el remate y el 3.º la devuelve por arriba. Dónde se la
-*    toca la corre un poco (más cuanto más rápido viene).
-*  - al apretar se salta y queda armado el golpe, como la patada de HaxBall (hay que soltar para
-*    volver a pegar): sale hacia el lado contrario a donde se la toca y cae a la profundidad que
-*    eligen las flechas (hacia la red, profundo; hacia atrás, corto). En el aire, cerca de la red y
-*    con la pelota alta es un remate (o una finta); si viene del rival por arriba de la red, un bloqueo.
 */
 const TEAM$1 = {
 	SPEC: 0,
@@ -2552,205 +2538,207 @@ const TEAM_FLAG = [
 	F.red,
 	F.blue
 ];
-const SERVE_FLAG = [
-	0,
-	F.redKO,
-	F.blueKO
-];
 const PLAYER_MASK = F.red | F.blue | F.wall;
 const DIAG = 1 / Math.SQRT2;
 const POINT_TICKS = 150;
 const END_TICKS = 300;
-const SERVE_WAIT = 480;
+const SERVE_MIN = 20;
+const SERVE_WAIT = 420;
 const AUTO_SERVE = 75;
-const TOUCH_CD = 14;
-const LAND_CD = 8;
-const BLOCK_ZONE = 34;
-const SPIKE_ZONE = .5;
+const KICK_MIN = 6;
+const BLOCK_X = 26;
 const r3 = (v) => Math.round(v * 1e3) / 1e3;
 const clamp$1 = (v, a, b) => v < a ? a : v > b ? b : v;
-/** Posiciones base de un equipo de n jugadores: [distancia a la red / fondo, y / ancho]. */
+/** Posiciones base de un equipo de n jugadores: [distancia a la red / cw, altura]. */
 const FORM = {
-	1: [[.55, 0]],
-	2: [[.4, -.45], [.6, .45]],
+	1: [[.5, 80]],
+	2: [[.3, 130], [.68, 60]],
 	3: [
-		[.25, 0],
-		[.62, -.5],
-		[.62, .5]
+		[.18, 140],
+		[.48, 70],
+		[.8, 55]
 	],
 	4: [
-		[.22, -.5],
-		[.22, .5],
-		[.64, -.5],
-		[.64, .5]
+		[.16, 150],
+		[.4, 80],
+		[.66, 50],
+		[.84, 110]
 	],
 	5: [
-		[.2, -.6],
-		[.2, 0],
-		[.2, .6],
-		[.64, -.45],
-		[.64, .45]
+		[.14, 160],
+		[.34, 90],
+		[.54, 45],
+		[.72, 120],
+		[.88, 60]
 	],
 	6: [
-		[.2, -.6],
-		[.2, 0],
-		[.2, .6],
-		[.64, -.6],
-		[.64, 0],
-		[.64, .6]
+		[.14, 165],
+		[.3, 95],
+		[.46, 40],
+		[.62, 130],
+		[.76, 70],
+		[.9, 150]
 	]
 };
-/** Posición base del i-ésimo de n jugadores de un equipo, en coordenadas de la cancha. */
+/** Posición base del i-ésimo de n jugadores de un equipo. */
 function formation(st, team, i, n) {
-	const f = FORM[Math.min(6, Math.max(1, n))];
-	const [fx, fy] = f[i % f.length];
+	const f = FORM[clamp$1(n, 1, 6)];
+	const [fx, h] = f[i % f.length];
 	const extra = Math.floor(i / f.length);
-	return [SIDE[team] * st.cw * Math.min(.9, fx + extra * .12), st.ch * fy];
+	return [SIDE[team] * st.cw * Math.min(.9, fx + extra * .07), -Math.min(st.height - 40, h + extra * 35)];
 }
 /**
-* Avanza la pelota un tick: vuelo con gravedad, red (cara y faja) y arena.
-* Devuelve 1 si tocó la red y 2 si picó (o las dos cosas); la velocidad del impacto queda en b.imp.
+* Avanza la pelota un tick con el mismo orden que HaxBall (posición con la velocidad anterior y
+* después velocidad = amortiguación · (velocidad + gravedad)) y la hace rebotar en la red (un palo
+* vertical de (0, −netH) a (0, 0) con la punta redonda), el piso y las paredes de los costados.
+* Arriba no hay techo: es cielo abierto. Devuelve 1 si tocó la red, 2 si tocó el piso y 4 si rebotó
+* en una pared (se pueden sumar); la velocidad del impacto queda en b.imp.
 */
 function stepBall(b, st) {
+	const B = st.ball;
 	const r = b.r;
-	b.px = b.x;
-	b.py = b.y;
-	b.pz = b.z;
+	const px = b.x;
+	const py = b.y;
 	b.x += b.vx;
 	b.y += b.vy;
-	b.z += b.vz;
-	b.vz -= st.ball.gravity;
+	b.vx *= B.damping;
+	b.vy = B.damping * (b.vy + B.gravity);
 	let hit = 0;
 	b.imp = 0;
-	const H = st.netH;
-	if (b.px < 0 !== b.x < 0 && b.px !== 0) {
-		const t = b.px / (b.px - b.x);
-		const yc = b.py + (b.y - b.py) * t;
-		const zc = b.pz + (b.z - b.pz) * t;
-		if (Math.abs(yc) <= st.netY) {
-			const s0 = b.px < 0 ? -1 : 1;
-			if (zc < H) {
-				b.imp = Math.abs(b.vx);
-				b.x = s0 * r;
-				b.vx = -b.vx * .25;
-				b.vy *= .7;
-				hit = 1;
-			} else if (zc < H + r) {
-				b.imp = Math.abs(b.vz) + Math.abs(b.vx) * .3;
-				b.z = Math.max(b.z, H + r);
-				b.vz = Math.abs(b.vz) * .45 + .3;
-				b.vx *= .6;
-				b.vy *= .8;
-				hit = 1;
-			}
+	const top = -st.netH;
+	if (px < 0 !== b.x < 0 && px !== 0) {
+		const t = px / (px - b.x);
+		if (py + (b.y - py) * t > top) {
+			b.imp = Math.abs(b.vx);
+			b.x = px < 0 ? -r : r;
+			b.vx = -b.vx * B.bCoef;
+			hit |= 1;
 		}
-	} else if (Math.abs(b.y) <= st.netY && Math.abs(b.x) < r) {
-		const cz = clamp$1(b.z, 0, H);
+	} else if (Math.abs(b.x) < r && b.y > top) {
+		const s = b.x !== 0 ? Math.sign(b.x) : px < 0 ? -1 : 1;
+		b.x = s * r;
+		if (b.vx * s < 0) {
+			b.imp = Math.abs(b.vx);
+			b.vx = -b.vx * B.bCoef;
+			hit |= 1;
+		}
+	}
+	if (b.y <= top) {
 		const dx = b.x;
-		const dz = b.z - cz;
-		const dist = Math.sqrt(dx * dx + dz * dz);
-		if (dist < r) {
-			let nx;
-			let nz;
-			if (dist > 1e-6) {
-				nx = dx / dist;
-				nz = dz / dist;
-			} else {
-				nx = b.vx > 0 ? -1 : 1;
-				nz = 0;
+		const dy = b.y - top;
+		const d2 = dx * dx + dy * dy;
+		if (d2 < r * r) {
+			let d = Math.sqrt(d2);
+			let nx = d > 0 ? dx / d : 0;
+			let ny = d > 0 ? dy / d : -1;
+			if (Math.abs(dx) < .05) {
+				nx = px < 0 ? -.08 : .08;
+				ny = -1;
+				d = Math.min(d, r);
 			}
-			b.x += nx * (r - dist);
-			b.z += nz * (r - dist);
-			if (cz >= H && Math.abs(b.vx) < .05) b.vx += b.x >= 0 ? .08 : -.08;
-			const vn = b.vx * nx + b.vz * nz;
+			b.x += nx * (r - d);
+			b.y += ny * (r - d);
+			const vn = b.vx * nx + b.vy * ny;
 			if (vn < 0) {
-				const e = cz < H ? .25 : .45;
-				b.imp = -vn;
-				b.vx -= (1 + e) * vn * nx;
-				b.vz -= (1 + e) * vn * nz;
-				b.vy *= .8;
-				hit = 1;
+				b.imp = Math.max(b.imp, -vn);
+				const k = vn * (1 + B.bCoef);
+				b.vx -= nx * k;
+				b.vy -= ny * k;
+				hit |= 1;
 			}
 		}
 	}
-	if (b.z < r) {
-		b.z = r;
-		if (b.vz < 0) {
-			b.imp = Math.max(b.imp, -b.vz);
+	if (b.y > -r) {
+		b.y = -r;
+		if (b.vy > 0) {
+			b.imp = Math.max(b.imp, b.vy);
+			b.vy = -b.vy * B.floorBCoef;
+			b.vx *= .8;
 			hit |= 2;
-			b.vz = -b.vz * .42;
-			if (b.vz < .5) b.vz = 0;
-			b.vx *= .72;
-			b.vy *= .72;
 		}
 	}
-	if (b.z <= r + 1e-6 && b.vz === 0) {
-		b.vx *= .95;
-		b.vy *= .95;
+	const W = st.cw - r;
+	if (b.x < -W || b.x > W) {
+		const s = Math.sign(b.x);
+		b.x = s * W;
+		if (b.vx * s > 0) {
+			b.imp = Math.max(b.imp, Math.abs(b.vx));
+			b.vx = -b.vx * B.bCoef;
+			hit |= 4;
+		}
 	}
 	return hit;
 }
-/**
-* Dónde cae un golpe de ataque ('hit', 'spike' o 'tip') pegado en (bx, by) con la dirección (ux, uy)
-* desde el jugador hacia la pelota. depth: −1 corto, 0 normal, 1 profundo (flechas al pegar).
-* El remate y la finta tiran además hacia adelante. Devuelve null si el golpe no va hacia el rival.
-*/
-function attackPoint(st, kind, team, bx, by, ux, uy, depth) {
-	const fwd = -SIDE[team];
-	let ax = ux;
-	let ay = uy;
-	if (kind === "hit") {
-		if (ux * fwd <= .15) return null;
-	} else {
-		ax = ux + fwd * .8;
-		const l = Math.sqrt(ax * ax + ay * ay) || 1;
-		ax /= l;
-		ay /= l;
+/** Velocidad de la pelota después de un golpe en la dirección (nx, ny). */
+function kickVelocity(st, bvx, bvy, nx, ny, pvx = 0, pvy = 0, serve = false) {
+	const K = st.kick;
+	const run = Math.max(0, pvx * nx + pvy * ny) * K.run;
+	const j = K.strength * (serve ? K.serve : 1) + run;
+	const c = serve ? 0 : K.carry;
+	let vx = bvx * c + nx * j;
+	let vy = bvy * c + ny * j;
+	const v = Math.sqrt(vx * vx + vy * vy);
+	if (v > K.max) {
+		vx *= K.max / v;
+		vy *= K.max / v;
 	}
-	const d = kind === "tip" ? .22 : kind === "hit" ? depth > 0 ? .82 : depth < 0 ? .3 : .56 : depth > 0 ? .85 : .55;
-	const L = clamp$1((fwd * st.cw * d - bx) / ax, kind === "hit" ? 40 : 30, st.cw * (kind === "hit" ? 2.6 : 2.4));
-	return {
-		x: bx + ax * L,
-		y: by + ay * L,
-		ax,
-		ay,
-		L
-	};
+	return [vx, vy];
 }
-/**
-* Adónde va el saque según las flechas: arriba/abajo eligen el costado; hacia la red, un saque
-* potente al fondo; hacia atrás, uno corto. kind: 0 corto, 1 normal, 2 potente.
-*/
-function serveTarget(st, team, ballY, input) {
-	const fwd = -SIDE[team];
-	const ky = (input & KEY.DOWN ? 1 : 0) - (input & KEY.UP ? 1 : 0);
-	const kx = ((input & KEY.RIGHT ? 1 : 0) - (input & KEY.LEFT ? 1 : 0)) * fwd;
-	const kind = kx > 0 ? 2 : kx < 0 ? 0 : 1;
-	return {
-		x: fwd * st.cw * [
-			.4,
-			.62,
-			.8
-		][kind],
-		y: clamp$1(ballY * .25 + ky * st.ch * .55, -st.ch * .8, st.ch * .8),
-		kind
-	};
-}
-/** Copia de la pelota para simular hacia adelante (bots, predicción de dónde cae). */
 function ballCopy(b) {
 	return {
 		x: b.x,
 		y: b.y,
-		z: b.z,
 		vx: b.vx,
 		vy: b.vy,
-		vz: b.vz,
 		r: b.r,
-		px: b.x,
-		py: b.y,
-		pz: b.z,
 		imp: 0
 	};
+}
+/**
+* Dirección del saque (desde la pelota quieta en su lugar) para que pique a `depth` (fracción de cw)
+* en la cancha rival, pasando la red con margen. Se busca simulando y queda guardada en la cancha.
+*/
+function serveAim(st, team, depth = .6) {
+	const key = team + ":" + depth;
+	const cache = st.aimCache ||= {};
+	if (cache[key]) return cache[key];
+	const fwd = -SIDE[team];
+	const target = fwd * st.cw * depth;
+	let best = null;
+	for (let deg = 10; deg <= 80; deg++) {
+		const a = deg * Math.PI / 180;
+		const nx = fwd * Math.cos(a);
+		const ny = -Math.sin(a);
+		const [vx, vy] = kickVelocity(st, 0, 0, nx, ny, 0, 0, true);
+		const b = {
+			x: SIDE[team] * st.serveX,
+			y: st.serveY,
+			vx,
+			vy,
+			r: st.ball.r,
+			imp: 0
+		};
+		let ok = true;
+		let land = null;
+		for (let i = 0; i < 400 && ok; i++) {
+			const px = b.x;
+			const h = stepBall(b, st);
+			if (h & 5 || px < 0 !== b.x < 0 && b.y > -st.netH - b.r - 14) ok = false;
+			if (h & 2) {
+				land = b.x;
+				break;
+			}
+		}
+		if (!ok || land === null || land * fwd <= 0) continue;
+		const err = Math.abs(land - target);
+		if (!best || err < best.err) best = {
+			err,
+			nx,
+			ny
+		};
+	}
+	cache[key] = best ? [best.nx, best.ny] : [fwd * .6, -.8];
+	return cache[key];
 }
 var Match = class {
 	/**
@@ -2779,18 +2767,13 @@ var Match = class {
 		};
 		this.ball = {
 			x: 0,
-			y: 0,
-			z: this.st.ball.r,
+			y: this.st.serveY,
 			vx: 0,
 			vy: 0,
-			vz: 0,
 			r: this.st.ball.r,
-			px: 0,
-			py: 0,
-			pz: 0,
-			imp: 0
+			imp: 0,
+			live: false
 		};
-		this.held = null;
 		this.players = [];
 		this.tick = 0;
 		this.state = 0;
@@ -2812,7 +2795,7 @@ var Match = class {
 		this.touchTeam = 0;
 		this.touches = 0;
 		this.rally = 0;
-		this.serving = false;
+		this.netHit = false;
 		this.hist = [];
 		this.lastId = null;
 		this.lastKind = "";
@@ -2875,11 +2858,8 @@ var Match = class {
 				avatar,
 				bot,
 				input: 0,
-				armed: false,
+				kicking: false,
 				cd: 0,
-				z: 0,
-				vz: 0,
-				jcd: 0,
 				d: null
 			};
 			this.players.push(p);
@@ -2902,8 +2882,7 @@ var Match = class {
 		if (p.team === team && (team === 0 || p.d)) return;
 		p.team = team;
 		p.input = 0;
-		p.armed = false;
-		p.z = p.vz = 0;
+		p.kicking = false;
 		if (!team) p.d = null;
 		else {
 			const pp = this.st.player;
@@ -2916,8 +2895,8 @@ var Match = class {
 				cGroup: TEAM_FLAG[team]
 			});
 			if (spawn) {
-				p.d.x = SIDE[team] * this.st.cw * .7;
-				p.d.y = 0;
+				p.d.x = SIDE[team] * this.st.cw * .75;
+				p.d.y = -60;
 			}
 			this.stat(p).team = team;
 		}
@@ -2933,38 +2912,63 @@ var Match = class {
 		const p = this.player(id);
 		if (!p) return;
 		bits &= 31;
-		if (!(p.input & KEY.HIT) && bits & KEY.HIT && p.d) {
-			p.armed = true;
-			if (p.z <= 0 && p.vz <= 0 && p.jcd <= 0) p.vz = this.st.player.jump;
-		}
+		if (!(p.input & KEY.HIT) && bits & KEY.HIT && p.d) p.kicking = true;
 		p.input = bits;
 	}
-	/** Elige al que saca (rota dentro del equipo) y le da la pelota. */
+	/** ¿La pelota está al alcance del golpe de p? */
+	reach(p) {
+		const b = this.ball;
+		const d = p.d;
+		const dx = b.x - d.x;
+		const dy = b.y - d.y;
+		const R = d.r + b.r + this.st.kick.range;
+		return dx * dx + dy * dy <= R * R;
+	}
+	/** Equipo del lado en el que está la pelota. */
+	get sideTeam() {
+		return this.ball.x < 0 ? TEAM$1.RED : TEAM$1.BLUE;
+	}
+	/** Toques que lleva el equipo del lado de la pelota. */
+	get sideTouches() {
+		return this.touchTeam === this.sideTeam ? this.touches : 0;
+	}
+	/** Elige al que saca (rota dentro del equipo). */
 	pickServer() {
 		for (const t of [1, 2]) if (!this.members(t).length && this.members(3 - t).length) this.serveTeam = t;
 		const team = this.serveTeam;
 		const list = this.members(team);
-		for (const p of this.players) if (p.d) p.d.cGroup = TEAM_FLAG[p.team];
 		if (!list.length) {
 			this.server = null;
-			this.held = null;
-			const b = this.ball;
-			Object.assign(b, {
-				x: SIDE[team] * this.st.serveX,
-				y: 0,
-				z: this.st.hit.serveZ,
-				vx: 0,
-				vy: 0,
-				vz: 0
-			});
 			return null;
 		}
 		if (this.serveIdx[team] < 0) this.serveIdx[team] = 0;
 		const p = list[this.serveIdx[team] % list.length];
 		this.server = p.id;
-		this.held = p.id;
-		p.d.cGroup = TEAM_FLAG[team] | SERVE_FLAG[team];
 		return p;
+	}
+	/** Pone la pelota en el lugar del saque y al que saca listo para pegarle. */
+	placeServe() {
+		const st = this.st;
+		const team = this.serveTeam;
+		const b = this.ball;
+		Object.assign(b, {
+			x: SIDE[team] * st.serveX,
+			y: st.serveY,
+			vx: 0,
+			vy: 0,
+			live: false
+		});
+		const p = this.player(this.server);
+		if (p?.d) {
+			const [nx, ny] = serveAim(st, team);
+			const R = p.d.r + b.r + 1;
+			Object.assign(p.d, {
+				x: b.x - nx * R,
+				y: b.y - ny * R,
+				vx: 0,
+				vy: 0
+			});
+		}
 	}
 	resetPositions() {
 		this.state = 0;
@@ -2972,7 +2976,7 @@ var Match = class {
 		this.touchTeam = 0;
 		this.touches = 0;
 		this.rally = 0;
-		this.serving = false;
+		this.netHit = false;
 		this.hist = [];
 		this.lastId = null;
 		this.lastKind = "";
@@ -2991,85 +2995,44 @@ var Match = class {
 			});
 		}
 		for (const p of this.players) {
-			p.armed = false;
-			p.z = p.vz = 0;
+			p.kicking = false;
 			p.cd = 0;
-			p.jcd = 0;
 		}
-		if (sv) {
-			Object.assign(sv.d, {
-				x: SIDE[sv.team] * st.serveX,
-				y: -SIDE[sv.team] * st.ch * .4,
-				vx: 0,
-				vy: 0
-			});
-			this.holdBall();
-		}
+		this.placeServe();
 	}
-	holdBall() {
-		const p = this.player(this.held);
-		if (!p?.d) return;
-		const b = this.ball;
-		b.x = p.d.x - SIDE[p.team] * (p.d.r + 2);
-		b.y = p.d.y + 3;
-		b.z = 26 + p.z;
-		b.vx = b.vy = b.vz = 0;
-	}
-	/** Lanza la pelota para que caiga en (tx, ty) con velocidad horizontal vh (sin rozamiento en el aire). */
-	launch(tx, ty, vh, clearNet = true) {
-		const b = this.ball;
-		const L = Math.sqrt((tx - b.x) ** 2 + (ty - b.y) ** 2) || 1;
-		this.flight(tx, ty, Math.max(6, L / vh), clearNet);
-	}
-	/**
-	* Lanza la pelota para que caiga en (tx, ty) dentro de T ticks. Si así no pasa la red, sale más
-	* bombeada y lenta, pero cae en el mismo lugar.
-	*/
-	flight(tx, ty, T, clearNet = true) {
-		const b = this.ball;
-		const g = this.st.ball.gravity;
-		const need = this.st.netH + b.r + 4;
-		const cross = clearNet && b.x < 0 !== tx < 0 && tx !== b.x;
-		const fn = -b.x / (tx - b.x);
-		for (let i = 0; i < 40; i++) {
-			b.vz = (b.r - b.z + g * T * (T - 1) / 2) / T;
-			if (!cross) break;
-			const tn = fn * T;
-			if (tn < .5 || b.z + tn * b.vz - g * tn * (tn - 1) / 2 >= need || T > 220) break;
-			T *= 1.07;
-		}
-		b.vx = (tx - b.x) / T;
-		b.vy = (ty - b.y) / T;
-	}
-	serve(p) {
+	/** Saque: de un jugador (con su golpe) o automático (máquina o se le pasó el tiempo). */
+	serve(p, auto = false) {
 		const st = this.st;
 		const team = this.serveTeam;
 		const b = this.ball;
-		let aim;
+		if (p && !auto) {
+			const d = p.d;
+			const dx = b.x - d.x;
+			const dy = b.y - d.y;
+			const l = Math.sqrt(dx * dx + dy * dy);
+			const [nx, ny] = l > .5 ? [dx / l, dy / l] : [0, -1];
+			[b.vx, b.vy] = kickVelocity(st, 0, 0, nx, ny, d.vx, d.vy, true);
+		} else {
+			const depth = [
+				.6,
+				.45,
+				.75,
+				.55,
+				.68
+			][(this.score[1] + this.score[2]) % 5];
+			const [nx, ny] = serveAim(st, team, depth);
+			[b.vx, b.vy] = kickVelocity(st, 0, 0, nx, ny, 0, 0, true);
+		}
 		if (p) {
-			aim = serveTarget(st, team, b.y, p.input);
-			p.armed = false;
-			p.cd = 28;
-			p.d.cGroup = TEAM_FLAG[team];
-		} else aim = {
-			x: -SIDE[team] * st.cw * .62,
-			y: [
-				0,
-				.5,
-				-.5,
-				.25,
-				-.25
-			][(this.score[1] + this.score[2]) % 5] * st.ch,
-			kind: 1
-		};
-		const kind = aim.kind;
-		this.flight(aim.x, aim.y, st.hit.serveT[kind] / st.speed);
-		this.held = null;
+			p.kicking = false;
+			p.cd = KICK_MIN;
+		}
+		b.live = true;
 		this.state = 1;
-		this.serving = true;
 		this.touchTeam = team;
-		this.touches = 3;
+		this.touches = 1;
 		this.rally = 0;
+		this.netHit = false;
 		const id = p ? p.id : null;
 		this.hist = [{
 			id,
@@ -3079,18 +3042,14 @@ var Match = class {
 		this.lastTick = this.tick;
 		this.lastId = id;
 		this.lastKind = "serve";
+		if (p) this.stat(p).touches++;
 		this.events.push({
 			t: "serve",
 			id,
 			team,
-			kind: [
-				"short",
-				"normal",
-				"power"
-			][kind],
 			x: b.x,
 			y: b.y,
-			z: b.z
+			v: Math.hypot(b.vx, b.vy)
 		});
 	}
 	step() {
@@ -3098,11 +3057,15 @@ var Match = class {
 		ev.length = 0;
 		const pp = this.st.player;
 		for (const p of this.players) {
+			if (!p.d) continue;
+			if (!(p.input & KEY.HIT)) p.kicking = false;
+			if (p.cd > 0) p.cd--;
+		}
+		if (this.state === 0) this.serveStep();
+		else if (this.state === 1) this.kicks();
+		for (const p of this.players) {
 			const d = p.d;
 			if (!d) continue;
-			if (!(p.input & KEY.HIT)) p.armed = false;
-			if (p.cd > 0) p.cd--;
-			if (p.jcd > 0 && p.z <= 0) p.jcd--;
 			const bits = p.input;
 			let x = (bits & KEY.RIGHT ? 1 : 0) - (bits & KEY.LEFT ? 1 : 0);
 			let y = (bits & KEY.DOWN ? 1 : 0) - (bits & KEY.UP ? 1 : 0);
@@ -3110,54 +3073,17 @@ var Match = class {
 				x *= DIAG;
 				y *= DIAG;
 			}
-			const air = p.z > 0 || p.vz > 0;
-			const a = air ? pp.airAcceleration : pp.acceleration;
+			const a = p.kicking ? pp.kickingAcceleration : pp.acceleration;
 			d.vx += x * a;
 			d.vy += y * a;
-			d.damping = air ? pp.airDamping : pp.damping;
+			d.damping = p.kicking ? pp.kickingDamping : pp.damping;
 		}
 		step(this.world, null);
-		for (const p of this.players) {
-			if (!p.d || p.z <= 0 && p.vz <= 0) continue;
-			p.z += p.vz;
-			p.vz -= pp.gravity;
-			if (p.z <= 0) {
-				p.z = 0;
-				p.vz = 0;
-				p.jcd = LAND_CD;
-			}
-		}
 		switch (this.state) {
-			case 0: {
+			case 0:
 				this.time++;
-				this.serveClock++;
-				if (this.timeUp() && this.score[1] !== this.score[2]) {
-					this.end();
-					break;
-				}
-				const sp = this.player(this.server);
-				if (!sp || !sp.d || sp.team !== this.serveTeam) {
-					const was = this.server;
-					const now = this.pickServer();
-					if (now || was) {
-						this.serveClock = 0;
-						if (now) {
-							Object.assign(now.d, {
-								x: SIDE[now.team] * this.st.serveX,
-								y: 0,
-								vx: 0,
-								vy: 0
-							});
-							this.holdBall();
-						}
-					}
-					if (!now && this.serveClock >= AUTO_SERVE && this.players.some((q) => q.d)) this.serve(null);
-					break;
-				}
-				this.holdBall();
-				if (sp.armed || this.serveClock >= SERVE_WAIT) this.serve(sp);
+				if (this.timeUp() && this.score[1] !== this.score[2]) this.end();
 				break;
-			}
 			case 1:
 				this.time++;
 				this.play();
@@ -3185,262 +3111,146 @@ var Match = class {
 		}
 		this.tick++;
 	}
-	/** Pelota en juego: vuelo, red, toques, antenas y dónde pica. */
-	play() {
+	/** Saque: la pelota quieta espera al que saca. */
+	serveStep() {
+		this.serveClock++;
+		const sp = this.player(this.server);
+		if (!sp || !sp.d || sp.team !== this.serveTeam) {
+			const was = this.server;
+			const now = this.pickServer();
+			if (now || was) {
+				this.serveClock = 0;
+				this.placeServe();
+			}
+			if (!now && this.serveClock >= AUTO_SERVE && this.players.some((q) => q.d)) this.serve(null, true);
+			return;
+		}
+		if (this.serveClock >= SERVE_MIN && sp.kicking && sp.cd <= 0 && this.reach(sp)) this.serve(sp);
+		else if (this.serveClock >= SERVE_WAIT) this.serve(sp, true);
+	}
+	/** Golpes con la pelota en juego: le pega el más cercano de los que la tienen al alcance. */
+	kicks() {
+		let best = null;
+		let bestD = Infinity;
 		const b = this.ball;
+		for (const p of this.players) {
+			if (!p.d || !p.kicking || p.cd > 0 || !this.reach(p)) continue;
+			const dd = (b.x - p.d.x) ** 2 + (b.y - p.d.y) ** 2;
+			if (dd < bestD) {
+				bestD = dd;
+				best = p;
+			}
+		}
+		if (best) this.hit(best);
+	}
+	hit(p) {
 		const st = this.st;
-		const hit = stepBall(b, st);
-		if (hit & 1 && b.imp > .4) this.events.push({
-			t: "net",
-			v: b.imp,
+		const b = this.ball;
+		const d = p.d;
+		const dx = b.x - d.x;
+		const dy = b.y - d.y;
+		const l = Math.sqrt(dx * dx + dy * dy);
+		const [nx, ny] = l > .5 ? [dx / l, dy / l] : [0, -1];
+		const team = p.team;
+		const fwd = -SIDE[team];
+		const rival = this.touchTeam !== team && this.touchTeam !== 0;
+		[b.vx, b.vy] = kickVelocity(st, b.vx, b.vy, nx, ny, d.vx, d.vy);
+		p.kicking = false;
+		p.cd = KICK_MIN;
+		const v = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+		let kind = "pass";
+		if (rival && Math.abs(b.x) < BLOCK_X && b.y < -st.netH && b.vx * fwd > .5) kind = "block";
+		else if (b.vy > 1.2 && b.vx * fwd > 1 && b.y < 8 - st.netH) kind = "spike";
+		else if (v > st.kick.strength * 1.12 && b.vx * fwd > 2.5) kind = "bomb";
+		if (kind === "block") {
+			this.touchTeam = team;
+			this.touches = 0;
+		} else if (this.touchTeam === team) this.touches++;
+		else {
+			this.touchTeam = team;
+			this.touches = 1;
+		}
+		this.rally++;
+		this.netHit = false;
+		this.hist.push({
+			id: p.id,
+			team,
+			kind
+		});
+		if (this.hist.length > 12) this.hist.shift();
+		this.lastId = p.id;
+		this.lastKind = kind;
+		this.lastTick = this.tick;
+		const s = this.stat(p);
+		s.touches++;
+		if (kind === "spike") s.spikes++;
+		this.events.push({
+			t: "hit",
+			id: p.id,
+			team,
+			kind,
 			x: b.x,
 			y: b.y,
-			z: b.z
+			v,
+			n: this.touches
 		});
-		if (b.px < 0 !== b.x < 0 && b.px !== 0) {
-			const t = b.px / (b.px - b.x);
-			const yc = b.py + (b.y - b.py) * t;
-			if (Math.abs(yc) > st.netY) return this.point(3 - this.touchTeam, "antenna");
-			this.serving = false;
+		if (this.touches > 3) this.point(3 - team, "four");
+	}
+	/** Pelota en juego: vuelo, red, paredes y el piso, que define el punto. */
+	play() {
+		const b = this.ball;
+		const px = b.x;
+		const hit = stepBall(b, this.st);
+		if (px < 0 !== b.x < 0) this.touches = 0;
+		if (hit & 1) {
+			this.netHit = true;
+			if (b.imp > .4) this.events.push({
+				t: "net",
+				v: b.imp,
+				x: b.x,
+				y: b.y
+			});
 		}
-		if (Math.abs(b.x) > st.width + 30 || Math.abs(b.y) > st.height + 30) return this.point(3 - this.touchTeam, "out");
-		this.touchCheck();
-		if (this.state !== 1) return;
+		if (hit & 4 && b.imp > .6) this.events.push({
+			t: "wall",
+			v: b.imp,
+			x: b.x,
+			y: b.y
+		});
 		if (hit & 2) {
-			const inside = Math.abs(b.x) <= st.cw + b.r * .5 && Math.abs(b.y) <= st.ch + b.r * .5;
 			this.events.push({
 				t: "land",
 				x: b.x,
 				y: b.y,
-				v: b.imp,
-				in: inside
+				v: b.imp
 			});
-			if (inside) this.point(b.x < 0 ? 2 : 1, "in");
-			else this.point(3 - this.touchTeam, "out");
+			this.point(b.x < 0 ? TEAM$1.BLUE : TEAM$1.RED, "floor");
 		}
 	}
 	/** Pelota muerta (después del punto): sigue picando y rodando, sin reglas. */
 	loose() {
 		const b = this.ball;
-		const st = this.st;
-		const hit = stepBall(b, st);
+		if (!b.live) return;
+		const hit = stepBall(b, this.st);
 		if (hit & 2 && b.imp > 1) this.events.push({
 			t: "land",
 			x: b.x,
 			y: b.y,
 			v: b.imp,
-			in: true,
 			dead: true
 		});
 		if (hit & 1 && b.imp > .6) this.events.push({
 			t: "net",
 			v: b.imp,
 			x: b.x,
-			y: b.y,
-			z: b.z
+			y: b.y
 		});
-		const W = st.width - b.r;
-		const Hh = st.height - b.r;
-		if (Math.abs(b.x) > W) {
-			b.x = Math.sign(b.x) * W;
-			b.vx *= -.4;
-		}
-		if (Math.abs(b.y) > Hh) {
-			b.y = Math.sign(b.y) * Hh;
-			b.vy *= -.4;
-		}
-	}
-	/** ¿Algún jugador toca la pelota este tick? Toca el más cercano de los que llegan. */
-	touchCheck() {
-		const b = this.ball;
-		const pp = this.st.player;
-		let best = null;
-		let bestD = Infinity;
-		for (const p of this.players) {
-			const d = p.d;
-			if (!d || p.cd > 0) continue;
-			const dx = b.x - d.x;
-			const dy = b.y - d.y;
-			const hd = Math.sqrt(dx * dx + dy * dy);
-			if (hd > d.r + b.r + pp.range) continue;
-			if (b.z > p.z + pp.reach + b.r || b.z < p.z - 6) continue;
-			const side = SIDE[p.team];
-			const block = this.canBlock(p);
-			if (b.x * side < -2 && !block) continue;
-			if (!p.armed && b.vz > .6) continue;
-			const k = hd + Math.abs(b.z - (p.z + 22)) * .5;
-			if (k < bestD) {
-				bestD = k;
-				best = p;
-			}
-		}
-		if (best) this.touchBall(best);
-	}
-	canBlock(p) {
-		const b = this.ball;
-		const side = SIDE[p.team];
-		return p.armed && p.z > 4 && b.z >= this.st.netH && Math.abs(b.x) < BLOCK_ZONE && this.touchTeam !== 0 && this.touchTeam !== p.team && (b.vx * side > 0 || b.x * side < 0);
-	}
-	touchBall(p) {
-		const b = this.ball;
-		const d = p.d;
-		const st = this.st;
-		const H = st.hit;
-		const s = st.speed;
-		const side = SIDE[p.team];
-		const fwd = -side;
-		const dx = b.x - d.x;
-		const dy = b.y - d.y;
-		const ol = Math.sqrt(dx * dx + dy * dy);
-		let ux;
-		let uy;
-		if (ol > 4) {
-			ux = dx / ol;
-			uy = dy / ol;
-		} else {
-			const sp = Math.hypot(d.vx, d.vy);
-			if (sp > .4) {
-				ux = d.vx / sp;
-				uy = d.vy / sp;
-			} else {
-				ux = fwd;
-				uy = 0;
-			}
-		}
-		const vin = Math.sqrt(b.vx * b.vx + b.vy * b.vy + b.vz * b.vz);
-		const air = p.z > 2;
-		let kind = "bump";
-		if (p.armed) {
-			if (this.canBlock(p)) kind = "block";
-			else if (air && b.z >= st.netH + 2 && Math.abs(d.x) < st.cw * SPIKE_ZONE && ux * fwd > -.25) {
-				const k = p.input;
-				kind = ((k & KEY.RIGHT ? 1 : 0) - (k & KEY.LEFT ? 1 : 0)) * fwd < 0 ? "tip" : "spike";
-			} else kind = "hit";
-		}
-		if (kind === "bump") {
-			const prev = this.touchTeam === p.team ? this.touches : 0;
-			let tx;
-			let ty;
-			if (prev === 0) {
-				tx = side * st.cw * (this.members(p.team).length === 1 ? .3 : .22);
-				ty = clamp$1(b.y * .5, -st.ch * .4, st.ch * .4);
-			} else if (prev === 1) {
-				tx = side * st.cw * .13;
-				ty = clamp$1(b.y * .8, -st.ch * .6, st.ch * .6);
-			} else {
-				tx = fwd * st.cw * .5;
-				ty = b.y * .5;
-			}
-			const fast = Math.max(0, vin / s - 4);
-			let nx = dx * H.nudge * (1 + .3 * fast);
-			let ny = dy * H.nudge * (1 + .3 * fast);
-			const hv = Math.hypot(b.vx, b.vy);
-			if (hv > 1) {
-				const along = -(nx * b.vx + ny * b.vy) / hv;
-				if (along > 0) {
-					nx += b.vx / hv * along * .6;
-					ny += b.vy / hv * along * .6;
-				}
-			}
-			const nl = Math.hypot(nx, ny);
-			const cap = 36 + 6 * fast;
-			if (nl > cap) {
-				nx *= cap / nl;
-				ny *= cap / nl;
-			}
-			tx += nx;
-			ty += ny;
-			const vz = Math.min(H.bumpVmax, H.bumpV + H.bumpVk * vin / s + (prev === 1 ? H.setLift : 0)) * s;
-			if (prev >= 2) this.launch(tx, ty, H.bumpOver * s);
-			else {
-				const g = st.ball.gravity;
-				const a = vz + g / 2;
-				const disc = a * a - 2 * g * (H.passZ - b.z);
-				const T = disc > 0 ? (a + Math.sqrt(disc)) / g : 60;
-				const ddx = tx - b.x;
-				const ddy = ty - b.y;
-				const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
-				const vh = Math.min(H.bumpMaxH * s, dist / T);
-				b.vx = ddx / dist * vh + d.vx * H.carry;
-				b.vy = ddy / dist * vh + d.vy * H.carry;
-				b.vz = vz;
-			}
-		} else if (kind === "hit" || kind === "spike" || kind === "tip") {
-			const k = p.input;
-			const depth = Math.sign(((k & KEY.RIGHT ? 1 : 0) - (k & KEY.LEFT ? 1 : 0)) * fwd);
-			const pt = attackPoint(st, kind, p.team, b.x, b.y, ux, uy, depth);
-			if (!pt) {
-				const vh = H.hitH * .8 * s;
-				b.vx = ux * vh;
-				b.vy = uy * vh;
-				b.vz = H.hitV * s;
-			} else if (kind === "hit") {
-				const carry = clamp$1(d.vx * ux + d.vy * uy, 0, 2.4);
-				const vh = (H.hitH + carry * H.hitCarry) * s;
-				this.launch(pt.x, pt.y, Math.max(vh, pt.L / 110 * s));
-				b.vz = Math.min(b.vz, H.hitVmax * s);
-			} else {
-				const carry = Math.max(0, d.vx * pt.ax + d.vy * pt.ay);
-				const vh = kind === "tip" ? H.tipH * s : (H.spikeH + carry * H.spikeCarry) * s;
-				this.launch(pt.x, pt.y, vh);
-				if (kind === "tip") b.vz = Math.max(b.vz, H.tipV * s);
-			}
-		} else if (this.squareBlock(b, dx, dy, ol)) {
-			b.vx = fwd * Math.max(H.blockH * s, Math.abs(b.vx) * .45);
-			b.vy = b.vy * .35 + uy * .6;
-			b.vz = b.x * side > 0 ? 1.1 * s : -.6 * s;
-		} else {
-			b.vx *= .3;
-			b.vy *= .3;
-			b.vz = 2.4 * s;
-		}
-		if (b.z < b.r + 1) b.z = b.r + 1;
-		if (kind === "block") {
-			this.touchTeam = p.team;
-			this.touches = 0;
-		} else if (this.touchTeam !== p.team) {
-			this.touchTeam = p.team;
-			this.touches = 1;
-		} else this.touches++;
-		this.rally++;
-		if (p.armed) p.armed = false;
-		p.cd = TOUCH_CD;
-		this.lastTick = this.tick;
-		this.lastId = p.id;
-		this.lastKind = kind;
-		this.hist.push({
-			id: p.id,
-			team: p.team,
-			kind
-		});
-		if (this.hist.length > 8) this.hist.shift();
-		const s0 = this.stat(p);
-		s0.touches++;
-		if (kind === "spike") s0.spikes++;
-		this.events.push({
-			t: "hit",
-			id: p.id,
-			team: p.team,
-			kind,
-			x: b.x,
-			y: b.y,
-			z: b.z,
-			v: vin,
-			n: this.touches
-		});
-		if (this.touches > 3) this.point(3 - p.team, "four");
-	}
-	/** ¿La pelota viene derecho a las manos del que bloquea? (si no, es un toque de bloqueo) */
-	squareBlock(b, dx, dy, ol) {
-		const hv = Math.hypot(b.vx, b.vy);
-		return (hv > 1 ? Math.abs(dx * b.vy - dy * b.vx) / hv : ol) < 15;
 	}
 	/**
-	* Punto para `win`. reason: in (picó en la cancha rival), out (afuera), antenna (cruzó por fuera de
-	* las antenas) o four (4 toques). Se clasifica para los carteles: ace, remate, bloqueo, finta…
+	* Punto para `win`. reason: floor (tocó el piso del lado rival) o four (4 toques). Se clasifica
+	* para los carteles y el relato: ace, remate, bombazo, bloqueo, error, red…
 	*/
 	point(win, reason) {
-		if (win !== 1 && win !== 2) win = this.ball.x < 0 ? 2 : 1;
 		const lose = 3 - win;
 		const b = this.ball;
 		this.state = 2;
@@ -3472,25 +3282,27 @@ var Match = class {
 		const credit = {
 			serve: "ace",
 			spike: "kill",
-			tip: "tip",
+			bomb: "bomb",
 			block: "block"
 		};
-		let kind = reason;
+		let kind;
 		let by = null;
 		let vs = null;
-		if (reason === "four" || reason === "antenna") vs = who(mine || last);
-		else if (mine?.kind === "serve") {
-			kind = reason === "out" ? "serveOut" : "serveFault";
+		if (reason === "four") {
+			kind = "four";
+			vs = who(last);
+		} else if (mine?.kind === "serve") {
+			kind = "serveFault";
 			vs = who(mine);
-		} else if (!n && att) {
+		} else if (!n) {
 			by = who(att);
+			kind = att && credit[att.kind] || "in";
+		} else if (n === 1 && att) {
+			by = who(att);
+			vs = who(mine);
 			kind = credit[att.kind] || "in";
-		} else if (n === 1 && att && (mine.kind === "bump" || mine.kind === "block")) {
-			by = who(att);
-			vs = who(mine);
-			kind = mine.kind === "block" && reason === "out" ? "blockOut" : credit[att.kind] || "in";
 		} else {
-			kind = reason === "out" ? "out" : "own";
+			kind = this.netHit ? "net" : "own";
 			vs = who(mine || last);
 		}
 		const sb = by && this.player(by.id);
@@ -3498,13 +3310,13 @@ var Match = class {
 			const s = this.stat(sb);
 			s.points++;
 			if (kind === "ace") s.aces++;
-			if (kind === "kill" || kind === "tip" || kind === "blockOut") s.kills++;
+			if (kind === "kill" || kind === "bomb" || kind === "in") s.kills++;
 			if (kind === "block") s.blocks++;
 		}
 		if (kind === "ace") this.team.aces[win]++;
-		if (kind === "kill" || kind === "tip" || kind === "blockOut") this.team.kills[win]++;
+		if (kind === "kill" || kind === "bomb" || kind === "in") this.team.kills[win]++;
 		if (kind === "block") this.team.blocks[win]++;
-		if (kind === "out" || kind === "antenna" || kind === "four" || kind === "serveOut" || kind === "serveFault" || kind === "own") {
+		if (kind === "own" || kind === "net" || kind === "four" || kind === "serveFault") {
 			this.team.errors[lose]++;
 			const q = vs && this.player(vs.id);
 			if (q) this.stat(q).errors++;
@@ -3592,15 +3404,14 @@ var Match = class {
 				this.serveTeam,
 				this.serveIdx[1],
 				this.serveIdx[2],
-				this.serveClock,
-				this.serving ? 1 : 0
+				this.serveClock
 			],
 			sr: this.server,
-			h: this.held,
 			tt: [
 				this.touchTeam,
 				this.touches,
-				this.rally
+				this.rally,
+				this.netHit ? 1 : 0
 			],
 			hi: this.hist.map((x) => [
 				x.id,
@@ -3611,10 +3422,9 @@ var Match = class {
 			b: [
 				r3(b.x),
 				r3(b.y),
-				r3(b.z),
 				r3(b.vx),
 				r3(b.vy),
-				r3(b.vz)
+				b.live ? 1 : 0
 			],
 			p: this.players.filter((p) => p.d).map((p) => [
 				p.id,
@@ -3623,13 +3433,9 @@ var Match = class {
 				r3(p.d.y),
 				r3(p.d.vx),
 				r3(p.d.vy),
-				r3(p.z),
-				r3(p.vz),
 				p.input,
-				p.armed ? 1 : 0,
-				p.cd,
-				p.jcd,
-				p.d.cGroup
+				p.kicking ? 1 : 0,
+				p.cd
 			])
 		};
 	}
@@ -3642,10 +3448,9 @@ var Match = class {
 		this.score[1] = s.sc[0];
 		this.score[2] = s.sc[1];
 		[this.serveTeam, this.serveIdx[1], this.serveIdx[2], this.serveClock] = s.sv;
-		this.serving = !!s.sv[4];
 		this.server = s.sr;
-		this.held = s.h;
 		[this.touchTeam, this.touches, this.rally] = s.tt;
+		this.netHit = !!s.tt[3];
 		this.hist = s.hi.map(([id, team, kind]) => ({
 			id,
 			team,
@@ -3656,11 +3461,12 @@ var Match = class {
 		this.lastKind = last ? last.kind : "";
 		this.winner = s.w;
 		const b = this.ball;
-		[b.x, b.y, b.z, b.vx, b.vy, b.vz] = s.b;
+		[b.x, b.y, b.vx, b.vy] = s.b;
+		b.live = !!s.b[4];
 		const seen = /* @__PURE__ */ new Set();
 		let changed = false;
 		const pp = this.st.player;
-		for (const [id, team, x, y, vx, vy, z, vz, input, armed, cd, jcd, group] of s.p) {
+		for (const [id, team, x, y, vx, vy, input, kicking, cd] of s.p) {
 			seen.add(id);
 			let p = this.player(id);
 			if (!p || p.team !== team || !p.d) {
@@ -3673,21 +3479,16 @@ var Match = class {
 				}, false);
 				changed = true;
 			}
-			const air = z > 0 || vz > 0;
 			Object.assign(p.d, {
 				x,
 				y,
 				vx,
 				vy,
-				cGroup: group,
-				damping: air ? pp.airDamping : pp.damping
+				damping: kicking ? pp.kickingDamping : pp.damping
 			});
-			p.z = z;
-			p.vz = vz;
 			p.input = input;
-			p.armed = !!armed;
+			p.kicking = !!kicking;
 			p.cd = cd;
-			p.jcd = jcd;
 		}
 		for (const p of [...this.players]) if (!seen.has(p.id)) {
 			this.players.splice(this.players.indexOf(p), 1);
@@ -3702,69 +3503,82 @@ var Match = class {
 //#endregion
 //#region game.it/public/games/voleyball/shared/ai.js
 /**
-* Voleyball — bots. Juegan con los mismos controles que una persona (8 direcciones + pegar, y hay
-* que soltar para volver a pegar), así que respetan la física y las reglas.
+* Voleyball — bots. Juegan con los mismos controles que una persona (8 direcciones + pegar, y hay que
+* soltar para volver a pegar), así que respetan la física y las reglas.
 *
-* Cada tick se simula hacia adelante la pelota (con la misma física, red incluida) y cada equipo
-* arma un plan: quién va a la pelota (el que llega antes), qué hace con ese toque y dónde se para.
-*  - 1.er toque (recepción): se deja picar la pelota encima, parado del lado justo para que salga
-*    hacia el armador.
-*  - 2.º toque (armado): igual, pero hacia la red, adelante del que va a rematar.
-*  - 3.er toque (ataque): si la pelota queda alta cerca de la red, salta a tiempo y remata hacia el
-*    hueco; si no, la pasa con un golpe. Jugando solo, recibe y ataca.
-* Los demás se acomodan (armador cerca de la red, atacantes atrás, defensa en formación) y, en
-* Normal y Difícil, el que está adelante salta a bloquear. La dificultad cambia el tiempo de
-* reacción, el error al calcular dónde cae, la puntería, si remata y si bloquea.
+* Cada tick se simula la pelota hacia adelante con la misma física (red y paredes incluidas).
+* Si va a caer del lado propio, el equipo elige quién va (el que llega antes, mejor si no es el que
+* la tocó recién) y ese jugador busca, a lo largo de la trayectoria, dónde pararse y desde qué lado
+* pegarle: prueba direcciones de golpe, simula hacia dónde saldría la pelota y se queda con la mejor
+* según el toque: recibir hacia la red, armar alta para el remate o atacar al hueco (rematando desde
+* arriba cuando puede). Cuando la pelota llega, elige el instante del golpe comparando "pego ahora"
+* con "pego en un momento". Los demás se acomodan: uno arriba cerca de la red para rematar, el resto
+* en defensa, y cuando ataca el rival uno sube a bloquear.
+*
+* La dificultad cambia el tiempo de reacción, la velocidad, el error de puntería, cuánto se arriesga
+* a atacar antes del tercer toque, qué tan bien busca el hueco y si bloquea.
 */
 const LEVELS$1 = {
 	easy: {
-		react: 16,
-		err: 22,
-		pace: .82,
-		aim: .3,
-		spike: .35,
+		react: 18,
+		aim: .16,
+		pace: .78,
+		attack: 30,
+		smart: .25,
+		spike: .25,
 		block: 0,
-		judge: .3,
-		smart: false,
+		miss: .12,
 		serve: [
-			.45,
-			.45,
-			.1
-		]
+			.5,
+			.35,
+			.15
+		],
+		wait: 75
 	},
 	normal: {
-		react: 8,
-		err: 9,
-		pace: .95,
-		aim: .12,
-		spike: .8,
-		block: .25,
-		judge: .75,
-		smart: false,
+		react: 9,
+		aim: .07,
+		pace: .92,
+		attack: 18,
+		smart: .7,
+		spike: .6,
+		block: .15,
+		miss: .035,
 		serve: [
-			.25,
-			.5,
-			.25
-		]
+			.3,
+			.4,
+			.3
+		],
+		wait: 50
 	},
 	hard: {
-		react: 3,
-		err: 2,
+		react: 4,
+		aim: .025,
 		pace: 1,
-		aim: .04,
-		spike: 1,
-		block: .55,
-		judge: .95,
-		smart: true,
+		attack: 10,
+		smart: 1,
+		spike: .9,
+		block: .25,
+		miss: .006,
 		serve: [
-			.15,
-			.4,
+			.2,
+			.35,
 			.45
-		]
+		],
+		wait: 35
 	}
 };
-const SIM = 230;
-const OFF = 14;
+const SIM = 260;
+const LOOK = 120;
+const OUT = 200;
+const DEPTHS = [
+	.45,
+	.62,
+	.8
+];
+const ANG = Array.from({ length: 24 }, (_, i) => i * Math.PI / 12);
+const XS = /* @__PURE__ */ new Float64Array(202);
+const YS = /* @__PURE__ */ new Float64Array(202);
 function rng(seed) {
 	let a = seed >>> 0 || 1;
 	return () => {
@@ -3778,55 +3592,157 @@ function brain(level = "normal", seed = 1) {
 	return {
 		L: LEVELS$1[level] || LEVELS$1.normal,
 		rand: rng(seed * 2654435761),
-		prev: 0,
 		seen: -2,
-		delay: 0,
-		ex: 0,
-		ey: 0,
+		wait: 0,
+		plan: null,
+		planAt: -99,
+		noise: 0,
+		hit: false,
+		inReach: false,
+		serve: null,
 		tx: null,
 		ty: null,
-		serveAt: 0,
-		stall: 0,
-		unstick: 0,
-		uside: 1
+		block: false,
+		blockKey: -1,
+		blockErr: 0
 	};
 }
-const len = (x, y) => Math.sqrt(x * x + y * y) || 1e-9;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-/** Trayectoria de la pelota desde ahora hasta que pica (se calcula una vez por tick para todos). */
+/**
+* ¿Cuántos ticks tarde llega (x, y) en n ticks? Negativo: llega con tiempo. La física es lineal: el
+* movimiento es lo que avanza dejándose llevar (x + v·(1−dⁿ)/(1−d)) más lo que suma acelerando a
+* fondo desde quieto (a/(1−d)·(n − d(1−dⁿ)/(1−d))). `slack`: a cuánto alcanza con estar.
+*/
+const POW = /* @__PURE__ */ new Map();
+function powers(D) {
+	let t = POW.get(D);
+	if (!t) {
+		t = /* @__PURE__ */ new Float64Array(1201);
+		t[0] = 1;
+		for (let i = 1; i <= 1200; i++) t[i] = t[i - 1] * D;
+		POW.set(D, t);
+	}
+	return t;
+}
+function lateBy(d, x, y, n, pp, pace = 1, slack = 0) {
+	const D = pp.damping;
+	const pw = powers(D)[Math.min(1200, Math.max(0, n | 0))];
+	const f = (1 - pw) / (1 - D);
+	const dx = x - (d.x + d.vx * f);
+	const dy = y - (d.y + d.vy * f);
+	const v = pp.acceleration * pace / (1 - D);
+	const X = v * (n - D * (1 - pw) / (1 - D));
+	return (Math.sqrt(dx * dx + dy * dy) - slack - X) / v;
+}
+/**
+* Teclas para ir a (tx, ty) y frenar ahí: velocidad deseada hacia el punto, limitada para poder frenar
+* a tiempo (frenando a fondo se para en unos 3.6·v² píxeles), y en cada eje se acelera o se frena.
+*/
+function steer(p, tx, ty, pace = 1, pp) {
+	const d = p.d;
+	const dx = tx - d.x;
+	const dy = ty - d.y;
+	const D = Math.sqrt(dx * dx + dy * dy);
+	const vmax = pp.acceleration * pp.damping * pace / (1 - pp.damping);
+	if (D < 2.5 && d.vx * d.vx + d.vy * d.vy < .09) return 0;
+	let vx = 0;
+	let vy = 0;
+	if (D > .6) {
+		const sp = Math.min(vmax, Math.sqrt(D / 3.6));
+		vx = dx / D * sp;
+		vy = dy / D * sp;
+	}
+	const ex = vx - d.vx;
+	const ey = vy - d.vy;
+	const th = .08;
+	let bits = 0;
+	if (ex > th) bits |= KEY.RIGHT;
+	else if (ex < -.08) bits |= KEY.LEFT;
+	if (ey > th) bits |= KEY.DOWN;
+	else if (ey < -.08) bits |= KEY.UP;
+	return bits;
+}
+/** Dónde va a estar el jugador en los próximos n ticks si sigue yendo hacia (tx, ty). */
+function selfPath(p, tx, ty, pace, pp, n) {
+	const d = {
+		x: p.d.x,
+		y: p.d.y,
+		vx: p.d.vx,
+		vy: p.d.vy
+	};
+	const q = { d };
+	const out = [];
+	for (let j = 0; j < n; j++) {
+		const bits = steer(q, tx, ty, pace, pp);
+		let x = (bits & KEY.RIGHT ? 1 : 0) - (bits & KEY.LEFT ? 1 : 0);
+		let y = (bits & KEY.DOWN ? 1 : 0) - (bits & KEY.UP ? 1 : 0);
+		if (x && y) {
+			x *= Math.SQRT1_2;
+			y *= Math.SQRT1_2;
+		}
+		d.vx += x * pp.acceleration;
+		d.vy += y * pp.acceleration;
+		d.x += d.vx;
+		d.y += d.vy;
+		d.vx *= pp.damping;
+		d.vy *= pp.damping;
+		out.push({
+			x: d.x,
+			y: d.y,
+			vx: d.vx,
+			vy: d.vy
+		});
+	}
+	return out;
+}
+/** Punto válido para un jugador de ese lado (sin cruzar la red, el piso, las paredes ni el borde de arriba). */
+function legal(st, s, x, y, r) {
+	const ax = x * s;
+	return ax >= r + .5 && ax <= st.cw - r && y <= -r && y >= r - st.height;
+}
+function clampSpot(st, s, x, y, r) {
+	return [clamp(x * s, r + 1, st.cw - r - 1) * s, clamp(y, r + 1 - st.height, -r - 1)];
+}
+/** Trayectoria de la pelota desde ahora hasta que toca el piso (una vez por tick para todos). */
 function analyze(m) {
 	const A = m.__ai;
-	if (A && A.tick === m.tick && A.st === m.state) return A;
-	const path = [];
-	let land = -1;
-	if (m.state === 1) {
-		const c = ballCopy(m.ball);
-		for (let k = 0; k < SIM; k++) {
-			const h = stepBall(c, m.st);
-			path.push({
-				x: c.x,
-				y: c.y,
-				z: c.z,
-				vz: c.vz
-			});
-			if (h & 2) {
-				land = k;
-				break;
-			}
-		}
-	}
-	return m.__ai = {
+	if (A && A.tick === m.tick && A.state === m.state) return A;
+	const N = {
 		tick: m.tick,
-		st: m.state,
-		path,
-		land,
-		plans: [
+		state: m.state,
+		path: [],
+		land: -1,
+		teams: [
 			null,
 			null,
 			null
 		]
 	};
+	if (m.state === 1) {
+		const c = ballCopy(m.ball);
+		for (let k = 0; k < SIM; k++) {
+			const h = stepBall(c, m.st);
+			N.path.push({
+				x: c.x,
+				y: c.y,
+				vx: c.vx,
+				vy: c.vy
+			});
+			if (h & 2) {
+				N.land = k + 1;
+				break;
+			}
+		}
+	}
+	m.__ai = N;
+	return N;
 }
+/** Pelota dentro de i ticks (0 = ahora). */
+function at(m, A, i) {
+	if (i <= 0) return m.ball;
+	return A.path[Math.min(i, A.path.length) - 1];
+}
+/** Memoria del equipo entre ticks (quién va a la pelota, para no cambiar a cada rato). */
 function mem(m) {
 	return m.__aiMem ||= {
 		chaser: [
@@ -3834,573 +3750,609 @@ function mem(m) {
 			null,
 			null
 		],
-		at: [
-			-1,
-			-1,
-			-1
+		key: [
+			-9,
+			-9,
+			-9
 		],
-		dec: [
-			null,
-			null,
-			null
-		]
+		active: {}
 	};
 }
-/** Ticks que tarda un jugador en llegar a (x, y) (aproximado, con la física del modo). */
-function travel(q, x, y, pp) {
-	const d = q.d;
-	const dist = len(x - d.x, y - d.y);
-	const vmax = pp.acceleration * pp.damping / (1 - pp.damping);
-	const along = (d.vx * (x - d.x) + d.vy * (y - d.y)) / dist;
-	return Math.max(0, dist - 4) / (vmax * .93) + 9 - along * 3;
+/** Simula la pelota después de un golpe; deja el recorrido en XS/YS. */
+function outcome(st, x, y, vx, vy) {
+	const b = {
+		x,
+		y,
+		vx,
+		vy,
+		r: st.ball.r,
+		imp: 0
+	};
+	const o = {
+		n: 0,
+		x0: x,
+		y0: y,
+		vy0: vy,
+		cross: -1,
+		crossY: 0,
+		crossNet: false,
+		net: false,
+		wall: false,
+		sky: false,
+		land: -1,
+		landX: 0,
+		apex: 0,
+		apexY: y
+	};
+	for (let t = 0; t < OUT; t++) {
+		const px = b.x;
+		const h = stepBall(b, st);
+		XS[t] = b.x;
+		YS[t] = b.y;
+		o.n = t + 1;
+		if (h & 1) o.net = true;
+		if (h & 4) o.wall = true;
+		if (b.y < b.r - st.height) o.sky = true;
+		if (b.y < o.apexY) {
+			o.apexY = b.y;
+			o.apex = t;
+		}
+		if (o.cross < 0 && px < 0 !== b.x < 0) {
+			o.cross = t;
+			o.crossY = b.y;
+			o.crossNet = o.net;
+		}
+		if (h & 2) {
+			o.land = t;
+			o.landX = b.x;
+			break;
+		}
+	}
+	return o;
+}
+/** Ataque: que pase limpia y pique del otro lado, rápido y lejos de los rivales. */
+function attackScore(o, C) {
+	if (o.x0 * C.s < 0 && o.cross < 0) {
+		o.cross = 0;
+		o.crossY = o.y0;
+	}
+	if (o.cross < 0 || o.land < 0 || o.landX * C.s > 0 || o.crossNet) return -Infinity;
+	const clear = -o.crossY - C.netTop;
+	let sc = 70;
+	const safe = C.spike ? 14 : 30;
+	if (clear < safe) sc -= (safe - clear) * (C.spike ? 2.5 : 1.2);
+	sc -= (o.land - o.cross) * (C.spike ? .22 : .06);
+	let cover = 45;
+	for (const q of C.opp) for (let j = o.cross; j <= o.land; j += 3) {
+		const late = lateBy(q.d, XS[j], YS[j], C.t0 + j, C.pp, 1, 18);
+		if (late < cover) cover = late;
+	}
+	sc += clamp(cover, -45, 45) * C.smart;
+	if (o.wall) sc -= 5;
+	return sc;
 }
 /**
-* Dirección desde el jugador hacia la pelota para que, sumándole `blend` hacia adelante (como hace
-* el golpe), la pelota salga en la dirección (dx, dy).
+* Pase: que quede de este lado, suba y baje cerca de Q despacio, a tiempo para que alguien llegue a
+* ponerse abajo.
 */
-function offsetDir(dx, dy, fwd, blend) {
-	const l = len(dx, dy);
-	const Dx = dx / l;
-	const Dy = dy / l;
-	const fx = fwd * blend;
-	const df = Dx * fx;
-	const lam = df + Math.sqrt(Math.max(0, df * df - fx * fx + 1));
-	const ux = lam * Dx - fx;
-	const uy = lam * Dy;
-	const ul = len(ux, uy);
-	return [ux / ul, uy / ul];
+function passScore(o, C) {
+	if (o.cross >= 0 && o.landX * C.s < 0) return -Infinity;
+	const Q = C.Q;
+	let best = -Infinity;
+	let free = -Infinity;
+	for (let j = Math.max(8, o.apex); j < o.n; j += 2) {
+		const x = XS[j];
+		const y = YS[j];
+		if (y > -30 || x * C.s < 0) break;
+		const dq = Math.sqrt((x - Q[0]) ** 2 + (y - Q[1]) ** 2);
+		const v = Math.sqrt((x - XS[j - 1]) ** 2 + (y - YS[j - 1]) ** 2);
+		let late = Infinity;
+		const rx = x + C.rdx;
+		const ry = y + C.rdy;
+		for (const q of C.mates) late = Math.min(late, lateBy(q.d, rx, ry, C.t0 + j, C.pp, 1, 6));
+		if (C.solo || !C.mates.length) late = Math.min(late, lateBy({
+			x: C.kx,
+			y: C.ky,
+			vx: 0,
+			vy: 0
+		}, rx, ry, j - 8, C.pp, 1, 6));
+		const q = -dq * .3 + Math.min(-late, 15) * .9 - Math.max(0, v - 3.5) * 6;
+		if (q > best) best = q;
+		if (y < -60 && late < -4 && v < 4.5) free = Math.max(free, 34 - Math.abs(x) * .03);
+	}
+	if (best === -Infinity) return -Infinity;
+	let sc = Math.max(60 + best, free);
+	const rise = o.y0 - o.apexY;
+	if (rise < 50) sc -= (50 - rise) * .4;
+	if (o.sky) sc -= 25;
+	const room = C.st.height + o.apexY;
+	if (room < 70) sc -= (70 - room) * .5;
+	if (o.wall) sc -= 6;
+	if (o.net) sc -= 20;
+	if (o.cross >= 0) sc -= 25;
+	return sc;
 }
-/** Lugar libre de la cancha rival (lejos de los rivales) o uno al azar. */
-function pickTarget(m, team, B) {
+/** Puntaje de un golpe según el toque: el 3.º tiene que pasar; antes, pase salvo que el ataque convenga. */
+function evaluate(o, C) {
+	const att = attackScore(o, C);
+	if (C.k >= 3) {
+		if (att > -Infinity) return att;
+		if (o.cross >= 0 && o.landX * C.s < 0) return -300 - o.land;
+		return -900 + Math.min(0, o.apexY) * -.1;
+	}
+	const pas = passScore(o, C);
+	return Math.max(pas, att - C.bias);
+}
+/** A dónde se levanta jugando solo (cerca de la red) y el pase para rematar (alto, pegado a la red). */
+function passSpot(st, s) {
+	return [s * 85, -(st.netH + 95)];
+}
+function setSpot(st, s) {
+	return [s * 50, -Math.min(st.netH + 105, st.height - 90)];
+}
+/** Contexto del equipo para puntuar golpes. */
+function context(m, p, k) {
 	const st = m.st;
-	const fwd = -SIDE[team];
-	const opp = m.players.filter((q) => q.d && q.team && q.team !== team);
+	const s = SIDE[p.team];
+	const mates = m.members(p.team).filter((q) => q !== p);
+	const opp = m.members(3 - p.team);
+	const solo = !mates.length;
+	const self = solo && k <= 1;
+	const Q = self ? passSpot(st, s) : setSpot(st, s);
+	const rdx = self ? 0 : s * 12;
+	const rdy = self ? 12 : -14;
+	return {
+		s,
+		k,
+		st,
+		pp: st.player,
+		mates,
+		opp,
+		solo,
+		Q,
+		rdx,
+		rdy,
+		netTop: st.netH + st.ball.r,
+		smart: .5,
+		bias: 10,
+		spike: true,
+		kx: 0,
+		ky: 0,
+		t0: 0
+	};
+}
+/** ¿Una persona del equipo está jugando (se movió en los últimos 1.5 s)? Si no, los bots van por ella. */
+function engaged(m, q) {
+	const M = mem(m);
+	if (q.input & 15) M.active[q.id] = m.tick;
+	return m.tick - (M.active[q.id] ?? -999) < 90;
+}
+/**
+* Qué hace el equipo: 'receive' si la pelota va a caer de este lado (hay que jugarla), 'defend' si cae
+* del otro. Elige quién va a la pelota, la ventana de ticks en la que se la puede tocar y, si viene un
+* ataque del rival por abajo, quién se queda en la red a bloquearlo.
+*/
+function teamPlan(m, team, A) {
+	if (A.teams[team]) return A.teams[team];
+	const st = m.st;
+	const s = SIDE[team];
+	const nh = st.netH;
+	const P = {
+		mode: "defend",
+		chaser: null,
+		blocker: null,
+		i0: 0,
+		i1: -1,
+		k: 1,
+		crossY: 0
+	};
+	A.teams[team] = P;
+	if (m.state !== 1 || !A.path.length) return P;
+	const lastI = A.path.length;
+	if (at(m, A, lastI).x * s <= 0) return P;
+	let i0 = lastI;
+	while (i0 > 0 && at(m, A, i0 - 1).x * s > 0) i0--;
+	P.mode = "receive";
+	P.i0 = i0;
+	P.i1 = lastI;
+	P.k = (m.touchTeam === team ? m.touches : 0) + 1;
+	const pp = st.player;
+	const list = m.members(team);
+	if (i0 > 0 && list.length > 1) {
+		P.crossY = at(m, A, i0).y;
+		if (-P.crossY < nh + 130) {
+			let bd = 70;
+			for (const q of list) {
+				if (!q.bot || !LEVELS$1[q.bot]?.block) continue;
+				const dd = Math.hypot(q.d.x - s * 16, q.d.y - P.crossY);
+				if (Math.abs(q.d.x) < 45 && dd < bd) {
+					bd = dd;
+					P.blocker = q;
+				}
+			}
+		}
+	}
+	const M = mem(m);
 	let best = null;
-	let bs = -Infinity;
-	const wide = B.L.smart ? .7 : .55;
-	for (const depth of [
-		.3,
-		.56,
-		.82
-	]) for (const fy of [
-		-wide,
-		-wide / 2,
-		0,
-		wide / 2,
-		wide
-	]) {
-		const x = fwd * st.cw * depth;
-		const y = fy * st.ch;
-		let near = 400;
-		for (const q of opp) near = Math.min(near, len(q.d.x - x, q.d.y - y));
-		const score = (B.L.smart ? near : 0) + B.rand() * (B.L.smart ? 40 : 400);
-		if (score > bs) {
-			bs = score;
-			best = {
-				x,
-				y,
-				depth
+	let bestT = Infinity;
+	const etas = /* @__PURE__ */ new Map();
+	for (const q of list) {
+		if (q === P.blocker || !q.bot && !engaged(m, q)) continue;
+		let eta = Infinity;
+		const pace = q.bot ? LEVELS$1[q.bot]?.pace ?? 1 : 1;
+		for (let i = Math.max(1, i0); i <= Math.min(lastI, i0 + LOOK); i += 2) {
+			const B = at(m, A, i);
+			if (B.y > -16) break;
+			const h = -B.y;
+			let cx = B.x;
+			let cy = B.y + 14;
+			let pen = h < 50 ? 20 : 0;
+			if (P.k >= 3) {
+				const high = h > nh + 40 && Math.abs(B.x) < 150;
+				cx = B.x + s * (high ? 12 : 14);
+				cy = B.y + (high ? -14 : 10);
+				pen = high ? 0 : h < nh + 20 ? 40 : 15;
+			}
+			[cx, cy] = clampSpot(st, s, cx, cy, pp.radius);
+			if (i + pen < eta && lateBy(q.d, cx, cy, i, pp, pace, 10) <= 0) eta = i + pen;
+			if (eta <= i) break;
+		}
+		if (eta === Infinity) {
+			const B = at(m, A, lastI);
+			eta = 400 + Math.hypot(B.x - q.d.x, B.y - 16 - q.d.y) / 2.5;
+		}
+		if (list.length > 1 && m.lastId === q.id && m.touchTeam === team && P.k > 1) eta += 22;
+		etas.set(q.id, eta);
+		if (eta < bestT) {
+			bestT = eta;
+			best = q;
+		}
+	}
+	const prev = M.chaser[team];
+	if (prev && M.key[team] === m.lastTick && etas.has(prev) && best && prev !== best.id && etas.get(prev) <= bestT + 10) best = m.player(prev);
+	M.chaser[team] = best ? best.id : null;
+	M.key[team] = m.lastTick;
+	P.chaser = best;
+	return P;
+}
+/** Busca el mejor contacto (cuándo, desde dónde y hacia dónde) a lo largo de la ventana. */
+function planContact(m, p, A, P, C, L) {
+	const st = m.st;
+	const s = C.s;
+	const pp = st.player;
+	const fwd = -s;
+	let best = null;
+	const i0 = Math.max(1, P.i0);
+	const i1 = Math.min(P.i1, i0 + LOOK);
+	const stepI = i1 - i0 > 60 ? 3 : 2;
+	for (let i = i0; i <= i1; i += stepI) {
+		const B = at(m, A, i);
+		if (B.y > -13) break;
+		for (const a of ANG) {
+			const nx = Math.cos(a);
+			const ny = Math.sin(a);
+			if (nx * fwd < -.75) continue;
+			const dd = clamp(nx * (B.x - p.d.x) + ny * (B.y - p.d.y), 8, 24);
+			const px = B.x - nx * dd;
+			const py = B.y - ny * dd;
+			if (!legal(st, s, px, py, pp.radius)) continue;
+			const late = lateBy(p.d, px, py, i - 1, pp, L.pace, 3);
+			if (late > 3) continue;
+			C.t0 = i;
+			const [vx, vy] = kickVelocity(st, B.vx, B.vy, nx, ny);
+			C.kx = px;
+			C.ky = py;
+			const sc = evaluate(outcome(st, B.x, B.y, vx, vy), C) - i * .04 - Math.max(0, late) * 6;
+			if (!best || sc > best.sc) best = {
+				sc,
+				i,
+				px,
+				py,
+				tick: m.tick + i
 			};
 		}
 	}
 	return best;
 }
-/** Plan de un equipo para este tick: quién va, qué toque hace y dónde se para cada uno. */
-function teamPlan(m, team, B) {
-	const A = analyze(m);
-	if (A.plans[team]) return A.plans[team];
-	const st = m.st;
-	const pp = st.player;
-	const side = SIDE[team];
-	const fwd = -side;
-	const M = mem(m);
-	const mates = m.players.filter((q) => q.d && q.team === team);
-	const plan = {
-		chaser: null,
-		act: "",
-		k: -1,
-		C: null,
-		P: null,
-		T: null,
-		depth: 0,
-		roles: /* @__PURE__ */ new Map(),
-		avoid: null
-	};
-	A.plans[team] = plan;
-	if (m.state !== 1 || !A.path.length || !mates.length) return plan;
-	const path = A.path;
-	const R = pp.radius + st.ball.r;
-	const top = pp.reach + st.ball.r;
-	let k0 = -1;
-	for (let k = 0; k < path.length; k++) {
-		const q = path[k];
-		if (q.x * side > 3 && q.z <= top && q.vz < .6) {
-			k0 = k;
-			break;
-		}
-	}
-	const used = m.touchTeam === team ? m.touches : 0;
-	const landP = A.land >= 0 ? path[A.land] : null;
-	let dec = M.dec[team];
-	if (!dec || dec.key !== m.lastTick) dec = M.dec[team] = {
-		key: m.lastTick,
-		T: pickTarget(m, team, B),
-		spike: B.rand() < B.L.spike,
-		over: B.L.smart && B.rand() < .4,
-		judge: B.rand() < B.L.judge,
-		tip: B.rand() < (B.L.smart ? .12 : .05),
-		block: B.rand() < B.L.block
-	};
-	plan.T = dec.T;
-	if (k0 < 0) {
-		supportRoles(m, team, plan, mates, null, used, dec, B);
-		return plan;
-	}
-	if (used >= 3) {
-		plan.avoid = path[k0];
-		supportRoles(m, team, plan, mates, null, used, dec, B);
-		return plan;
-	}
-	if (landP && dec.judge && m.touchTeam !== team && landP.x * side > 0 && (Math.abs(landP.x) > st.cw + 14 || Math.abs(landP.y) > st.ch + 14)) {
-		plan.avoid = landP;
-		supportRoles(m, team, plan, mates, null, used, dec, B);
-		return plan;
-	}
-	const tnum = used + 1;
-	const solo = mates.length === 1;
-	const last = tnum === 3 || solo && tnum === 2;
-	const bumpWin = () => {
-		const out = [];
-		for (let k = k0; k < path.length; k++) {
-			const C = path[k];
-			if (C.x * side <= 2 || C.z > top + 2 || C.z < st.ball.r + 2) continue;
-			out.push({
-				k,
-				C,
-				P: clampSide(st, side, C.x, C.y, R)
-			});
-		}
-		return out;
-	};
-	const T = dec.T;
-	const spikeWin = () => {
-		const out = [];
-		for (let k = 0; k < path.length; k++) {
-			const C = path[k];
-			if (C.x * side < 8 || C.x * side > st.cw * .42 || C.z < st.netH + 8 || C.z > 72) continue;
-			const [ux, uy] = offsetDir(T.x - C.x, T.y - C.y, fwd, .8);
-			out.push({
-				k,
-				C,
-				P: clampSide(st, side, C.x - ux * OFF, C.y - uy * OFF, R),
-				lead: 12
-			});
-		}
-		return out;
-	};
-	const hitWin = () => {
-		const out = [];
-		for (let k = k0; k < path.length; k++) {
-			const C = path[k];
-			if (C.x * side <= 2 || C.z > top + 2 || C.z < st.ball.r + 2) continue;
-			const l = len(T.x - C.x, T.y - C.y);
-			out.push({
-				k,
-				C,
-				P: clampSide(st, side, C.x - (T.x - C.x) / l * OFF, C.y - (T.y - C.y) / l * OFF, R)
-			});
-		}
-		return out;
-	};
-	const act = last ? "attack" : tnum === 1 ? "receive" : "set";
-	let win = act === "attack" ? null : bumpWin();
-	let spk = null;
-	if (act === "attack" || dec.over && tnum === 1 && m.touchTeam !== team) {
-		spk = dec.spike ? spikeWin() : [];
-		if (act === "attack") win = hitWin();
-	}
-	const first = (q, list, lead = 0) => {
-		for (const w of list) if (travel(q, w.P.x, w.P.y, pp) <= w.k - lead) return w;
-		return null;
-	};
-	let best = null;
-	let bestK = Infinity;
-	let bestAct = act;
-	const again = (q) => !solo && m.touchTeam === team && m.lastId === q.id;
-	const keep = (q) => M.chaser[team] === q.id && M.at[team] === m.lastTick;
-	const engaged = (q, w) => {
-		if (q.bot) return true;
-		const dx = w.P.x - q.d.x;
-		const dy = w.P.y - q.d.y;
-		const dd = len(dx, dy);
-		return dd < 50 || (q.d.vx * dx + q.d.vy * dy) / dd > .9;
-	};
-	for (const q of mates) {
-		let w = spk?.length ? first(q, spk, 12) : null;
-		const a = w ? "spike" : act;
-		if (!w && win) w = first(q, win);
-		if (!w || !engaged(q, w)) continue;
-		const score = w.k + (q.bot ? 0 : 10) + (again(q) ? 30 : 0) - (keep(q) ? 5 : 0);
-		if (score < bestK) {
-			bestK = score;
-			best = {
-				q,
-				w
-			};
-			bestAct = a;
-		}
-	}
-	if (!best) {
-		const list = win && win.length ? win : spk || [];
-		const w = list[list.length - 1];
-		if (w) {
-			let bl = Infinity;
-			for (const q of mates) {
-				if (!engaged(q, w)) continue;
-				const late = travel(q, w.P.x, w.P.y, pp) - w.k + (q.bot ? 0 : 8) + (again(q) ? 20 : 0);
-				if (late < bl) {
-					bl = late;
-					best = {
-						q,
-						w
-					};
-				}
-			}
-			bestAct = act === "attack" && list === spk ? "spike" : act;
-		}
-	}
-	if (best) {
-		plan.chaser = best.q.id;
-		plan.act = bestAct === "attack" ? "hit" : bestAct === "receive" || bestAct === "set" ? "bump" : bestAct;
-		plan.k = best.w.k;
-		plan.C = best.w.C;
-		plan.P = best.w.P;
-		plan.depth = dec.tip ? -1 : T.depth > .7 ? 1 : 0;
-		plan.from = {
-			x: best.q.d.x,
-			y: best.q.d.y
-		};
-		M.chaser[team] = best.q.id;
-		M.at[team] = m.lastTick;
-	}
-	supportRoles(m, team, plan, mates, best?.q || null, used, dec, B);
-	return plan;
-}
-/** Mantiene un punto dentro de mi mitad (sin pisar la red) y del estadio. */
-function clampSide(st, side, x, y, R) {
-	const r = st.player.radius + 1;
-	x = side < 0 ? clamp(x, -st.width + r, -r) : clamp(x, r, st.width - r);
-	return {
-		x,
-		y: clamp(y, -st.height + r, st.height - r)
-	};
-}
-/** Dónde se para el resto: armador, atacantes, bloqueo y defensa. */
-function supportRoles(m, team, plan, mates, chaser, used, dec, B) {
-	const st = m.st;
-	const side = SIDE[team];
-	const b = m.ball;
-	const others = mates.filter((q) => q !== chaser && q.bot);
-	const n = mates.length;
-	const C = plan.C;
-	if (!!chaser && plan.act !== "" && (plan.act === "bump" || used > 0) && plan.act === "bump") {
-		const nextSet = used === 0;
-		const sy = clamp((C?.y || 0) * .5, -st.ch * .4, st.ch * .4);
-		let setter = null;
-		if (nextSet) {
-			let bd = Infinity;
-			for (const q of others) {
-				const dd = len(q.d.x - side * st.cw * .2, q.d.y - sy);
-				if (dd < bd) {
-					bd = dd;
-					setter = q;
-				}
-			}
-			if (setter) plan.roles.set(setter.id, {
-				x: side * st.cw * .2,
-				y: sy
-			});
-		}
-		const spots = [
-			-.45,
-			.45,
-			0
-		].map((f) => ({
-			x: side * st.cw * .4,
-			y: f * st.ch
-		}));
-		for (const q of others) {
-			if (q === setter) continue;
-			spots.sort((a, c) => len(a.x - q.d.x, a.y - q.d.y) - len(c.x - q.d.x, c.y - q.d.y));
-			const s = spots.shift() || {
-				x: side * st.cw * .5,
-				y: 0
-			};
-			plan.roles.set(q.id, s);
-		}
+/** Puntaje de pegar con la pelota en (bx, by) y el jugador en (px, py), con el error de puntería. */
+function kickScore(st, C, B, bx, by, bvx, bvy, px, py, pvx, pvy, t0 = 0) {
+	C.t0 = t0;
+	let nx = bx - px;
+	let ny = by - py;
+	const l = Math.sqrt(nx * nx + ny * ny);
+	if (l > .5) {
+		nx /= l;
+		ny /= l;
 	} else {
-		mates.forEach((q, i) => {
-			if (q === chaser || !q.bot) return;
-			const [x, y] = formation(st, team, i, n);
-			plan.roles.set(q.id, {
-				x,
-				y: clamp(y + (b.y - y) * .22, -st.ch * .9, st.ch * .9)
-			});
-		});
-		if (b.x * side < 0 && m.touchTeam && m.touchTeam !== team && B.L.block > 0 && dec && n >= 1) {
-			let blocker = null;
-			let bd = Infinity;
-			for (const q of others) {
-				const dd = Math.abs(q.d.x) + Math.abs(q.d.y - b.y) * .5;
-				if (dd < bd) {
-					bd = dd;
-					blocker = q;
-				}
-			}
-			const near = Math.abs(b.x) < st.cw * .45;
-			if (blocker && near && (n > 1 || Math.abs(b.x) < st.cw * .25)) plan.roles.set(blocker.id, {
-				x: side * (st.player.radius + 2),
-				y: clamp(b.y, -st.ch, st.ch),
-				block: true,
-				go: dec.block
-			});
-		}
+		nx = 0;
+		ny = -1;
 	}
-	if (C) for (const s of plan.roles.values()) {
-		if (s.block) continue;
-		const dx = s.x - C.x;
-		const dy = s.y - C.y;
-		const dd = len(dx, dy);
-		if (dd < 46) {
-			s.x = C.x + dx / dd * 46;
-			s.y = C.y + dy / dd * 46;
-			Object.assign(s, clampSide(st, side, s.x, s.y, 0));
-		}
+	if (B.noise) {
+		const c = Math.cos(B.noise);
+		const sn = Math.sin(B.noise);
+		[nx, ny] = [nx * c - ny * sn, nx * sn + ny * c];
 	}
-}
-/** Teclas para llegar a (tx, ty) frenando a tiempo según la física del modo. */
-function steer(d, tx, ty, pp, B) {
-	const dx = tx - d.x;
-	const dy = ty - d.y;
-	const dist = len(dx, dy);
-	const vmax = pp.acceleration * pp.damping / (1 - pp.damping);
-	const want = dist < 3 ? 0 : Math.min(vmax, Math.sqrt(1.5 * pp.acceleration * dist) + pp.acceleration);
-	const dvx = dx / dist * want - d.vx;
-	const dvy = dy / dist * want - d.vy;
-	const dead = pp.acceleration * .9;
-	let bits = 0;
-	if (dvx > dead) bits |= KEY.RIGHT;
-	else if (dvx < -dead) bits |= KEY.LEFT;
-	if (dvy > dead) bits |= KEY.DOWN;
-	else if (dvy < -dead) bits |= KEY.UP;
-	if (B.L.pace < 1 && B.rand() > B.L.pace) bits = 0;
-	return bits;
+	const [vx, vy] = kickVelocity(st, bvx, bvy, nx, ny, pvx, pvy);
+	C.kx = px;
+	C.ky = py;
+	return evaluate(outcome(st, bx, by, vx, vy), C);
 }
 /**
-* Si salto ahora, ¿en cuántos ticks toco la pelota y a qué altura? (misma física que el partido:
-* en el aire casi no se cambia el rumbo).
+* ¿Pego ahora? Compara pegar en este tick con pegar en los próximos (mientras la pelota siga al
+* alcance, con el jugador yendo a donde va) y con lo que espera el plan. Si es la última
+* oportunidad, pega igual.
 */
-function contactIfJump(m, p, path, maxJ, jump = true) {
+function decideKick(m, p, A, C, B, force = -Infinity) {
 	const st = m.st;
-	const pp = st.player;
+	const b = m.ball;
 	const d = p.d;
-	const br = st.ball.r;
-	const side = SIDE[p.team];
-	let x = d.x;
-	let y = d.y;
-	let vx = d.vx;
-	let vy = d.vy;
-	let z = p.z;
-	let vz = jump && p.z <= 0 && p.jcd <= 0 ? pp.jump : p.vz;
-	const R = d.r + br + pp.range;
-	for (let j = 0; j < Math.min(maxJ, path.length); j++) {
-		const air = z > 0 || vz > 0;
-		x += vx;
-		y += vy;
-		const damp = air ? pp.airDamping : pp.damping;
-		vx *= damp;
-		vy *= damp;
-		if (air) {
-			z += vz;
-			vz -= pp.gravity;
-			if (z <= 0) {
-				z = 0;
-				vz = 0;
-			}
+	const R = d.r + b.r + st.kick.range - .4;
+	if (p.cd > 0 || (b.x - d.x) ** 2 + (b.y - d.y) ** 2 > R * R) {
+		B.inReach = false;
+		return false;
+	}
+	if (!B.inReach) {
+		B.inReach = true;
+		if (B.rand() < B.L.miss) B.noise = (B.rand() < .5 ? -1 : 1) * (.25 + B.rand() * .35);
+	}
+	const now = kickScore(st, C, B, b.x, b.y, b.vx, b.vy, d.x, d.y, d.vx, d.vy);
+	let later = -Infinity;
+	const fut = selfPath(p, B.tx ?? d.x, B.ty ?? d.y, B.L.pace, st.player, 7);
+	for (let j = 1; j <= 7 && j <= A.path.length; j++) {
+		const S = fut[j - 1];
+		const Bj = at(m, A, j);
+		if (Bj.y > -11) break;
+		if ((Bj.x - S.x) ** 2 + (Bj.y - S.y) ** 2 > R * R) continue;
+		const sc = kickScore(st, C, B, Bj.x, Bj.y, Bj.vx, Bj.vy, S.x, S.y, S.vx, S.vy, j);
+		if (sc > later) later = sc;
+	}
+	const pl = B.plan;
+	if (pl && !pl.desperate && pl.tick - m.tick > 6 && pl.sc > -100) later = Math.max(later, pl.sc - 4);
+	if (later === -Infinity) return now > force;
+	return now >= later - 1.5 && now > force;
+}
+/** Lugar de cada uno cuando no va a la pelota. */
+function spot(m, p, P, B) {
+	const st = m.st;
+	const team = p.team;
+	const s = SIDE[team];
+	const nh = st.netH;
+	const others = m.members(team).filter((q) => q !== P.chaser && q !== P.blocker);
+	const idx = Math.max(0, others.indexOf(p));
+	const n = others.length;
+	if (P.mode === "receive") {
+		if (P.k <= 2 && others.length) {
+			const [qx, qy] = setSpot(st, s);
+			const S = [qx + s * 30, qy - 26];
+			const role = nearest(others, S);
+			if (p === role) return S;
+			const rest = others.filter((q) => q !== role);
+			const j = rest.indexOf(p);
+			if (j === 0) return [qx + s * 40, qy + 70];
+			return [s * st.cw * (.5 + .3 * (j + .5) / Math.max(1, rest.length)), -(50 + 35 * (j % 2))];
 		}
-		if (j + 1 < p.cd) continue;
-		const q = path[j];
-		if (q.x * side < -2) continue;
-		if (len(q.x - x, q.y - y) <= R && q.z <= z + pp.reach + br && q.z >= z - 6) return {
-			j,
-			z: q.z,
-			pz: z,
-			px: x,
-			ox: q.x - x,
-			oy: q.y - y
+		return defenseSpot(st, s, idx, n);
+	}
+	const blk = blocker(m, others);
+	if (p === blk && B.block) {
+		const b = m.ball;
+		let h = nh + 42;
+		if (b.x * s < 0 && Math.abs(b.x) < 150) h = clamp(nh + 42 + (-b.y - nh - 100) * .25, nh + 25, nh + 75);
+		return [s * 16, -h];
+	}
+	const rest = blk && B.block ? others.filter((q) => q !== blk) : others;
+	const j = Math.max(0, rest.indexOf(p));
+	const b = m.ball;
+	if ((m.touchTeam === 3 - team ? m.touches : 0) + 1 >= 3 || b.x * s < 0 && Math.abs(b.x) < 130 && -b.y > nh + 30) {
+		const k = rest.length;
+		const f = k <= 1 ? .5 : j / (k - 1);
+		return [s * Math.min(st.cw - 40, 70 + f * Math.min(150, st.cw - 110) + (k <= 1 ? 30 : 0)), -(34 + 14 * (j % 2))];
+	}
+	return defenseSpot(st, s, j, rest.length);
+}
+function defenseSpot(st, s, i, n) {
+	if (n <= 1) return [s * st.cw * .5, -75];
+	const f = .28 + .56 * i / (n - 1);
+	return [s * st.cw * f, -(50 + 45 * (i % 2))];
+}
+/** El más cercano a un lugar (las personas, solo si están mucho más cerca). */
+function nearest(list, [x, y]) {
+	let best = null;
+	let bd = Infinity;
+	for (const q of list) {
+		const dd = Math.hypot(q.d.x - x, q.d.y - y) + (q.bot ? 0 : 60);
+		if (dd < bd) {
+			bd = dd;
+			best = q;
+		}
+	}
+	return best;
+}
+/** El que bloquea: el bot más cerca de la red. */
+function blocker(m, list) {
+	let best = null;
+	let bd = Infinity;
+	for (const q of list) {
+		if (!q.bot || !LEVELS$1[q.bot]?.block) continue;
+		const dd = Math.abs(q.d.x) + Math.abs(q.d.y + m.st.netH + 48) * .5;
+		if (dd < bd) {
+			bd = dd;
+			best = q;
+		}
+	}
+	return best;
+}
+function serveThink(m, p, B) {
+	const st = m.st;
+	const L = B.L;
+	const b = m.ball;
+	const fwd = -SIDE[p.team];
+	const key = m.score[1] + m.score[2] * 1e3;
+	if (!B.serve || B.serve.key !== key) {
+		const r = B.rand();
+		const w = L.serve;
+		const depth = DEPTHS[r < w[0] ? 0 : r < w[0] + w[1] ? 1 : 2] + (B.rand() - .5) * .12;
+		const target = fwd * st.cw * depth;
+		let best = null;
+		for (let deg = 12; deg <= 78; deg += 1) {
+			const a = deg * Math.PI / 180;
+			const nx = fwd * Math.cos(a);
+			const ny = -Math.sin(a);
+			const [vx, vy] = kickVelocity(st, 0, 0, nx, ny, 0, 0, true);
+			const o = outcome(st, b.x, b.y, vx, vy);
+			if (o.cross < 0 || o.crossNet || o.sky || o.land < 0 || o.landX * fwd <= 0 || -o.crossY < st.netH + 22) continue;
+			const err = Math.abs(o.landX - target);
+			if (!best || err < best.err) best = {
+				err,
+				nx,
+				ny
+			};
+		}
+		const [nx, ny] = best ? [best.nx, best.ny] : [fwd * .6, -.8];
+		const e = (B.rand() * 2 - 1) * L.aim * .6;
+		const c = Math.cos(e);
+		const sn = Math.sin(e);
+		B.serve = {
+			key,
+			nx: nx * c - ny * sn,
+			ny: nx * sn + ny * c,
+			at: L.wait + B.rand() * 40
 		};
 	}
-	return null;
+	const R = p.d.r + b.r + st.kick.range - 4;
+	const tx = b.x - B.serve.nx * R;
+	const ty = b.y - B.serve.ny * R;
+	let bits = steer(p, tx, ty, 1, st.player);
+	const d = p.d;
+	const settled = Math.hypot(tx - d.x, ty - d.y) < 2 && Math.hypot(d.vx, d.vy) < .12;
+	if (m.serveClock >= B.serve.at && (settled || m.serveClock > B.serve.at + 90) && !B.hit) {
+		const dx = b.x - d.x;
+		const dy = b.y - d.y;
+		const l = Math.hypot(dx, dy);
+		const [vx, vy] = kickVelocity(st, 0, 0, dx / l, dy / l, d.vx, d.vy, true);
+		const o = outcome(st, b.x, b.y, vx, vy);
+		if (o.cross >= 0 && !o.crossNet && o.land >= 0 && o.landX * fwd > 0 || m.serveClock > B.serve.at + 150 || B.rand() < L.miss * .2) bits |= KEY.HIT;
+	}
+	return bits;
 }
-/** ¿El ataque que saldría de ese contacto cae dentro de la cancha rival (con algo de margen)? */
-function attackLands(m, p, c, path, depth, L) {
-	const st = m.st;
-	const fwd = -SIDE[p.team];
-	const q = path[c.j];
-	const ol = len(c.ox, c.oy);
-	const ux = c.ox / ol;
-	const uy = c.oy / ol;
-	const pt = attackPoint(st, c.pz > 2 && q.z >= st.netH + 2 && Math.abs(c.px) < st.cw * .5 && ux * fwd > -.25 ? depth < 0 ? "tip" : "spike" : "hit", p.team, q.x, q.y, ux, uy, depth);
-	if (!pt) return false;
-	const mg = L.smart ? 16 : L.err > 15 ? 0 : 9;
-	return pt.x * fwd > 14 && Math.abs(pt.x) < st.cw - mg && Math.abs(pt.y) < st.ch - mg;
-}
-/** Decide las teclas del bot `p` para este tick. */
+/** Teclas del bot `p` para este tick. */
 function think(m, p, B) {
+	const st = m.st;
+	const L = B.L;
 	const d = p.d;
 	if (!d) return 0;
-	const L = B.L;
-	const st = m.st;
-	const pp = st.player;
-	const team = p.team;
-	const side = SIDE[team];
-	const fwd = -side;
-	if (m.state >= 2) {
-		B.serveAt = 0;
-		return B.prev = 0;
-	}
-	if (m.state === 0) {
-		if (m.server === p.id) {
-			if (!B.serveAt) B.serveAt = m.serveClock + 35 + Math.floor(B.rand() * (L.smart ? 40 : 80));
-			if (m.serveClock >= B.serveAt && !(B.prev & KEY.HIT)) {
-				B.serveAt = 0;
-				const w = L.serve;
-				const r = B.rand();
-				const kind = r < w[0] ? -1 : r < w[0] + w[1] ? 0 : 1;
-				let ky = Math.floor(B.rand() * 3) - 1;
-				if (L.smart) {
-					let up = 0;
-					let down = 0;
-					for (const q of m.players) if (q.d && q.team && q.team !== team) q.d.y < 0 ? up++ : down++;
-					ky = up < down ? -1 : down < up ? 1 : ky;
-				}
-				let bits = KEY.HIT;
-				if (ky < 0) bits |= KEY.UP;
-				if (ky > 0) bits |= KEY.DOWN;
-				if (kind) bits |= kind * fwd > 0 ? KEY.RIGHT : KEY.LEFT;
-				return B.prev = bits;
-			}
-			return B.prev = 0;
-		}
-		const mates = m.players.filter((q) => q.d && q.team === team && q.id !== m.server);
-		const [x, y] = formation(st, team, Math.max(0, mates.indexOf(p)), mates.length);
-		return B.prev = steer(d, x, y, pp, B);
-	}
-	if (B.seen !== m.lastTick) {
-		B.seen = m.lastTick;
-		B.delay = L.react + Math.floor(B.rand() * L.react * .5);
-		B.ex = (B.rand() * 2 - 1) * L.err;
-		B.ey = (B.rand() * 2 - 1) * L.err;
-	}
-	if (B.delay > 0) {
-		B.delay--;
-		return B.prev = (B.tx === null ? 0 : steer(d, B.tx, B.ty, pp, B)) | (B.prev & KEY.HIT && p.armed ? KEY.HIT : 0);
-	}
 	const A = analyze(m);
-	const plan = teamPlan(m, team, B);
-	let tx = d.x;
-	let ty = d.y;
-	let press = false;
-	let hold = false;
-	let depthKeys = 0;
-	const b = m.ball;
-	if (plan.chaser === p.id && plan.P) {
-		const fade = .35 + .65 * clamp((plan.k - 10) / 60, 0, 1);
-		tx = plan.P.x + B.ex * fade;
-		ty = plan.P.y + B.ey * fade;
-		const close = len(tx - d.x, ty - d.y) < 44;
-		if (plan.act === "spike" || plan.act === "hit") {
-			const spike = plan.act === "spike";
-			if (p.z <= 0 && !p.armed && (close || !spike)) {
-				const c = contactIfJump(m, p, A.path, spike ? 50 : 6);
-				if (c && (!spike || c.z >= st.netH + (L.smart ? 10 : 5)) && attackLands(m, p, c, A.path, plan.depth, L)) press = true;
-			}
-			hold = true;
-			if (p.armed && contactIfJump(m, p, A.path, 3, false)) depthKeys = plan.depth ? plan.depth * fwd > 0 ? KEY.RIGHT : KEY.LEFT : -1;
+	const s = SIDE[p.team];
+	let bits = 0;
+	(m.__aiBrains ||= {})[p.id] = B;
+	const out = (x) => {
+		if (x & KEY.HIT && B.hit) x &= ~KEY.HIT;
+		B.hit = !!(x & KEY.HIT);
+		return x;
+	};
+	if (m.state === 0) {
+		if (m.server === p.id) return out(serveThink(m, p, B));
+		const list = m.members(p.team).filter((q) => q.id !== m.server);
+		const [fx, fy] = formation(st, p.team, Math.max(0, list.indexOf(p)), list.length);
+		return out(steer(p, fx, fy, .7, st.player));
+	}
+	if (m.state !== 1) {
+		const list = m.members(p.team);
+		const [fx, fy] = formation(st, p.team, Math.max(0, list.indexOf(p)), list.length);
+		return out(steer(p, fx, fy, .5, st.player));
+	}
+	if (m.lastTick !== B.seen) {
+		B.seen = m.lastTick;
+		B.wait = L.react;
+		B.plan = null;
+		B.noise = (B.rand() * 2 - 1) * L.aim;
+		B.spike = B.rand() < L.spike;
+		B.inReach = false;
+	}
+	if (B.wait > 0) {
+		B.wait--;
+		if (B.tx !== null) bits = steer(p, B.tx, B.ty, L.pace, st.player);
+		return out(bits);
+	}
+	const P = teamPlan(m, p.team, A);
+	const poss = m.touchTeam === p.team ? 0 : m.touchTeam;
+	if (B.blockKey !== poss) {
+		B.blockKey = poss;
+		if (poss) {
+			B.block = B.rand() < L.block;
+			B.blockErr = (B.rand() * 2 - 1) * 16 * (1 - L.smart * .5);
 		}
-	} else {
-		const role = plan.roles.get(p.id);
-		if (role) {
-			tx = role.x;
-			ty = role.y;
-			if (role.block && p.z <= 0 && !p.armed && role.go) {
-				const jz = L.smart ? 4 : 12;
-				for (const q of m.players) if (q.d && q.team && q.team !== team && q.z > jz && q.vz > 0 && Math.abs(q.d.x) < st.cw * .45 && len(q.d.x - b.x, q.d.y - b.y) < 64 && b.z > st.netH) press = true;
-				const path = A.path;
-				for (let k = 0; k < Math.min(16, path.length); k++) {
-					const q = path[k];
-					if (q.x * side > 0 && Math.abs(q.x) < 30) {
-						if (q.z > st.netH && q.z < st.netH + 46 && Math.abs(q.y - d.y) < 30 && k >= 5 && k <= 12) press = true;
-						break;
-					}
+	}
+	if (P.mode === "receive" && P.chaser === p) {
+		const C = context(m, p, P.k);
+		C.smart = L.smart;
+		C.spike = B.spike;
+		C.bias = L.attack + (P.k === 1 ? 20 : -6);
+		if (!B.plan || m.tick - B.planAt >= (B.plan.i - (m.tick - B.planAt) < 25 ? 3 : 8)) {
+			const plan = planContact(m, p, A, P, C, L);
+			B.planAt = m.tick;
+			if (plan) B.plan = plan;
+			else if (!B.plan || B.plan.desperate || B.plan.tick - m.tick < -4) {
+				let best = null;
+				for (let i = Math.max(1, P.i0); i <= P.i1; i += 2) {
+					const E = at(m, A, i);
+					const late = lateBy(d, E.x, E.y + 12, i, st.player, L.pace, 10);
+					if (!best || late < best.late) best = {
+						late,
+						i,
+						x: E.x,
+						y: E.y + 12
+					};
 				}
+				const [x, y] = best ? clampSpot(st, s, best.x, best.y, st.player.radius) : [d.x, d.y];
+				B.plan = {
+					px: x,
+					py: y,
+					i: best ? best.i : 0,
+					tick: m.tick + (best ? best.i : 0),
+					desperate: true
+				};
 			}
-			if (role.block) hold = true;
-		} else {
-			const mates = m.players.filter((q) => q.d && q.team === team);
-			const [x, y] = formation(st, team, mates.indexOf(p), mates.length);
-			tx = x;
-			ty = y;
 		}
-		const avoid = plan.avoid || (plan.chaser && plan.chaser !== p.id ? plan.C : null);
-		if (avoid) {
-			let ax = d.x - avoid.x;
-			let ay = d.y - avoid.y;
-			const dd = len(ax, ay);
-			const from = plan.chaser && plan.chaser !== p.id ? plan.from : null;
-			if (from) {
-				const lx = avoid.x - from.x;
-				const ly = avoid.y - from.y;
-				const ll = len(lx, ly);
-				const t = clamp(((d.x - from.x) * lx + (d.y - from.y) * ly) / (ll * ll), 0, 1);
-				const px = from.x + lx * t - d.x;
-				const py = from.y + ly * t - d.y;
-				if (len(px, py) < 34 || dd < 50) {
-					const nx = -ly / ll;
-					const ny = lx / ll;
-					const s = Math.sign(ax * nx + ay * ny) || 1;
-					tx = avoid.x + nx * s * 58 - lx / ll * 10;
-					ty = avoid.y + ny * s * 58 - ly / ll * 10;
-				}
-			} else if (dd < 50) {
-				tx = avoid.x + ax / dd * 58;
-				ty = avoid.y + ay / dd * 58;
+		B.tx = B.plan.px;
+		B.ty = B.plan.py;
+		bits = steer(p, B.tx, B.ty, L.pace, st.player);
+		if (P.k <= 3 && decideKick(m, p, A, C, B)) bits |= KEY.HIT;
+		return out(bits);
+	}
+	if (P.mode === "receive" && P.blocker === p && B.block) {
+		const want = P.crossY - 6 + (B.blockErr || 0);
+		const ty0 = Math.abs(want - d.y) < 30 ? want : d.y;
+		const [tx, ty] = clampSpot(st, s, s * 16, ty0, st.player.radius);
+		B.tx = tx;
+		B.ty = ty;
+		bits = steer(p, tx, ty, L.pace, st.player);
+		const C = context(m, p, 3);
+		C.smart = L.smart;
+		if (decideKick(m, p, A, C, B, 15)) bits |= KEY.HIT;
+		return out(bits);
+	}
+	let [x, y] = spot(m, p, P, B);
+	const ch = P.chaser && P.chaser !== p ? P.chaser : null;
+	if (ch) {
+		const cb = m.__aiBrains?.[ch.id];
+		const cx = cb?.tx ?? ch.d.x;
+		const cy = cb?.ty ?? ch.d.y;
+		for (const [ax, ay] of [[cx, cy], [ch.d.x, ch.d.y]]) {
+			const dx = x - ax;
+			const dy = y - ay;
+			const dd = Math.sqrt(dx * dx + dy * dy);
+			if (dd < 48) {
+				const k = (48 - dd) / (dd || 1);
+				x += (dd ? dx : s) * k;
+				y += (dd ? dy : 0) * k;
 			}
 		}
 	}
-	const pt = clampSide(st, side, tx, ty, 0);
-	tx = pt.x;
-	ty = pt.y;
+	const [tx, ty] = clampSpot(st, s, x, y, st.player.radius);
 	B.tx = tx;
 	B.ty = ty;
-	const sp = Math.hypot(d.vx, d.vy);
-	B.stall = B.prev & 15 && sp < .25 && p.z <= 0 ? B.stall + 1 : Math.max(0, B.stall - 2);
-	if (B.stall > 45) {
-		B.unstick = 22;
-		B.stall = 0;
-		B.uside = B.rand() < .5 ? -1 : 1;
-	}
-	let bits;
-	if (B.unstick > 0) {
-		B.unstick--;
-		bits = steer(d, d.x + B.uside * 30, d.y + B.uside * 30, pp, B);
-	} else bits = steer(d, tx, ty, pp, B);
-	if (p.z > 0 && p.armed && plan.chaser === p.id) bits = 0;
-	if (press && !(B.prev & KEY.HIT)) bits |= KEY.HIT;
-	else if (hold && B.prev & KEY.HIT && p.armed) bits |= KEY.HIT;
-	if (bits & KEY.HIT && depthKeys) bits = bits & ~(KEY.LEFT | KEY.RIGHT) | (depthKeys > 0 ? depthKeys : 0);
-	B.prev = bits;
-	return bits;
+	return out(steer(p, tx, ty, L.pace, st.player));
 }
 //#endregion
 //#region game.it/public/games/voleyball/play.js
@@ -4418,12 +4370,10 @@ function savePrev(m) {
 		if (!p.d) continue;
 		p.d.ox = p.d.x;
 		p.d.oy = p.d.y;
-		p.oz = p.z;
 	}
 	const b = m.ball;
 	b.ox = b.x;
 	b.oy = b.y;
-	b.oz = b.z;
 }
 var LocalSession = class {
 	/**
@@ -4511,16 +4461,8 @@ var NetSession = class {
 	positions() {
 		const out = /* @__PURE__ */ new Map();
 		const b = this.match.ball;
-		out.set("b", [
-			b.x,
-			b.y,
-			b.z
-		]);
-		for (const p of this.match.players) if (p.d) out.set(p.id, [
-			p.d.x,
-			p.d.y,
-			0
-		]);
+		out.set("b", [b.x, b.y]);
+		for (const p of this.match.players) if (p.d) out.set(p.id, [p.d.x, p.d.y]);
 		return out;
 	}
 	/** Aplica el último estado del servidor y vuelve a simular hasta el presente predicho. */
@@ -4562,26 +4504,17 @@ var NetSession = class {
 		const teleport = prevState !== m.state && (m.state === 0 || prevState === 0);
 		if (before) {
 			const after = this.positions();
-			for (const [k, [x, y, z]] of after) {
+			for (const [k, [x, y]] of after) {
 				const b = before.get(k);
-				const off = this.smooth.get(k) || [
-					0,
-					0,
-					0
-				];
+				const off = this.smooth.get(k) || [0, 0];
 				if (!b || teleport) {
 					this.smooth.delete(k);
 					continue;
 				}
 				const dx = b[0] - x + off[0];
 				const dy = b[1] - y + off[1];
-				const dz = b[2] - z + (off[2] || 0);
-				if (Math.hypot(dx, dy, dz) > 70) this.smooth.delete(k);
-				else this.smooth.set(k, [
-					dx,
-					dy,
-					dz
-				]);
+				if (Math.hypot(dx, dy) > 70) this.smooth.delete(k);
+				else this.smooth.set(k, [dx, dy]);
 			}
 		}
 	}
@@ -4608,8 +4541,7 @@ var NetSession = class {
 		for (const [key, o] of this.smooth) {
 			o[0] *= k;
 			o[1] *= k;
-			o[2] *= k;
-			if (Math.abs(o[0]) + Math.abs(o[1]) + Math.abs(o[2]) < .05) this.smooth.delete(key);
+			if (Math.abs(o[0]) + Math.abs(o[1]) < .05) this.smooth.delete(key);
 		}
 		if (this.paused || this.L === null) {
 			this.alpha = 1;
@@ -4633,7 +4565,7 @@ var NetSession = class {
 		}
 		this.alpha = this.acc / DT;
 	}
-	/** Eventos de la predicción local: solo lo inmediato (mis golpes y saltos). */
+	/** Eventos de la predicción local: solo lo inmediato (mis golpes y mi saque). */
 	predicted(e) {
 		if ((e.t === "hit" || e.t === "serve") && e.id === this.me) this.onEvent(e, "predicted");
 	}
@@ -4646,12 +4578,13 @@ var NetSession = class {
 //#endregion
 //#region game.it/public/games/voleyball/render.js
 /**
-* Voleyball — dibujo en canvas 2D, vista de arriba como Clashball con la altura "levantada": la
-* pelota y los jugadores que saltan se dibujan corridos hacia arriba de la pantalla según su altura
-* y su sombra queda en el piso, donde están de verdad. La cancha se pre-dibuja en un canvas aparte
-* (solo cambia al redimensionar); cada cuadro se dibujan la red, sombras, jugadores, pelota y
-* efectos ordenados de atrás para adelante. En pantallas verticales la cancha se gira 90° y la red
-* queda acostada, con el equipo propio abajo.
+* Voleyball — dibujo en canvas 2D, de costado como los mapas de vóley de HaxBall: el piso abajo (si
+* la pelota lo toca es punto), la red al medio con la barrera de los jugadores arriba, las paredes
+* a los costados y cielo abierto arriba: si la pelota se va del mapa, una flecha en el borde de
+* arriba la sigue para que todos sepan por dónde va a bajar.
+* El fondo se pre-dibuja en un canvas aparte (solo cambia al redimensionar); cada cuadro se dibujan
+* las sombras en el piso, la red, los jugadores, la pelota y los efectos. En un celular vertical la
+* cancha se ve más de cerca y la cámara sigue la pelota de costado.
 */
 const COLORS = {
 	red: "#ff4b5c",
@@ -4666,39 +4599,39 @@ const TEAM = [
 	COLORS.red,
 	COLORS.blue
 ];
-const HK = .72;
+const SKY = 26;
+const GROUND = 30;
+const SIDEM = 10;
 const THEMES = {
 	classic: {
-		out: "#2f6b3a",
-		out2: "#367a43",
-		sand: ["#f6e7bd", "#e9d39a"],
-		edge: "#d9bf7f",
-		line: "#2d5bd1",
-		line2: "rgba(45,91,209,0.55)",
-		shadow: "rgba(52,38,10,0.2)",
-		bg: "#0a0f1c"
+		bg: "#0a0f1c",
+		sky: ["#1d4d2b", "#2a6a3a"],
+		stripe: ["#3c8a45", "#46974f"],
+		sand: ["#f3dfa8", "#e0c27f"],
+		line: "#ffffff",
+		wall: "#24542d",
+		post: "#3a4250",
+		stands: true
 	},
 	beach: {
-		out: "#e9d29f",
-		out2: "#e2c88f",
-		sand: ["#fbf0d2", "#f1dfb1"],
-		edge: "#d8bd84",
-		line: "#1f78d1",
-		line2: "rgba(31,120,209,0.5)",
-		shadow: "rgba(80,58,20,0.18)",
-		sea: true,
-		bg: "#0b2d4f"
+		bg: "#1d1030",
+		sky: ["#ff8f5a", "#ffd7a0"],
+		sea: ["#2b7fb6", "#1f6496"],
+		sand: ["#f7e5b6", "#ebd096"],
+		line: "#fffaf0",
+		wall: "rgba(255,255,255,0.35)",
+		post: "#5a4636",
+		sun: true
 	},
 	turbo: {
-		out: "#0d1430",
-		out2: "#111a3b",
-		sand: ["#1d2b5c", "#16224a"],
-		edge: "#2a3c7a",
+		bg: "#05070f",
+		sky: ["#070b18", "#111a3a"],
+		grid: "rgba(45,226,230,0.08)",
+		sand: ["#18244e", "#101a3c"],
 		line: "#2de2e6",
-		line2: "rgba(241,91,181,0.75)",
-		shadow: "rgba(0,0,0,0.35)",
-		neon: true,
-		bg: "#070b18"
+		wall: "#f15bb5",
+		post: "#2de2e6",
+		neon: true
 	}
 };
 var Renderer = class {
@@ -4709,9 +4642,7 @@ var Renderer = class {
 		this.st = null;
 		this.cam = {
 			x: 0,
-			y: 0,
-			z: 1,
-			rot: 0
+			z: 1
 		};
 		this.fx = [];
 		this.shake = 0;
@@ -4722,8 +4653,7 @@ var Renderer = class {
 		this.spin = 0;
 		this.glow = true;
 		this.reduced = false;
-		this.noRot = false;
-		this.padBottom = 0;
+		this.touch = false;
 		this.W = 0;
 		this.H = 0;
 		this.dpr = 1;
@@ -4748,24 +4678,30 @@ var Renderer = class {
 		this.trail.length = 0;
 		this.fx.length = 0;
 	}
-	/** Zoom que entra la cancha completa (con lugar arriba para la pelota alta), con un mínimo. */
+	/**
+	* Zoom que entra la cancha entera, con el marcador arriba y los controles táctiles abajo (celular
+	* vertical) o a los costados (horizontal). Si así queda muy chica (celular vertical), se acerca y
+	* la cámara sigue la pelota de costado.
+	*/
 	layout() {
 		const st = this.st;
-		const rot = !this.noRot && this.H > this.W * 1.08 ? 1 : 0;
-		const vw = rot ? this.H : this.W;
-		const vh = rot ? this.W : this.H;
-		const lift = rot ? 0 : 46;
-		const pad = this.padBottom || 0;
-		const fit = rot ? Math.min((vw - 90 - pad) / (st.width * 2), (vh - 16) / (st.height * 2)) : Math.min((vw - 20) / (st.width * 2), (vh - 76 - lift) / (st.height * 2));
-		const minZ = Math.min(.62, Math.max(.48, Math.min(vw, vh) / 720));
-		const z = Math.max(minZ, Math.min(1.7, fit));
+		const portrait = this.H > this.W;
+		const top = 62;
+		const bottom = (this.touch && portrait ? 150 : 0) + 6;
+		const side = this.touch && !portrait ? 150 : 0;
+		const ww = st.cw * 2 + 20;
+		const wh = st.height + SKY + GROUND;
+		const fitH = (this.H - top - bottom) / wh;
+		const fit = Math.min((this.W - 12 - side * 2) / ww, fitH);
+		const near = Math.min(fitH, this.W / (st.cw * 1.12));
+		const z = Math.max(.3, fit < .8 && near > fit ? near : fit);
+		const follow = z * ww > this.W + 1;
+		const free = this.H - top - bottom - wh * z;
 		return {
-			rot,
 			z,
-			follow: z > fit + .001,
-			vw,
-			vh,
-			lift
+			follow,
+			ww,
+			y0: top + Math.max(0, free) * .5 + (SKY + st.height) * z
 		};
 	}
 	drawField(z) {
@@ -4776,135 +4712,143 @@ var Renderer = class {
 		this.fieldKey = key;
 		const s = z * this.dpr;
 		const f = this.field;
-		f.width = Math.ceil(st.width * 2 * s);
-		f.height = Math.ceil(st.height * 2 * s);
+		const X0 = -st.cw - SIDEM;
+		const Y0 = -st.height - SKY;
+		const ww = st.cw * 2 + 20;
+		const wh = st.height + SKY + GROUND;
+		f.width = Math.ceil(ww * s);
+		f.height = Math.ceil(wh * s);
 		const g = f.getContext("2d");
-		g.setTransform(s, 0, 0, s, st.width * s, st.height * s);
-		const { cw, ch } = st;
-		const W = st.width;
+		g.setTransform(s, 0, 0, s, -X0 * s, -Y0 * s);
+		const W = st.cw;
 		const H = st.height;
-		g.fillStyle = T.out;
-		g.fillRect(-W, -H, W * 2, H * 2);
-		if (st.mode === "classic") {
-			g.save();
-			g.beginPath();
-			g.rect(-W, -H, W * 2, H * 2);
-			g.clip();
-			g.fillStyle = T.out2;
-			for (let x = -W - H * 2; x < W + H * 2; x += 56) {
+		const sky = g.createLinearGradient(0, Y0, 0, 0);
+		sky.addColorStop(0, T.sky[0]);
+		sky.addColorStop(1, T.sky[1]);
+		g.fillStyle = sky;
+		g.fillRect(X0, Y0, ww, wh);
+		if (T.stripe) {
+			const n = Math.ceil(ww / 40);
+			for (let i = 0; i < n; i++) {
+				g.fillStyle = T.stripe[i % 2];
+				g.fillRect(X0 + i * 40, -H, 40, H);
+			}
+			const band = g.createLinearGradient(0, Y0, 0, -H);
+			band.addColorStop(0, "#24314f");
+			band.addColorStop(1, "#3b4d78");
+			g.fillStyle = band;
+			g.fillRect(X0, Y0, ww, SKY);
+			const cols = [
+				"#ff4b5c",
+				"#ffd23f",
+				"#3d8bff",
+				"#ffffff",
+				"#2de2e6",
+				"#f15bb5"
+			];
+			g.globalAlpha = .55;
+			for (let x = X0 + 4, i = 0; x < X0 + ww; x += 7, i++) {
+				g.fillStyle = cols[(i * 7 + (i >> 2)) % cols.length];
 				g.beginPath();
-				g.moveTo(x, -H);
-				g.lineTo(x + 28, -H);
-				g.lineTo(x + 28 + H * 2, H);
-				g.lineTo(x + H * 2, H);
+				g.arc(x, Y0 + 8 + i * 5 % 3 * 4, 2.2, 0, Math.PI * 2);
 				g.fill();
 			}
-			g.restore();
-		} else if (st.mode === "beach") {
-			g.strokeStyle = "rgba(170,130,70,0.13)";
+			g.globalAlpha = 1;
+			g.fillStyle = "#6b3b22";
+			g.fillRect(X0, -H - 4, ww, 4);
+		}
+		if (T.sun) {
+			g.fillStyle = "rgba(255,240,200,0.85)";
+			g.beginPath();
+			g.arc(W * .55, -H * .62, 26, 0, Math.PI * 2);
+			g.fill();
+			const sea = g.createLinearGradient(0, -H * .3, 0, 0);
+			sea.addColorStop(0, T.sea[0]);
+			sea.addColorStop(1, T.sea[1]);
+			g.fillStyle = sea;
+			g.fillRect(X0, -H * .3, ww, H * .3);
+			g.strokeStyle = "rgba(255,255,255,0.25)";
 			g.lineWidth = 1.2;
-			for (let i = 0; i < 90; i++) {
-				const x = i * 137 % (W * 2) - W;
-				const y = i * 71 % (H * 2) - H;
+			for (let y = -H * .27; y < -6; y += 11) for (let x = X0 + -y * 7 % 30; x < X0 + ww; x += 46) {
 				g.beginPath();
 				g.moveTo(x, y);
-				g.quadraticCurveTo(x + 9, y - 3, x + 18, y);
+				g.lineTo(x + 14, y);
 				g.stroke();
 			}
-			const sea = g.createLinearGradient(0, -H, 0, -ch - 18);
-			sea.addColorStop(0, "#1b6fae");
-			sea.addColorStop(.75, "#3fa7d6");
-			sea.addColorStop(1, "rgba(120,210,235,0)");
-			g.fillStyle = sea;
-			g.fillRect(-W, -H, W * 2, H - ch - 18);
-			g.strokeStyle = "rgba(255,255,255,0.7)";
-			g.lineWidth = 2;
-			g.beginPath();
-			for (let x = -W; x <= W; x += 8) g.lineTo(x, -ch - 34 + Math.sin(x / 18) * 3);
-			g.stroke();
-		} else {
-			g.strokeStyle = "rgba(255,255,255,0.035)";
+			g.fillStyle = "rgba(255,255,255,0.18)";
+			g.fillRect(X0, -H - 2, ww, 2);
+		}
+		if (T.grid) {
+			g.strokeStyle = T.grid;
 			g.lineWidth = 1;
-			for (let y = -H; y < H; y += 14) {
-				g.beginPath();
+			g.beginPath();
+			for (let x = 0; x <= W; x += 30) for (const sx of [-1, 1]) {
+				g.moveTo(sx * x, -H);
+				g.lineTo(sx * x, 0);
+			}
+			for (let y = -H; y < 0; y += 30) {
 				g.moveTo(-W, y);
 				g.lineTo(W, y);
-				g.stroke();
 			}
+			g.stroke();
+			g.fillStyle = "rgba(241,91,181,0.35)";
+			g.fillRect(X0, -H - 2, ww, 2);
 		}
-		g.fillStyle = T.edge;
-		g.fillRect(-cw - 8, -ch - 8, cw * 2 + 16, ch * 2 + 16);
-		const gr = g.createLinearGradient(0, -ch, 0, ch);
-		gr.addColorStop(0, T.sand[1]);
-		gr.addColorStop(.5, T.sand[0]);
-		gr.addColorStop(1, T.sand[1]);
-		g.fillStyle = gr;
-		g.fillRect(-cw, -ch, cw * 2, ch * 2);
-		if (!T.neon) {
-			g.fillStyle = "rgba(120,90,30,0.07)";
-			for (let i = 0; i < 520; i++) {
-				const x = i * 97.13 % (cw * 2) - cw;
-				const y = i * 53.7 % (ch * 2) - ch;
-				g.fillRect(x, y, 1.6, 1.6);
-			}
+		const sand = g.createLinearGradient(0, 0, 0, GROUND);
+		sand.addColorStop(0, T.sand[0]);
+		sand.addColorStop(1, T.sand[1]);
+		g.fillStyle = sand;
+		g.fillRect(X0, 0, ww, GROUND);
+		g.fillStyle = "rgba(0,0,0,0.06)";
+		for (let i = 0; i < ww * .35; i++) {
+			const x = X0 + i * 97.13 % ww;
+			const y = 3 + i * 31.7 % 25;
+			g.fillRect(x, y, 1.2, 1.2);
 		}
-		g.lineCap = "round";
+		g.fillStyle = T.wall;
+		g.fillRect(X0, Y0, SIDEM, wh);
+		g.fillRect(W, Y0, SIDEM, wh);
 		if (T.neon && this.glow) {
-			g.shadowColor = T.line;
+			g.shadowColor = T.wall;
 			g.shadowBlur = 10;
 		}
-		g.strokeStyle = T.line;
-		g.lineWidth = 3;
-		g.strokeRect(-cw, -ch, cw * 2, ch * 2);
-		g.lineWidth = 2;
-		g.strokeStyle = T.line2;
-		if (T.neon && this.glow) g.shadowColor = "#f15bb5";
-		for (const sx of [-1, 1]) {
-			g.beginPath();
-			g.moveTo(sx * cw / 3, -ch);
-			g.lineTo(sx * cw / 3, ch);
-			g.stroke();
-			for (const sy of [-1, 1]) {
-				g.beginPath();
-				g.moveTo(sx * (cw + 6), sy * ch);
-				g.lineTo(sx * (cw + 22), sy * ch);
-				g.stroke();
-			}
-		}
-		g.shadowBlur = 0;
-		g.strokeStyle = T.line;
+		g.strokeStyle = T.neon ? T.wall : "rgba(255,255,255,0.7)";
 		g.lineWidth = 2;
 		g.beginPath();
-		g.moveTo(0, -ch);
-		g.lineTo(0, ch);
+		g.moveTo(-W, Y0);
+		g.lineTo(-W, 0);
+		g.moveTo(W, Y0);
+		g.lineTo(W, 0);
 		g.stroke();
-		const sh = st.netH * .55;
-		const sv = st.netH * .22;
-		g.fillStyle = T.shadow;
-		g.beginPath();
-		g.moveTo(0, -st.netY);
-		g.lineTo(0, st.netY);
-		g.lineTo(sh, st.netY + sv);
-		g.lineTo(sh, -st.netY + sv);
-		g.closePath();
-		g.fill();
-		g.strokeStyle = T.shadow;
-		g.lineWidth = 3;
-		for (const py of [-st.postY, st.postY]) {
-			g.beginPath();
-			g.moveTo(0, py);
-			g.lineTo(sh * 1.15, py + sv * 1.15);
-			g.stroke();
+		if (T.neon && this.glow) {
+			g.shadowColor = T.line;
+			g.shadowBlur = 12;
 		}
+		g.strokeStyle = T.line;
+		g.lineWidth = 3;
+		g.beginPath();
+		g.moveTo(-W, 0);
+		g.lineTo(W, 0);
+		g.stroke();
+		g.shadowBlur = 0;
+		g.fillStyle = T.neon ? "rgba(45,226,230,0.5)" : "rgba(255,255,255,0.55)";
+		for (const sx of [-1, 1]) g.fillRect(sx * st.serveX - 9, 3, 18, 3);
+		g.strokeStyle = T.neon ? "rgba(45,226,230,0.35)" : "rgba(255,255,255,0.45)";
+		g.lineWidth = 1.5;
+		g.setLineDash([6, 6]);
+		g.beginPath();
+		g.moveTo(0, -H);
+		g.lineTo(0, -st.netH - 4);
+		g.stroke();
+		g.setLineDash([]);
 	}
-	hit(x, y, z, color, kind) {
+	hit(x, y, color, kind) {
 		if (this.reduced) return;
-		const big = kind === "spike" || kind === "block";
+		const big = kind === "spike" || kind === "block" || kind === "bomb";
 		this.fx.push({
 			k: "ring",
 			x,
 			y,
-			z,
 			t: 0,
 			life: big ? .38 : .26,
 			r0: 8,
@@ -4917,10 +4861,8 @@ var Renderer = class {
 				k: "dot",
 				x,
 				y,
-				z,
-				vx: Math.cos(a) * 60,
-				vy: Math.sin(a) * 60,
-				vz: Math.random() * 40,
+				vx: Math.cos(a) * 70,
+				vy: Math.sin(a) * 70,
 				t: 0,
 				life: .35,
 				color: "#fff",
@@ -4934,17 +4876,15 @@ var Renderer = class {
 		const n = Math.min(26, 6 + Math.round(v * 3));
 		const sand = (THEMES[this.st?.mode] || THEMES.classic).sand[1];
 		for (let i = 0; i < n; i++) {
-			const a = Math.random() * Math.PI * 2;
-			const sp = 20 + Math.random() * 40 * Math.min(2, v / 2);
+			const a = Math.PI + Math.random() * Math.PI;
+			const sp = 30 + Math.random() * 45 * Math.min(2, v / 2);
 			this.fx.push({
 				k: "dot",
 				x,
-				y,
-				z: 2,
+				y: -1,
 				vx: Math.cos(a) * sp,
 				vy: Math.sin(a) * sp,
-				vz: 30 + Math.random() * 60,
-				g: 260,
+				g: 320,
 				t: 0,
 				life: .45 + Math.random() * .3,
 				color: color && i % 3 === 0 ? color : sand,
@@ -4961,17 +4901,15 @@ var Renderer = class {
 		if (this.reduced) return;
 		this.shake = .7;
 		for (let i = 0; i < 60; i++) {
-			const a = Math.random() * Math.PI * 2;
+			const a = Math.PI + Math.random() * Math.PI;
 			const v = 60 + Math.random() * 220;
 			this.fx.push({
 				k: "dot",
 				x,
-				y,
-				z: 4,
+				y: Math.min(y, -2),
 				vx: Math.cos(a) * v,
 				vy: Math.sin(a) * v,
-				vz: 40 + Math.random() * 160,
-				g: 300,
+				g: 380,
 				t: 0,
 				life: .8 + Math.random() * .6,
 				color: i % 3 ? TEAM[team] : "#fff",
@@ -4981,8 +4919,7 @@ var Renderer = class {
 		this.fx.push({
 			k: "ring",
 			x,
-			y,
-			z: 0,
+			y: 0,
 			t: 0,
 			life: .6,
 			r0: 10,
@@ -4993,7 +4930,7 @@ var Renderer = class {
 	}
 	/**
 	* @param {Match} m
-	* @param {object} v  { alpha, me, focusTeam, offsets: Map, dt, names, aimFor, aimInput }
+	* @param {object} v  { alpha, me, offsets: Map, dt, names, aimFor }
 	*/
 	frame(m, v) {
 		const { ctx } = this;
@@ -5010,42 +4947,30 @@ var Renderer = class {
 		const bo = off("b");
 		const ball = {
 			x: lerp(b.ox, b.x) + (bo ? bo[0] : 0),
-			y: lerp(b.oy, b.y) + (bo ? bo[1] : 0),
-			z: Math.max(b.r, lerp(b.oz, b.z) + (bo ? bo[2] || 0 : 0))
+			y: lerp(b.oy, b.y) + (bo ? bo[1] : 0)
 		};
 		const players = m.players.filter((p) => p.d).map((p) => {
 			const o = off(p.id);
 			return {
 				p,
 				x: lerp(p.d.ox, p.d.x) + (o ? o[0] : 0),
-				y: lerp(p.d.oy, p.d.y) + (o ? o[1] : 0),
-				z: Math.max(0, lerp(p.oz, p.z))
+				y: lerp(p.d.oy, p.d.y) + (o ? o[1] : 0)
 			};
 		});
 		const me = players.find((q) => q.p.id === v.me);
+		const z = L.z;
 		const cam = this.cam;
 		let tx = 0;
-		let ty = 0;
 		if (L.follow) {
+			const half = this.W / z / 2;
 			tx = ball.x;
-			ty = ball.y;
-			const hw = L.vw / L.z / 2 - 60;
-			const hh = (L.vh - 60) / L.z / 2 - 50;
-			if (me) {
-				tx = Math.max(me.x - hw, Math.min(me.x + hw, tx));
-				ty = Math.max(me.y - hh, Math.min(me.y + hh, ty));
-			}
-			const mx = Math.max(0, st.width - L.vw / L.z / 2);
-			const my = Math.max(0, st.height - (L.vh - 60) / L.z / 2);
+			if (me) tx = Math.max(me.x - half + 40, Math.min(me.x + half - 40, tx));
+			const mx = Math.max(0, L.ww / 2 - half);
 			tx = Math.max(-mx, Math.min(mx, tx));
-			ty = Math.max(-my, Math.min(my, ty));
 		}
-		const kc = cam.rot !== L.rot || cam.z !== L.z ? 1 : 1 - Math.exp(-dt * 5);
+		const kc = cam.z !== z ? 1 : 1 - Math.exp(-dt * 5);
 		cam.x += (tx - cam.x) * kc;
-		cam.y += (ty - cam.y) * kc;
-		cam.z = L.z;
-		cam.rot = L.rot;
-		const flip = L.rot && v.focusTeam === 2 ? -1 : 1;
+		cam.z = z;
 		const dpr = this.dpr;
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 		ctx.fillStyle = T.bg;
@@ -5058,88 +4983,35 @@ var Renderer = class {
 			sy = (Math.random() * 2 - 1) * amp;
 			this.shake = Math.max(0, this.shake - dt * 2.4);
 		}
-		const z = L.z;
 		const cx = this.W / 2 + sx;
-		const cy = (L.rot ? (70 + this.H - (this.padBottom || 0)) / 2 : this.H / 2 + 20 + L.lift * z * .5) + sy;
-		const toScreen = (x, y) => {
-			const dx = (x - cam.x) * z;
-			const dy = (y - cam.y) * z;
-			return L.rot ? [cx + dy * flip, cy - dx * flip] : [cx + dx, cy + dy];
-		};
-		const lift = (h) => h * HK * z;
+		const cy = L.y0 + sy;
+		const toScreen = (x, y) => [cx + (x - cam.x) * z, cy + y * z];
 		this.toScreen = toScreen;
-		ctx.save();
-		ctx.translate(cx, cy);
-		if (L.rot) ctx.rotate(flip > 0 ? -Math.PI / 2 : Math.PI / 2);
-		ctx.scale(z, z);
-		ctx.translate(-cam.x, -cam.y);
-		ctx.drawImage(this.field, -st.width, -st.height, st.width * 2, st.height * 2);
-		ctx.restore();
-		if (m.state === 0 && v.aimFor && m.server === v.aimFor && v.aimInput !== void 0) {
-			const sp = players.find((q) => q.p.id === v.aimFor);
-			if (sp) {
-				const aim = serveTarget(st, sp.p.team, ball.y, v.aimInput);
-				const [ax, ay] = toScreen(aim.x, aim.y);
-				const pulse = 1 + Math.sin(performance.now() / 180) * .08;
-				ctx.strokeStyle = "rgba(255,255,255,0.75)";
-				ctx.setLineDash([5, 5]);
-				ctx.lineWidth = 2;
-				ctx.beginPath();
-				ctx.ellipse(ax, ay, 18 * z * pulse, 18 * z * pulse, 0, 0, Math.PI * 2);
-				ctx.stroke();
-				ctx.setLineDash([]);
-				ctx.beginPath();
-				ctx.arc(ax, ay, 3 * z, 0, Math.PI * 2);
-				ctx.fillStyle = "rgba(255,255,255,0.75)";
-				ctx.fill();
-			}
-		}
+		const [fx0, fy0] = toScreen(-st.cw - SIDEM, -st.height - SKY);
+		ctx.drawImage(this.field, fx0, fy0, L.ww * z, (st.height + SKY + GROUND) * z);
 		for (const q of players) {
-			const [x, y] = toScreen(q.x, q.y);
-			const k = Math.max(.55, 1 - q.z / 70);
-			ctx.fillStyle = `rgba(0,0,0,${(.24 * k).toFixed(3)})`;
+			const [x] = toScreen(q.x, 0);
+			const k = Math.max(.35, 1 + q.y / 260);
+			ctx.fillStyle = `rgba(0,0,0,${(.18 * k).toFixed(3)})`;
 			ctx.beginPath();
-			ctx.ellipse(x + 2, y + 3, q.p.d.r * z * k, q.p.d.r * z * k * .8, 0, 0, Math.PI * 2);
+			ctx.ellipse(x, cy + 2 * z, q.p.d.r * z * k, 3.2 * z * k, 0, 0, Math.PI * 2);
 			ctx.fill();
 		}
-		{
-			const [x, y] = toScreen(ball.x, ball.y);
-			const h = ball.z - b.r;
-			const k = Math.max(.45, 1 - h / 220);
-			ctx.fillStyle = `rgba(0,0,0,${(.34 * Math.max(.35, 1 - h / 160)).toFixed(3)})`;
+		if (b.live) {
+			const [x] = toScreen(ball.x, 0);
+			const k = Math.max(.3, 1 + ball.y / 320);
+			ctx.fillStyle = `rgba(0,0,0,${(.38 * k).toFixed(3)})`;
 			ctx.beginPath();
-			ctx.ellipse(x, y, b.r * z * k, b.r * z * k * .8, 0, 0, Math.PI * 2);
+			ctx.ellipse(x, cy + 2 * z, b.r * z * (.6 + k * .6), 3 * z, 0, 0, Math.PI * 2);
 			ctx.fill();
-			if (h > 26) {
-				ctx.strokeStyle = "rgba(255,255,255,0.16)";
-				ctx.lineWidth = 1;
-				ctx.setLineDash([3, 4]);
-				ctx.beginPath();
-				ctx.moveTo(x, y);
-				ctx.lineTo(x, y - lift(ball.z) + b.r * z);
-				ctx.stroke();
-				ctx.setLineDash([]);
-			}
 		}
-		const items = [];
-		for (const q of players) items.push({
-			k: 0,
-			q,
-			d: toScreen(q.x, q.y)[1]
-		});
-		items.push({
-			k: 1,
-			d: toScreen(ball.x, ball.y)[1]
-		});
-		const netD = L.rot ? toScreen(0, 0)[1] : -Infinity;
-		items.push({
-			k: 2,
-			d: netD
-		});
-		items.sort((p1, p2) => p1.d - p2.d);
-		for (const it of items) if (it.k === 0) this.drawPlayer(it.q, v, toScreen, lift, z);
-		else if (it.k === 1) this.drawBall(m, ball, toScreen, lift, z, dt);
-		else this.drawNet(st, toScreen, lift, z, L.rot, T);
+		this.drawNet(st, toScreen, z, T);
+		if (m.state === 0 && v.aimFor && m.server === v.aimFor) {
+			const sp = m.player(v.aimFor);
+			if (sp?.d) this.drawServeAim(m, sp, toScreen, z);
+		}
+		for (const q of players) this.drawPlayer(q, v, toScreen, z);
+		this.drawBall(m, ball, toScreen, z, dt);
 		for (let i = this.fx.length - 1; i >= 0; i--) {
 			const e = this.fx[i];
 			e.t += dt;
@@ -5152,24 +5024,25 @@ var Renderer = class {
 				const [x, y] = toScreen(e.x, e.y);
 				const rr = (e.r0 + (e.r1 - e.r0) * (1 - al * al)) * z;
 				ctx.beginPath();
-				if (e.flat) ctx.ellipse(x, y, rr, rr * .8, 0, 0, Math.PI * 2);
-				else ctx.arc(x, y - lift(e.z), rr, 0, Math.PI * 2);
+				if (e.flat) ctx.ellipse(x, y, rr, rr * .18, 0, 0, Math.PI * 2);
+				else ctx.arc(x, y, rr, 0, Math.PI * 2);
 				ctx.lineWidth = 3 * al;
 				ctx.strokeStyle = withAlpha(e.color, al * .85);
 				ctx.stroke();
 			} else {
 				e.x += e.vx * dt;
 				e.y += e.vy * dt;
-				e.vx *= 1 - dt * 2.5;
-				e.vy *= 1 - dt * 2.5;
-				if (e.g) {
-					e.z = Math.max(0, e.z + e.vz * dt);
-					e.vz -= e.g * dt;
+				e.vx *= 1 - dt * 1.5;
+				if (e.g) e.vy += e.g * dt;
+				else e.vy *= 1 - dt * 1.5;
+				if (e.g && e.y > 0) {
+					e.y = 0;
+					e.vy *= -.3;
 				}
 				const [x, y] = toScreen(e.x, e.y);
 				ctx.fillStyle = withAlpha(e.color, al);
 				const s = e.s * Math.max(.6, z);
-				ctx.fillRect(x - s / 2, y - lift(e.z) - s / 2, s, s);
+				ctx.fillRect(x - s / 2, y - s / 2, s, s);
 			}
 		}
 		ctx.textAlign = "center";
@@ -5181,21 +5054,9 @@ var Renderer = class {
 			const label = q.p.name || "";
 			ctx.lineWidth = 3;
 			ctx.strokeStyle = "rgba(5,8,16,0.7)";
-			ctx.strokeText(label, x, y + r + 11);
+			ctx.strokeText(label, x, y + r + 10);
 			ctx.fillStyle = q.p.id === v.me ? "#fff" : "rgba(255,255,255,0.86)";
-			ctx.fillText(label, x, y + r + 11);
-		}
-		{
-			const [x, y] = toScreen(ball.x, ball.y);
-			if (y - lift(ball.z) < 8) {
-				ctx.fillStyle = "rgba(255,255,255,0.85)";
-				ctx.beginPath();
-				ctx.moveTo(x, 6);
-				ctx.lineTo(x - 7, 18);
-				ctx.lineTo(x + 7, 18);
-				ctx.closePath();
-				ctx.fill();
-			}
+			ctx.fillText(label, x, y + r + 10);
 		}
 		if (this.flash > 0) {
 			ctx.fillStyle = withAlpha(this.flashColor, this.flash * .22);
@@ -5204,18 +5065,70 @@ var Renderer = class {
 		}
 		if (this.netWob > 0) this.netWob = Math.max(0, this.netWob - dt * 2.2);
 	}
-	drawPlayer(q, v, toScreen, lift, z) {
+	drawNet(st, toScreen, z, T) {
+		const { ctx } = this;
+		const wob = this.netWob > 0 && !this.reduced ? Math.sin(performance.now() / 28) * this.netWob * 2.5 * z : 0;
+		const [x, y0] = toScreen(0, 0);
+		const [, y1] = toScreen(0, -st.netH);
+		const w = Math.max(5, 7 * z);
+		ctx.save();
+		ctx.translate(wob, 0);
+		ctx.fillStyle = T.neon ? "rgba(45,226,230,0.12)" : "rgba(20,24,34,0.28)";
+		ctx.fillRect(x - w / 2, y1, w, y0 - y1);
+		ctx.strokeStyle = T.neon ? "rgba(45,226,230,0.55)" : "rgba(255,255,255,0.55)";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		const step = Math.max(4, 6 * z);
+		for (let y = y1 + step; y < y0; y += step) {
+			ctx.moveTo(x - w / 2, y);
+			ctx.lineTo(x + w / 2, y);
+		}
+		ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = T.post;
+		ctx.fillRect(x - 1.5 * z, y1, 3 * z, y0 - y1);
+		if (T.neon && this.glow) {
+			ctx.shadowColor = T.line;
+			ctx.shadowBlur = 10;
+		}
+		ctx.fillStyle = T.neon ? T.line : "#ffffff";
+		ctx.fillRect(x - w / 2 - 1 + wob, y1 - 2 * z, w + 2, 4 * z);
+		ctx.shadowBlur = 0;
+		ctx.fillStyle = T.post;
+		ctx.fillRect(x - 6 * z, y0 - 1, 12 * z, 3 * z);
+	}
+	/** Trayectoria que tendría el saque si le pega ahora desde donde está. */
+	drawServeAim(m, sp, toScreen, z) {
+		const { ctx } = this;
+		const b = m.ball;
+		const d = sp.d;
+		const dx = b.x - d.x;
+		const dy = b.y - d.y;
+		const l = Math.hypot(dx, dy);
+		const R = d.r + b.r + m.st.kick.range;
+		if (l > R * 2.2) return;
+		const c = ballCopy(b);
+		[c.vx, c.vy] = l > .5 ? kickVelocity(m.st, 0, 0, dx / l, dy / l, d.vx, d.vy, true) : [0, -5];
+		ctx.fillStyle = l <= R ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.35)";
+		for (let i = 0; i < 70; i++) {
+			if (stepBall(c, m.st) & 3) break;
+			if (i % 4) continue;
+			const [x, y] = toScreen(c.x, c.y);
+			ctx.beginPath();
+			ctx.arc(x, y, Math.max(1.4, 2.2 * z * (1 - i / 90)), 0, Math.PI * 2);
+			ctx.fill();
+		}
+	}
+	drawPlayer(q, v, toScreen, z) {
 		const { ctx } = this;
 		const { p } = q;
-		const [gx, gy] = toScreen(q.x, q.y);
-		const x = gx;
-		const y = gy - lift(q.z);
-		const r = p.d.r * z * (1 + q.z * .006);
+		const [x, y] = toScreen(q.x, q.y);
+		const r = p.d.r * z;
 		const col = TEAM[p.team];
 		const gr = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r);
 		gr.addColorStop(0, lighten(col));
 		gr.addColorStop(1, col);
-		if (p.armed && this.glow) {
+		if (p.kicking && this.glow) {
 			ctx.shadowColor = "rgba(255,255,255,0.85)";
 			ctx.shadowBlur = 12;
 		}
@@ -5224,8 +5137,8 @@ var Renderer = class {
 		ctx.fillStyle = gr;
 		ctx.fill();
 		ctx.shadowBlur = 0;
-		ctx.lineWidth = p.armed ? 3 : 2;
-		ctx.strokeStyle = p.armed ? "#ffffff" : COLORS.ink;
+		ctx.lineWidth = p.kicking ? 3 : 2;
+		ctx.strokeStyle = p.kicking ? "#ffffff" : COLORS.ink;
 		ctx.stroke();
 		if (p.id === v.me) {
 			ctx.beginPath();
@@ -5242,22 +5155,44 @@ var Renderer = class {
 			ctx.fillText(p.avatar, x, y + 1);
 		}
 	}
-	drawBall(m, ball, toScreen, lift, z, dt) {
+	drawBall(m, ball, toScreen, z, dt) {
 		const { ctx } = this;
 		const b = m.ball;
-		const [gx, gy] = toScreen(ball.x, ball.y);
-		const x = gx;
-		const y = gy - lift(ball.z);
-		const r = b.r * z * (1 + (ball.z - b.r) / 420);
-		const sp = Math.hypot(b.vx, b.vy, b.vz);
+		const [x, y] = toScreen(ball.x, ball.y);
+		const r = b.r * z;
+		const tt = m.state === 1 ? m.sideTeam : 0;
+		const n = m.state === 1 ? m.sideTouches : 0;
+		const edge = n ? TEAM[tt] : COLORS.ink;
+		const top = toScreen(0, -this.st.height)[1] + 3;
+		if (y + r < top - 3) {
+			const s = 1 - Math.min(1, (top - y) / (260 * z)) * .45;
+			ctx.fillStyle = "rgba(255,255,255,0.95)";
+			ctx.beginPath();
+			ctx.moveTo(x, top - 1);
+			ctx.lineTo(x - 9 * s, top + 12 * s);
+			ctx.lineTo(x + 9 * s, top + 12 * s);
+			ctx.closePath();
+			ctx.fill();
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = edge;
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.arc(x, top + 21 * s, 5.5 * s, 0, Math.PI * 2);
+			ctx.fillStyle = "#fff";
+			ctx.fill();
+			ctx.stroke();
+			this.trail.length = 0;
+			return;
+		}
+		const sp = Math.hypot(b.vx, b.vy);
 		const tr = this.trail;
 		tr.push(x, y);
 		if (tr.length > 18) tr.splice(0, 2);
-		if (sp > 4.2 && !this.reduced && tr.length >= 6) {
+		if (sp > 5.5 && !this.reduced && tr.length >= 6) {
 			ctx.lineCap = "round";
 			for (let j = 2; j < tr.length; j += 2) {
 				const al = j / tr.length;
-				ctx.strokeStyle = `rgba(255,255,255,${(al * .4 * Math.min(1, (sp - 4.2) / 3)).toFixed(3)})`;
+				ctx.strokeStyle = `rgba(255,255,255,${(al * .4 * Math.min(1, (sp - 5.5) / 3)).toFixed(3)})`;
 				ctx.lineWidth = r * 1.5 * al;
 				ctx.beginPath();
 				ctx.moveTo(tr[j - 2], tr[j - 1]);
@@ -5265,7 +5200,7 @@ var Renderer = class {
 				ctx.stroke();
 			}
 		}
-		this.spin += Math.hypot(b.vx, b.vy) * dt * .9;
+		this.spin += (b.vx >= 0 ? 1 : -1) * Math.hypot(b.vx, b.vy) * dt * .9;
 		const gr = ctx.createRadialGradient(x - r * .35, y - r * .4, 1, x, y, r);
 		gr.addColorStop(0, "#ffffff");
 		gr.addColorStop(1, "#e3e8f2");
@@ -5293,16 +5228,15 @@ var Renderer = class {
 		ctx.beginPath();
 		ctx.arc(x, y, r, 0, Math.PI * 2);
 		ctx.lineWidth = 2;
-		const tt = m.state === 1 ? m.touchTeam : 0;
-		ctx.strokeStyle = tt ? TEAM[tt] : COLORS.ink;
+		ctx.strokeStyle = edge;
 		ctx.stroke();
-		if (m.state === 1 && !m.serving && tt && m.touches > 0 && m.touches <= 3) {
+		if (n > 0 && n <= 3) {
 			const dy = y - r - 7;
 			for (let i = 0; i < 3; i++) {
 				const dx = x + (i - 1) * 7;
 				ctx.beginPath();
 				ctx.arc(dx, dy, 2.6, 0, Math.PI * 2);
-				if (i < m.touches) {
+				if (i < n) {
 					ctx.fillStyle = TEAM[tt];
 					ctx.fill();
 				}
@@ -5312,94 +5246,21 @@ var Renderer = class {
 			}
 		}
 	}
-	drawNet(st, toScreen, lift, z, rot, T) {
-		const { ctx } = this;
-		const H = lift(st.netH);
-		const wob = this.netWob > 0 && !this.reduced ? Math.sin(performance.now() / 28) * this.netWob * 3 * z : 0;
-		const P0 = toScreen(0, -st.postY);
-		const P1 = toScreen(0, st.postY);
-		const N0 = toScreen(0, -st.netY);
-		const N1 = toScreen(0, st.netY);
-		if (rot) {
-			ctx.fillStyle = "rgba(15,20,35,0.22)";
-			ctx.beginPath();
-			ctx.moveTo(N0[0], N0[1] - H * .28);
-			ctx.lineTo(N1[0], N1[1] - H * .28);
-			ctx.lineTo(N1[0], N1[1] - H + wob);
-			ctx.lineTo(N0[0], N0[1] - H + wob);
-			ctx.closePath();
-			ctx.fill();
-			ctx.strokeStyle = "rgba(20,25,40,0.45)";
-			ctx.lineWidth = 1;
-			const n = Math.max(6, Math.round(Math.abs(N1[0] - N0[0]) / 7));
-			ctx.beginPath();
-			for (let i = 0; i <= n; i++) {
-				const xx = N0[0] + (N1[0] - N0[0]) * i / n;
-				ctx.moveTo(xx, N0[1] - H * .28);
-				ctx.lineTo(xx, N0[1] - H + wob);
-			}
-			for (let j = 1; j < 4; j++) {
-				const yy = N0[1] - H * .28 - H * .72 * j / 4;
-				ctx.moveTo(N0[0], yy + wob * j / 4);
-				ctx.lineTo(N1[0], yy + wob * j / 4);
-			}
-			ctx.stroke();
-		} else {
-			ctx.fillStyle = "rgba(15,20,35,0.35)";
-			ctx.fillRect(N0[0] - 2.5 * z + wob, N0[1] - H, 5 * z, N1[1] - N0[1] + H * .7);
-		}
-		ctx.lineCap = "round";
-		ctx.strokeStyle = T.neon ? "#e9fbff" : "#ffffff";
-		ctx.lineWidth = 3 * Math.max(.8, z);
-		ctx.beginPath();
-		ctx.moveTo(P0[0] + wob, P0[1] - H);
-		ctx.lineTo(P1[0] + wob, P1[1] - H);
-		ctx.stroke();
-		for (const N of [N0, N1]) {
-			const top = N[1] - H - 16 * z;
-			ctx.lineWidth = 2.5 * Math.max(.8, z);
-			for (let i = 0; i < 4; i++) {
-				ctx.strokeStyle = i % 2 ? "#ffffff" : "#ff3b5c";
-				ctx.beginPath();
-				ctx.moveTo(N[0] + wob, top + i * 4 * z);
-				ctx.lineTo(N[0] + wob, top + (i + 1) * 4 * z);
-				ctx.stroke();
-			}
-		}
-		for (const P of [P0, P1]) {
-			ctx.strokeStyle = "#59606f";
-			ctx.lineWidth = 5 * Math.max(.8, z);
-			ctx.beginPath();
-			ctx.moveTo(P[0], P[1]);
-			ctx.lineTo(P[0], P[1] - H - 4 * z);
-			ctx.stroke();
-			ctx.strokeStyle = "rgba(255,255,255,0.35)";
-			ctx.lineWidth = 1.5;
-			ctx.beginPath();
-			ctx.moveTo(P[0] - 1.2 * z, P[1]);
-			ctx.lineTo(P[0] - 1.2 * z, P[1] - H - 4 * z);
-			ctx.stroke();
-			ctx.fillStyle = "#3c424f";
-			ctx.beginPath();
-			ctx.ellipse(P[0], P[1], 5 * z, 4 * z, 0, 0, Math.PI * 2);
-			ctx.fill();
-		}
-	}
 };
 function lighten(hex) {
 	const n = parseInt(hex.slice(1), 16);
 	return `rgb(${Math.min(255, (n >> 16 & 255) + 60)},${Math.min(255, (n >> 8 & 255) + 60)},${Math.min(255, (n & 255) + 60)})`;
 }
 function withAlpha(hex, a) {
-	if (hex[0] !== "#") return hex;
-	const n = parseInt(hex.length === 4 ? hex.replace(/#(.)(.)(.)/, "#$1$1$2$2$3$3").slice(1) : hex.slice(1), 16);
+	if (hex.startsWith("rgb")) return hex;
+	const n = parseInt(hex.slice(1), 16);
 	return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
 }
 //#endregion
 //#region game.it/public/games/voleyball/input.js
 /**
 * Voleyball — entrada: teclado, joystick (Gamepad API) y controles táctiles → bits como en
-* Clashball (1 arriba, 2 abajo, 4 izquierda, 8 derecha, 16 pegar/saltar).
+* Clashball (1 arriba, 2 abajo, 4 izquierda, 8 derecha, 16 pegar).
 */
 const G$2 = window.GameIt;
 const ARROWS = {
@@ -5551,27 +5412,6 @@ function touchBits() {
 		KEY.UP,
 		KEY.UP | KEY.RIGHT
 	][(s + 8) % 8];
-}
-/** Rota los bits de dirección de pantalla a mundo cuando la cancha está girada. */
-function rotate(b, rot, flip) {
-	if (!rot) return b;
-	const u = b & KEY.UP;
-	const d = b & KEY.DOWN;
-	const l = b & KEY.LEFT;
-	const r = b & KEY.RIGHT;
-	let o = b & KEY.HIT;
-	if (flip > 0) {
-		if (u) o |= KEY.RIGHT;
-		if (d) o |= KEY.LEFT;
-		if (r) o |= KEY.DOWN;
-		if (l) o |= KEY.UP;
-	} else {
-		if (u) o |= KEY.LEFT;
-		if (d) o |= KEY.RIGHT;
-		if (r) o |= KEY.UP;
-		if (l) o |= KEY.DOWN;
-	}
-	return o;
 }
 /** Joystick virtual (aparece donde se apoya el dedo) y botón de pegar. */
 function initTouch(zone, stick, knob, hitBtn) {
@@ -6047,8 +5887,8 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const TXT = {
 	tagline: {
-		es: "Vóley a toda velocidad: pelota rápida y bombeada, red, 3 toques por equipo y saca el que hace el punto. Con bots y salas online.",
-		en: "Fast-paced volleyball: quick lofted ball, a net, 3 touches per side and the scorer serves. With bots and online rooms."
+		es: "Vóley de costado como en HaxBall: le pegás con Espacio y es punto si la pelota toca el piso del rival. 3 toques por equipo y saca el que hace el punto. Con bots y salas online.",
+		en: "Side-view volleyball like HaxBall: hit with Space and score when the ball touches the other floor. 3 touches per side and the scorer serves. With bots and online rooms."
 	},
 	solo: {
 		es: "JUGAR VS CPU",
@@ -6079,8 +5919,8 @@ const TXT = {
 		en: "HOW TO PLAY"
 	},
 	helpSub: {
-		es: "Controles, toques, remate y reglas",
-		en: "Controls, touches, spikes and rules"
+		es: "Controles, golpe, remate y reglas",
+		en: "Controls, hitting, spikes and rules"
 	},
 	edit: {
 		es: "cambiar",
@@ -6374,10 +6214,6 @@ const TXT = {
 		es: "saque",
 		en: "serve"
 	},
-	serving: {
-		es: "saque",
-		en: "serve"
-	},
 	golden: {
 		es: "punto de oro",
 		en: "golden point"
@@ -6463,16 +6299,16 @@ const TXT = {
 		en: "players"
 	},
 	practiceHint: {
-		es: "Práctica: la máquina te saca siempre. Recibí, armá y rematá.",
-		en: "Practice: the machine always serves to you. Receive, set and spike."
+		es: "Práctica: la máquina te saca siempre. Recibí, levantala cerca de la red y rematá desde arriba.",
+		en: "Practice: the machine always serves to you. Receive, pop it up near the net and spike from above."
 	},
 	hitHintKb: {
-		es: "Sin apretar, la pelota rebota y sube · <kbd>X</kbd> / <kbd>Espacio</kbd> para saltar y pegar",
-		en: "Without pressing, the ball pops up · <kbd>X</kbd> / <kbd>Space</kbd> to jump and hit"
+		es: "<kbd>Espacio</kbd> / <kbd>X</kbd> le pega: sale desde tu jugador hacia la pelota (desde abajo sube, desde arriba es remate) · es punto si toca el piso",
+		en: "<kbd>Space</kbd> / <kbd>X</kbd> hits: it flies from your player toward the ball (from below it rises, from above it is a spike) · a point when it touches the floor"
 	},
 	keysSolo: {
-		es: "<kbd>↑↓←→</kbd> / <kbd>WASD</kbd> mover · <kbd>X</kbd> <kbd>Espacio</kbd> saltar y pegar · <kbd>Esc</kbd> pausa",
-		en: "<kbd>↑↓←→</kbd> / <kbd>WASD</kbd> move · <kbd>X</kbd> <kbd>Space</kbd> jump & hit · <kbd>Esc</kbd> pause"
+		es: "<kbd>↑↓←→</kbd> / <kbd>WASD</kbd> mover · <kbd>Espacio</kbd> <kbd>X</kbd> pegar · <kbd>Esc</kbd> pausa",
+		en: "<kbd>↑↓←→</kbd> / <kbd>WASD</kbd> move · <kbd>Space</kbd> <kbd>X</kbd> hit · <kbd>Esc</kbd> pause"
 	},
 	keysLocal: {
 		es: "J1: <kbd>WASD</kbd> + <kbd>Espacio</kbd>/<kbd>C</kbd> · J2: <kbd>↑↓←→</kbd> + <kbd>Enter</kbd>/<kbd>.</kbd>/<kbd>Ctrl der</kbd> · joysticks: 1 y 2",
@@ -6483,16 +6319,16 @@ const TXT = {
 		en: "<kbd>Enter</kbd> chat · <kbd>Esc</kbd> room & teams · <kbd>P</kbd> pause (host)"
 	},
 	touchNote: {
-		es: "Joystick a la izquierda; PEGAR a la derecha salta y le pega. Sin tocarlo, la pelota rebota y sube.",
-		en: "Joystick on the left; HIT on the right jumps and hits. Without it, the ball pops up."
+		es: "Joystick a la izquierda para moverte; PEGAR a la derecha le pega, desde tu jugador hacia la pelota. Es punto si la pelota toca el piso.",
+		en: "Joystick on the left to move; HIT on the right hits, from your player toward the ball. A point when the ball touches the floor."
 	},
 	serveHint: {
-		es: "Sacás vos: flechas para apuntar (hacia la red: potente; hacia atrás: corto) y PEGAR",
-		en: "Your serve: arrows to aim (toward the net: power; back: short) and HIT"
+		es: "Sacás vos: acomodate al lado de la pelota y pegale con <kbd>Espacio</kbd>. Los puntitos muestran por dónde va a salir.",
+		en: "Your serve: get next to the ball and hit it with <kbd>Space</kbd>. The dots show where it will go."
 	},
 	serveHintTouch: {
-		es: "Sacás vos: apuntá con el joystick (hacia la red: potente; hacia atrás: corto) y tocá PEGAR",
-		en: "Your serve: aim with the joystick (toward the net: power; back: short) and tap HIT"
+		es: "Sacás vos: acomodate al lado de la pelota y tocá PEGAR. Los puntitos muestran por dónde va a salir.",
+		en: "Your serve: get next to the ball and tap HIT. The dots show where it will go."
 	}
 };
 const t = (k, v) => {
@@ -6522,20 +6358,10 @@ const POINT_TXT = {
 			en: "{by}"
 		}
 	},
-	blockOut: {
+	bomb: {
 		t: {
-			es: "¡REMATE!",
-			en: "KILL!"
-		},
-		s: {
-			es: "{by} · tocó el bloqueo y se fue",
-			en: "{by} · off the block and out"
-		}
-	},
-	tip: {
-		t: {
-			es: "¡FINTA!",
-			en: "TIP!"
+			es: "¡BOMBAZO!",
+			en: "BOMB!"
 		},
 		s: {
 			es: "{by}",
@@ -6562,24 +6388,24 @@ const POINT_TXT = {
 			en: "{by}"
 		}
 	},
-	out: {
-		t: {
-			es: "¡AFUERA!",
-			en: "OUT!"
-		},
-		s: {
-			es: "La tiró {vs}",
-			en: "Hit out by {vs}"
-		}
-	},
 	own: {
 		t: {
-			es: "¡PUNTO!",
-			en: "POINT!"
+			es: "¡SE LES CAYÓ!",
+			en: "DROPPED IT!"
 		},
 		s: {
 			es: "{vs} no la pudo pasar",
 			en: "{vs} couldn't get it over"
+		}
+	},
+	net: {
+		t: {
+			es: "¡A LA RED!",
+			en: "INTO THE NET!"
+		},
+		s: {
+			es: "La tiró {vs}",
+			en: "Hit by {vs}"
 		}
 	},
 	four: {
@@ -6592,34 +6418,14 @@ const POINT_TXT = {
 			en: "Fault by {team}"
 		}
 	},
-	antenna: {
-		t: {
-			es: "¡AFUERA!",
-			en: "OUT!"
-		},
-		s: {
-			es: "Por fuera de la antena · {vs}",
-			en: "Outside the antenna · {vs}"
-		}
-	},
-	serveOut: {
-		t: {
-			es: "¡AFUERA!",
-			en: "OUT!"
-		},
-		s: {
-			es: "Saque largo de {vs}",
-			en: "Long serve by {vs}"
-		}
-	},
 	serveFault: {
 		t: {
-			es: "¡A LA RED!",
-			en: "INTO THE NET!"
+			es: "¡SAQUE MALO!",
+			en: "BAD SERVE!"
 		},
 		s: {
-			es: "Saque de {vs}",
-			en: "Serve by {vs}"
+			es: "{vs} no pasó la red",
+			en: "{vs} didn't clear the net"
 		}
 	}
 };
@@ -6642,38 +6448,38 @@ const HELP = [
 			en: "Goal"
 		},
 		p: {
-			es: "Que la pelota pique en la cancha rival. Cada punto lo gana alguien (punto por jugada) y saca el equipo que lo ganó; si recupera el saque, saca el siguiente de ese equipo. Gana el primero en llegar a los puntos fijados (por 2 de diferencia, si está activado) o el que va arriba al terminar el tiempo.",
-			en: "Make the ball land on the other court. Every rally scores a point and the winning team serves; when a team wins back the serve, its next player serves. First to the point limit wins (by 2, if enabled), or whoever leads when time runs out."
+			es: "Se ve de costado, como el vóley de HaxBall. El punto se define en el piso: si la pelota toca el piso de tu lado, punto del rival. Cada jugada es un punto y saca el equipo que lo ganó; si recupera el saque, saca el siguiente de ese equipo. Gana el primero en llegar a los puntos fijados (por 2 de diferencia, si está activado) o el que va arriba al terminar el tiempo.",
+			en: "Seen from the side, like HaxBall volleyball. Points are decided on the floor: if the ball touches the floor on your side, the rival scores. Every rally scores a point and the winning team serves; when a team wins back the serve, its next player serves. First to the point limit wins (by 2, if enabled), or whoever leads when time runs out."
 		}
 	},
 	{
 		h: {
-			es: "Moverse y la pelota",
-			en: "Moving and the ball"
+			es: "Moverse",
+			en: "Moving"
 		},
 		p: {
-			es: "Flechas o WASD, con la misma inercia que en Clashball. Nadie cruza la red. La pelota vuela: su sombra en la arena muestra dónde está y la línea punteada qué tan alta va.",
-			en: "Arrows or WASD, with the same inertia as Clashball. Nobody crosses the net. The ball flies: its shadow on the sand shows where it is and the dotted line how high it is."
+			es: "Flechas o WASD, en las 8 direcciones y flotando con la misma inercia que en Clashball: los jugadores no caen, la pelota sí. Nadie pasa al otro lado de la red (la línea punteada de arriba es la barrera). La sombra en la arena muestra dónde está la pelota y, si se va arriba del mapa, una flecha en el borde de arriba la sigue para que sepas por dónde baja.",
+			en: "Arrows or WASD, in 8 directions and floating with the same inertia as Clashball: players do not fall, the ball does. Nobody crosses to the other side of the net (the dotted line above it is the barrier). The shadow on the sand shows where the ball is and, if it flies above the map, an arrow on the top edge follows it so you know where it comes down."
 		}
 	},
 	{
 		h: {
-			es: "Pase (sin apretar)",
-			en: "Pass (no button)"
+			es: "Pegarle",
+			en: "Hitting"
 		},
 		p: {
-			es: "Parate debajo de la pelota sin apretar nada: rebota en vos y sube. El 1.er toque va hacia la red (al armador), el 2.º sube cerca de la red para rematar y el 3.º la devuelve por arriba. Dónde la tocás la corre un poco.",
-			en: "Stand under the ball without pressing: it bounces off you and goes up. The 1st touch goes toward the net (to the setter), the 2nd rises close to the net for the spike and the 3rd sends it back over. Where you touch it nudges it."
+			es: "La pelota te atraviesa: solo le pegás con Espacio, X o PEGAR, como la patada de HaxBall. El golpe sale desde el centro de tu jugador hacia la pelota: si estás abajo, sube; si estás al costado, sale para el otro lado; si estás arriba, la bajás (remate). Apretando, el golpe queda armado (borde blanco) y sale apenas la tenés al alcance; para volver a pegar, soltá y apretá de nuevo. Yendo hacia la pelota le pegás más fuerte.",
+			en: "The ball passes through you: you only hit it with Space, X or HIT, like the HaxBall kick. The hit goes from the center of your player toward the ball: from below it rises; from the side it goes the other way; from above you smash it down (a spike). Holding the button arms the hit (white outline) and it goes off as soon as the ball is in reach; release and press again to hit again. Moving into the ball hits harder."
 		}
 	},
 	{
 		h: {
-			es: "Pegar, rematar y bloquear",
-			en: "Hit, spike and block"
+			es: "Toques, remate y bloqueo",
+			en: "Touches, spikes and blocks"
 		},
 		p: {
-			es: "Apretá X, Espacio o PEGAR: saltás y le pegás fuerte apenas te llega, hacia el lado contrario a donde la tocás (como la patada de Clashball). En el aire, cerca de la red y con la pelota alta es un remate. Las flechas al pegar eligen la profundidad: hacia la red, profundo; hacia atrás, corto (en el remate, una finta). Si la pelota viene del rival por arriba de la red, saltando ahí la bloqueás. Para volver a pegar, soltá y apretá de nuevo.",
-			en: "Press X, Space or HIT: you jump and hit hard as soon as it reaches you, away from where you touch it (like the Clashball kick). In the air, near the net with the ball high, it is a spike. Arrows when hitting set the depth: toward the net, deep; back, short (a tip when spiking). If the ball comes from the rival over the net, jumping there blocks it. Release and press again to hit again."
+			es: "Cada equipo tiene hasta 3 toques para pasarla (el saque cuenta como el primero). La jugada clásica: recibir alto hacia la red, que un compañero la deje alta cerca de la red y rematar desde arriba. Si el rival remata cerca de la red, ponete ahí y pegale: es un bloqueo y no cuenta como toque. Los puntitos arriba de la pelota muestran los toques usados.",
+			en: "Each team has up to 3 touches to send it over (the serve counts as the first). The classic play: receive high toward the net, a teammate leaves it high near the net and you spike it from above. If the rival spikes near the net, get there and hit it: that is a block and it does not count as a touch. The dots above the ball show the touches used."
 		}
 	},
 	{
@@ -6682,18 +6488,18 @@ const HELP = [
 			en: "Serve"
 		},
 		p: {
-			es: "El que saca espera detrás de su línea con la pelota. Apuntá con arriba/abajo, y con la flecha hacia la red sale potente al fondo (hacia atrás, corto). Si tarda 8 segundos, saca solo.",
-			en: "The server waits behind the end line holding the ball. Aim with up/down; the arrow toward the net makes a power serve deep (back makes a short one). After 8 seconds it serves by itself."
+			es: "La pelota espera quieta en el fondo de tu cancha: acomodate al lado y pegale. Los puntitos muestran por dónde va a salir según dónde estés parado (más abajo de la pelota, más alto; más atrás, más largo). Si tardás 7 segundos, sale sola.",
+			en: "The ball waits still at the back of your court: get next to it and hit it. The dots show where it will go from where you are (further below, higher; further back, longer). After 7 seconds it goes by itself."
 		}
 	},
 	{
 		h: {
-			es: "Faltas",
-			en: "Faults"
+			es: "Faltas y rebotes",
+			en: "Faults and bounces"
 		},
 		p: {
-			es: "Más de 3 toques seguidos de un equipo (el bloqueo no cuenta), tirarla afuera o hacerla cruzar por fuera de las antenas es punto para el rival. La pelota puede tocar la red y seguir. Los puntitos arriba de la pelota muestran los toques usados.",
-			en: "More than 3 touches in a row by a team (a block does not count), hitting it out or crossing outside the antennas gives the rival the point. The ball may touch the net and go on. The dots above the ball show the touches used."
+			es: "Un 4.º toque seguido de un equipo es punto para el rival. La pelota rebota en las paredes de los costados y en la red, y arriba no hay techo: si la mandás muy alto sale del mapa y vuelve a bajar.",
+			en: "A 4th touch in a row by a team gives the rival the point. The ball bounces off the side walls and the net, and there is no ceiling: if you send it very high it leaves the map and comes back down."
 		}
 	},
 	{
@@ -6702,8 +6508,8 @@ const HELP = [
 			en: "Modes"
 		},
 		p: {
-			es: "Clásico: rápida y bombeada. Playa: pelota liviana que flota, ideal para empezar. Turbo: saques y remates bombazo, todo más rápido. Práctica: la máquina te saca siempre.",
-			en: "Classic: fast and lofted. Beach: light floaty ball, great to start. Turbo: rocket serves and spikes, all faster. Practice: the machine always serves to you."
+			es: "Clásico: rápida y bombeada. Playa: pelota liviana que flota, ideal para empezar. Turbo: todo más rápido. Práctica: la máquina te saca siempre.",
+			en: "Classic: fast and lofted. Beach: light floaty ball, great to start. Turbo: everything faster. Practice: the machine always serves to you."
 		}
 	},
 	{
@@ -6832,7 +6638,7 @@ function refreshChrome() {
 	document.body.classList.toggle("is-touch", touch);
 	const playing = S.kind !== "online" || !!S.session?.inMatch?.();
 	$("touch").hidden = !(inMatch && touch && !menuOpen && S.kind !== "local" && playing);
-	renderer.padBottom = $("touch").hidden ? 0 : 150;
+	renderer.touch = !$("touch").hidden;
 	$("chat").hidden = !(S.kind === "online" && inMatch && !menuOpen);
 	$("btn-chat").hidden = !(S.kind === "online" && touch);
 	setEnabled(inMatch && !menuOpen);
@@ -7064,7 +6870,6 @@ function startLocal(kind, o) {
 	});
 	S.demo = null;
 	S.ended = null;
-	renderer.noRot = kind === "local";
 	renderer.setCourt(S.session.match.st);
 	hideScreens();
 	resetHud();
@@ -7126,9 +6931,9 @@ function pointText(e) {
 	const vs = e.vs?.name || "";
 	let sub = G.t(P.s).replace("{by}", by).replace("{vs}", vs).replace("{team}", teamName(3 - e.team));
 	sub = sub.replace(/\s·\s*$/, "").replace(/^(Saque de|Served by)\s*$/, "").trim();
-	if ((e.kind === "kill" || e.kind === "ace" || e.kind === "tip" || e.kind === "in") && by) {
+	if ((e.kind === "kill" || e.kind === "bomb" || e.kind === "ace" || e.kind === "block" || e.kind === "in") && by) {
 		if (vs) sub += ` · ${G.t(TOUCHED).replace("{vs}", vs)}`;
-		else if (e.kind === "kill") sub += ` · ${G.t(NOBODY)}`;
+		else if (e.kind !== "in") sub += ` · ${G.t(NOBODY)}`;
 	}
 	return {
 		title: G.t(P.t),
@@ -7140,16 +6945,14 @@ function onEvent(e) {
 	switch (e.t) {
 		case "serve":
 			play("serve");
-			renderer.hit(e.x, e.y, e.z, teamColor(e.team), "serve");
+			renderer.hit(e.x, e.y, teamColor(e.team), "serve");
 			if (e.id && e.id === myId()) $("hint").classList.add("off");
 			break;
-		case "hit": {
-			const k = e.kind === "tip" ? "hit" : e.kind;
-			if (k !== "bump" || throttled("bump", 60)) play(k);
-			renderer.hit(e.x, e.y, e.z, teamColor(e.team), e.kind);
-			if (e.kind === "spike" && !renderer.reduced) renderer.shake = Math.max(renderer.shake, .25);
+		case "hit":
+			play(e.kind === "pass" ? e.n >= 3 ? "hit" : "bump" : e.kind === "bomb" ? "spike" : e.kind);
+			renderer.hit(e.x, e.y, teamColor(e.team), e.kind);
+			if ((e.kind === "spike" || e.kind === "bomb") && !renderer.reduced) renderer.shake = Math.max(renderer.shake, .25);
 			break;
-		}
 		case "net":
 			if (throttled("net", 120)) play("net", e.v);
 			renderer.net(e.v);
@@ -7236,9 +7039,9 @@ function updateHud() {
 	else if (m.state === 0) phase = t("serve");
 	else if (m.cfg.scoreLimit) phase = t("toPoints", { n: m.cfg.scoreLimit });
 	const showT = m.state === 1;
-	const tt = m.touchTeam;
-	const tc = m.serving ? 0 : m.touches;
-	const key = `${m.score[1]}|${m.score[2]}|${clock}|${phase}|${m.state < 3 ? m.serveTeam : 0}|${showT}|${tt}|${tc}|${m.serving}`;
+	const tt = m.sideTeam;
+	const tc = m.sideTouches;
+	const key = `${m.score[1]}|${m.score[2]}|${clock}|${phase}|${m.state < 3 ? m.serveTeam : 0}|${showT}|${tt}|${tc}`;
 	if (key !== hudKey) {
 		hudKey = key;
 		$("sc-red").textContent = m.score[1];
@@ -7249,17 +7052,14 @@ function updateHud() {
 		$("srv-blue").classList.toggle("on", m.state < 3 && m.serveTeam === 2);
 		const el = $("touches");
 		el.classList.toggle("on", showT);
-		el.className = `touches ${showT ? "on" : ""} t${m.serving ? 0 : tt} ${tc >= 3 ? "last" : ""}`;
-		$("tch-label").textContent = m.serving ? t("serving") : `${teamName(tt)} · ${t("touches")}`;
-		$$("#touches i").forEach((d, i) => {
-			d.hidden = m.serving;
-			d.classList.toggle("on", i < tc);
-		});
+		el.className = `touches ${showT ? "on" : ""} t${tt} ${tc >= 3 ? "last" : ""}`;
+		$("tch-label").textContent = `${teamName(tt)} · ${t("touches")}`;
+		$$("#touches i").forEach((d, i) => d.classList.toggle("on", i < tc));
 	}
 	const me = myId();
 	if (!serveHinted && m.state === 0 && me && m.server === me) {
 		serveHinted = true;
-		showHint(esc(t(G.prefs.touch ? "serveHintTouch" : "serveHint")), 5e3);
+		showHint(t(G.prefs.touch ? "serveHintTouch" : "serveHint"), 5e3);
 	}
 	if (S.kind === "online" && s.ping) {
 		const p = $("ping");
@@ -7374,13 +7174,12 @@ function startDemo() {
 		bots,
 		onEvent: demoEvent
 	});
-	renderer.noRot = false;
 	renderer.setCourt(S.demo.match.st);
 }
 function demoEvent(e) {
 	const m = S.demo?.match;
 	if (!m) return;
-	if (e.t === "hit") renderer.hit(e.x, e.y, e.z, teamColor(e.team), e.kind);
+	if (e.t === "hit") renderer.hit(e.x, e.y, teamColor(e.team), e.kind);
 	else if (e.t === "land") renderer.puff(e.x, e.y, e.v);
 	else if (e.t === "net") renderer.net(e.v);
 	else if (e.t === "point") {
@@ -7391,9 +7190,7 @@ function demoEvent(e) {
 let lastT = performance.now();
 let padWas = false;
 function readBits(slot) {
-	let b = bits(slot);
-	if (S.kind !== "local" && renderer.cam.rot) b = rotate(b, 1, myTeam() === 2 ? -1 : 1);
-	return b;
+	return bits(slot);
 }
 function frame(now) {
 	const dt = Math.min(.1, (now - lastT) / 1e3);
@@ -7410,16 +7207,13 @@ function frame(now) {
 		const m = sess.match;
 		let aimFor = me;
 		if (S.kind === "local" && m.state === 0 && sess.humans?.some((h) => h.id === m.server)) aimFor = m.server;
-		const aimP = aimFor && m.player(aimFor);
 		renderer.frame(m, {
 			alpha: sess.alpha,
 			me,
-			focusTeam: myTeam(),
 			offsets: sess.smooth,
 			dt,
 			names: sess !== S.demo,
-			aimFor,
-			aimInput: aimP ? aimP.input : void 0
+			aimFor
 		});
 		if (S.session) updateHud();
 	}
@@ -7657,7 +7451,6 @@ function startNetSession(room) {
 		info
 	});
 	S.session.liveId = room.live.id;
-	renderer.noRot = false;
 	renderer.setCourt(S.session.match.st);
 	resetHud();
 	if (S.screen !== "s-room" || !overlayWanted) hideScreens();
