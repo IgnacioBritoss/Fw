@@ -225,32 +225,33 @@ function ponerEstilos() {
     ${reglasDeIconos()}
 
     /*
-      El mapa de OpenStreetMap es una foto de un mapa hecho para fondo claro: al
-      lado de una pantalla oscura queda como una linterna. No se puede pedir un
-      mapa oscuro sin cambiar de proveedor, así que se lo oscurece con un filtro
-      —acá sí corresponde, porque es una imagen— bajando el brillo y girando el
-      tono. Los pines y el globo se dejan afuera: son nuestros y ya están bien.
+      EL MAPA NO CAMBIA CON EL MODO OSCURO, Y ES A PROPÓSITO.
+
+      Antes se lo oscurecía con un filtro que invertía y giraba el tono de las
+      baldosas. La idea era que un mapa claro al lado de una pantalla oscura
+      queda como una linterna, y es cierto. El problema es cómo queda el mapa
+      invertido: el agua se vuelve naranja, los verdes grises, y las calles
+      dejan de parecerse a un mapa. Un mapa sirve para reconocer un lugar, y
+      reconocer un lugar con los colores dados vuelta cuesta.
+
+      Se saca TODO lo del mapa, no solo el filtro: el fondo del contenedor —lo
+      que se ve mientras bajan las baldosas—, los botones de zoom y la línea de
+      atribución. Si esos quedaran oscuros sobre un mapa claro, sería el mismo
+      problema de antes al revés: un pedazo con el tema puesto y otro no.
+
+      EL GLOBO DEL PIN TAMBIÉN, aunque sea una tarjeta nuestra. Sale del mapa,
+      se apoya sobre el mapa y se lee sobre el mapa: es parte de eso y no de la
+      lista de al lado.
+
+      Y no alcanza con dejarle el fondo blanco que Leaflet le pone por su
+      cuenta. Adentro del globo hay texto, y ese texto toma su color de las
+      variables del tema: en oscuro son claras, así que sobre un fondo blanco
+      quedarían ilegibles. Lo que se hace es volver a declarar la paleta CLARA
+      adentro del globo. Las variables se heredan, así que todo lo que está
+      adentro —el título, la ubicación, el precio— se dibuja con los colores de
+      modo claro sin que haya que tocar MapCarPopup.
     */
-    /* El gris claro que Leaflet le pone a su contenedor es lo que se ve
-       mientras bajan las baldosas: en oscuro, un destello blanco. */
-    html.fw-dark .leaflet-container {
-      background: var(--fw-surface-2);
-    }
-    html.fw-dark .leaflet-tile {
-      filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.75);
-    }
-    html.fw-dark .leaflet-popup-content-wrapper,
-    html.fw-dark .leaflet-popup-tip {
-      background: var(--fw-surface);
-      color: var(--fw-text);
-      box-shadow: 0 3px 14px var(--fw-sombra-fuerte);
-    }
-    html.fw-dark .leaflet-bar a,
-    html.fw-dark .leaflet-control-attribution {
-      background: var(--fw-surface);
-      color: var(--fw-text-3);
-    }
-    html.fw-dark .leaflet-bar a { border-bottom-color: var(--fw-border); }
+    html.fw-dark .leaflet-popup { ${CLARO} }
 
     /* El calendario viene con su hoja de estilos propia, con los colores
        adentro: se lo trae a la paleta. */

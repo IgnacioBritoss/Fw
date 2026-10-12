@@ -20,7 +20,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { cargarLeaflet } from "../../services/leaflet";
+import { cargarLeaflet, ponerBaldosas } from "../../services/leaflet";
 import { useListings } from "../../hooks/useListings";
 import {
   CATEGORIES, filterCars, priceOf, sortCars, categoryLabel, transmissionLabel, fuelLabel,
@@ -239,7 +239,7 @@ export default function Search() {
       const L = window.L; if (!L) return;
       // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
       const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: 12, zoomControl: false, scrollWheelZoom: false });
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { attribution: "© OSM" }).addTo(map);
+      ponerBaldosas(L, map);
       map.on("click", () => setSelected(null));
       mapInstanceRef.current = map;
       addMarkers(map, L);

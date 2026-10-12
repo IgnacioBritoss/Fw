@@ -19,7 +19,7 @@
 // ============================================================================
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { cargarLeaflet } from "../../services/leaflet";
+import { cargarLeaflet, ponerBaldosas } from "../../services/leaflet";
 import { ajusteParaQueEntre, medidaDeLaTarjeta } from "../../services/mapaGlobo";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -387,7 +387,7 @@ export default function Home() {
       if (!L || !mapRef.current) return false;
       // scrollWheelZoom: false — ver la nota en components/MapView.jsx.
       const map = L.map(mapRef.current, { center: [-34.6037, -58.3816], zoom: isMobile ? 11 : 12, scrollWheelZoom: false });
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
+      ponerBaldosas(L, map);
       mapInstanceRef.current = map;
       /*
         Al cambiar el zoom hay que volver a agrupar: lo que estaba junto se

@@ -29,6 +29,34 @@
 const VERSION = "1.9.4";
 const BASE = `https://unpkg.com/leaflet@${VERSION}/dist/leaflet`;
 
+/**
+ * DE DÓNDE SALEN LAS BALDOSAS DEL MAPA, ESCRITO UNA SOLA VEZ.
+ *
+ * Estaba escrito cuatro veces, una en cada pantalla con mapa, y por eso se
+ * separaron: tres usaban OpenStreetMap y la búsqueda había quedado con un
+ * servidor de CARTO. Ese servidor pasó a pedir una clave, así que el mapa de la
+ * búsqueda dejó de cargar y mostraba las baldosas con "API KEY REQUIRED"
+ * escrito encima. Los pines aparecían igual —son nuestros— y por eso se veía
+ * medio mapa y medio cartel.
+ *
+ * Acá hay una sola dirección. Si alguna vez hay que cambiar de proveedor, se
+ * cambia en un lugar y las cuatro pantallas van juntas.
+ */
+export const BALDOSAS = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+/** Lo que pide la licencia de OpenStreetMap que se muestre en el mapa. */
+export const ATRIBUCION = "© OpenStreetMap";
+
+/**
+ * Pone la capa de baldosas en un mapa ya creado.
+ *
+ * Es una línea, pero existe para que agregar un mapa nuevo no sea otra vez
+ * copiar una dirección de otro archivo, que es exactamente como se llegó acá.
+ */
+export function ponerBaldosas(L, map) {
+  return L.tileLayer(BALDOSAS, { attribution: ATRIBUCION }).addTo(map);
+}
+
 /** La carga en curso (o terminada). Null hasta que alguien la pide. */
 let promesa = null;
 

@@ -11,6 +11,7 @@
 import { useEffect, useRef } from "react";
 import { useI18n } from "../i18n/core";
 import { useCurrency } from "../context/CurrencyContext";
+import { ponerBaldosas } from "../services/leaflet";
 
 export default function MapView({ cars, onCarClick, height = "500px" }) {
   // El globo del pin se arma con HTML a mano (Leaflet no es de React), así que la
@@ -42,9 +43,7 @@ export default function MapView({ cars, onCarClick, height = "500px" }) {
       scrollWheelZoom: false,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
+    ponerBaldosas(L, map);
 
     instanceRef.current = map;
 

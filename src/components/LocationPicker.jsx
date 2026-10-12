@@ -26,7 +26,7 @@
 // ============================================================================
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
-import { cargarLeaflet } from "../services/leaflet";
+import { cargarLeaflet, ponerBaldosas } from "../services/leaflet";
 
 /**
  * Hasta dónde se puede estirar la entrega.
@@ -99,9 +99,7 @@ export default function LocationPicker({ value, onChange, radioKm = 0, onRadioKm
       // hace zoom en vez de bajar la página.
       scrollWheelZoom: false,
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-    }).addTo(map);
+    ponerBaldosas(L, map);
 
     map.on("click", (e) => {
       const { lat, lng } = e.latlng;
