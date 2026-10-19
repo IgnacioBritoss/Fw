@@ -50,12 +50,13 @@ import { useCurrency } from "../../context/CurrencyContext";
 // idiomas.
 const DRIVETRAIN_KEYS = { FRONT: "drive.FRONT", REAR: "drive.REAR", FOUR_BY_FOUR: "drive.4X4", AWD: "drive.AWD" };
 
-// Arma el nombre visible del dueño a partir de sus datos.
+// Arma el nombre visible del dueño a partir de sus datos, con la mayúscula
+// puesta: acá abajo del precio se lee "Conocé más" sobre esta persona, y
+// "lucia fernandez" en minúscula no se lee como un dato cuidado. Ver
+// services/people.js.
 function getName(owner, fallback) {
   if (!owner) return fallback;
-  return owner.displayName ||
-    `${owner.firstName || ""} ${owner.lastName || ""}`.trim() ||
-    fallback;
+  return nameOf(owner, fallback);
 }
 
 // Convierte una publicación del backend al formato "car" que usa esta pantalla,

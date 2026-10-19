@@ -21,15 +21,12 @@ import PanelDeReputacion from "./PanelDeReputacion";
 import ListaDeReseñas from "./ListaDeReseñas";
 import StatusChip from "./StatusChip";
 import Avatar from "./Avatar";
-import { initialsOf } from "../services/people";
+import { initialsOf, nameOf } from "../services/people";
+import { portadaDeLaPersona } from "../services/portadaDePerfil";
 import Spinner from "./Spinner";
 
 export default function UserProfileModal({ userId, onClose }) {
   const { t: tr, lang } = useI18n();
-  const nameOf = (person) =>
-    person?.displayName
-    || `${person?.firstName || ""} ${person?.lastName || ""}`.trim()
-    || tr("profile.userFallback");
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +46,10 @@ export default function UserProfileModal({ userId, onClose }) {
     return () => { active = false; };
   }, [userId]);
 
-  const name = nameOf(profile);
+  // Con la mayúscula puesta, igual que en el perfil propio: el nombre del otro
+  // se lee acá antes de decidir si prestarle un auto, y "ignacio britos" no se
+  // lee como un dato cuidado. Ver services/people.js.
+  const name = nameOf(profile, tr("profile.userFallback"));
   // Sin reseñas no hay promedio ni rango: no se inventa un puntaje.
   const ratingCount = Number(profile?.ratingCount) || 0;
 
@@ -70,10 +70,29 @@ export default function UserProfileModal({ userId, onClose }) {
           maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,.25)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 0" }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--fw-text)" }}>{tr("profile.title")}</div>
+        {/*
+          LA PORTADA QUE ELIGIÓ ESTA PERSONA.
+
+          Es el mismo dibujo y el mismo color que se ven en su perfil. Está acá
+          porque una portada que solo apareciera en el perfil propio sería una
+          decoración privada, y no es para eso que alguien la elige: esta ficha
+          es justamente la que mira el otro antes de decidir si confía.
+
+          Mientras carga se dibuja la de siempre (`portadaDe(null)` devuelve la
+          predeterminada): queda la misma franja de color y el cuadro no da un
+          salto de alto cuando llegan los datos.
+        */}
+        <div style={{ position: "relative" }}>
+          <div style={{ ...portadaDeLaPersona(profile), height: 92 }} />
           <button onClick={onClose} aria-label={tr("common.close")}
-            style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--fw-text-3)", lineHeight: 1 }}>
+            style={{
+              position: "absolute", top: 8, right: 10,
+              width: 30, height: 30, minHeight: 30, padding: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "rgba(17,24,39,.38)", color: "#fff",
+              border: "1px solid rgba(255,255,255,.3)", borderRadius: "50%",
+              fontSize: 18, lineHeight: 1, cursor: "pointer",
+            }}>
             ×
           </button>
         </div>
@@ -86,9 +105,18 @@ export default function UserProfileModal({ userId, onClose }) {
           </div>
         ) : (
           <div style={{ padding: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+            {/*
+              El avatar monta sobre la portada, como en el perfil.
+
+              EL MARGEN NEGATIVO VA EN EL AVATAR, NO EN LA FILA. Puesto en la
+              fila entera subía también el nombre, que quedaba tapado por la
+              portada: se leía "En Freewheel desde..." sin saber de quién.
+            */}
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 14, marginBottom: 18 }}>
               {/* La foto de perfil pública, o las iniciales si todavía no subió ninguna. */}
-              <Avatar src={profile.profilePhotoUrl} initials={initialsOf(profile)} size={56} alt={name} />
+              <div style={{ marginTop: -44, flexShrink: 0 }}>
+                <Avatar src={profile.profilePhotoUrl} initials={initialsOf(profile)} size={64} ring={4} alt={name} />
+              </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)" }}>{name}</div>
                 <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginTop: 2 }}>

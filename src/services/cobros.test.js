@@ -77,3 +77,49 @@ test("a quien no publico ningun auto no se le avisa nada", () => {
   assert.equal(convieneAvisar(estadoDeCobro(LISTO), 5), false);
   assert.equal(convieneAvisar(estadoDeCobro(null), 5), false);
 });
+
+// ── Cobros simulados ─────────────────────────────────────────────────────────
+//  Freewheel es un proyecto escolar: el pago con tarjeta va a Stripe en modo de
+//  prueba, pero la transferencia AL DUEÑO necesita Stripe Connect, que es un
+//  alta de plataforma que este deploy no tiene. Mientras no la tenga, el
+//  servidor simula la transferencia y lo avisa con `simulated: true`
+//  (ver src/payments/cobros-simulados.ts del backend).
+//
+//  Antes eso llegaba acá como "sinCuenta" y la pantalla le pedía al dueño que
+//  completara un alta: un cartel de plata, sobre plata que no existe, dirigido
+//  a la única persona que no podía resolverlo.
+const SIMULADO = {
+  connected: true, status: "ENABLED", accountId: "acct_sim_abc",
+  chargesEnabled: true, payoutsEnabled: true, detailsSubmitted: true,
+  simulated: true,
+};
+
+test("con los cobros simulados no hay nada que completar ni nada que avisar", () => {
+  const e = estadoDeCobro(SIMULADO);
+  assert.equal(e.clave, "simulado");
+  assert.equal(e.puedeCobrar, true);
+  assert.equal(e.hayQueAvisar, false);
+});
+
+test("Y NO SE AVISA NI CON AUTOS PUBLICADOS", () => {
+  // Es el cartel amarillo del panel. Con los cobros simulados no tiene nada que
+  // ofrecer: no hay alta que hacer.
+  assert.equal(convieneAvisar(estadoDeCobro(SIMULADO), 6), false);
+});
+
+test("se reconoce por el campo del servidor, no por estar todo en verde", () => {
+  /*
+    Son dos cosas distintas y confundirlas sería grave en los dos sentidos: una
+    cuenta de Stripe de verdad habilitada también tiene todo en verde, y decirle
+    "está simulado" a alguien que SÍ va a cobrar es tan malo como lo contrario.
+  */
+  assert.equal(estadoDeCobro(LISTO).clave, "listo");
+  assert.equal(estadoDeCobro({ ...SIMULADO, simulated: false }).clave, "listo");
+  assert.equal(estadoDeCobro({ ...SIMULADO, simulated: "si" }).clave, "listo");
+});
+
+test("y un backend viejo, que no manda el campo, se comporta como antes", () => {
+  const { simulated: _sinElCampo, ...viejo } = SIMULADO;
+  void _sinElCampo;
+  assert.equal(estadoDeCobro(viejo).clave, "listo");
+});

@@ -271,12 +271,16 @@ const CAMPOS_EDITABLES = [
   "dni", "cuil", "address",
   // Si querés recibir avisos por mail (reservas, pagos, mensajes sin leer).
   "emailNotifications",
+  // El dibujo, el color y la foto de la portada del perfil
+  // (services/portadaDePerfil.js). La foto, con null, se quita.
+  "profileCoverDesign", "profileCoverColor", "profileCoverPhotoUrl",
 ];
 
 // Los que un backend anterior puede no conocer todavía.
 const CAMPOS_NUEVOS = [
   "profilePhotoVisibility", "profilePhotoOriginalUrl",
   "dni", "cuil", "address", "emailNotifications",
+  "profileCoverDesign", "profileCoverColor", "profileCoverPhotoUrl",
 ];
 
 // Los que ya rebotaron en esta sesión por no existir en el backend.

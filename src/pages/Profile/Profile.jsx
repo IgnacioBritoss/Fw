@@ -45,7 +45,9 @@ import { rankOf } from "../../services/rank";
 import Avatar from "../../components/Avatar";
 import AvatarEditor from "../../components/AvatarEditor";
 import PhotoVisibilityChoice from "../../components/PhotoVisibilityChoice";
-import { initialsOf, visibilidadDeFoto } from "../../services/people";
+import { conMayusculas, initialsOf, visibilidadDeFoto } from "../../services/people";
+import { fondoDePortada, portadaDe } from "../../services/portadaDePerfil";
+import EditorDePortada from "../../components/EditorDePortada";
 import Spinner from "../../components/Spinner";
 import StatusChip from "../../components/StatusChip";
 
@@ -170,7 +172,10 @@ export default function Profile() {
   const lastName = user?.lastName || (user?.name || "").split(" ").slice(1).join(" ") || "";
   const phone = user?.phone || "";
 
-  const fullName = `${firstName} ${lastName}`.trim() || tr("profile.userFallback");
+  // Con la mayúscula puesta. El servidor ya lo guarda así y arregla las
+  // cuentas viejas al publicar; esto hace que se vea bien desde que se abre la
+  // pantalla, sin esperar a eso. Ver services/people.js.
+  const fullName = conMayusculas(`${firstName} ${lastName}`) || tr("profile.userFallback");
   const initials = initialsOf({ firstName, lastName });
   const email = user?.email || "—";
 
@@ -361,6 +366,114 @@ export default function Profile() {
     }
   };
 
+  /*
+    ── LA PORTADA ──────────────────────────────────────────────────────────
+
+    Se guarda sola al tocar, sin botón de "guardar", y se muestra elegida antes
+    de que conteste el servidor. Es lo mismo que hace el ajuste de quién ve la
+    foto, y por el mismo motivo: lo que se está eligiendo es algo que se MIRA,
+    y esperar medio segundo a que la portada cambie convierte cada prueba en un
+    trámite. Si el guardado falla, vuelve a lo que estaba y lo dice.
+
+    `portadaElegida` arranca de lo que vino del servidor y después manda lo que
+    tocó la persona. Ver services/portada.js.
+  */
+  const portadaGuardada = portadaDe(user);
+  const [portadaElegida, setPortadaElegida] = useState(portadaGuardada);
+  const [editandoPortada, setEditandoPortada] = useState(false);
+  const [portadaGuardando, setPortadaGuardando] = useState(false);
+  const [portadaError, setPortadaError] = useState("");
+
+  // Sigue al servidor cuando el usuario cambia (al entrar, o tras guardar).
+  const portadaPrevia = useRef(portadaGuardada);
+  useEffect(() => {
+    const previa = portadaPrevia.current;
+    if (previa.dibujo !== portadaGuardada.dibujo
+      || previa.color !== portadaGuardada.color
+      || previa.foto !== portadaGuardada.foto) {
+      portadaPrevia.current = portadaGuardada;
+      setPortadaElegida(portadaGuardada);
+    }
+  }, [portadaGuardada.dibujo, portadaGuardada.color, portadaGuardada.foto]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cambiarPortada = async (dibujo, color) => {
+    if (portadaGuardando) return;
+    if (dibujo === portadaElegida.dibujo && color === portadaElegida.color) return;
+    const anterior = portadaElegida;
+    setPortadaElegida({ ...anterior, dibujo, color });
+    setPortadaGuardando(true);
+    setPortadaError("");
+    try {
+      await updateMe({ profileCoverDesign: dibujo, profileCoverColor: color });
+      await refreshUser();
+    } catch (err) {
+      setPortadaElegida(anterior);
+      setPortadaError(err?.message || tr("portada.error"));
+    } finally {
+      setPortadaGuardando(false);
+    }
+  };
+
+  /*
+    LA FOTO DE PORTADA.
+
+    Se sube a Cloudinary y recién después se guarda la dirección en el perfil,
+    igual que la foto de perfil. Dos diferencias con aquella, las dos a
+    propósito:
+
+     · NO HAY ENCUADRE. La portada es una franja ancha y el navegador la
+       recorta solo (`background-size: cover`). Un editor de encuadre para una
+       banda de 148px de alto es un paso de más para una decisión que se toma
+       mirando el resultado.
+     · NO SE GUARDA UNA COPIA SIN RECORTAR, porque no hay recorte que deshacer.
+
+    Mientras sube no se muestra nada a medias: la portada sigue siendo la que
+    estaba hasta que la nueva está arriba de verdad. Una vista previa local que
+    después falla al subir deja a alguien creyendo que guardó algo que no
+    guardó.
+  */
+  const [subiendoPortada, setSubiendoPortada] = useState(false);
+
+  const elegirFotoDePortada = async (archivo) => {
+    if (!archivo.type.startsWith("image/")) { setPortadaError(tr("profile.photoNotImage")); return; }
+    // 8 MB: una foto de paisaje de celular entra, y no deja a nadie esperando
+    // un minuto por una portada.
+    if (archivo.size > 8 * 1024 * 1024) { setPortadaError(tr("portada.fotoMuyGrande")); return; }
+    setSubiendoPortada(true);
+    setPortadaError("");
+    try {
+      const url = await uploadImageToCloudinary(archivo);
+      await updateMe({ profileCoverPhotoUrl: url });
+      await refreshUser();
+      setPortadaElegida(p => ({ ...p, foto: url }));
+    } catch (err) {
+      setPortadaError(err?.message || tr("portada.error"));
+    } finally {
+      setSubiendoPortada(false);
+    }
+  };
+
+  const quitarFotoDePortada = async () => {
+    if (portadaGuardando || subiendoPortada) return;
+    const anterior = portadaElegida;
+    // Se saca de la pantalla al toque y vuelve a verse el dibujo elegido, que
+    // es exactamente lo que la persona espera al apretar "quitar".
+    setPortadaElegida({ ...anterior, foto: null });
+    setPortadaGuardando(true);
+    setPortadaError("");
+    try {
+      await updateMe({ profileCoverPhotoUrl: null });
+      await refreshUser();
+    } catch (err) {
+      setPortadaElegida(anterior);
+      setPortadaError(err?.message || tr("portada.error"));
+    } finally {
+      setPortadaGuardando(false);
+    }
+  };
+
+  const portada = fondoDePortada(portadaElegida.dibujo, portadaElegida.color, portadaElegida.foto);
+
   // Checklist REAL de verificación que devuelve el backend.
   const checklist = user?.verification?.checklist || {};
   const emailVerified = checklist.emailVerified ?? !!user?.emailVerifiedAt;
@@ -488,9 +601,53 @@ export default function Profile() {
   // El Layout provee el sidebar y la topbar; acá solo el contenido
   return (
     <div style={{ padding: isMobile ? "20px 16px" : "28px 32px", maxWidth: 1280, margin: "0 auto" }}>
-      {/* Portada + cabecera */}
+      {/*
+        PORTADA + CABECERA.
+
+        ── CÓMO ESTABA ───────────────────────────────────────────────────────
+        La portada era un degradado azul escrito a mano, igual para todo el
+        mundo. Abajo iba el avatar, al lado una columna con los dos botones de
+        la foto y su aclaración, y RECIÉN DESPUÉS, en otro renglón, el nombre.
+        O sea: lo primero que se leía después de la foto eran dos botones de
+        mantenimiento, y el nombre de la persona quedaba tercero.
+
+        ── CÓMO QUEDÓ ────────────────────────────────────────────────────────
+        El nombre va al lado de la foto, que es donde se lo busca, con sus
+        distintivos en la misma línea. Los botones de la foto bajan a un
+        renglón propio, en chico: siguen estando a un toque pero ya no compiten
+        con el nombre. Y la portada la elige cada uno.
+      */}
       <div data-sc-in="depth" style={{ ...t.card, overflow: "hidden" }}>
-        <div style={{ height: isMobile ? 100 : 140, background: "linear-gradient(90deg,#0a0f1e 0%,var(--fw-blue-strong) 70%,var(--fw-blue) 100%)" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ ...portada, height: isMobile ? 104 : 148 }} />
+          {/* El botón de la portada, arriba de ella y a la derecha. Translúcido
+              sobre el dibujo: un botón blanco macizo acá parecería un cartel
+              pegado encima. */}
+          <button
+            type="button"
+            onClick={() => setEditandoPortada(v => !v)}
+            aria-expanded={editandoPortada}
+            style={{
+              position: "absolute", top: 12, right: 12,
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(17,24,39,.42)", color: "#fff",
+              border: "1px solid rgba(255,255,255,.32)", borderRadius: 999,
+              padding: "7px 13px", fontSize: 12.5, fontWeight: 700,
+              fontFamily: "inherit", cursor: "pointer",
+              backdropFilter: "blur(3px)",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="13.5" cy="6.5" r="2.5" />
+              <circle cx="19" cy="12" r="2.5" />
+              <circle cx="6" cy="12" r="2.5" />
+              <circle cx="10" cy="18" r="2.5" />
+              <path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-1.4-1-1.8-1-3 0-.6.4-1 1-1h2a5 5 0 0 0 5-5c0-5-4.5-9-9-9z" />
+            </svg>
+            {tr("portada.boton")}
+          </button>
+        </div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, padding: isMobile ? "0 20px" : "0 32px", marginTop: isMobile ? -46 : -60, flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
             <Avatar
@@ -539,70 +696,107 @@ export default function Profile() {
             </button>
           </div>
 
-          {/* Subir / cambiar / quitar la foto pública */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingBottom: 6 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={pickPhoto}
-                style={{ display: "none" }}
-              />
-              <button type="button" disabled={photoBusy} onClick={() => fileRef.current?.click()}
-                style={{ ...t.photoBtn, opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
-                {user?.profilePhotoUrl ? tr("profile.changePhoto") : tr("profile.photo")}
-              </button>
-              {user?.profilePhotoUrl && (
-                <button type="button" disabled={photoBusy} onClick={removePhoto}
-                  style={{ ...t.photoBtn, color: "var(--fw-red-text-2)", opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
-                  {tr("profile.removePhoto")}
-                </button>
-              )}
-            </div>
-            <div style={{ fontSize: 11.5, color: photoError ? "var(--fw-red-text-2)" : "var(--fw-text-4)", maxWidth: 320 }}>
-              {photoError || tr("profile.photoNote")}
-            </div>
-          </div>
-        </div>
+          {/*
+            EL NOMBRE, AL LADO DE LA FOTO.
 
-        <div style={{ padding: isMobile ? "16px 20px 22px" : "16px 32px 28px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" }}>{fullName}</span>
-            {fullyVerified
-              ? <StatusChip tone="verified">{tr("status.verified")}</StatusChip>
-              : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
-            {/*
-              LA MEDALLA VA ARRIBA, AL LADO DEL NOMBRE.
+            Es lo que uno busca primero cuando abre un perfil, y estaba tercero:
+            después de la foto y después de dos botones. `paddingBottom` lo
+            apoya sobre la misma línea de base que el círculo.
+          */}
+          <div style={{ minWidth: 0, flex: "1 1 240px", paddingBottom: isMobile ? 2 : 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" }}>{fullName}</span>
+              {fullyVerified
+                ? <StatusChip tone="verified">{tr("status.verified")}</StatusChip>
+                : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
+              {/*
+                LA MEDALLA, AL LADO DEL NOMBRE.
 
-              Es el escudo solo, sin la cajita: al lado de un nombre de 28px una
-              etiqueta con borde y fondo compite con él, y lo que se tiene que
-              leer primero es el nombre. La medalla acompaña; el rango escrito,
-              la escalera y todo lo demás están en la planilla de más abajo, que
-              es el lugar donde alguien va a MIRAR su reputación y no a
-              cruzársela.
+                Es el escudo solo, sin la cajita: al lado de un nombre de 28px
+                una etiqueta con borde y fondo compite con él, y lo que se tiene
+                que leer primero es el nombre. La medalla acompaña; el rango
+                escrito, la escalera y todo lo demás están en la planilla de más
+                abajo, que es el lugar donde alguien va a MIRAR su reputación y
+                no a cruzársela.
 
-              Solo aparece cuando hay reseñas de verdad detrás: sin reseñas no
-              hay rango, y un escudo vacío al lado del nombre sería prometer algo
-              que todavía no pasó.
-            */}
-            {ratingCount > 0 && (() => {
-              const tier = rankOf(ratingCount, ratingAverage);
-              return (
-                <span title={tr(`rank.${tier.key}`)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <EscudoDeRango metal={tier.metal} color={tier.color} size={isMobile ? 18 : 21} />
-                  <span style={{
-                    fontSize: 11, fontWeight: 800, letterSpacing: ".055em",
-                    textTransform: "uppercase", color: tier.color, whiteSpace: "nowrap",
-                  }}>
-                    {tr(`rank.${tier.key}`)}
+                Solo aparece cuando hay reseñas de verdad detrás: sin reseñas no
+                hay rango, y un escudo vacío al lado del nombre sería prometer
+                algo que todavía no pasó.
+              */}
+              {ratingCount > 0 && (() => {
+                const tier = rankOf(ratingCount, ratingAverage);
+                return (
+                  <span title={tr(`rank.${tier.key}`)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <EscudoDeRango metal={tier.metal} color={tier.color} size={isMobile ? 18 : 21} />
+                    <span style={{
+                      fontSize: 11, fontWeight: 800, letterSpacing: ".055em",
+                      textTransform: "uppercase", color: tier.color, whiteSpace: "nowrap",
+                    }}>
+                      {tr(`rank.${tier.key}`)}
+                    </span>
                   </span>
-                </span>
-              );
-            })()}
+                );
+              })()}
+            </div>
+            <div style={{ fontSize: 14, color: "var(--fw-text-3)", marginTop: 3 }}>
+              {tr("profile.memberSince", { date: memberSince })}
+            </div>
           </div>
-          <div style={{ fontSize: 14, color: "var(--fw-text-3)" }}>{tr("profile.memberSince", { date: memberSince })}</div>
         </div>
+
+        {/*
+          LOS BOTONES DE LA FOTO, EN SU PROPIO RENGLÓN.
+
+          Estaban pegados al avatar, a la misma altura y del mismo tamaño que
+          el nombre: dos botones de mantenimiento ganándole el lugar al dato
+          principal de la pantalla. Acá abajo siguen estando a un toque, en
+          chico, con la aclaración al lado en vez de abajo —que es lo que hacía
+          que el bloque ocupara cuatro renglones para decir dos cosas—.
+        */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+          padding: isMobile ? "14px 20px 18px" : "16px 32px 22px",
+        }}>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={pickPhoto}
+            style={{ display: "none" }}
+          />
+          <button type="button" disabled={photoBusy} onClick={() => fileRef.current?.click()}
+            style={{ ...t.photoBtn, opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
+            {user?.profilePhotoUrl ? tr("profile.changePhoto") : tr("profile.photo")}
+          </button>
+          {user?.profilePhotoUrl && (
+            <button type="button" disabled={photoBusy} onClick={removePhoto}
+              style={{ ...t.photoBtn, color: "var(--fw-red-text-2)", opacity: photoBusy ? .6 : 1, cursor: photoBusy ? "default" : "pointer" }}>
+              {tr("profile.removePhoto")}
+            </button>
+          )}
+          <div style={{
+            fontSize: 11.5, lineHeight: 1.45, minWidth: 0,
+            color: (photoError || portadaError) ? "var(--fw-red-text-2)" : "var(--fw-text-4)",
+          }}>
+            {photoError || portadaError || tr("profile.photoNote")}
+          </div>
+        </div>
+
+        {editandoPortada && (
+          <div style={{ padding: isMobile ? "0 20px 20px" : "0 32px 24px" }}>
+            <EditorDePortada
+              dibujo={portadaElegida.dibujo}
+              color={portadaElegida.color}
+              foto={portadaElegida.foto}
+              deshabilitado={portadaGuardando}
+              subiendoFoto={subiendoPortada}
+              onCambiar={cambiarPortada}
+              onElegirFoto={elegirFotoDePortada}
+              onQuitarFoto={quitarFotoDePortada}
+              onCerrar={() => setEditandoPortada(false)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Cifras reales: promedio, autos publicados y reservas terminadas */}

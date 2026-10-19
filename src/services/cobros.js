@@ -29,6 +29,7 @@
 /**
  * Qué hacer con lo que contestó el servidor.
  *
+ *   "simulado"     la transferencia al dueño se simula (proyecto escolar).
  *   "listo"        la plata le va a llegar: no hay nada que hacer.
  *   "enRevision"   completó sus datos y Stripe todavía no lo habilitó.
  *   "aMedias"      empezó el alta y la dejó por la mitad. El caso más común.
@@ -45,6 +46,25 @@
 export function estadoDeCobro(respuesta) {
   if (!respuesta || typeof respuesta !== "object") {
     return { clave: "desconocido", puedeCobrar: false, hayQueAvisar: false };
+  }
+  /*
+    LOS COBROS SIMULADOS VAN PRIMERO, ANTES QUE CUALQUIER OTRA COSA.
+
+    Freewheel es un proyecto escolar: el pago con tarjeta va a Stripe en modo de
+    prueba, pero la transferencia AL DUEÑO necesita Stripe Connect, que es un
+    alta de plataforma que este deploy no tiene. Mientras no la tenga, el
+    servidor simula la transferencia y lo dice con `simulated: true`.
+
+    Antes eso llegaba acá como "sinCuenta" y la pantalla le pedía al dueño que
+    completara un alta: un cartel de plata, sobre plata que no existe, dirigido
+    a la única persona que no podía resolverlo.
+
+    Se mira el campo del servidor y NO que esté todo en verde. Son dos cosas
+    distintas —una cuenta de verdad habilitada también está toda en verde— y
+    confundirlas sería decirle "ya podés cobrar" a alguien que no va a cobrar.
+  */
+  if (respuesta.simulated === true) {
+    return { clave: "simulado", puedeCobrar: true, hayQueAvisar: false };
   }
   if (respuesta.payoutsEnabled || respuesta.status === "ENABLED") {
     return { clave: "listo", puedeCobrar: true, hayQueAvisar: false };

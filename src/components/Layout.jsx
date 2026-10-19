@@ -23,6 +23,7 @@ import CarIcon from "./CarIcon";
 import Avatar from "./Avatar";
 import { useAsistente } from "../context/AssistantContext";
 import { useI18n } from "../i18n/core";
+import { conMayusculas } from "../services/people";
 import RobotIcon from "./RobotIcon";
 import { useScrollCraft, useTransicionDePantalla } from "../anim";
 
@@ -428,7 +429,9 @@ export default function Layout({ children }) {
     return () => { active = false; clearInterval(iv); };
   }, [user, location.pathname]);
 
-  const firstName = user?.firstName || user?.name?.split(" ")[0] || "Invitado";
+  // Con la mayúscula puesta: es el nombre que queda abajo a la izquierda en
+  // todas las pantallas. Ver services/people.js.
+  const firstName = conMayusculas(user?.firstName || user?.name?.split(" ")[0]) || "Invitado";
   const initials = `${(user?.firstName || user?.name || "U")[0] || "U"}`.toUpperCase();
 
   // Indica si un ítem del menú corresponde a la página actual (para resaltarlo).

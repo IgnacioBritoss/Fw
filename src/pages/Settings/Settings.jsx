@@ -21,6 +21,7 @@ import { formatearPrecio } from "../../services/moneda";
 import { LANGUAGES, useI18n } from "../../i18n/core";
 import { shortDate } from "../../i18n/dates";
 import { updateMe } from "../../services/api";
+import { estadoDeCobro } from "../../services/cobros";
 import { applyColorBlindMode, applyDarkMode, applyReadableFont } from "../../services/theme";
 import StatusChip from "../../components/StatusChip";
 
@@ -109,6 +110,10 @@ export default function Settings() {
     CONTESTÓ el servidor. Si no quedó guardado, el interruptor vuelve y se
     explica por qué, en vez de dejarlo mostrando algo que no se guardó.
   */
+  // Lo que contestó el servidor sobre el cobro, para el subtítulo de esa
+  // sección. `undefined` es "todavía no contestó"; `null` es "no se pudo
+  // preguntar", que no es lo mismo y no se dibuja igual.
+  const [cobro, setCobro] = useState(undefined);
   const [avisos, setAvisos] = useState(user?.emailNotifications !== false);
   const [avisosError, setAvisosError] = useState("");
 
@@ -616,10 +621,27 @@ export default function Settings() {
               <div style={{ fontSize: 17, fontWeight: 800, color: "var(--fw-text)", marginTop: 32, marginBottom: 4 }}>
                 {tr("cobros.titulo")}
               </div>
-              <div style={{ fontSize: 13.5, color: "var(--fw-text-4)", marginBottom: 14, lineHeight: 1.6 }}>
-                {tr("cobros.subtitulo")}
-              </div>
-              <CobrosDelDueno />
+              {/*
+                EL SUBTÍTULO DEPENDE DE SI HAY UN ALTA QUE HACER.
+
+                Decía "hay que completar un alta con Stripe, se hace una sola
+                vez y lleva un par de minutos". Con los cobros simulados no hay
+                ningún alta que completar, así que ese texto mandaba a la
+                persona a buscar un trámite que no existe.
+
+                No se dibuja nada hasta saberlo —`undefined` es "todavía no
+                contestó"— para que no aparezca una frase y se cambie sola
+                medio segundo después. Mientras tanto, abajo gira el reloj del
+                propio cuadro, que es el que corresponde.
+              */}
+              {cobro !== undefined && (
+                <div style={{ fontSize: 13.5, color: "var(--fw-text-4)", marginBottom: 14, lineHeight: 1.6 }}>
+                  {tr(estadoDeCobro(cobro).clave === "simulado"
+                    ? "cobros.subtituloSimulado"
+                    : "cobros.subtitulo")}
+                </div>
+              )}
+              <CobrosDelDueno onEstado={setCobro} />
             </>
           ) : section === "reportar" ? (
             <>

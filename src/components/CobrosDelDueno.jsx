@@ -60,9 +60,12 @@ const s = {
 /** Un punto de color: verde si la plata va a llegar, ámbar si falta algo. */
 function Semaforo({ clave }) {
   const color = clave === "listo" ? "var(--fw-green)"
-    : clave === "enRevision" ? "var(--fw-amber)"
-      : clave === "desconocido" ? "var(--fw-text-4)"
-        : "var(--fw-amber)";
+    // Azul y no verde: el verde dice "la plata sale". Acá no sale ninguna, y
+    // no se parece a un estado que haya que arreglar tampoco. Es otra cosa.
+    : clave === "simulado" ? "var(--fw-blue)"
+      : clave === "enRevision" ? "var(--fw-amber)"
+        : clave === "desconocido" ? "var(--fw-text-4)"
+          : "var(--fw-amber)";
   return (
     <span style={{
       width: 9, height: 9, borderRadius: "50%", background: color,
