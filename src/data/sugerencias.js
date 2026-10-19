@@ -24,29 +24,129 @@
  * cuanto más corto lo que queda escrito, más autos encuentra.
  */
 export const ZONAS = [
+  // Lo más general primero: quien escribe "bue" quiere Buenos Aires.
   "Buenos Aires",
   "CABA",
+
+  /*
+    LOS BARRIOS PORTEÑOS, LOS CUARENTA Y OCHO.
+
+    Antes había seis. No era una lista corta, era una lista incompleta: alguien
+    escribía "Saavedra" —o San Cristóbal, o Colegiales, o Villa Crespo, que son
+    barrios donde ya hay autos publicados— y el campo no ofrecía nada, con lo
+    cual parecía que ahí no había nada para alquilar.
+
+    Están los cuarenta y ocho oficiales y no una selección: cuál es "importante"
+    es una opinión, y la que no se incluye deja a su gente escribiendo a ciegas.
+    El orden de abajo sí es por uso, porque es lo único que decide qué se ofrece
+    cuando dos empiezan igual.
+  */
   "Palermo",
   "Belgrano",
   "Recoleta",
   "Caballito",
   "Villa Urquiza",
+  "Villa Crespo",
+  "Villa Devoto",
+  "Villa del Parque",
   "Núñez",
-  "San Isidro",
+  "Saavedra",
+  "Colegiales",
+  "Coghlan",
+  "Chacarita",
+  "Almagro",
+  "Boedo",
+  "San Telmo",
+  "San Cristóbal",
+  "San Nicolás",
+  "Retiro",
+  "Barracas",
+  "Balvanera",
+  "Constitución",
+  "Montserrat",
+  "Puerto Madero",
+  "La Boca",
+  "Flores",
+  "Floresta",
+  "Liniers",
+  "Mataderos",
+  "Agronomía",
+  "La Paternal",
+  "Monte Castro",
+  "Nueva Pompeya",
+  "Parque Patricios",
+  "Parque Chacabuco",
+  "Parque Chas",
+  "Parque Avellaneda",
+  "Vélez Sársfield",
+  "Versalles",
+  "Villa Lugano",
+  "Villa Luro",
+  "Villa Ortúzar",
+  "Villa Pueyrredón",
+  "Villa Real",
+  "Villa Riachuelo",
+  "Villa Santa Rita",
+  "Villa Soldati",
+
+  /*
+    EL CONURBANO. Las localidades donde de verdad hay gente con auto, no un
+    listado administrativo: la del norte primero porque es de donde salen la
+    mayoría de las publicaciones.
+  */
   "Vicente López",
-  "Tigre",
   "Olivos",
   "Martínez",
+  "San Isidro",
+  "Florida",
+  "Munro",
+  "La Lucila",
+  "Beccar",
+  "Boulogne",
+  "San Fernando",
+  "Tigre",
+  "Nordelta",
+  "Don Torcuato",
+  "San Martín",
+  "Villa Ballester",
+  "Ramos Mejía",
+  "Morón",
+  "Castelar",
+  "Ituzaingó",
+  "Avellaneda",
+  "Lanús",
+  "Banfield",
+  "Adrogué",
+  "Temperley",
   "Quilmes",
+  "Berazategui",
   "Lomas de Zamora",
+  "Ezeiza",
+  "Pilar",
+  "Escobar",
   "La Plata",
+
+  /*
+    LOS DESTINOS. Acá la gente no busca dónde vive sino adónde va, que es el
+    otro motivo por el que se alquila un auto.
+
+    Acá está la única entrada de toda la lista que no está en su bloque, y es
+    "Villa General Mitre": quedó al final del archivo. Choca con "Villa Gesell"
+    —las dos empiezan con "Villa Ge" y se completa con la primera— y, puesta
+    entre los barrios, le ganaba el lugar a uno de los destinos más buscados
+    del verano con uno de los barrios menos buscados de la ciudad.
+  */
   "Mar del Plata",
   "Pinamar",
   "Villa Gesell",
+  "Mar de Ajó",
+  "Necochea",
+  "Bahía Blanca",
   "Córdoba",
   "Villa Carlos Paz",
   "Rosario",
   "Santa Fe",
+  "Paraná",
   "Mendoza",
   "San Rafael",
   "Bariloche",
@@ -60,10 +160,13 @@ export const ZONAS = [
   "Puerto Iguazú",
   "Ushuaia",
   "El Calafate",
-  "Mar de Ajó",
-  "Necochea",
-  "Bahía Blanca",
-  "Paraná",
+
+  /*
+    ACÁ ABAJO, Y NO CON LOS BARRIOS: ver la nota de arriba. "Villa Ge" completa
+    con la primera de la lista, y entre este barrio y Villa Gesell gana el que
+    la gente escribe.
+  */
+  "Villa General Mitre",
 ];
 
 /**

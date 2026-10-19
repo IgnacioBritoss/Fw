@@ -253,6 +253,39 @@ function ponerEstilos() {
     */
     html.fw-dark .leaflet-popup { ${CLARO} }
 
+    /*
+      EL PUNTO DEL MAPA, Y POR QUÉ SU ESTADO VIVE EN CSS Y NO EN JAVASCRIPT.
+
+      Cada auto es un punto. El que tiene el mouse encima —o está elegido en la
+      lista— se agranda y se pone oscuro.
+
+      Ese cambio estaba escrito adentro del código que CREA los marcadores, así
+      que resaltar uno obligaba a rehacerlos todos: se borraban del mapa y se
+      volvían a crear los veinte en cada movimiento del mouse. Acá es una clase
+      que se prende y se apaga sobre un div que ya existe, que es lo que un
+      navegador hace sin despeinarse.
+
+      Crece con \`transform\` y no cambiando el ancho: el marcador está anclado a
+      su centro, y si el div cambiara de tamaño el ancla se correría y el punto
+      se movería de lugar al resaltarse.
+
+      NO lleva prefijo de modo oscuro: es un punto sobre un mapa, y el mapa se
+      ve igual en los dos modos.
+    */
+    .fw-pin {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #0f6ce6; border: 2px solid #fff; cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+      transform: scale(.7);
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+      box-sizing: border-box;
+    }
+    .fw-pin.on {
+      background: #111827;
+      transform: scale(1);
+      box-shadow: 0 4px 14px rgba(17,24,39,.45);
+    }
+
     /* El calendario viene con su hoja de estilos propia, con los colores
        adentro: se lo trae a la paleta. */
     html.fw-dark .react-datepicker,

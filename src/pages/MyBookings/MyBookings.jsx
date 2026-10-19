@@ -27,12 +27,14 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { format, parseISO } from "date-fns";
 import {
   getMyBookings, cancelBooking, acceptBooking, rejectBooking, markReadyForPickup,
+  reportarQueNoRetiro, reportarQueNoEntrego,
   getMyPendingReviews, createReview,
 } from "../../services/api";
 import ReviewForm from "../../components/ReviewForm";
 import UserReputation from "../../components/UserReputation";
 import { tramoPendienteDeReserva } from "../../services/pago";
 import { decidirCancelacion, avisoDeCancelacion } from "../../services/cancelacion";
+import { estaTrabada, estadoDelRetiro, puedeReportar } from "../../services/noShow";
 import RevisarElAuto from "../../components/RevisarElAuto";
 import { hayQueRevisar } from "../../services/reclamo";
 import StatusChip from "../../components/StatusChip";
@@ -207,6 +209,31 @@ export default function MyBookings() {
     finally { setActionLoading(null); }
   };
 
+  /*
+    DEJAR CONSTANCIA DE QUE EL OTRO NO APARECIÓ AL RETIRO.
+
+    Las dos partes pueden, con la misma ventana. No pide escribir una frase
+    como la cancelación: no es irreversible —la reserva sigue ahí— y, sobre
+    todo, el momento en que se usa es justo el peor para pedir trámites: la
+    persona está parada en la calle esperando a alguien que no vino. Lo que sí
+    hace es un cartel de confirmación simple, porque es un acto con nombre y
+    queda registrado.
+
+    Ver services/noShow.js: ahí está la ventana y qué pasa con cada
+    combinación de constancias.
+  */
+  const [reportando, setReportando] = useState(null);
+
+  const confirmarNoShow = async () => {
+    const reserva = reportando;
+    if (!reserva) return;
+    await runAction(`${reserva.id}-noshow`, () =>
+      reserva.soyElDueno
+        ? reportarQueNoRetiro(reserva.id)
+        : reportarQueNoEntrego(reserva.id));
+    setReportando(null);
+  };
+
   const handleAccept = (id) => runAction(`${id}-accept`, () => acceptBooking(id));
   const handleReject = (id) => runAction(`${id}-reject`, () => rejectBooking(id));
   const handleReady = (id) => runAction(`${id}-ready`, () => markReadyForPickup(id));
@@ -331,7 +358,37 @@ export default function MyBookings() {
             {isOwner ? t("bookings.myReturnQr") : t("bookings.confirmReturn")}
           </button>
         )}
-        {canCancel && (
+        {/*
+          "VINE, ESPERÉ Y NO APARECIÓ."
+
+          Las dos partes tienen el mismo botón, con la misma ventana: desde
+          media hora después del horario acordado y hasta 24 horas. Lo que
+          cambia es el texto, porque no dicen lo mismo.
+
+          Antes esto existía solo del lado del dueño, y no era un detalle: su
+          versión era la única escrita que podía existir, así que alcanzaba con
+          reportar para quedarse con la seña. Quien alquilaba no tenía dónde
+          decir lo contrario; su única salida era cancelar, y una cancelación no
+          distingue entre "me arrepentí" y "estuve media hora en la esquina".
+        */}
+        {puedeReportar(b, { soyElDueno: isOwner }).puede && (
+          <button
+            style={s.btnQR}
+            disabled={!!actionLoading}
+            onClick={() => setReportando({ id: b.id, soyElDueno: isOwner })}
+          >
+            {actionLoading === `${b.id}-noshow`
+              ? "..."
+              : t(isOwner ? "noShow.botonDueno" : "noShow.botonInquilino")}
+          </button>
+        )}
+        {/*
+          Cancelar NO se ofrece con el caso trabado: el servidor contesta
+          NO_SHOW_DISPUTED y un botón que falla siempre es peor que un botón
+          que no está. En su lugar, abajo, va la explicación de por qué la
+          plata está quieta.
+        */}
+        {canCancel && !estaTrabada(b) && (
           <button style={s.btnReject} disabled={!!actionLoading} onClick={() => handleCancel(b.id, isOwner)}>
             {actionLoading === `${b.id}-cancel` ? "..." : t("common.cancel")}
           </button>
@@ -401,6 +458,35 @@ export default function MyBookings() {
         {nextStepFor(b, isOwner) && (
           <div style={s.nextStep}>{t(nextStepFor(b, isOwner))}</div>
         )}
+        {/*
+          EN QUÉ QUEDÓ EL RETIRO, CUANDO ALGUIEN DEJÓ CONSTANCIA.
+
+          Cuatro combinaciones y cuatro textos. El que importa es el cuarto: con
+          las dos constancias, la plata NO SE MUEVE. Eso hay que decirlo con
+          todas las letras y en el momento, porque si no la pantalla parece
+          trabada por un error.
+
+          Va en ámbar y no en rojo cuando está trabado: nadie hizo nada mal
+          —las dos partes usaron una herramienta que está para eso— y lo que
+          hay es una espera, no una falla.
+        */}
+        {(() => {
+          const retiro = estadoDelRetiro(b, { soyElDueno: isOwner });
+          if (retiro.clave === "sinReportes") return null;
+          const trabado = retiro.clave === "trabado";
+          return (
+            <div style={{
+              marginTop: 10, padding: "10px 12px", borderRadius: 10, fontSize: 12.5, lineHeight: 1.55,
+              background: trabado ? "var(--fw-amber-bg)" : "var(--fw-surface-2)",
+              border: `1px solid ${trabado ? "var(--fw-amber-line)" : "var(--fw-line-soft)"}`,
+              color: trabado ? "var(--fw-amber-text)" : "var(--fw-text-3)",
+            }}>
+              {t(retiro.clave === "resuelto"
+                ? (retiro.aMiFavor ? "noShow.resueltoAFavor" : "noShow.resueltoEnContra")
+                : `noShow.${retiro.clave}`)}
+            </div>
+          );
+        })()}
         {reviewingId === b.id ? (
           <ReviewForm
             isOwner={isOwner}
@@ -477,6 +563,80 @@ export default function MyBookings() {
           onCerrar={() => setRevisando(null)}
           onListo={load}
         />
+      )}
+
+      {/*
+        EL CARTEL DE LA CONSTANCIA.
+
+        No usa ConfirmarEscribiendo —el de escribir la frase— y es una
+        decisión, no un descuido. Ese cartel es para lo que no se puede
+        deshacer y sale caro por error: va en rojo, con el triángulo de peligro
+        y pidiendo tipear. Dejar constancia no es eso: la reserva sigue viva, la
+        plata no se mueve por este acto solo, y el momento en que se usa es el
+        peor posible para pedir trámites —la persona está parada en la calle
+        esperando a alguien que no vino—.
+
+        Lo que sí hace es decir qué pasa después, incluida la parte que nadie se
+        imagina: que si el otro también reporta, la plata queda quieta hasta que
+        alguien resuelva.
+      */}
+      {reportando && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 2000, padding: 16,
+            background: "rgba(0,0,0,.5)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !actionLoading) setReportando(null);
+          }}
+        >
+          <div
+            role="dialog" aria-modal="true"
+            style={{
+              background: "var(--fw-surface)", borderRadius: 16, maxWidth: 430,
+              width: "100%", padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,.25)",
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 16, fontWeight: 800, color: "var(--fw-text)", marginBottom: 8 }}>
+              {t(reportando.soyElDueno ? "noShow.confirmarDueno" : "noShow.confirmarInquilino")}
+            </div>
+            <div style={{ fontSize: 13.5, color: "var(--fw-text-3)", lineHeight: 1.6, marginBottom: 18 }}>
+              {t("noShow.confirmarCuerpo")}
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setReportando(null)}
+                disabled={!!actionLoading}
+                style={{
+                  padding: "10px 16px", borderRadius: 10, fontSize: 13.5, fontWeight: 700,
+                  fontFamily: "inherit", cursor: "pointer",
+                  background: "var(--fw-surface)", color: "var(--fw-text-2)",
+                  border: "1px solid var(--fw-border-2)",
+                }}
+              >
+                {t("common.back")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmarNoShow}
+                disabled={!!actionLoading}
+                style={{
+                  padding: "10px 16px", borderRadius: 10, fontSize: 13.5, fontWeight: 700,
+                  fontFamily: "inherit", cursor: actionLoading ? "default" : "pointer",
+                  background: "var(--fw-blue)", color: "#fff", border: "none",
+                  opacity: actionLoading ? .7 : 1,
+                }}
+              >
+                {actionLoading === `${reportando.id}-noshow`
+                  ? t("common.loading")
+                  : t("noShow.confirmarBoton")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <ConfirmarEscribiendo

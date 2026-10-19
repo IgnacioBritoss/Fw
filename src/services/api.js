@@ -892,6 +892,27 @@ export async function rejectBooking(id) {
 export async function markReadyForPickup(id) {
   return apiFetch(`/bookings/${id}/ready-for-pickup`, { method: "PATCH" });
 }
+/*
+  LAS DOS CONSTANCIAS DEL RETIRO QUE NO PASÓ.
+
+  El retiro es el único momento del alquiler que ocurre en la vereda, donde el
+  servidor no ve nada. Si nadie escaneó el código, cada parte puede dejar su
+  versión por escrito, con su nombre y su hora. Son dos rutas y no una con un
+  parámetro: quién firma la constancia no es un dato del cuerpo, es QUIÉN está
+  haciendo el pedido, y el servidor lo comprueba contra la reserva.
+
+  Ver services/noShow.js, que explica la ventana y qué pasa con cada
+  combinación.
+*/
+/** El dueño: "vine, esperé y no apareció a retirar". */
+export async function reportarQueNoRetiro(id) {
+  return apiFetch(`/bookings/${id}/renter-no-show`, { method: "POST" });
+}
+/** Quien alquiló: "vine, esperé y el auto no apareció". */
+export async function reportarQueNoEntrego(id) {
+  return apiFetch(`/bookings/${id}/owner-no-show`, { method: "POST" });
+}
+
 export async function getBookingTokens(id) { return apiFetch(`/bookings/${id}/tokens`); }
 export async function confirmPickup(id, token) {
   return apiFetch(`/bookings/${id}/confirm-pickup`, { method: "POST", body: JSON.stringify({ token }) });

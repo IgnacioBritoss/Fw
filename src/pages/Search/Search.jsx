@@ -23,9 +23,10 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { cargarLeaflet, ponerBaldosas } from "../../services/leaflet";
 import { useListings } from "../../hooks/useListings";
 import {
-  CATEGORIES, filterCars, priceOf, sortCars, categoryLabel, transmissionLabel, fuelLabel,
+  CATEGORIES, filterCars, priceOf, sortCars,
 } from "../../services/listings";
 import FavoriteButton from "../../components/FavoriteButton";
+import TarjetaDeBusqueda from "../../components/TarjetaDeBusqueda";
 import Select from "../../components/Select";
 import { firstBookableInput } from "../../services/dates";
 import { useI18n } from "../../i18n/core";
@@ -141,6 +142,15 @@ export default function Search() {
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
   const [mapLoaded, setMapLoaded] = useState(false);
+  /*
+    El mapa, en un estado además de la referencia.
+
+    La referencia sirve para tocarlo desde cualquier lado sin provocar
+    dibujados; el estado es lo único que le avisa a React que el mapa ya
+    existe, y de eso depende que los pines se dibujen cuando los autos llegan
+    antes que Leaflet. Ver el efecto que lo crea.
+  */
+  const [mapa, setMapa] = useState(null);
 
   // Retiro = devolución es una búsqueda válida: "¿está libre ese día?". Antes se
   // exigía devolución posterior, así que con fechas iguales no se mandaba ninguna
@@ -186,6 +196,22 @@ export default function Search() {
   // Auto actualmente seleccionado en el mapa (para la tarjeta flotante).
   const selectedCar = filtered.find(c => c.id === selected) || null;
 
+  /*
+    LAS TRES FUNCIONES QUE RECIBE CADA TARJETA, ESTABLES.
+
+    `useCallback` sin dependencias que cambien: así son LA MISMA función en
+    cada dibujado y la memoización de la tarjeta sirve. Sin esto, cada
+    dibujado de Search crearía tres funciones nuevas, las veinte tarjetas
+    verían props distintas y se volverían a ejecutar todas, que es justo lo
+    que se vino a arreglar.
+
+    `setHovered` y `setSelected` ya son estables (React lo garantiza) y
+    `navigate` de react-router también.
+  */
+  const marcarAuto = useCallback((id) => setHovered(id), []);
+  const desmarcarAuto = useCallback(() => setHovered(null), []);
+  const abrirAuto = useCallback((id) => navigate(`/cars/${id}`), [navigate]);
+
   // ── Leaflet ──
   useEffect(() => {
     // Un solo cargador para toda la app: ver services/leaflet.js.
@@ -212,26 +238,54 @@ export default function Search() {
     markersRef.current = {};
     filtered.forEach(car => {
       if (!car.lat || !car.lng) return;
-      const on = hovered === car.id || selected === car.id;
-      const lado = on ? 20 : 14;
-      const punto = `width:${lado}px;height:${lado}px;background:${on ? "#111827" : "#0f6ce6"};`
-        + `border:2px solid #fff;border-radius:50%;cursor:pointer;`
-        + `box-shadow:${on ? "0 4px 14px rgba(17,24,39,.45)" : "0 2px 6px rgba(0,0,0,.35)"};`
-        + `transition:width .18s ease,height .18s ease,background .18s ease`;
+      /*
+        EL PIN SE DIBUJA UNA SOLA VEZ Y NO CAMBIA MÁS.
+
+        Antes el tamaño y el color del punto se escribían acá adentro según si
+        estaba resaltado, así que `addMarkers` dependía de `hovered` y de
+        `selected`: cada vez que el mouse pasaba por un auto, ESTA FUNCIÓN SE
+        VOLVÍA A CREAR, el efecto que la usa se volvía a disparar, y los
+        marcadores se borraban del mapa y se creaban de nuevo TODOS. Mover el
+        mouse por la lista rehacía veinte pines por movimiento.
+
+        Ahora el resaltado es una clase de CSS que se prende y se apaga sobre
+        el punto que corresponde (ver el efecto de abajo y theme.js). El
+        marcador no se toca: se le cambia una clase a un div.
+      */
       const icon = L.divIcon({
         className: "",
-        html: `<div style="${punto}"></div>`,
-        iconSize: [lado, lado],
-        iconAnchor: [lado / 2, lado / 2],
+        html: `<div class="fw-pin"></div>`,
+        // Fijo, y del tamaño del punto resaltado: si cambiara con el estado, el
+        // ancla se correría y el pin se movería de lugar al resaltarse.
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
       });
-      const marker = L.marker([car.lat, car.lng], { icon, zIndexOffset: on ? 1000 : 0, riseOnHover: true });
+      const marker = L.marker([car.lat, car.lng], { icon, riseOnHover: true });
       marker.on("click", () => setSelected(car.id));
       marker.addTo(map);
       markersRef.current[car.id] = marker;
     });
-  }, [filtered, hovered, selected]);
+  }, [filtered]);
 
-  // Crea el mapa cuando corresponde mostrarlo (escritorio + vista mapa activa).
+  /*
+    Crea el mapa cuando corresponde mostrarlo (escritorio + vista mapa activa).
+
+    EL MAPA QUEDA EN UN ESTADO Y NO SOLO EN UNA REFERENCIA, y eso arregla una
+    carrera que estaba escondida: los resultados y el mapa llegan por caminos
+    distintos —uno de la red, el otro de que Leaflet termine de cargar— y
+    cualquiera de los dos puede llegar primero. Guardado en una referencia, el
+    efecto que dibuja los pines no tenía forma de enterarse de que el mapa ya
+    existía: si los autos llegaban ANTES, ese efecto corría sin mapa, no hacía
+    nada, y no volvía a correr nunca. El mapa quedaba vacío.
+
+    Antes eso no se notaba porque el efecto también dependía del resaltado, así
+    que el primer movimiento del mouse lo rescataba —y de paso rehacía todos los
+    pines, que es el problema que se vino a arreglar—. O sea: el error estaba
+    desde siempre y lo tapaba otro error.
+
+    Con el mapa en un estado, React ve que apareció y vuelve a correr lo que
+    depende de él. No importa cuál de los dos llegue primero.
+  */
   useEffect(() => {
     if (!showMap || isMobile) return;
     const init = () => {
@@ -242,22 +296,51 @@ export default function Search() {
       ponerBaldosas(L, map);
       map.on("click", () => setSelected(null));
       mapInstanceRef.current = map;
-      addMarkers(map, L);
+      setMapa(map);
     };
     if (window.L) { const t = setTimeout(init, 120); return () => clearTimeout(t); }
     const iv = setInterval(() => { if (window.L) { clearInterval(iv); setTimeout(init, 120); } }, 100);
     return () => clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Ya no hace falta silenciar nada acá: sacando `addMarkers` de adentro de
+    // init, este efecto no usa ninguna dependencia que no esté en la lista.
   }, [showMap, mapLoaded, isMobile]);
 
-  // Redibuja los pines cada vez que cambian los resultados o el resaltado.
+  // Rehace los pines cuando hay un mapa donde ponerlos o resultados distintos
+  // que dibujar. NO cuando cambia el resaltado: de eso se ocupa el de abajo.
   useEffect(() => {
-    if (mapInstanceRef.current && window.L) addMarkers(mapInstanceRef.current, window.L);
-  }, [filtered, hovered, selected, addMarkers]);
+    if (mapa && window.L) addMarkers(mapa, window.L);
+  }, [mapa, addMarkers]);
+
+  /*
+    EL RESALTADO: UNA CLASE, SOBRE LOS PINES QUE CAMBIARON.
+
+    Este efecto corre con cada movimiento del mouse por la lista, así que tiene
+    que ser barato. Lo es: recorre los pines y prende o apaga una clase. No crea
+    iconos, no toca Leaflet, no vuelve a agregar nada al mapa.
+
+    `getElement()` puede dar null para un marcador que todavía no se dibujó —el
+    mapa recicla los que quedan fuera de la vista—, así que se saltea.
+  */
+  useEffect(() => {
+    for (const [id, marker] of Object.entries(markersRef.current)) {
+      const el = marker.getElement?.()?.querySelector(".fw-pin");
+      if (!el) continue;
+      const on = id === hovered || id === selected;
+      el.classList.toggle("on", on);
+      marker.setZIndexOffset(on ? 1000 : 0);
+    }
+  }, [hovered, selected, filtered]);
 
   // Destruye el mapa si se oculta o se pasa a celular (libera memoria).
   useEffect(() => {
-    if ((!showMap || isMobile) && mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; markersRef.current = {}; }
+    if ((!showMap || isMobile) && mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      markersRef.current = {};
+      // Y se avisa: si el estado quedara con el mapa viejo, el efecto de los
+      // pines intentaría dibujar sobre un mapa que ya no está en la pantalla.
+      setMapa(null);
+    }
   }, [showMap, isMobile]);
 
   const st = {
@@ -328,77 +411,6 @@ export default function Search() {
 
     detail: { background: "var(--fw-chip)", color: "#fff", border: "none", borderRadius: 22, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
     banner: { background: "var(--fw-amber-bg)", border: "1px solid var(--fw-amber-line)", borderRadius: 12, padding: "12px 16px", fontSize: 13, color: "var(--fw-amber-text)", marginBottom: 16 },
-  };
-
-  // Tarjeta de un auto en la lista.
-  const Card = ({ car }) => {
-    const on = selected === car.id;
-    return (
-      /*
-        `data-sc-in="up"`: la tarjeta entra desde abajo la primera vez que se la
-        ve. Acá NO va la inclinación hacia el mouse que sí llevan las del inicio,
-        y no es un olvido: esta tarjeta es apaisada —la foto a la izquierda y la
-        ficha a la derecha— y ocupa el ancho entero de la lista. Inclinar una
-        pieza de 900 píxeles de ancho mueve sus dos puntas en direcciones
-        opuestas, y lo que en una tarjeta chica se lee como que responde al
-        mouse, en esta se lee como que la lista entera se dobla.
-
-        Lo que sí hace al pasar el mouse es acercarse: `translateZ` en vez de los
-        dos píxeles para arriba que tenía. Es el mismo gesto que las categorías
-        del inicio, así que las dos pantallas se sienten del mismo sistema.
-      */
-      <div style={{ ...st.card, borderColor: on ? "var(--fw-blue)" : "var(--fw-line)", boxShadow: on ? "0 8px 26px rgba(37,99,235,.14)" : "none" }}
-        data-sc-in
-        onClick={() => navigate(`/cars/${car.id}`)}
-        onMouseEnter={e => { setHovered(car.id); e.currentTarget.style.transform = "perspective(1000px) translate3d(0,-3px,16px)"; if (!on) e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,.10)"; }}
-        onMouseLeave={e => { setHovered(null); e.currentTarget.style.transform = "none"; if (!on) e.currentTarget.style.boxShadow = "none"; }}>
-        <div style={st.ph}>
-          {car.photos?.length > 0
-            ? <img src={car.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fw-text-4)", fontSize: 12 }}>{tr("common.noPhoto")}</div>}
-          <FavoriteButton listingId={car.id} size={28} disabled={car.isMock} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.3px" }}>{car.brand} {car.model} {car.year}</div>
-          <div style={{ fontSize: 13, color: "var(--fw-text-3)", marginTop: 2 }}>{car.location}{car.rating > 0 ? ` · ${car.rating} ★${car.reviews ? ` (${car.reviews})` : ""}` : ""}</div>
-          {car.category && (
-            <div style={{ marginTop: 10 }}>
-              <span style={st.categoria}>{categoryLabel(tr, car.category)}</span>
-            </div>
-          )}
-          {/* Ficha técnica: una barra con celdas, igual que en el inicio. Se arma
-              con los datos que el auto tenga, y si no tiene ninguno no se dibuja
-              una barra vacía. */}
-          {(() => {
-            const celdas = [
-              car.transmissionCode && transmissionLabel(tr, car.transmissionCode),
-              car.fuelCode && fuelLabel(tr, car.fuelCode),
-              car.seats && tr("common.seats", { count: car.seats }),
-            ].filter(Boolean);
-            if (celdas.length === 0) return null;
-            return (
-              <div style={st.fichaFila}>
-                {celdas.map((texto, i) => (
-                  <span key={texto} style={{ ...st.fichaCelda, ...(i === 0 ? { borderLeft: "none" } : {}) }}>
-                    {texto}
-                  </span>
-                ))}
-              </div>
-            );
-          })()}
-          <div style={{
-            marginTop: "auto", paddingTop: 12, display: "flex", gap: 10,
-            ...(isMobile
-              ? { flexDirection: "column", alignItems: "stretch" }
-              : { justifyContent: "space-between", alignItems: "flex-end" }),
-          }}>
-            <div><span style={{ fontSize: 22, fontWeight: 800, color: "var(--fw-text)" }}>{precio(priceOf(car))}</span><span style={{ fontSize: 13, color: "var(--fw-text-4)" }}>{tr("common.perDay")}</span></div>
-            <button style={{ ...st.detail, ...(isMobile ? { width: "100%" } : {}) }}
-              onClick={e => { e.stopPropagation(); navigate(`/cars/${car.id}`); }}>{tr("search.viewDetail")}</button>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   /*
@@ -571,7 +583,17 @@ export default function Search() {
                   {tr("search.noneWithFilters")}
                   {anyFilter && <div style={{ marginTop: 12 }}><button onClick={clearAll} style={{ padding: "9px 18px", borderRadius: 20, border: "1.5px solid var(--fw-border)", background: "var(--fw-surface)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{tr("search.clearFilters")}</button></div>}
                 </div>
-              : filtered.map(car => <Card key={car.id} car={car} />)}
+              : filtered.map(car => (
+                <TarjetaDeBusqueda
+                  key={car.id}
+                  car={car}
+                  activo={selected === car.id}
+                  isMobile={isMobile}
+                  onEntrar={marcarAuto}
+                  onSalir={desmarcarAuto}
+                  onAbrir={abrirAuto}
+                />
+              ))}
         </div>
 
         {showMap && !isMobile && (
