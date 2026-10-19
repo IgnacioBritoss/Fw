@@ -491,8 +491,10 @@ export default function MyBookings() {
           <ReviewForm
             isOwner={isOwner}
             onCancel={() => setReviewingId(null)}
-            onSubmit={async ({ rating, comment, tags }) => {
-              await createReview(b.id, { rating, comment, tags });
+            onSubmit={async ({ rating, comment, tags, photos }) => {
+              // `photos` va incluido: el formulario deja subir hasta dos y, sin
+              // pasarlas acá, se subían a la nube y se perdían en el camino.
+              await createReview(b.id, { rating, comment, tags, photos });
               setReviewingId(null);
               load();
             }}

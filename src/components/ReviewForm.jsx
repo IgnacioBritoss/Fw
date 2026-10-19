@@ -47,12 +47,27 @@
 //  Las dos partes se reseñan: quien alquiló puntúa el auto y al dueño, y el dueño
 //  puntúa a quien alquiló. El promedio lo recalcula y lo guarda el servidor.
 // ============================================================================
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/core";
 import { paresPara, MAXIMO } from "../services/atributos";
 import { useSacudida } from "../anim";
+import { uploadImageToCloudinary } from "../services/cloudinary";
+import Spinner from "./Spinner";
 
 const LARGO_MAXIMO = 1000;
+
+/**
+ * Cuántas fotos puede llevar una reseña. El mismo número que valida el
+ * servidor (src/reviews/review-tags.ts allá).
+ *
+ * Dos y no diez: una reseña no es un álbum, y con diez fotos cada una la lista
+ * de reseñas de una publicación deja de poder leerse. Y es, además, lo que
+ * encarece inflar un perfil: escribir "todo bien" es gratis; sacar y subir dos
+ * fotos distintas en cada reseña falsa, bastante menos.
+ */
+const MAXIMO_DE_FOTOS = 2;
+/** 6 MB: una foto de celular entra de sobra y nadie espera un minuto. */
+const PESO_MAXIMO = 6 * 1024 * 1024;
 
 export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   const { t: tr } = useI18n();
@@ -63,6 +78,12 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
   // aspecto como mucho. Guardarlo así es lo que hace imposible la contradicción:
   // no hay lugar donde poner las dos.
   const [respuestas, setRespuestas] = useState({});
+  // Las fotos ya subidas, como direcciones. Se suben al elegirlas y no al
+  // enviar: así el error de una foto pesada aparece en el momento y no después
+  // de que la persona ya dio por terminada la reseña.
+  const [fotos, setFotos] = useState([]);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const archivo = useRef(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   /*
@@ -117,7 +138,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
     setSending(true);
     avisar("");
     try {
-      await onSubmit({ rating, comment: comment.trim(), tags: elegidas });
+      await onSubmit({ rating, comment: comment.trim(), tags: elegidas, photos: fotos });
     } catch (err) {
       avisar(err.message || tr("review.saveFailed"));
       setSending(false);
@@ -279,6 +300,90 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
             {comment.length}/{LARGO_MAXIMO}
           </span>
         )}
+      </div>
+
+      {/* ── 4 · Las fotos ───────────────────────────────────────────────────
+          Una foto del auto como quedó vale mucho más que cinco estrellas: le da
+          a quien la lee algo que mirar en vez de una opinión. Son opcionales:
+          pedirlas obligatorias dejaría sin reseñar a quien ya devolvió el auto
+          y se acordó dos días después. */}
+      <div style={{ marginBottom: 10 }}>
+        <input
+          ref={archivo}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={async (e) => {
+            const elegido = e.target.files?.[0];
+            // Se limpia siempre: sin esto, elegir DOS VECES la misma foto no
+            // dispara el evento y parece que el botón no anduvo.
+            e.target.value = "";
+            if (!elegido) return;
+            if (!elegido.type.startsWith("image/")) { avisar(tr("review.fotoNoEsImagen")); return; }
+            if (elegido.size > PESO_MAXIMO) { avisar(tr("review.fotoMuyGrande")); return; }
+            setSubiendoFoto(true);
+            avisar("");
+            try {
+              const url = await uploadImageToCloudinary(elegido);
+              /*
+                Sin repetir. Dos archivos distintos dan direcciones distintas,
+                así que esto casi nunca pasa; cuando pasa —la misma foto elegida
+                dos veces— el servidor rechazaría la reseña entera por repetida,
+                y perderla después de escribirla sería lo peor de los dos
+                mundos.
+              */
+              setFotos((previas) =>
+                previas.includes(url) ? previas : [...previas, url].slice(0, MAXIMO_DE_FOTOS));
+            } catch (err) {
+              avisar(err?.message || tr("review.fotoFallo"));
+            } finally {
+              setSubiendoFoto(false);
+            }
+          }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {fotos.map((url) => (
+            <div key={url} style={{ position: "relative" }}>
+              <img src={url} alt="" style={{
+                width: 58, height: 58, objectFit: "cover", borderRadius: 8,
+                border: "1px solid var(--fw-border)",
+              }} />
+              <button
+                type="button"
+                aria-label={tr("review.quitarFoto")}
+                onClick={() => setFotos((previas) => previas.filter((f) => f !== url))}
+                style={{
+                  position: "absolute", top: -6, right: -6, width: 20, height: 20,
+                  minHeight: 20, padding: 0, borderRadius: "50%", border: "none",
+                  background: "var(--fw-text)", color: "#fff", fontSize: 13,
+                  lineHeight: 1, cursor: "pointer",
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {fotos.length < MAXIMO_DE_FOTOS && (
+            <button
+              type="button"
+              disabled={subiendoFoto}
+              onClick={() => archivo.current?.click()}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "9px 13px", borderRadius: 9, fontSize: 12.5, fontWeight: 700,
+                fontFamily: "inherit", cursor: subiendoFoto ? "default" : "pointer",
+                background: "var(--fw-surface)", color: "var(--fw-text-2)",
+                border: "1px dashed var(--fw-border-2)",
+                opacity: subiendoFoto ? 0.6 : 1,
+              }}
+            >
+              {subiendoFoto ? <><Spinner size={13} /> {tr("review.subiendoFoto")}</> : tr("review.agregarFoto")}
+            </button>
+          )}
+          <span style={{ fontSize: 11.5, color: "var(--fw-text-4)" }}>
+            {tr("review.fotoNota", { maximo: MAXIMO_DE_FOTOS })}
+          </span>
+        </div>
       </div>
 
       {error && (

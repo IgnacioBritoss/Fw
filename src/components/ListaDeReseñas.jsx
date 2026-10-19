@@ -92,6 +92,30 @@ export default function ListaDeReseñas({ reviews = [], vacio }) {
                 {review.comment}
               </div>
             )}
+
+            {/*
+              LAS FOTOS DE LA RESEÑA.
+
+              Una foto del auto como quedó vale mucho más que cinco estrellas:
+              le da a quien lee algo que mirar en vez de una opinión.
+
+              Se abren en una pestaña al tocarlas y no en un visor propio: son
+              como mucho dos, y un visor con flechas para dos fotos es más
+              pantalla de la que el dato necesita.
+            */}
+            {Array.isArray(review.photos) && review.photos.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 10, marginLeft: 42, flexWrap: "wrap" }}>
+                {review.photos.slice(0, 2).map((url) => (
+                  <a key={url} href={url} target="_blank" rel="noreferrer noopener"
+                    style={{ display: "block", lineHeight: 0 }}>
+                    <img src={url} alt="" loading="lazy" style={{
+                      width: 84, height: 64, objectFit: "cover", borderRadius: 8,
+                      border: "1px solid var(--fw-line)",
+                    }} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}

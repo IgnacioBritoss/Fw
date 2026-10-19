@@ -14,7 +14,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import {
   adminGetListings, adminUpdateListingStatus,
   adminGetUsers, adminUpdateUserStatus,
-  adminGetSettings, adminDeleteUser,
+  adminGetSettings, adminDeleteUser, adminGetFraudSignals,
   getAdminReports, getAdminOpenReportsCount, resolveReport,
   adminGetVerifications, adminGetVerificationDocuments,
   adminReviewVerification, getAiHealth, probeAiModels,
@@ -56,6 +56,7 @@ const esperaAlAdmin = (v) =>
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
 import ReservasAdmin from "../../components/ReservasAdmin";
+import AlertasDeFraude from "../../components/AlertasDeFraude";
 import { useI18n } from "../../i18n/core";
 import Avatar from "../../components/Avatar";
 import { initialsOf } from "../../services/people";
@@ -151,6 +152,8 @@ export default function Admin() {
   const [verifications, setVerifications] = useState([]);
   const [loadingVerifications, setLoadingVerifications] = useState(false);
   const [pendingVerifications, setPendingVerifications] = useState(0);
+  // Señales de reputación inflada sin revisar, para el número de la pestaña.
+  const [alertasDeFraude, setAlertasDeFraude] = useState(0);
   const [aiHealth, setAiHealth] = useState(null);
   // Fotos de identidad firmadas, por solicitud. Los archivos son privados: la URL
   // guardada devuelve 401, así que hay que pedirlas al backend una por una.
@@ -275,6 +278,17 @@ export default function Admin() {
         (Array.isArray(data) ? data : []).filter(esperaAlAdmin).length,
       ))
       .catch(() => setPendingVerifications(0));
+    /*
+      Y las señales sin revisar.
+
+      Si la ruta no existe —un backend todavía sin publicar— queda en cero y la
+      pestaña aparece sin número. No se muestra ningún error: una pestaña sin
+      número es correcta, y un cartel rojo en el panel por una ruta que todavía
+      no está sería alarma sin motivo.
+    */
+    adminGetFraudSignals()
+      .then(data => setAlertasDeFraude((Array.isArray(data) ? data : []).length))
+      .catch(() => setAlertasDeFraude(0));
   }, [tab, tr, esAdmin]);
 
   // Acá sí: ya se llamaron todos los hooks, así que salir en este punto no
@@ -464,6 +478,15 @@ export default function Admin() {
           // reclamo por un daño llegaba por un reporte y no había forma de
           // actuar sobre la garantía.
           ["reservas", tr("admin.tabBookings")],
+          /*
+            Las cuentas que podrían estar inflando su reputación.
+
+            Va última a propósito: es la pestaña que uno abre cuando pasa algo,
+            no la del día a día. Con el número al lado cuando hay algo sin
+            revisar, que es lo único que la hace mirarse sin que nadie avise.
+          */
+          ["fraude", alertasDeFraude > 0
+            ? `${tr("admin.tabFraude")} (${alertasDeFraude})` : tr("admin.tabFraude")],
         ].map(([k, l]) => (
           <button key={k}
             style={{ ...s.tab, ...(tab === k ? s.tabActive : {}) }}
@@ -634,6 +657,9 @@ export default function Admin() {
           relación con la publicación, así el admin no tiene que leer de cero los
           que no tienen nada que ver. La decisión siempre la toma el admin. */}
       {tab === "reservas" && <ReservasAdmin />}
+
+      {/* REPUTACIÓN INFLADA. Ver components/AlertasDeFraude.jsx. */}
+      {tab === "fraude" && <AlertasDeFraude onAviso={showAlert} />}
 
       {tab === "reports" && (
         loadingReports ? <Spinner block label={tr("common.loading")} />

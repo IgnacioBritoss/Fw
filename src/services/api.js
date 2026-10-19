@@ -776,14 +776,19 @@ export async function getMyPendingReviews() {
  * una lista vacía a un backend que todavía no lo conozca sería pedirle que
  * valide un campo que no tiene.
  */
-export async function createReview(bookingId, { rating, comment, tags }) {
+export async function createReview(bookingId, { rating, comment, tags, photos }) {
   const elegidas = Array.isArray(tags) ? tags.filter(Boolean) : [];
+  // Hasta dos fotos. El servidor valida lo mismo; acá se recorta por las dudas
+  // de que llegue una lista más larga desde una pantalla vieja, que terminaría
+  // en un 400 sobre una reseña que la persona ya escribió.
+  const imagenes = (Array.isArray(photos) ? photos.filter(Boolean) : []).slice(0, 2);
   return apiFetch(`/bookings/${bookingId}/reviews`, {
     method: "POST",
     body: JSON.stringify({
       rating,
       ...(comment ? { comment } : {}),
       ...(elegidas.length ? { tags: elegidas } : {}),
+      ...(imagenes.length ? { photos: imagenes } : {}),
     }),
   });
 }
@@ -1193,6 +1198,24 @@ export async function adminUpdateListingStatus(id, status) {
     body: JSON.stringify({ status }),
   });
 }
+/*
+  LAS SEÑALES DE REPUTACIÓN INFLADA.
+
+  La reputación es lo único que hace que un desconocido le preste su auto a
+  otro: si se puede fabricar —tres cuentas que se alquilan entre ellas y se
+  dejan cinco estrellas— todo lo demás da igual. Estas dos rutas son la bandeja
+  del panel. Ver src/antifraude/limites.ts del backend, que explica cada patrón.
+*/
+export async function adminGetFraudSignals() {
+  return apiFetch("/admin/fraud-signals");
+}
+export async function adminResolveFraudSignal(id, note) {
+  return apiFetch(`/admin/fraud-signals/${id}/resolve`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}
+
 export async function adminUpdateUserStatus(id, status) {
   return apiFetch(`/admin/users/${id}/status`, {
     method: "PATCH",

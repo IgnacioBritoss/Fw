@@ -703,33 +703,71 @@ export default function Profile() {
             después de la foto y después de dos botones. `paddingBottom` lo
             apoya sobre la misma línea de base que el círculo.
           */}
-          <div style={{ minWidth: 0, flex: "1 1 240px", paddingBottom: isMobile ? 2 : 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)", letterSpacing: "-.5px" }}>{fullName}</span>
+          {/*
+            `paddingBottom: 0`: el bloque se apoya en la base del círculo.
+
+            Tenía 8px, que lo empujaban hacia arriba. Con el nombre y los datos
+            en DOS renglones en vez de uno, el bloque creció para arriba y el
+            nombre terminaba pisando el borde de la portada: texto oscuro sobre
+            el final del dibujo, que es el peor lugar para leerlo.
+          */}
+          <div style={{ minWidth: 0, flex: "1 1 240px", paddingBottom: 0 }}>
+            {/*
+              EL NOMBRE SOLO EN SU RENGLÓN, Y LOS DISTINTIVOS ABAJO.
+
+              Estaban los tres en la misma línea: el nombre en 28px, el
+              "verificado" y la medalla del rango. Tres cosas de tamaños y pesos
+              distintos apoyadas sobre la misma base no se leen como una fila,
+              se leen como tres cosas sueltas que quedaron ahí — que es
+              exactamente lo que se veía—. Y el nombre, que es lo que uno busca,
+              terminaba compartiendo el renglón con dos etiquetas.
+
+              Ahora el nombre manda solo, y debajo va UNA línea de datos: desde
+              cuándo, verificado, rango. Es la misma información, pero jerarquía
+              y no empate.
+            */}
+            <div style={{
+              fontSize: isMobile ? 23 : 28, fontWeight: 800, color: "var(--fw-text)",
+              letterSpacing: "-.5px", lineHeight: 1.15,
+            }}>
+              {fullName}
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: isMobile ? 8 : 10,
+              flexWrap: "wrap", marginTop: 6,
+            }}>
+              <span style={{ fontSize: 13.5, color: "var(--fw-text-3)" }}>
+                {tr("profile.memberSince", { date: memberSince })}
+              </span>
+              {/*
+                El punto separador. Es un carácter y no un borde ni un margen
+                grande: lo que separa dos datos del mismo renglón sin
+                convertirlos en dos bloques.
+              */}
+              <span aria-hidden="true" style={{ color: "var(--fw-text-4)", fontSize: 13 }}>·</span>
               {fullyVerified
                 ? <StatusChip tone="verified">{tr("status.verified")}</StatusChip>
                 : <StatusChip tone="warn">{tr("profile.verificationPending")}</StatusChip>}
               {/*
-                LA MEDALLA, AL LADO DEL NOMBRE.
+                LA MEDALLA.
 
-                Es el escudo solo, sin la cajita: al lado de un nombre de 28px
-                una etiqueta con borde y fondo compite con él, y lo que se tiene
-                que leer primero es el nombre. La medalla acompaña; el rango
-                escrito, la escalera y todo lo demás están en la planilla de más
-                abajo, que es el lugar donde alguien va a MIRAR su reputación y
-                no a cruzársela.
+                Es el escudo solo, sin la cajita: una etiqueta con borde y fondo
+                al lado del "verificado" —que ya es una— haría dos cajitas
+                peleando. La medalla acompaña; el rango escrito, la escalera y
+                todo lo demás están en la planilla de más abajo, que es el lugar
+                donde alguien va a MIRAR su reputación y no a cruzársela.
 
                 Solo aparece cuando hay reseñas de verdad detrás: sin reseñas no
-                hay rango, y un escudo vacío al lado del nombre sería prometer
-                algo que todavía no pasó.
+                hay rango, y un escudo vacío sería prometer algo que todavía no
+                pasó.
               */}
               {ratingCount > 0 && (() => {
                 const tier = rankOf(ratingCount, ratingAverage);
                 return (
                   <span title={tr(`rank.${tier.key}`)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <EscudoDeRango metal={tier.metal} color={tier.color} size={isMobile ? 18 : 21} />
+                    <EscudoDeRango metal={tier.metal} color={tier.color} size={isMobile ? 16 : 18} />
                     <span style={{
-                      fontSize: 11, fontWeight: 800, letterSpacing: ".055em",
+                      fontSize: 10.5, fontWeight: 800, letterSpacing: ".055em",
                       textTransform: "uppercase", color: tier.color, whiteSpace: "nowrap",
                     }}>
                       {tr(`rank.${tier.key}`)}
@@ -737,9 +775,6 @@ export default function Profile() {
                   </span>
                 );
               })()}
-            </div>
-            <div style={{ fontSize: 14, color: "var(--fw-text-3)", marginTop: 3 }}>
-              {tr("profile.memberSince", { date: memberSince })}
             </div>
           </div>
         </div>
