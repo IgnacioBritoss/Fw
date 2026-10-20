@@ -46,8 +46,9 @@ import Avatar from "../../components/Avatar";
 import AvatarEditor from "../../components/AvatarEditor";
 import PhotoVisibilityChoice from "../../components/PhotoVisibilityChoice";
 import { conMayusculas, initialsOf, visibilidadDeFoto } from "../../services/people";
-import { fondoDePortada, portadaDe } from "../../services/portadaDePerfil";
+import { portadaDe } from "../../services/portadaDePerfil";
 import EditorDePortada from "../../components/EditorDePortada";
+import PortadaDelPerfil from "../../components/PortadaDelPerfil";
 import Spinner from "../../components/Spinner";
 import StatusChip from "../../components/StatusChip";
 
@@ -390,11 +391,13 @@ export default function Profile() {
     const previa = portadaPrevia.current;
     if (previa.dibujo !== portadaGuardada.dibujo
       || previa.color !== portadaGuardada.color
-      || previa.foto !== portadaGuardada.foto) {
+      || previa.foto !== portadaGuardada.foto
+      || previa.x !== portadaGuardada.x
+      || previa.y !== portadaGuardada.y) {
       portadaPrevia.current = portadaGuardada;
       setPortadaElegida(portadaGuardada);
     }
-  }, [portadaGuardada.dibujo, portadaGuardada.color, portadaGuardada.foto]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [portadaGuardada.dibujo, portadaGuardada.color, portadaGuardada.foto, portadaGuardada.x, portadaGuardada.y]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cambiarPortada = async (dibujo, color) => {
     if (portadaGuardando) return;
@@ -443,9 +446,13 @@ export default function Profile() {
     setPortadaError("");
     try {
       const url = await uploadImageToCloudinary(archivo);
-      await updateMe({ profileCoverPhotoUrl: url });
+      // El encuadre vuelve al medio con cada foto nueva. Era de la anterior:
+      // una posición elegida para una foto vertical aplicada a una panorámica
+      // no es "lo que la persona había elegido", es un recorte al azar que
+      // encima parece un error de la página.
+      await updateMe({ profileCoverPhotoUrl: url, profileCoverX: 50, profileCoverY: 50 });
       await refreshUser();
-      setPortadaElegida(p => ({ ...p, foto: url }));
+      setPortadaElegida(p => ({ ...p, foto: url, x: 50, y: 50 }));
     } catch (err) {
       setPortadaError(err?.message || tr("portada.error"));
     } finally {
@@ -472,7 +479,65 @@ export default function Profile() {
     }
   };
 
-  const portada = fondoDePortada(portadaElegida.dibujo, portadaElegida.color, portadaElegida.foto);
+  /*
+    ── EL ENCUADRE DE LA FOTO ──────────────────────────────────────────────
+
+    La portada es una franja ancha y baja y la foto se agranda hasta llenarla,
+    así que siempre sobra imagen y el navegador recorta por el centro. Con una
+    foto vertical de celular eso deja afuera casi todo: subir una foto era tirar
+    los dados y quedarse con lo que saliera. Ahora se arrastra la franja —o se
+    mueven los dos deslizadores del editor— y se elige qué parte se ve. Ver
+    components/PortadaDelPerfil.jsx y services/portadaDePerfil.js.
+
+    SE VE AL TOQUE Y SE GUARDA DESPUÉS. Arrastrar produce decenas de posiciones
+    por segundo: mandar una por cada una serían cientos de pedidos para una sola
+    decisión, y, lo peor, podrían llegar desordenados y dejar guardada una
+    posición vieja. Entonces la pantalla se mueve sin esperar a nadie y el
+    guardado sale medio segundo después del último movimiento, o en el momento
+    en que se suelta.
+  */
+  const encuadrePendiente = useRef(null);
+  const encuadreTimer = useRef(null);
+
+  async function guardarEncuadre() {
+    if (encuadreTimer.current) {
+      clearTimeout(encuadreTimer.current);
+      encuadreTimer.current = null;
+    }
+    const pendiente = encuadrePendiente.current;
+    if (!pendiente) return;
+    encuadrePendiente.current = null;
+    try {
+      await updateMe({ profileCoverX: pendiente.x, profileCoverY: pendiente.y });
+      await refreshUser();
+    } catch (err) {
+      // Vuelve a lo último que sí quedó guardado: dejar en pantalla una
+      // posición que el servidor no tiene es prometer algo que no pasó.
+      setPortadaElegida(p => ({ ...p, x: portadaGuardada.x, y: portadaGuardada.y }));
+      setPortadaError(err?.message || tr("portada.error"));
+    }
+  }
+
+  const encuadrar = (x, y) => {
+    if (portadaGuardando || subiendoPortada) return;
+    setPortadaElegida(p => ({ ...p, x, y }));
+    encuadrePendiente.current = { x, y };
+    if (encuadreTimer.current) clearTimeout(encuadreTimer.current);
+    encuadreTimer.current = setTimeout(guardarEncuadre, 500);
+  };
+
+  /*
+    Irse de la página no puede perder el encuadre.
+
+    Sin esto, mover la foto y tocar enseguida otra sección dejaba el guardado a
+    medio salir: el temporizador se va con el componente y la posición queda
+    solo en la pantalla que se está cerrando. La referencia es para que el
+    efecto de limpieza —que se arma una vez— llame a la versión de ahora de la
+    función y no a la del primer dibujo.
+  */
+  const guardarAlSalir = useRef(guardarEncuadre);
+  guardarAlSalir.current = guardarEncuadre;
+  useEffect(() => () => { guardarAlSalir.current(); }, []);
 
   // Checklist REAL de verificación que devuelve el backend.
   const checklist = user?.verification?.checklist || {};
@@ -618,8 +683,20 @@ export default function Profile() {
         con el nombre. Y la portada la elige cada uno.
       */}
       <div data-sc-in="depth" style={{ ...t.card, overflow: "hidden" }}>
-        <div style={{ position: "relative" }}>
-          <div style={{ ...portada, height: isMobile ? 104 : 148 }} />
+        <PortadaDelPerfil
+          dibujo={portadaElegida.dibujo}
+          color={portadaElegida.color}
+          foto={portadaElegida.foto}
+          x={portadaElegida.x}
+          y={portadaElegida.y}
+          alto={isMobile ? 104 : 148}
+          // Solo se arrastra con el editor abierto. Con el editor cerrado la
+          // portada es una franja de adorno, y una franja de adorno que se
+          // mueve sola al pasar el dedo para bajar la página es un estorbo.
+          ajustable={editandoPortada}
+          onMover={encuadrar}
+          onSoltar={guardarEncuadre}
+        >
           {/* El botón de la portada, arriba de ella y a la derecha. Translúcido
               sobre el dibujo: un botón blanco macizo acá parecería un cartel
               pegado encima. */}
@@ -647,7 +724,7 @@ export default function Profile() {
             </svg>
             {tr("portada.boton")}
           </button>
-        </div>
+        </PortadaDelPerfil>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, padding: isMobile ? "0 20px" : "0 32px", marginTop: isMobile ? -46 : -60, flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
             <Avatar
@@ -823,11 +900,14 @@ export default function Profile() {
               dibujo={portadaElegida.dibujo}
               color={portadaElegida.color}
               foto={portadaElegida.foto}
+              x={portadaElegida.x}
+              y={portadaElegida.y}
               deshabilitado={portadaGuardando}
               subiendoFoto={subiendoPortada}
               onCambiar={cambiarPortada}
               onElegirFoto={elegirFotoDePortada}
               onQuitarFoto={quitarFotoDePortada}
+              onEncuadrar={encuadrar}
               onCerrar={() => setEditandoPortada(false)}
             />
           </div>

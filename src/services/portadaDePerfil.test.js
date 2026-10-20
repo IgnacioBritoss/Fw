@@ -20,11 +20,15 @@ import {
   DIBUJOS,
   PORTADA_POR_OMISION,
   aclarar,
+  encuadreDe,
+  encuadreUsable,
   fondoDePortada,
   fotoUsable,
+  moverEncuadre,
   oscurecer,
   portadaDe,
   portadaDeLaPersona,
+  sobranteDeLaFoto,
 } from "./portadaDePerfil.js";
 
 test("todos los dibujos del catálogo devuelven un fondo de verdad", () => {
@@ -126,7 +130,7 @@ test("aclarar aclara y oscurecer oscurece", () => {
 test("portadaDe lee lo que eligió una persona", () => {
   assert.deepEqual(
     portadaDe({ profileCoverDesign: "rayas", profileCoverColor: "#15803d" }),
-    { dibujo: "rayas", color: "#15803d", foto: null },
+    { dibujo: "rayas", color: "#15803d", foto: null, x: 50, y: 50 },
   );
 });
 
@@ -136,7 +140,9 @@ test("Y UN BACKEND QUE TODAVÍA NO MANDA LOS CAMPOS DEJA LA DE SIEMPRE", () => {
     siga arriba, `/users/me` no devuelve estos tres campos, y la pantalla tiene
     que verse exactamente como se veía antes: no vacía, no rota.
   */
-  const esperada = { dibujo: PORTADA_POR_OMISION, color: COLOR_POR_OMISION, foto: null };
+  const esperada = {
+    dibujo: PORTADA_POR_OMISION, color: COLOR_POR_OMISION, foto: null, x: 50, y: 50,
+  };
   for (const persona of [null, undefined, {}, { profileCoverDesign: null }]) {
     assert.deepEqual(portadaDe(persona), esperada);
   }
@@ -215,4 +221,125 @@ test("y una dirección normal sí entra", () => {
   assert.equal(fotoUsable(FOTO), FOTO);
   // Con espacios al borde, que es lo que deja un copiar y pegar.
   assert.equal(fotoUsable(`  ${FOTO}  `), FOTO);
+});
+
+// ── El encuadre ─────────────────────────────────────────────────────────────
+//
+//  La portada es una franja ancha y baja: la foto se agranda hasta llenarla y
+//  siempre sobra imagen por algún lado. Quién decide qué parte queda a la vista
+//  es lo que se prueba acá.
+
+test("sin encuadre elegido, la foto se ve por el medio", () => {
+  // Es exactamente como se veía antes de que existiera este ajuste: las
+  // cuentas que ya tenían una portada puesta no tienen que notar el cambio.
+  assert.equal(fondoDePortada("liso", "#1d4ed8", FOTO).backgroundPosition, "50% 50%");
+  assert.deepEqual(encuadreDe({}), { x: 50, y: 50 });
+  assert.deepEqual(encuadreDe(null), { x: 50, y: 50 });
+});
+
+test("el encuadre elegido llega a la propiedad de CSS", () => {
+  const estilo = fondoDePortada("liso", "#1d4ed8", FOTO, { x: 20, y: 85 });
+  assert.equal(estilo.backgroundPosition, "20% 85%");
+});
+
+test("NO ENTRA CUALQUIER COSA EN EL ENCUADRE", () => {
+  /*
+    Estos dos números vienen de la base y terminan adentro de una propiedad de
+    estilo, igual que la dirección de la foto. Un texto con CSS, un número
+    fuera de escala o un NaN tienen que caer en el medio y no escribirse tal
+    cual: lo que no es un número entre 0 y 100 no es un encuadre.
+  */
+  const BASURA = [
+    "50%; background: red",
+    "center", -1, 101, NaN, Infinity, null, undefined, {}, [],
+  ];
+  for (const malo of BASURA) {
+    assert.equal(encuadreUsable(malo), null, String(malo));
+    assert.equal(
+      fondoDePortada("liso", "#1d4ed8", FOTO, { x: malo, y: malo }).backgroundPosition,
+      "50% 50%",
+      String(malo),
+    );
+  }
+  // Un número escrito como texto sí vale: este dato viaja por JSON.
+  assert.equal(encuadreUsable("70"), 70);
+  assert.equal(encuadreUsable(70.4), 70);
+});
+
+test("sobranteDeLaFoto mide lo que queda afuera", () => {
+  /*
+    La franja de la prueba es de 1000 x 100: diez veces más ancha que alta, que
+    es la proporción real de la portada.
+
+    Una foto cuadrada de 1000 entra justo de ancho y queda de 1000 x 1000: lo
+    que sobra son 900 de alto. A lo ancho no sobra nada, así que ese eje no se
+    puede mover, y es el caso más común —casi ninguna foto es tan apaisada como
+    la franja—.
+  */
+  assert.deepEqual(
+    sobranteDeLaFoto({ ancho: 1000, alto: 1000 }, { ancho: 1000, alto: 100 }),
+    { x: 0, y: 900 },
+  );
+  // Una foto vertical de celular: sobra muchísimo de alto.
+  assert.deepEqual(
+    sobranteDeLaFoto({ ancho: 1000, alto: 2000 }, { ancho: 1000, alto: 100 }),
+    { x: 0, y: 1900 },
+  );
+  // Y una panorámica MÁS apaisada que la franja: ahí lo que sobra es a los
+  // costados. Hace falta ser muy ancha para eso (20:1 contra 10:1).
+  assert.deepEqual(
+    sobranteDeLaFoto({ ancho: 5000, alto: 250 }, { ancho: 1000, alto: 100 }),
+    { x: 1000, y: 0 },
+  );
+});
+
+test("Y SIN MEDIDAS NO SE PUEDE ENCUADRAR", () => {
+  // La foto todavía no cargó, o la franja todavía no se dibujó. Devolver
+  // cualquier otra cosa haría que arrastrar moviera la portada a un lugar
+  // calculado con medidas inventadas.
+  for (const natural of [null, undefined, {}, { ancho: 0, alto: 0 }]) {
+    assert.deepEqual(sobranteDeLaFoto(natural, { ancho: 1000, alto: 100 }), { x: 0, y: 0 });
+  }
+  assert.deepEqual(sobranteDeLaFoto({ ancho: 1000, alto: 1000 }, null), { x: 0, y: 0 });
+});
+
+test("arrastrar mueve la foto, no la ventanita", () => {
+  /*
+    Es el detalle que hace que el control se sienta bien: tirando hacia abajo
+    aparece la parte de ARRIBA de la foto, igual que si se corriera un papel
+    sobre la mesa. Al revés —que el gesto moviera el recorte— es la misma
+    cuenta con el signo cambiado, y se siente como el volante invertido.
+  */
+  const sobrante = { x: 0, y: 900 };
+  // Se empieza en el medio (50) y se arrastra 90px hacia abajo: 90 de 900 es
+  // el 10%, así que el encuadre baja a 40 y se ve más de arriba.
+  assert.deepEqual(moverEncuadre({ x: 50, y: 50 }, { x: 0, y: 90 }, sobrante), { x: 50, y: 40 });
+  assert.deepEqual(moverEncuadre({ x: 50, y: 50 }, { x: 0, y: -90 }, sobrante), { x: 50, y: 60 });
+});
+
+test("el encuadre no se puede pasar de los bordes", () => {
+  // Arrastrar diez pantallas no da 400%: la foto se queda pegada al borde.
+  const sobrante = { x: 500, y: 500 };
+  assert.deepEqual(moverEncuadre({ x: 50, y: 50 }, { x: 9999, y: 9999 }, sobrante), { x: 0, y: 0 });
+  assert.deepEqual(moverEncuadre({ x: 50, y: 50 }, { x: -9999, y: -9999 }, sobrante), { x: 100, y: 100 });
+});
+
+test("un eje sin sobrante no se mueve", () => {
+  // No hay nada escondido de ese lado que pudiera aparecer. Dejarlo moverse
+  // haría que el control respondiera sin que la foto cambie.
+  assert.deepEqual(
+    moverEncuadre({ x: 30, y: 50 }, { x: 200, y: 200 }, { x: 0, y: 400 }),
+    { x: 30, y: 0 },
+  );
+});
+
+test("portadaDe y portadaDeLaPersona llevan el encuadre hasta el estilo", () => {
+  const persona = {
+    profileCoverDesign: "noche", profileCoverColor: "#be123c",
+    profileCoverPhotoUrl: FOTO, profileCoverX: 12, profileCoverY: 88,
+  };
+  assert.deepEqual(portadaDe(persona), {
+    dibujo: "noche", color: "#be123c", foto: FOTO, x: 12, y: 88,
+  });
+  assert.equal(portadaDeLaPersona(persona).backgroundPosition, "12% 88%");
 });

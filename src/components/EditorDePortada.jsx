@@ -27,7 +27,8 @@ import { COLORES, DIBUJOS, fondoDePortada } from "../services/portadaDePerfil";
 import Spinner from "./Spinner";
 
 export default function EditorDePortada({
-  dibujo, color, foto, onCambiar, onElegirFoto, onQuitarFoto,
+  dibujo, color, foto, x = 50, y = 50,
+  onCambiar, onElegirFoto, onQuitarFoto, onEncuadrar,
   subiendoFoto = false, deshabilitado = false, onCerrar,
 }) {
   const { t: tr } = useI18n();
@@ -125,6 +126,70 @@ export default function EditorDePortada({
           {foto ? tr("portada.conFoto") : tr("portada.fotoNota")}
         </div>
       </div>
+
+      {/*
+        ── El encuadre ───────────────────────────────────────────────────
+
+        Solo con una foto puesta: los diseños son gradientes que ocupan
+        exactamente la franja, no sobra nada de ellos que se pueda correr.
+
+        Lo normal es arrastrar la foto de arriba, que es donde se ve el
+        resultado. Estos dos deslizadores están igual por tres motivos: se
+        manejan con el teclado, permiten el toque fino que con el dedo no sale,
+        y dicen que la portada se puede mover —cosa que arrastrar, por sí solo,
+        no anuncia en ninguna parte—.
+      */}
+      {foto && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ ...rotulo, marginBottom: 7 }}>{tr("portada.encuadre")}</div>
+          <div style={{ fontSize: 11.5, color: "var(--fw-text-4)", lineHeight: 1.45, marginBottom: 11 }}>
+            {tr("portada.encuadreNota")}
+          </div>
+          {[
+            { eje: "x", valor: x, rotuloEje: tr("portada.horizontal") },
+            { eje: "y", valor: y, rotuloEje: tr("portada.vertical") },
+          ].map(({ eje, valor, rotuloEje }) => (
+            <label key={eje} style={{
+              display: "flex", alignItems: "center", gap: 11, marginBottom: 8,
+              fontSize: 12.5, color: "var(--fw-text-3)",
+            }}>
+              <span style={{ width: 68, flexShrink: 0 }}>{rotuloEje}</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={valor}
+                disabled={deshabilitado || subiendoFoto}
+                // `onChange` alcanza: en React, un deslizador avisa en cada
+                // paso y no recién al soltarlo, así que la portada de arriba
+                // acompaña el movimiento. Quien llama se encarga de no mandar
+                // un guardado por cada paso.
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  onEncuadrar?.(eje === "x" ? n : x, eje === "y" ? n : y);
+                }}
+                style={{ flex: 1, minWidth: 0, accentColor: "var(--fw-blue)" }}
+              />
+            </label>
+          ))}
+          <button
+            type="button"
+            disabled={deshabilitado || subiendoFoto}
+            onClick={() => onEncuadrar?.(50, 50)}
+            style={{
+              background: "var(--fw-surface)", color: "var(--fw-text-2)",
+              border: "1px solid var(--fw-border-2)", borderRadius: 8,
+              padding: "6px 12px", fontSize: 12, fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: deshabilitado || subiendoFoto ? "default" : "pointer",
+              opacity: deshabilitado || subiendoFoto ? .6 : 1,
+            }}
+          >
+            {tr("portada.centrar")}
+          </button>
+        </div>
+      )}
 
       {/*
         ── Los dibujos y los colores ──────────────────────────────────────

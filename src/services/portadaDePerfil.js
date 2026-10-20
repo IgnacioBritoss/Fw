@@ -230,6 +230,107 @@ export function fotoUsable(url) {
   return limpio;
 }
 
+// ── El encuadre ─────────────────────────────────────────────────────────────
+
+/*
+  POR QUÉ HACE FALTA ELEGIR QUÉ PARTE DE LA FOTO SE VE.
+
+  La portada es una franja ancha y baja —148px de alto contra 1280 de ancho— y
+  la foto se agranda hasta llenarla (`background-size: cover`). Siempre sobra
+  imagen por algún lado, y el navegador, librado a su criterio, recorta por el
+  centro. En una foto vertical de celular eso deja afuera casi todo: si el
+  motivo está arriba —una persona, un cartel, el techo de un auto— lo que se ve
+  es justo lo que no había que mostrar, y antes no había forma de corregirlo.
+  Subir la foto era tirar los dados.
+
+  Se guarda como DOS ENTEROS de 0 a 100, uno por eje, que es la unidad que
+  entiende `background-position`: 0 es el borde de arriba (o el izquierdo), 100
+  el de abajo (o el derecho), 50 el medio. En porcentaje y no en píxeles porque
+  la franja mide distinto en celular que en pantalla grande, y un encuadre
+  elegido en el teléfono tiene que seguir siendo el mismo encuadre en la
+  computadora.
+*/
+
+/** El medio: es lo que venía haciendo el navegador solo. */
+export const ENCUADRE_POR_OMISION = 50;
+
+/**
+ * Un porcentaje de encuadre, o `null` si lo que vino no sirve.
+ *
+ * Acepta el número y también el texto, porque este dato viaja por JSON y un
+ * backend podría mandarlo como `"70"`. Lo que no es un número entre 0 y 100 no
+ * entra: este valor termina adentro de una propiedad de CSS.
+ */
+export function encuadreUsable(valor) {
+  const numero = typeof valor === "string" ? Number(valor) : valor;
+  if (typeof numero !== "number" || !Number.isFinite(numero)) return null;
+  if (numero < 0 || numero > 100) return null;
+  return Math.round(numero);
+}
+
+/** El encuadre que eligió una persona, o el medio. */
+export function encuadreDe(persona) {
+  return {
+    x: encuadreUsable(persona?.profileCoverX) ?? ENCUADRE_POR_OMISION,
+    y: encuadreUsable(persona?.profileCoverY) ?? ENCUADRE_POR_OMISION,
+  };
+}
+
+/**
+ * CUÁNTA FOTO QUEDA AFUERA, en píxeles, arriba+abajo y a los costados.
+ *
+ * Es la cuenta que hace `background-size: cover`: la imagen se agranda por el
+ * lado que le falta hasta tapar la franja, y lo que se pasa del otro lado es lo
+ * que no se ve. Saberlo es lo que permite que arrastrar se sienta bien: mover
+ * el dedo 30px tiene que correr la foto 30px, ni más ni menos. Sin esta cuenta
+ * habría que inventar una sensibilidad fija, que en una foto panorámica se
+ * quedaría corta y en una vertical se pasaría de largo.
+ *
+ * Una medida que no se sabe todavía —la foto aún no cargó— devuelve cero por
+ * los dos lados, y entonces arrastrar no hace nada. Es lo correcto: no se puede
+ * encuadrar lo que no se midió.
+ */
+export function sobranteDeLaFoto(natural, caja) {
+  const ancho = Number(caja?.ancho) || 0;
+  const alto = Number(caja?.alto) || 0;
+  const anchoNatural = Number(natural?.ancho) || 0;
+  const altoNatural = Number(natural?.alto) || 0;
+  if (ancho <= 0 || alto <= 0 || anchoNatural <= 0 || altoNatural <= 0) {
+    return { x: 0, y: 0 };
+  }
+  const escala = Math.max(ancho / anchoNatural, alto / altoNatural);
+  return {
+    x: Math.max(0, anchoNatural * escala - ancho),
+    y: Math.max(0, altoNatural * escala - alto),
+  };
+}
+
+/**
+ * El encuadre nuevo después de arrastrar `movido` píxeles.
+ *
+ * El signo está invertido a propósito: se arrastra LA FOTO, no la ventanita.
+ * Tirando hacia la derecha la imagen se corre hacia la derecha, o sea que
+ * aparece más de su lado izquierdo, y eso en `background-position` es un
+ * porcentaje MÁS CHICO. Hacerlo al revés —que arrastrar mueva el recorte— se
+ * siente como manejar con el volante al revés, aunque sea la misma cuenta.
+ *
+ * Un eje sin sobrante no se mueve: no hay nada escondido de ese lado que
+ * pudiera aparecer, y dejarlo moverse haría que el control respondiera sin que
+ * la foto cambie.
+ */
+export function moverEncuadre(desde, movido, sobrante) {
+  const uno = (actual, corrido, margen) => {
+    const base = encuadreUsable(actual) ?? ENCUADRE_POR_OMISION;
+    if (!(margen > 0)) return base;
+    const paso = (Number(corrido) || 0) / margen * 100;
+    return Math.min(100, Math.max(0, Math.round(base - paso)));
+  };
+  return {
+    x: uno(desde?.x, movido?.x, sobrante?.x),
+    y: uno(desde?.y, movido?.y, sobrante?.y),
+  };
+}
+
 /**
  * El estilo de una portada.
  *
@@ -243,14 +344,20 @@ export function fotoUsable(url) {
  * pantalla. Es la misma regla que el color: si no es un hexadecimal válido, se
  * usa el azul; y la misma que la foto, que si no es usable es como si no
  * estuviera.
+ *
+ * `encuadre` solo tiene sentido con una foto puesta: los dibujos son gradientes
+ * que ocupan exactamente la franja, no sobra nada de ellos que se pueda correr.
  */
-export function fondoDePortada(dibujo, color, foto) {
+export function fondoDePortada(dibujo, color, foto, encuadre) {
   const imagen = fotoUsable(foto);
   if (imagen) {
+    const x = encuadreUsable(encuadre?.x) ?? ENCUADRE_POR_OMISION;
+    const y = encuadreUsable(encuadre?.y) ?? ENCUADRE_POR_OMISION;
     return {
       backgroundImage: `url("${imagen}")`,
       backgroundSize: "cover",
-      backgroundPosition: "center",
+      backgroundPosition: `${x}% ${y}%`,
+      backgroundRepeat: "no-repeat",
       // Mientras la foto baja se ve el dibujo elegido y no un rectángulo
       // gris. Dura un instante, pero es el instante en que se abre la
       // pantalla.
@@ -271,15 +378,18 @@ export function fondoDePortada(dibujo, color, foto) {
 export function portadaDe(persona) {
   const dibujo = persona?.profileCoverDesign;
   const color = persona?.profileCoverColor;
+  const { x, y } = encuadreDe(persona);
   return {
     dibujo: DIBUJOS.includes(dibujo) ? dibujo : PORTADA_POR_OMISION,
     color: /^#[0-9a-fA-F]{6}$/.test(color || "") ? color : COLOR_POR_OMISION,
     foto: fotoUsable(persona?.profileCoverPhotoUrl),
+    x,
+    y,
   };
 }
 
 /** El estilo de la portada de una persona, en un solo paso. */
 export function portadaDeLaPersona(persona) {
-  const { dibujo, color, foto } = portadaDe(persona);
-  return fondoDePortada(dibujo, color, foto);
+  const { dibujo, color, foto, x, y } = portadaDe(persona);
+  return fondoDePortada(dibujo, color, foto, { x, y });
 }
