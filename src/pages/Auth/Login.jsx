@@ -105,8 +105,34 @@ export default function Login() {
         </>
       }
     >
+      {/*
+        QUE LA SESIÓN VENZA NO ES UN ERROR.
+
+        Esto era un recuadro ámbar con borde, igual que el de error pero de
+        otro color, así que lo primero que veía alguien al abrir la página era
+        una advertencia. Y no hizo nada mal: la sesión que vence es la medida
+        de seguridad FUNCIONANDO.
+
+        Por eso ahora dice las dos cosas —qué pasó y por qué— y está dibujado
+        como una nota al margen y no como una alarma. Ver styles/authFields.js.
+      */}
       {expired && !error && (
-        <div style={f.notice}>{t("auth.sessionExpired")}</div>
+        <div style={f.notice}>
+          <span style={f.noticeIcono} aria-hidden="true">
+            {/* Un reloj: lo que pasó es que pasó el tiempo. */}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7.5v5l3 1.8" />
+            </svg>
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <span style={f.noticeTitulo}>{t("auth.sessionExpired")}</span>
+            <span style={{ ...f.noticeTexto, display: "block" }}>
+              {t("auth.sessionExpiredWhy")}
+            </span>
+          </span>
+        </div>
       )}
       {error && <div ref={cartelError} style={f.error}>{error}</div>}
 

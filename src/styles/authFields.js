@@ -47,9 +47,40 @@ export const authFields = (isMobile) => ({
     padding: "10px 14px", color: "var(--fw-red-text-2)", fontSize: 13,
     marginBottom: 16, lineHeight: 1.6,
   },
+  /*
+    EL AVISO DE QUE LA SESIÓN VENCIÓ. NO ES UN ERROR.
+
+    Era un recuadro ámbar con borde grueso, igual que el de error pero de otro
+    color. Y ahí estaba el problema: que una sesión venza no es que algo salió
+    mal, es lo que TIENE que pasar cada tanto —es la medida de seguridad
+    funcionando—. Pintarlo como una advertencia le dice a alguien que acaba de
+    abrir la página que hizo algo mal cuando no hizo nada, y encima es el
+    recuadro genérico que podría ser de cualquier sitio.
+
+    Ahora: el azul de la marca, sin borde, con la barrita de acento a la
+    izquierda y el icono. Informa, no alarma, y se ve de acá y no de ningún
+    lado.
+  */
   notice: {
-    background: "var(--fw-amber-bg)", border: "1.5px solid var(--fw-amber-line)", borderRadius: 8,
-    padding: "10px 14px", color: "var(--fw-amber-text)", fontSize: 13,
-    marginBottom: 16, lineHeight: 1.6,
+    display: "flex", alignItems: "flex-start", gap: 11,
+    background: "var(--fw-blue-bg)",
+    // La barra de acento en vez de un borde completo: un borde cerrado
+    // convierte cualquier cosa en una alerta. Un acento al costado es lo que
+    // usan las notas al margen, que es lo que esto es.
+    borderLeft: "3px solid var(--fw-blue)",
+    borderRadius: "4px 10px 10px 4px",
+    padding: "12px 14px", marginBottom: 16,
+  },
+  noticeIcono: {
+    width: 22, height: 22, borderRadius: "50%", flexShrink: 0, marginTop: 1,
+    background: "var(--fw-blue)", color: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  noticeTitulo: {
+    fontSize: 13.5, fontWeight: 700, color: "var(--fw-blue-text)",
+    lineHeight: 1.35,
+  },
+  noticeTexto: {
+    fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.55, marginTop: 2,
   },
 });
