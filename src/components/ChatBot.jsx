@@ -418,9 +418,18 @@ function Asistente() {
       const porCodigo = {
         not_configured: "ai.whyNotConfigured",
         rate_limited: "chat.rateLimit",
+        RATE_LIMITED: "chat.rateLimit",
       };
       const esPorCuota = err.message?.includes("429") || err.message?.toLowerCase().includes("rate");
-      const clave = porCodigo[err?.code] || (esPorCuota ? "chat.rateLimit" : "chat.connectError");
+      /*
+        El cupo del día va primero y tiene su propio texto. "Esperá un momento"
+        es cierto para una ráfaga y es mentira para el cupo: hasta mañana no
+        cambia nada, y alguien puede quedarse apretando enviar un rato largo.
+        Ver services/api.js, que separa los dos 429 por cuánto hay que esperar.
+      */
+      const clave = err?.cupoDiario
+        ? "chat.quotaDay"
+        : porCodigo[err?.code] || (esPorCuota ? "chat.rateLimit" : "chat.connectError");
       setMessages((prev) => [...prev, { role: "assistant", text: tr(clave) }]);
     } finally {
       setLoading(false);

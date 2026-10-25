@@ -159,6 +159,20 @@ async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
     err.status = res.status;
     err.code = payload?.code;                  // ej: ACCOUNT_NOT_VERIFIED
     err.needsVerification = noVerificada;
+    /*
+      LOS DOS 429 NO SON EL MISMO 429.
+
+      El servidor frena por dos motivos distintos y los dos contestan 429: una
+      ráfaga —muchos pedidos en un minuto, se espera un rato y listo— y el CUPO
+      DEL DÍA de algo que cuesta plata (las preguntas a la IA, las fotos que se
+      suben). Decirle "probá en un minuto" a alguien que agotó el cupo del día
+      es mandarlo a esperar al pedo.
+
+      Lo que los distingue es cuánto hay que esperar, que el servidor manda en
+      `retryAfterSec`. Más de diez minutos no es una ráfaga.
+    */
+    err.retryAfterSec = Number(payload?.retryAfterSec) || 0;
+    err.cupoDiario = res.status === 429 && err.retryAfterSec > 600;
     err.payload = payload;
     throw err;
   }

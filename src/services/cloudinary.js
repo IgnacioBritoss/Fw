@@ -33,26 +33,26 @@
 import { getCloudinarySignature, getIdentityUploadSignature } from "./api";
 import { tSync } from "../i18n/core";
 
-// La firma sirve para varias subidas seguidas (mismo folder y timestamp), así
-// que se reutiliza un rato en vez de pedir una por foto.
-const SIGNATURE_TTL_MS = 45 * 1000;
-let cachedSignature = null;
+/*
+  UNA FIRMA POR FOTO, Y YA NO SE GUARDA NINGUNA.
 
-/**
- * La firma para subir a Cloudinary, guardada 45 segundos.
- *
- * Al subir seis fotos de un auto se pedirían seis firmas idénticas en pocos
- * segundos. Con la caché se pide una sola; el secreto sigue viviendo únicamente
- * en el servidor.
- */
+  Antes se pedía una firma y se reutilizaba 45 segundos, porque era la misma
+  para toda la carpeta y así seis fotos costaban un solo pedido.
+
+  Esa firma era el agujero: servía para subir CUALQUIER cantidad de archivos
+  mientras Cloudinary la siguiera aceptando. Cualquiera podía pedir una desde
+  la consola del navegador y, con ella sola, llenar la cuenta de fotos sin
+  volver a pasar por nuestro servidor ni una vez. Un tope del lado del
+  navegador no arregla eso: el tope del navegador se borra con F12.
+
+  Ahora el servidor firma el NOMBRE del archivo (`public_id`), o sea que cada
+  firma sirve para una foto y nada más; repetir la subida sobrescribe la misma
+  en lugar de agregar otra. Por eso la caché ya no puede existir —dos fotos con
+  el mismo nombre serían una— y por eso el tope de firmas por día del servidor
+  es, de verdad, un tope de fotos por día.
+*/
 async function fetchSignature(folder) {
-  const now = Date.now();
-  if (cachedSignature && cachedSignature.folder === folder && now - cachedSignature.at < SIGNATURE_TTL_MS) {
-    return cachedSignature.data;
-  }
-  const data = await getCloudinarySignature(folder);
-  cachedSignature = { folder, at: now, data };
-  return data;
+  return getCloudinarySignature(folder);
 }
 
 /**
@@ -71,15 +71,32 @@ async function upload(file, { resourceType = "image", folder = "freewheel", file
   } catch (err) {
     // Sin firma no se sube. Un 503 es "el backend no tiene Cloudinary
     // configurado", y eso se arregla cargando las variables en el servidor.
-    cachedSignature = null;
     if (err?.status === 503) throw new Error(tSync("net.uploadNotConfigured"));
+    // Y el cupo del día es otra cosa: no hay nada roto, es que ya se subieron
+    // muchas fotos hoy. Decir "no se pudo subir" mandaría a buscar un problema
+    // que no existe.
+    if (err?.cupoDiario) throw new Error(tSync("net.uploadQuota"));
     throw err;
   }
 
-  form.append("api_key", signature.apiKey);
-  form.append("timestamp", String(signature.timestamp));
-  form.append("signature", signature.signature);
-  form.append("folder", signature.folder);
+  /*
+    Los parámetros se copian TAL CUAL los mandó el servidor: la firma se
+    calculó sobre ellos y Cloudinary la rechaza si se cambia uno solo.
+
+    El camino de abajo es para el backend viejo, el que firma por carpeta y no
+    manda `params`. Está para que el front nuevo funcione antes de que se
+    publique el backend nuevo, y se puede borrar cuando los dos estén arriba.
+  */
+  if (signature.params) {
+    for (const [clave, valor] of Object.entries(signature.params)) {
+      form.append(clave, String(valor));
+    }
+  } else {
+    form.append("api_key", signature.apiKey);
+    form.append("timestamp", String(signature.timestamp));
+    form.append("signature", signature.signature);
+    form.append("folder", signature.folder);
+  }
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${signature.cloudName}/${resourceType}/upload`,

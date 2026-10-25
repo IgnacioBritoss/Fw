@@ -884,7 +884,10 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
    */
   const CLAVES_DE_FALLO = {
     not_configured: "ai.whyNotConfigured",
+    // Ráfaga: se espera un minuto. Cupo del día: no hay nada que esperar hasta
+    // mañana, y decirle "probá en un minuto" sería mandarlo a esperar al pedo.
     rate_limited: "ai.whyRateLimited",
+    quota: "ai.whyQuota",
     unreadable: "ai.whyUnreadable",
   };
 

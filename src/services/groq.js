@@ -115,6 +115,22 @@ function notConfigured(errorOrResult) {
   return errorOrResult?.status === 503 || errorOrResult?.code === "not_configured";
 }
 
+/**
+ * Por qué no se pudo revisar, en una palabra que la pantalla sepa traducir.
+ *
+ * Los dos 429 se separan acá: "quota" es el cupo del día —no sirve de nada
+ * reintentar hasta mañana— y "rate_limited" es una ráfaga, que se arregla
+ * esperando un minuto. Decirle lo mismo a los dos deja a alguien apretando
+ * "reintentar" toda la tarde.
+ */
+function codigoDelFallo(failure) {
+  if (failure?.status === 429) {
+    return failure?.cupoDiario ? "quota" : "rate_limited";
+  }
+  if (notConfigured(failure)) return "not_configured";
+  return failure?.code || "upstream_error";
+}
+
 // Las preguntas que se le hacen al modelo NO están acá: las escribe el backend
 // (src/ai/ai.service.ts), que es el único que habla con Groq. Antes estaban
 // duplicadas en este archivo para el respaldo que llamaba a Groq desde el
@@ -156,7 +172,7 @@ export async function groqVision(imageDataUrl) {
   // puede pasar por buena.
   return {
     isVehicle: null,
-    code: failure?.code || (notConfigured(failure) ? "not_configured" : "upstream_error"),
+    code: codigoDelFallo(failure),
     reason: failure?.message || null,
     // El texto crudo del proveedor. Es lo único que dice qué pasó de verdad, y
     // sin él "no se pudo revisar" no le sirve a nadie para arreglar nada.
