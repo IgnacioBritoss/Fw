@@ -1197,6 +1197,7 @@ export default {
   "publish.needMorePhotos": "Você precisa de pelo menos {min} fotos para continuar.",
   "publish.otherCar": "Outro carro",
   "publish.otherCarSeen": "Aqui aparece {aca}, e nas outras fotos {resto}",
+  "publish.otherCarPlate": "A placa que aparece aqui não é {patente}",
   "publish.otherCarDeclared": "Aqui aparece {aca}, e você está publicando um {auto}",
   "publish.otherCarShort": "Não combina com as outras fotos",
   "publish.errOtherCar": "Há fotos que não parecem do mesmo carro. Todas as fotos do anúncio têm que ser do veículo que você está publicando: remova as que sobram.",

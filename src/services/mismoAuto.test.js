@@ -16,13 +16,16 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   normalizar, rasgosDeTexto, rasgosDeRevision, rasgosDeclarados, desacuerdos,
-  fotosDeOtroAuto,
+  fotosDeOtroAuto, patenteUsable, mismaPatente,
 } from "./mismoAuto.js";
 
 // Una revisión como la que devuelve el servidor viejo: solo la frase corta.
 const vista = (detected) => ({ isVehicle: true, detected });
 // Una del servidor nuevo, con los rasgos ya separados.
 const rasgos = (tipo, color, marcaModelo) => ({ isVehicle: true, rasgos: { tipo, color, marcaModelo } });
+// La misma, con la patente leída de la chapa.
+const conPatente = (tipo, color, marcaModelo, patente) =>
+  ({ isVehicle: true, rasgos: { tipo, color, marcaModelo, patente } });
 
 // ── Leer la descripción ────────────────────────────────────────────────────
 
@@ -32,10 +35,10 @@ test("los acentos y las mayusculas no cambian nada", () => {
 
 test("de una frase suelta salen el color, la carroceria y la marca", () => {
   assert.deepEqual(rasgosDeTexto("Renault Clio blanco"), {
-    tipo: null, color: "blanco", marca: "renault", modelo: null,
+    tipo: null, color: "blanco", marca: "renault", modelo: null, patente: null,
   });
   assert.deepEqual(rasgosDeTexto("SUV gris"), {
-    tipo: "suv", color: "gris", marca: null, modelo: null,
+    tipo: "suv", color: "gris", marca: null, modelo: null, patente: null,
   });
 });
 
@@ -50,16 +53,16 @@ test("'camioneta' es ambigua en Argentina y no se toma por ninguna", () => {
 
 test("lo que no se entiende queda en null, no se inventa", () => {
   assert.deepEqual(rasgosDeTexto("cosa rara"), {
-    tipo: null, color: null, marca: null, modelo: null,
+    tipo: null, color: null, marca: null, modelo: null, patente: null,
   });
   assert.deepEqual(rasgosDeTexto(""), {
-    tipo: null, color: null, marca: null, modelo: null,
+    tipo: null, color: null, marca: null, modelo: null, patente: null,
   });
 });
 
 test("con los rasgos separados del servidor, la marca y el modelo se parten", () => {
   assert.deepEqual(rasgosDeRevision(rasgos("SUV", "Gris", "Toyota Corolla Cross")), {
-    tipo: "suv", color: "gris", marca: "toyota", modelo: "corolla cross",
+    tipo: "suv", color: "gris", marca: "toyota", modelo: "corolla cross", patente: null,
   });
 });
 
@@ -126,10 +129,10 @@ test("una foto que no se pudo describir no acusa a nadie", () => {
 
 test("con una sola foto no hay contra que comparar", () => {
   assert.deepEqual(fotosDeOtroAuto({ 0: rasgos("suv", "rojo", "Jeep Renegade") }), {
-    indices: [], porFormulario: [], referencia: null, principal: null,
+    indices: [], porFormulario: [], porPatente: [], referencia: null, principal: null,
   });
   assert.deepEqual(fotosDeOtroAuto({}), {
-    indices: [], porFormulario: [], referencia: null, principal: null,
+    indices: [], porFormulario: [], porPatente: [], referencia: null, principal: null,
   });
 });
 
@@ -175,7 +178,7 @@ const FORMULARIO = { brand: "Renault", model: "Clio", color: "Blanco", category:
 
 test("el formulario se lee tal como lo guarda la pantalla de publicar", () => {
   assert.deepEqual(rasgosDeclarados(FORMULARIO), {
-    tipo: "hatchback", color: "blanco", marca: "renault", modelo: "clio",
+    tipo: "hatchback", color: "blanco", marca: "renault", modelo: "clio", patente: null,
   });
 });
 
@@ -260,4 +263,111 @@ test("sin datos utiles en el formulario, se sigue comparando foto contra foto", 
   );
   assert.deepEqual(indices, [2]);
   assert.deepEqual(porFormulario, []);
+});
+
+// ── La patente ─────────────────────────────────────────────────────────────
+//
+//  Es el único rasgo que identifica a UN auto y no a un tipo de auto, así que
+//  pesa el doble: alcanza sola para marcar una foto. Justamente por eso la
+//  mitad de estas pruebas es sobre cuándo NO tiene que opinar.
+
+test("una patente solo cuenta si tiene forma de patente argentina", () => {
+  // Las dos formas válidas, escritas como las escribe cualquiera.
+  assert.equal(patenteUsable("ab 123 cd"), "AB123CD");
+  assert.equal(patenteUsable("ABC-123"), "ABC123");
+  // Y lo que no tiene esa forma no es una patente. Sin esto, una palabra leída
+  // de una calcomanía no coincidiría con ninguna patente y marcaría la foto.
+  for (const no of ["LAVADO", "123", "AB12CD", "ABCD1234", "", null, undefined, 42]) {
+    assert.equal(patenteUsable(no), null, String(no));
+  }
+});
+
+test("SE PERDONAN LAS CONFUSIONES DE LEER UNA CHAPA", () => {
+  /*
+    Un modelo mirando una foto confunde la O con el cero, la I con el uno y la
+    S con el cinco: es la confusión más vieja que existe leyendo letras. Acusar
+    a alguien de publicar otro auto porque leyó una O donde había un 0 sería un
+    error nuestro cobrado a quien publica.
+  */
+  assert.ok(mismaPatente("AB123CD", "AB123CD"));
+  assert.ok(mismaPatente("AO123CD", "A0123CD"));
+  assert.ok(mismaPatente("IB123SD", "1B1235D"));
+  assert.ok(mismaPatente("ab-123-cd", "AB123CD"));
+});
+
+test("pero dos patentes distintas son dos patentes distintas", () => {
+  assert.ok(!mismaPatente("AB123CD", "AC456DF"));
+  // Distinto largo es distinto auto, sin mirar nada más.
+  assert.ok(!mismaPatente("ABC123", "AB123CD"));
+});
+
+test("sin las dos patentes no hay nada que comparar", () => {
+  // Lo más común: la foto no la muestra, o la persona no la cargó. Eso no es
+  // sospechoso, es lo normal, y no puede frenar una publicación.
+  assert.ok(mismaPatente("AB123CD", null));
+  assert.ok(mismaPatente(null, "AB123CD"));
+  assert.ok(mismaPatente(null, null));
+  assert.ok(mismaPatente("AB123CD", "no se lee"));
+});
+
+test("UNA PATENTE DISTINTA ALCANZA SOLA PARA MARCAR LA FOTO", () => {
+  /*
+    Es la diferencia con los otros tres rasgos. Dos Clios blancos comparten el
+    tipo, el color y la marca; la patente no la comparte nadie. Acá la foto
+    coincide en TODO menos en la patente, y aun así es otro auto: el de al lado
+    en el estacionamiento.
+  */
+  const { indices, porPatente, porFormulario } = fotosDeOtroAuto(
+    {
+      0: conPatente("hatchback", "blanco", "Renault Clio", "AB123CD"),
+      1: conPatente("hatchback", "blanco", "Renault Clio", "AC456DF"),
+    },
+    rasgosDeclarados({ ...FORMULARIO, plate: "AB123CD" }),
+  );
+  assert.deepEqual(indices, [1]);
+  assert.deepEqual(porPatente, [1]);
+  // Y también cae por formulario, porque es contra el formulario que se comparó.
+  assert.deepEqual(porFormulario, [1]);
+});
+
+test("y la foto que coincide con la patente declarada no se toca", () => {
+  const { indices } = fotosDeOtroAuto(
+    { 0: conPatente("hatchback", "blanco", "Renault Clio", "AB123CD") },
+    rasgosDeclarados({ ...FORMULARIO, plate: "ab 123 cd" }),
+  );
+  assert.deepEqual(indices, []);
+});
+
+test("sin patente en el formulario, la patente de la foto no opina", () => {
+  // Es un campo opcional. Que alguien no la cargue no puede convertir cada foto
+  // donde se lee una chapa en una foto sospechosa.
+  const { indices, porPatente } = fotosDeOtroAuto(
+    { 0: conPatente("hatchback", "blanco", "Renault Clio", "AB123CD") },
+    rasgosDeclarados(FORMULARIO),
+  );
+  assert.deepEqual(indices, []);
+  assert.deepEqual(porPatente, []);
+});
+
+test("dos fotos con dos patentes distintas son dos autos, aunque no haya formulario", () => {
+  // Mismo modelo, mismo color, misma marca: entre ellas, lo único que las
+  // separa es la chapa. Sin el peso doble de la patente esto pasaría de largo.
+  const { indices } = fotosDeOtroAuto(
+    {
+      0: conPatente("hatchback", "blanco", "Renault Clio", "AB123CD"),
+      1: conPatente("hatchback", "blanco", "Renault Clio", "AB123CD"),
+      2: conPatente("hatchback", "blanco", "Renault Clio", "AC456DF"),
+    },
+    null,
+  );
+  assert.deepEqual(indices, [2]);
+});
+
+test("una patente que el modelo leyó mal no marca nada", () => {
+  // "LAVADERO" no tiene forma de patente, así que no se compara con nada.
+  const { indices } = fotosDeOtroAuto(
+    { 0: conPatente("hatchback", "blanco", "Renault Clio", "LAVADERO") },
+    rasgosDeclarados({ ...FORMULARIO, plate: "AB123CD" }),
+  );
+  assert.deepEqual(indices, []);
 });

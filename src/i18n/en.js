@@ -1198,6 +1198,7 @@ export default {
   "publish.needMorePhotos": "You need at least {min} photos to continue.",
   "publish.otherCar": "Another car",
   "publish.otherCarSeen": "This one shows {aca}, and the other photos show {resto}",
+  "publish.otherCarPlate": "The plate visible here is not {patente}",
   "publish.otherCarDeclared": "This one shows {aca}, and you are listing a {auto}",
   "publish.otherCarShort": "Does not match the other photos",
   "publish.errOtherCar": "Some photos do not look like the same car. Every photo in the listing has to be of the vehicle you are publishing: remove the ones that do not belong.",

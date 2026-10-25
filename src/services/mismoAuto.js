@@ -96,6 +96,67 @@ const CARROCERIAS = {
   un desacuerdo que no existe. Una palabra ambigua no es un dato.
 */
 
+// ── La patente ──────────────────────────────────────────────────────────────
+//
+//  ES DISTINTA DE LOS OTROS TRES RASGOS, y por eso vale más.
+//
+//  El tipo, el color y la marca describen un TIPO de auto: dos Clios blancos
+//  los comparten enteros. La patente no la comparte nadie. Si la foto muestra
+//  AB123CD y en el formulario dice AC456DF, no hay interpretación posible: o la
+//  foto es de otro auto, o la patente está mal cargada, y las dos cosas hay que
+//  avisarlas antes de publicar.
+//
+//  POR ESO PESA DOBLE: una patente distinta alcanza sola para marcar la foto,
+//  mientras que un color distinto no (el mismo auto a la sombra sale "gris" en
+//  una foto y "negro" en otra).
+//
+//  Y por eso mismo se la cuida tanto antes de creerle:
+//   · Tiene que tener forma de patente argentina. Un texto cualquiera que el
+//     modelo haya leído de una calcomanía no es una patente.
+//   · Se perdonan las confusiones típicas de leer letras en una chapa: 0 y O,
+//     1 e I, 5 y S, 8 y B, 2 y Z. Acusar a alguien porque un modelo leyó una O
+//     donde había un 0 sería un error nuestro cobrado a quien publica.
+//   · Si no se lee, no se compara. La mayoría de las fotos no la muestran, y
+//     mucha gente la tapa a propósito: eso no es sospechoso, es lo normal.
+
+/** El formato viejo (ABC123) y el Mercosur (AB123CD). */
+const FORMATOS_DE_PATENTE = [/^[A-Z]{3}[0-9]{3}$/, /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/];
+
+/**
+ * Una patente argentina en su forma canónica, o `null` si lo que vino no tiene
+ * forma de patente.
+ *
+ * Devolver null es lo que hace que un texto cualquiera no se compare nunca: sin
+ * esto, "LAVADO" leído de una calcomanía sería una patente que no coincide con
+ * ninguna y marcaría todas las fotos.
+ */
+export function patenteUsable(texto) {
+  const limpio = String(texto ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return FORMATOS_DE_PATENTE.some((f) => f.test(limpio)) ? limpio : null;
+}
+
+/** Los caracteres que se confunden leyendo una chapa, en los dos sentidos. */
+const PARECIDOS = { O: "0", I: "1", L: "1", S: "5", B: "8", Z: "2", G: "6", Q: "0" };
+const mismoCaracter = (a, b) =>
+  a === b || (PARECIDOS[a] ?? a) === (PARECIDOS[b] ?? b);
+
+/**
+ * ¿Dos patentes son la misma?
+ *
+ * Se comparan carácter por carácter y no como texto entero, porque las dos
+ * formas válidas tienen largos distintos: dos patentes de distinto largo son
+ * siempre distintas, sin necesidad de mirar nada más.
+ */
+export function mismaPatente(a, b) {
+  const una = patenteUsable(a);
+  const otra = patenteUsable(b);
+  if (!una || !otra) return true; // sin las dos, no hay nada que comparar
+  if (una.length !== otra.length) return false;
+  return [...una].every((c, i) => mismoCaracter(c, otra[i]));
+}
+
 const MARCAS = [
   "renault", "peugeot", "citroen", "fiat", "volkswagen", "chevrolet",
   "ford", "toyota", "honda", "nissan", "hyundai", "kia", "jeep", "suzuki",
@@ -140,17 +201,20 @@ function primerGrupo(tabla, palabras) {
  * entendido una palabra.
  */
 export function rasgosDeTexto(texto) {
+  const vacio = { tipo: null, color: null, marca: null, modelo: null, patente: null };
   const palabras = normalizar(texto).split(" ").filter(Boolean);
-  if (!palabras.length) return { tipo: null, color: null, marca: null, modelo: null };
+  if (!palabras.length) return vacio;
 
   const marca = palabras.find(p => MARCAS.includes(marcaCanonica(p))) || null;
   return {
+    ...vacio,
     tipo: primerGrupo(CARROCERIAS, palabras),
     color: primerGrupo(COLORES, palabras),
     marca: marca ? marcaCanonica(marca) : null,
     // El modelo no se adivina de una frase suelta: cualquier palabra que no sea
-    // color ni carrocería podría ser el modelo, o el fondo, o el barrio.
-    modelo: null,
+    // color ni carrocería podría ser el modelo, o el fondo, o el barrio. La
+    // patente tampoco: `normalizar` ya le sacó el formato con el que se la
+    // reconoce, y una tira suelta de letras y números no es una patente.
   };
 }
 
@@ -173,6 +237,7 @@ export function rasgosDeRevision(revision) {
       color: grupoDe(COLORES, normalizar(dato.color)) || null,
       marca: marca ? marcaCanonica(marca) : null,
       modelo,
+      patente: patenteUsable(dato.patente),
     };
   }
   return rasgosDeTexto(revision?.detected);
@@ -188,7 +253,8 @@ export function rasgosDeRevision(revision) {
  *
  * Lo que no se pueda mapear queda en null y no participa: el color "Otro" del
  * formulario guarda un código hexadecimal, y la categoría "Eléctrico" no es una
- * carrocería.
+ * carrocería. La patente es opcional en el formulario, así que lo más común es
+ * que tampoco esté.
  */
 export function rasgosDeclarados(vehiculo) {
   const marca = normalizar(vehiculo?.brand).split(" ")[0] || null;
@@ -199,10 +265,21 @@ export function rasgosDeclarados(vehiculo) {
     // marcas conocidas: la escribió una persona, no la dedujo un modelo.
     marca: marca ? marcaCanonica(marca) : null,
     modelo: normalizar(vehiculo?.model) || null,
+    patente: patenteUsable(vehiculo?.plate),
   };
 }
 
-const CAMPOS = ["tipo", "color", "marca", "modelo"];
+const CAMPOS = ["tipo", "color", "marca", "modelo", "patente"];
+
+/**
+ * CUÁNTO PESA CADA RASGO CUANDO NO COINCIDE.
+ *
+ * Los tres primeros describen un tipo de auto y pueden fallar por la luz, el
+ * ángulo o la palabra elegida, así que hacen falta dos para acusar. La patente
+ * identifica a UN auto y no se confunde con nada: una patente distinta es otro
+ * auto, y pesa ella sola lo que hacen falta para marcar la foto.
+ */
+const PESO = { tipo: 1, color: 1, marca: 1, modelo: 1, patente: 2 };
 
 /**
  * ¿Dos modelos son el mismo?
@@ -215,7 +292,13 @@ const CAMPOS = ["tipo", "color", "marca", "modelo"];
  */
 const mismoModelo = (a, b) => a.split(" ")[0] === b.split(" ")[0];
 
-/** ¿Cuántos rasgos conocidos de los dos lados NO coinciden? */
+/**
+ * CUÁNTO PESAN, EN TOTAL, los rasgos que no coinciden.
+ *
+ * No es una cuenta de rasgos distintos sino la suma de sus pesos (ver `PESO`):
+ * tres de ellos valen uno y la patente vale dos, porque es la única que
+ * identifica a un auto en particular.
+ */
 export function desacuerdos(a, b) {
   let n = 0;
   for (const campo of CAMPOS) {
@@ -224,11 +307,18 @@ export function desacuerdos(a, b) {
     // Un rasgo que uno de los dos no tiene no es un desacuerdo: es un dato que
     // falta, y por un dato que falta no se acusa a nadie.
     if (!uno || !otro) continue;
-    const iguales = campo === "modelo" ? mismoModelo(uno, otro) : uno === otro;
-    if (!iguales) n++;
+    const iguales =
+      campo === "modelo" ? mismoModelo(uno, otro)
+        : campo === "patente" ? mismaPatente(uno, otro)
+          : uno === otro;
+    if (!iguales) n += PESO[campo];
   }
   return n;
 }
+
+/** ¿Estas dos descripciones tienen patente, y es distinta? */
+const patenteDistinta = (a, b) =>
+  Boolean(a?.patente) && Boolean(b?.patente) && !mismaPatente(a.patente, b.patente);
 
 /** Cuántos rasgos conocidos tiene una descripción. Sin ninguno, no opina. */
 export const tieneRasgos = (r) => CAMPOS.some(campo => Boolean(r?.[campo]));
@@ -259,6 +349,12 @@ export const MINIMO_DESACUERDOS = 2;
  *   · `porFormulario` → cuáles de esas chocan contra lo declarado. La pantalla
  *                       las explica distinto: ahí puede nombrar el auto tal como
  *                       lo escribió la persona.
+ *   · `porPatente`    → cuáles de esas chocan por LA PATENTE. Se separan porque
+ *                       es lo único que se puede decir sin rodeos: no es "parece
+ *                       otro auto", es "la patente que se lee acá no es la que
+ *                       cargaste". Y porque a veces el error no está en la foto
+ *                       sino en la patente mal tipeada, y con ese cartel la
+ *                       persona se da cuenta sola.
  *   · `referencia`    → los rasgos del auto que sí coincide
  *   · `principal`     → el índice de la primera foto de ese auto. Con él la
  *                       pantalla puede decir "las otras muestran «Renault Clio
@@ -282,6 +378,9 @@ export function fotosDeOtroAuto(revisiones, declarado = null) {
   const contraFormulario = tieneRasgos(declarado)
     ? entradas.filter(e => desacuerdos(declarado, e.rasgos) >= MINIMO_DESACUERDOS).map(e => e.i)
     : [];
+  const porPatente = entradas
+    .filter(e => patenteDistinta(declarado, e.rasgos))
+    .map(e => e.i);
 
   // 2 · Entre las que quedaron. Una foto ya marcada no vuelve a compararse: sin
   // esto, la intrusa formaría su propio grupo y arrastraría el conteo.
@@ -290,6 +389,7 @@ export function fotosDeOtroAuto(revisiones, declarado = null) {
   const nada = {
     indices: contraFormulario,
     porFormulario: contraFormulario,
+    porPatente,
     referencia: contraFormulario.length ? declarado : null,
     principal: null,
   };
@@ -325,6 +425,7 @@ export function fotosDeOtroAuto(revisiones, declarado = null) {
   return {
     indices: [...contraFormulario, ...sueltas].sort((a, b) => a - b),
     porFormulario: contraFormulario,
+    porPatente,
     referencia: referencia.rasgos,
     principal: referencia.indices[0],
   };

@@ -1604,18 +1604,27 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
                         {tr("publish.otherCar")}
                       </div>
                       <div style={{ width: "100%", background: "rgba(185,28,28,.94)", color: "#fff", fontSize: 9.5, lineHeight: 1.35, padding: "5px 6px", textAlign: "center", fontWeight: 600 }}>
-                        {/* Contra el formulario se puede nombrar el auto tal
-                            como lo escribió la persona, que es lo más claro que
-                            hay. Si no, se compara con lo que muestran las otras
-                            fotos. Y si falta hasta eso, la frase corta. */}
-                        {otroAuto.porFormulario.includes(i) && autoDeclarado && photoValidations[i]?.detected
-                          ? tr("publish.otherCarDeclared", { aca: photoValidations[i].detected, auto: autoDeclarado })
-                          : otroAuto.principal != null && photoValidations[otroAuto.principal]?.detected && photoValidations[i]?.detected
-                            ? tr("publish.otherCarSeen", {
-                              aca: photoValidations[i].detected,
-                              resto: photoValidations[otroAuto.principal].detected,
-                            })
-                            : tr("publish.otherCarShort")}
+                        {/* LA PATENTE PRIMERO: es lo único que se puede decir
+                            sin rodeos. "Parece otro auto" obliga a adivinar;
+                            "la patente que se lee acá no es AB123CD" se
+                            comprueba mirando la foto. Y a veces el error no
+                            está en la foto sino en la patente mal tipeada: con
+                            este cartel la persona se da cuenta sola.
+
+                            Si no, contra el formulario se nombra el auto tal
+                            como lo escribió, que es lo más claro que hay. Y si
+                            no hay formulario con qué comparar, contra lo que
+                            muestran las otras fotos. */}
+                        {otroAuto.porPatente.includes(i) && vehicleForm.plate
+                          ? tr("publish.otherCarPlate", { patente: vehicleForm.plate })
+                          : otroAuto.porFormulario.includes(i) && autoDeclarado && photoValidations[i]?.detected
+                            ? tr("publish.otherCarDeclared", { aca: photoValidations[i].detected, auto: autoDeclarado })
+                            : otroAuto.principal != null && photoValidations[otroAuto.principal]?.detected && photoValidations[i]?.detected
+                              ? tr("publish.otherCarSeen", {
+                                aca: photoValidations[i].detected,
+                                resto: photoValidations[otroAuto.principal].detected,
+                              })
+                              : tr("publish.otherCarShort")}
                       </div>
                     </div>
                   )}

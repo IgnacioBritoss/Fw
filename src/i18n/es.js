@@ -1224,6 +1224,7 @@ export default {
   "publish.needMorePhotos": "Necesitás al menos {min} fotos para continuar.",
   "publish.otherCar": "Otro auto",
   "publish.otherCarSeen": "Acá se ve {aca}, y en las otras fotos {resto}",
+  "publish.otherCarPlate": "La patente que se lee acá no es {patente}",
   "publish.otherCarDeclared": "Acá se ve {aca}, y estás publicando un {auto}",
   "publish.otherCarShort": "No coincide con las otras fotos",
   "publish.errOtherCar": "Hay fotos que no parecen del mismo auto. Todas las fotos del aviso tienen que ser del vehículo que estás publicando: sacá las que sobran.",

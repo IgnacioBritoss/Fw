@@ -1201,6 +1201,7 @@ export default {
   "publish.needMorePhotos": "至少需要 {min} 张照片才能继续。",
   "publish.otherCar": "另一辆车",
   "publish.otherCarSeen": "这张是 {aca}，其他照片是 {resto}",
+  "publish.otherCarPlate": "这张照片上的车牌不是 {patente}",
   "publish.otherCarDeclared": "这张是 {aca}，而你发布的是 {auto}",
   "publish.otherCarShort": "与其他照片不一致",
   "publish.errOtherCar": "有些照片看起来不是同一辆车。房源里的每张照片都必须是你要发布的这辆车：请删除多余的照片。",
