@@ -17,6 +17,7 @@ import IdentityVerification from "../../components/IdentityVerification";
 import BrandLogo from "../../components/Logo";
 import { useI18n } from "../../i18n/core";
 
+// El logo de Freewheel, en el tamaño que usa esta pantalla.
 const Logo = () => <BrandLogo size={17} />;
 
 export default function KYC() {

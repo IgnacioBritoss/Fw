@@ -27,6 +27,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getMyIdentity, retryDocumentAnalysis } from "../services/api";
 import { CADA_MS, TOPE_MS, documentos as comoLista, enAnalisis, faltaReintentar } from "../services/revisionDocumentos";
 
+/**
+ * Sigue la revisión del DNI y la licencia mientras está en curso.
+ *
+ * Pregunta cada tres segundos hasta que los dos documentos tengan resultado o
+ * hasta que se acabe el tiempo. Devuelve los documentos, si todavía se está
+ * analizando y un botón para reintentar lo que se pueda releer.
+ */
 export function useRevisionDeDocumentos() {
   // SIEMPRE UNA LISTA. `/verification/identity/me` contesta un objeto con un
   // documento por clave —{ dni, license }— y guardarlo crudo hacía que cualquier

@@ -17,6 +17,14 @@ import {
 
 const CurrencyContext = createContext(null);
 
+/**
+ * La moneda elegida y las cotizaciones, para toda la aplicación.
+ *
+ * Los precios se guardan SIEMPRE en una sola moneda; lo que cambia acá es en
+ * cuál se muestran. Las cotizaciones se bajan una vez por día y, si no se
+ * pueden bajar, se usan las de respaldo: un precio aproximado es mejor que una
+ * pantalla sin precios.
+ */
 export function CurrencyProvider({ children }) {
   const [moneda, setMonedaEstado] = useState(monedaGuardada);
   const [tasas, setTasas] = useState(TASAS_DE_RESPALDO);
@@ -62,6 +70,7 @@ const SIN_PROVEEDOR = {
   esMonedaReal: true,
 };
 
+/** La moneda elegida, desde cualquier pantalla. */
 export function useCurrency() {
   return useContext(CurrencyContext) || SIN_PROVEEDOR;
 }

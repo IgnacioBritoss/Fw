@@ -105,6 +105,7 @@ export default function AvailabilityManager({ listingId }) {
     }
   };
 
+  /** Levanta un bloqueo: esos días vuelven a estar disponibles. */
   const removeBlock = async (blockId) => {
     setError(""); setInfo("");
     try {

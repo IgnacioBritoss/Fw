@@ -57,6 +57,7 @@ const simplificar = (x) =>
     .trim()
     .replace(/\s+/g, " ");
 
+/** ¿Lo escrito coincide con la frase pedida? Sin mirar acentos ni mayúsculas. */
 const igual = (a, b) => simplificar(a) === simplificar(b);
 
 const s = {
@@ -126,6 +127,10 @@ export default function ConfirmarEscribiendo({ abierto, ...resto }) {
   return <Cartel {...resto} />;
 }
 
+/**
+ * El cartel en sí: el texto, el campo donde hay que escribir la frase y el
+ * botón, que sigue apagado hasta que lo escrito coincide.
+ */
 function Cartel({ titulo, cuerpo, frase, textoBoton, trabajando = false, onConfirmar, onCerrar }) {
   const { t: tr } = useI18n();
   const [escrito, setEscrito] = useState("");
@@ -149,6 +154,7 @@ function Cartel({ titulo, cuerpo, frase, textoBoton, trabajando = false, onConfi
 
   const listo = igual(escrito, frase) && !trabajando;
 
+  // Confirma, pero solo si la frase está bien escrita.
   const confirmar = () => { if (listo) onConfirmar(); };
 
   return createPortal(

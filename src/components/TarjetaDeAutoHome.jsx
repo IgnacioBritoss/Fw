@@ -30,6 +30,7 @@ import {
   categoryLabel, fuelLabel, priceOf, transmissionLabel,
 } from "../services/listings";
 
+/** La tarjeta en sí: la foto, el nombre del auto, la ficha corta y el precio. */
 function Tarjeta({ car, onAbrir }) {
   const { t: tr } = useI18n();
   const { precio } = useCurrency();

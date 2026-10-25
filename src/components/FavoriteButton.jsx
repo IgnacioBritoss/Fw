@@ -47,6 +47,7 @@ export default function FavoriteButton({ listingId, size = 30, disabled = false,
 
   const active = isFavorite(listingId);
 
+  /** Prende o apaga el favorito, sin abrir la publicación de abajo. */
   const handleClick = async (event) => {
     // Clave: el clic muere acá y no llega a la tarjeta que envuelve al corazón.
     event.stopPropagation();

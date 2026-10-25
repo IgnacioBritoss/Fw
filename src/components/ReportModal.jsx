@@ -90,6 +90,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
     aviso se repite tal cual. Ver anim/index.js.
   */
   const [avisoNro, setAvisoNro] = useState(0);
+  // Muestra un error y sacude el cartel.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setAvisoNro((n) => n + 1);
@@ -145,6 +146,7 @@ export default function ReportModal({ targetId, targetLabel, targetType, onClose
     }
   };
 
+  /** Saca una foto de la lista de evidencia. */
   const removeEvidence = (id) =>
     setEvidence(prev => prev.filter(item => item.id !== id));
 

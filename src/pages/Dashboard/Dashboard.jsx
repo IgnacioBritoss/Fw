@@ -212,11 +212,14 @@ export default function Dashboard() {
     }
   };
 
+  // El auto de una reserva, en una línea: "Renault Clio 2022".
   const vehicleLabel = (b) => {
     const v = b?.listing?.vehicle || b?.vehicle || {};
     return `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim();
   };
+  // El nombre de una persona, probando por orden hasta encontrar algo que mostrar.
   const personName = (p) => p?.displayName || `${p?.firstName || ""} ${p?.lastName || ""}`.trim() || p?.email || "";
+  // Las fechas de una reserva: "3 nov - 8 nov 2026".
   const dateRange = (b) => {
     try {
       return `${format(parseISO(b.startDate), "d MMM", { locale: localeFor(lang) })} - ${shortDate(b.endDate, lang)}`;

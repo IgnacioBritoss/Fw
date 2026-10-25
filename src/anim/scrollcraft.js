@@ -96,6 +96,8 @@ export const SALIDA = "cubic-bezier(.22, 1, .36, 1)";
 // seguir al mouse exacto se lee artificial porque no tiene inercia.
 const PESO_PUNTERO = 0.09;
 
+// ¿El sistema pidió menos animaciones? Hay gente a la que el movimiento en
+// pantalla le hace mal, y el navegador lo avisa con esta consulta.
 const consultaMenosMovimiento = () =>
   typeof matchMedia === "function"
     ? matchMedia("(prefers-reduced-motion: reduce)")
@@ -108,6 +110,7 @@ const hayPuntero = () =>
     ? matchMedia("(hover: hover) and (pointer: fine)").matches
     : false;
 
+/** Deja un número adentro de un rango. */
 const limitar = (n, min, max) => (n < min ? min : n > max ? max : n);
 
 /*
@@ -195,6 +198,8 @@ export function montarScrollCraft(raiz = document.body) {
   */
   const pendientes = new Set();
 
+  // Anota un elemento para que aparezca cuando entre en pantalla. El WeakSet
+  // evita prepararlo dos veces si el escaneo vuelve a pasar por él.
   function prepararEntrada(el) {
     if (vistos.has(el)) return;
     vistos.add(el);
@@ -229,6 +234,8 @@ export function montarScrollCraft(raiz = document.body) {
     pendientes.add(el);
   }
 
+  // El elemento entró en pantalla: se le prende la clase que dispara la
+  // animación de aparición.
   function entrar(el) {
     /*
       --sc-desde NO SE BORRA ACÁ, y es a propósito: el fotograma inicial de la
@@ -272,6 +279,8 @@ export function montarScrollCraft(raiz = document.body) {
   */
   const contados = new WeakMap();
 
+  // Los números que cuentan hacia arriba. Solo arrancan los que ya están a la
+  // vista: un contador que sube mientras nadie lo mira es una animación tirada.
   function revisarContadores() {
     const nums = raiz.querySelectorAll("[data-sc-count]");
     for (let i = 0; i < nums.length; i++) {
@@ -287,10 +296,13 @@ export function montarScrollCraft(raiz = document.body) {
     }
   }
 
+  // Anima un número de `desde` hasta `hasta`. Con "menos movimiento" pedido,
+  // escribe el número final de una y no anima nada.
   function trepar(el, desde, hasta) {
     if (menos) { el.textContent = hasta.toLocaleString(); return; }
     const DURACION = 1100;
     const t0 = performance.now();
+    // Un cuadro de la animación del número.
     const paso = (ahora) => {
       // Si el destino cambió en el medio, esta animación ya no es la vigente y
       // se abandona: dos animaciones escribiendo el mismo elemento lo dejarían
@@ -337,6 +349,8 @@ export function montarScrollCraft(raiz = document.body) {
     }
   }
 
+  // Lo que corre en cada scroll: mueve las capas de profundidad y vuelve a
+  // medir las tarjetas que se inclinan.
   function leer() {
     medirInclinaciones();
     if (menos || !profundidades.length) return;
@@ -386,6 +400,9 @@ export function montarScrollCraft(raiz = document.body) {
     }
   }
 
+  // El scroll dispara muchísimas veces por segundo. Esto deja UNA sola lectura
+  // por cuadro: sin el freno, la página haría el mismo cálculo diez veces
+  // seguidas antes de dibujar una.
   function alScrollear() {
     if (pendiente) return;
     pendiente = true;
@@ -394,6 +411,8 @@ export function montarScrollCraft(raiz = document.body) {
 
   /* ─────────────────────────── el puntero (3D) ─────────────────────────── */
 
+  // El mouse se movió: cada tarjeta calcula cuánto inclinarse según dónde está
+  // el puntero respecto de su centro.
   function alMover(e) {
     for (let i = 0; i < inclinaciones.length; i++) {
       const t = inclinaciones[i];
@@ -462,6 +481,9 @@ export function montarScrollCraft(raiz = document.body) {
 
   /* ──────────────────────────────── el escaneo ─────────────────────────── */
 
+  // Recorre la página y engancha todo lo que tenga un atributo `data-sc-*`. Se
+  // vuelve a correr cuando cambia el contenido, así lo que aparece después
+  // también se anima.
   function escanear() {
     // Las entradas: se preparan una por una y el WeakSet evita repetir. Una
     // entrada ya disparada no vuelve, así que no hay nada que rehacer.
@@ -558,6 +580,7 @@ export function montarScrollCraft(raiz = document.body) {
   });
   mutaciones.observe(raiz, { childList: true, subtree: true });
 
+  // Cambió el tamaño de la ventana: se vuelve a medir el alto y se redibuja.
   const alRedimensionar = () => { vh = innerHeight; leer(); };
 
   addEventListener("scroll", alScrollear, { passive: true });

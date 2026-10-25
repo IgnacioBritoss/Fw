@@ -37,6 +37,7 @@ import BrandLogo from "./Logo";
 import AuthAside from "./AuthAside";
 import LangPicker from "./LangPicker";
 
+// El logo que lleva al inicio, arriba de las pantallas de entrada.
 const Logo = ({ light = true, size = 20 }) => (
   <Link to="/" style={{ textDecoration: "none", position: "relative" }}>
     <BrandLogo size={size} light={light} />

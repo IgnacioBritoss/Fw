@@ -86,6 +86,7 @@ export default function PortadaDelPerfil({
   */
   const [medida, setMedida] = useState({ ancho: 0, alto: 0 });
   useEffect(() => {
+    // Mide la franja y guarda el tamaño.
     const medir = () => {
       const el = caja.current;
       if (el) setMedida({ ancho: el.offsetWidth, alto: el.offsetHeight });
@@ -100,6 +101,7 @@ export default function PortadaDelPerfil({
   // Sin esta comprobación el cursor diría "arrastrame" y no pasaría nada.
   const sePuede = ajustable && !!foto && (sobrante.x > 0 || sobrante.y > 0);
 
+  /** Se apoyó el dedo sobre la portada: se anota desde dónde arranca el arrastre. */
   const empezar = (e) => {
     if (!sePuede) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -123,6 +125,7 @@ export default function PortadaDelPerfil({
     onMover?.(nuevo.x, nuevo.y);
   };
 
+  /** Se soltó: termina el arrastre y avisa para que el encuadre se guarde. */
   const terminar = () => {
     if (!arrastre.current) return;
     arrastre.current = null;

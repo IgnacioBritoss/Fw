@@ -91,6 +91,8 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
     aviso se repite tal cual. Ver anim/index.js.
   */
   const [avisoNro, setAvisoNro] = useState(0);
+  // Muestra un aviso y sacude el cartel. El contador sube siempre para que el
+  // mismo aviso dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setAvisoNro((n) => n + 1);
@@ -111,6 +113,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
 
   const elegidas = Object.values(respuestas).filter(Boolean);
 
+  /** Marca o desmarca una de las características de la reseña. */
   const responder = (key, code) => {
     setRespuestas(antes => {
       // Tocar la respuesta que ya estaba la borra: alguien que se equivocó de
@@ -133,6 +136,7 @@ export default function ReviewForm({ isOwner, onSubmit, onCancel }) {
     });
   };
 
+  /** Manda la reseña: la puntuación, el comentario, las características y las fotos. */
   const handleSubmit = async () => {
     if (!rating || sending) return;
     setSending(true);

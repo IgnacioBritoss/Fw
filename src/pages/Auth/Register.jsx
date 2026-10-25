@@ -28,6 +28,7 @@ import LangPicker from "../../components/LangPicker";
 import { useI18n } from "../../i18n/core";
 import { useSacudida } from "../../anim";
 
+// El logo de Google del botón "Continuar con Google".
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -37,6 +38,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
+// Los dos ojos del campo de contraseña: mostrar y ocultar.
 const EyeOpen = () => (
   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -50,6 +52,7 @@ const EyeClosed = () => (
   </svg>
 );
 
+// El logo de Freewheel, en el tamaño que usa esta pantalla.
 const Logo = () => <BrandLogo size={17} />;
 
 /** Cuánto ocupa el panel de la foto. Va en dos lados —el panel, que está fijo, y
@@ -115,6 +118,8 @@ export default function Register() {
     Ver anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // Muestra un error y hace que el cartel se sacuda. El contador sube con cada
+  // aviso para que el MISMO error dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setIntento((n) => n + 1);

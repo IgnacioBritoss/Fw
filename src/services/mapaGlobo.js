@@ -88,6 +88,7 @@ export const ALTO_FOTO_MAXIMO = Math.round(ANCHO_MAXIMO * PROPORCION_DE_LA_FOTO)
 /** Lo que el globo de Leaflet le suma al ancho de la tarjeta (marco y sombra). */
 const MARCO = 47;
 
+/** Deja un número adentro de un rango. */
 const entre = (min, max, valor) => Math.max(min, Math.min(max, valor));
 
 /**

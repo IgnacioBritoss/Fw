@@ -34,6 +34,7 @@
 //  navegador y sin servidor (revisionDocumentos.test.js).
 // ============================================================================
 
+/** Lo que venga, como lista: un campo que el servidor no mandó no rompe el recorrido. */
 const lista = (x) => (Array.isArray(x) ? x : []);
 
 /** Cada cuánto volver a preguntar mientras se está analizando. */

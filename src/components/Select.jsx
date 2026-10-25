@@ -43,6 +43,7 @@ export default function Select({
   // Se cierra al hacer clic en cualquier otro lado de la página.
   useEffect(() => {
     if (!open) return undefined;
+    // Un clic afuera de la lista la cierra.
     const onDocClick = (event) => {
       if (!wrapRef.current?.contains(event.target)) setOpen(false);
     };
@@ -62,13 +63,20 @@ export default function Select({
     setOpen(true);
   };
 
+  /** Abre o cierra la lista. */
   const toggle = () => (open ? setOpen(false) : openList());
 
+  /** Elige una opción y cierra. */
   const choose = (option) => {
     onChange(option.value);
     setOpen(false);
   };
 
+  /**
+   * El teclado. Es lo que hace que esto se pueda usar sin mouse, igual que un
+   * `<select>` de verdad: flechas para moverse, Enter para elegir, Escape para
+   * cerrar.
+   */
   const onKeyDown = (event) => {
     if (event.key === "Escape") { setOpen(false); return; }
 

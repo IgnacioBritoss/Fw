@@ -77,6 +77,8 @@ export function lineasDelComprobante({ booking, payment, dias } = {}) {
   const porDia = b.pricePerDaySnapshot;
 
   const lineas = [];
+  // Suma una línea al comprobante, salteando las que no corresponden: así el
+  // comprobante no muestra un renglón vacío por cada dato que no existe.
   const agregar = (linea) => { if (linea) lineas.push(linea); };
 
   const vehiculo = vehiculoComoSeLee(b);

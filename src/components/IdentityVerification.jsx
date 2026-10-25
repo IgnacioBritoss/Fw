@@ -223,6 +223,8 @@ export default function IdentityVerification({ onDone, onCancel }) {
     cuil: editado.cuil ?? user?.cuil ?? "",
     address: editado.address ?? user?.address ?? "",
   };
+  // Cambia los datos de identidad que se están cargando, partiendo siempre de
+  // lo que ya tiene la cuenta: así, corregir un campo no borra los otros dos.
   const setDatos = (actualizar) =>
     setEditado((previo) => actualizar({
       dni: previo.dni ?? user?.dni ?? "",
@@ -684,6 +686,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
       // hay nada que releer se manda a la cola de un administrador, que es más
       // lento y ocupa a una persona.
       const aRelear = documentosRevisados.filter((d) => d?.analysis?.canRetry && d?.type);
+      // Del tipo que usa el servidor al nombre corto que espera la ruta de releer.
       const claveDe = (doc) => (doc.type === "LICENSE" ? "license" : "dni");
 
       if (aRelear.length) {
@@ -763,6 +766,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
     }
   };
 
+  /** Cierra el trámite: relee la cuenta para que la pantalla muestre el estado nuevo. */
   const finish = async () => {
     await refreshUser();
     onDone?.();

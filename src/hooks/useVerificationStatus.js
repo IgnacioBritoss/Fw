@@ -87,6 +87,8 @@ export function useVerificationStatus({ activo = true } = {}) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refrescar();
 
+    // Volver a la pestaña reinicia la insistencia: alguien está mirando, así
+    // que vale la pena preguntar de nuevo.
     const alVolver = () => {
       if (document.visibilityState === "visible") {
         desde.current = Date.now();   // hay alguien mirando: vale la pena insistir

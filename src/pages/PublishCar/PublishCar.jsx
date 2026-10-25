@@ -133,6 +133,13 @@ const ANIO_MAXIMO = new Date().getFullYear();
  */
 const ANIO_MINIMO = 1950;
 
+/**
+ * Revisa las fichas técnicas y devuelve los avisos que correspondan.
+ *
+ * NO FRENA NADA: solo advierte. Está para agarrar los valores absurdos —20
+ * puertas, un auto del año 3000— sobre todo cuando los completó la IA, pero
+ * quien publica puede tener razón y la pantalla no es quién para discutirle.
+ */
 function getSpecWarnings(form) {
   const checks = [
     /*
@@ -274,6 +281,7 @@ const EMPTY_LISTING = {
   deliveryRadiusKm: 0,
 };
 
+/** Lee el borrador guardado en el navegador, o null si no hay (o si está roto). */
 function loadDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
@@ -281,10 +289,12 @@ function loadDraft() {
   } catch { return null; }
 }
 
+/** Guarda el borrador. Si no entra, se pierde en silencio: es una comodidad, no un paso. */
 function saveDraft(draft) {
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* sin espacio */ }
 }
 
+/** Borra el borrador. Se llama al publicar y al apretar "empezar de cero". */
 function clearDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* nada que borrar */ }
 }
@@ -415,7 +425,7 @@ export default function PublishCar() {
 
   // Atajos para actualizar un campo del formulario de vehículo (setV) o de listing (setL).
   const setV = (k, v) => setVehicleForm((f) => ({ ...f, [k]: v }));
-  const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));
+  const setL = (k, v) => setListingForm((f) => ({ ...f, [k]: v }));   // un campo del aviso
 
   const prevLocationRef = useRef(""); // guarda la ubicación anterior para detectar cambios
 
@@ -480,6 +490,14 @@ export default function PublishCar() {
     });
   };
 
+  /**
+   * Completa la ficha técnica sola, con tres fuentes en orden:
+   *  1. La tabla local de autos argentinos. Si hay varias versiones, se
+   *     pregunta cuál antes de completar nada.
+   *  2. Si el modelo no está en la tabla, se le pide a la IA.
+   *  3. Si tampoco, se deja todo como estaba y se avisa.
+   * Lo completado se puede corregir a mano: son datos sugeridos, no impuestos.
+   */
   const fetchSpecs = async () => {
     if (!vehicleForm.brand || !vehicleForm.model || !vehicleForm.year) {
       avisar(tr("publish.errBeforeAi"));
@@ -784,6 +802,11 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
       });
   };
 
+  /**
+   * Lo que pasa al elegir fotos: se leen, se agregan a la grilla y cada una sale
+   * a revisarse por su cuenta. No se espera a que terminen para mostrarlas; cada
+   * una va cambiando de "revisando" a aprobada o rechazada cuando le contestan.
+   */
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files);
     // El input queda listo para volver a elegir el MISMO archivo. Sin esto, si
@@ -843,6 +866,7 @@ REGLAS DE LOS NÚMEROS, respetalas al pie de la letra:
     return fotosDeOtroAuto(aprobadas, rasgosDeclarados(vehicleForm));
   }, [photos, photoValidations, vehicleForm]);
 
+  /** ¿Esta foto quedó marcada como de otro auto? */
   const esDeOtroAuto = (i) => otroAuto.indices.includes(i);
   /** El auto del formulario, escrito como lo escribió la persona. */
   const autoDeclarado = `${vehicleForm.brand || ""} ${vehicleForm.model || ""}`.trim();

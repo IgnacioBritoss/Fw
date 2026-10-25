@@ -203,6 +203,8 @@ export default function BookingCalendar({ listingId, car, onConfirm, bloqueado =
     });
   }, [lang]);
 
+  /** Salta a un mes. El contador obliga a la animación a repetirse aunque se
+   *  vuelva al mismo mes dos veces seguidas. */
   const irAlMes = (fecha) => {
     setMesALaVista(fecha);
     setSalto((antes) => ({ fecha, n: antes.n + 1 }));

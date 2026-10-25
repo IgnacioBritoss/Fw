@@ -139,6 +139,7 @@ export function patenteUsable(texto) {
 
 /** Los caracteres que se confunden leyendo una chapa, en los dos sentidos. */
 const PARECIDOS = { O: "0", I: "1", L: "1", S: "5", B: "8", Z: "2", G: "6", Q: "0" };
+/** ¿Estas dos letras son la misma, perdonando las confusiones de la tabla? */
 const mismoCaracter = (a, b) =>
   a === b || (PARECIDOS[a] ?? a) === (PARECIDOS[b] ?? b);
 
@@ -173,6 +174,7 @@ const ALIAS_DE_MARCA = {
   benz: "mercedes",
 };
 
+/** "vw" y "volkswagen" son la misma marca: esto las lleva a una sola forma. */
 const marcaCanonica = (palabra) => ALIAS_DE_MARCA[palabra] || palabra;
 
 /** Busca en qué grupo cae una palabra. Devuelve la clave del grupo o null. */

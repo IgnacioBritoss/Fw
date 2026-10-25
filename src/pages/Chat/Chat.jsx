@@ -52,6 +52,11 @@ function Ticks({ read }) {
   );
 }
 
+/**
+ * Un mensaje de voz: el botón de reproducir, la onda que avanza y el botón de
+ * transcribir. La transcripción se pide a la IA recién cuando alguien la toca,
+ * no al abrir el chat: sería gastar cuota en audios que nadie va a leer.
+ */
 function AudioMsg({ src }) {
   const { t: tr } = useI18n();
   const [playing, setPlaying] = useState(false);
@@ -63,7 +68,9 @@ function AudioMsg({ src }) {
   const audioRef = useRef(null);
   const bars = [3, 5, 9, 14, 20, 18, 12, 8, 14, 18, 20, 16, 10, 7, 12, 18, 20, 14, 6, 4];
   const progress = duration > 0 ? current / duration : 0;
+  // Segundos a "1:05".
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  // Reproduce o pausa, según cómo esté.
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
@@ -174,6 +181,13 @@ function getMsgKind(msg) {
   return "text";
 }
 
+/**
+ * El alto visible de la pantalla y cuánto está corrida.
+ *
+ * En el celular, al abrir el teclado la ventana NO cambia de alto: lo que
+ * cambia es `visualViewport`. Sin leer eso, el teclado tapaba el campo de
+ * escribir y el chat quedaba escribiendo a ciegas.
+ */
 function getViewportData() {
   if (typeof window === "undefined") return { height: 0, offsetTop: 0 };
   if (window.visualViewport) return {
@@ -268,6 +282,8 @@ export default function Chat() {
   useEffect(() => {
     clearInterval(pollRef.current);
     if (!activeConvId) { setMessages([]); return; }
+    // Vuelve a pedir los mensajes. Es la versión simple de "tiempo real":
+    // preguntar cada tres segundos en vez de mantener una conexión abierta.
     const poll = () =>
       getConversationMessages(activeConvId)
         .then(msgs => setMessages(msgs || []))
@@ -287,6 +303,7 @@ export default function Chat() {
   }, [messages.length, activeConvId]);
 
   useEffect(() => {
+    // Guarda el alto visible cada vez que cambia (teclado que se abre o cierra).
     const update = () => setViewport(getViewportData());
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", update);

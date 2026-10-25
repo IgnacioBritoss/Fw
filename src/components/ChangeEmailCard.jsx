@@ -62,11 +62,16 @@ export default function ChangeEmailCard({ verified }) {
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
 
+  /** Deja la tarjeta como recién abierta. */
   const reset = () => {
     setPhase("idle"); setNewEmail(""); setCode("");
     setSentTo(""); setError(""); setInfo("");
   };
 
+  /**
+   * Paso 1: se escribe la dirección nueva y el servidor le manda un código AHÍ.
+   * Es lo que prueba que esa casilla existe y es de quien la está cargando.
+   */
   const pedirCodigo = async () => {
     const direccion = newEmail.trim().toLowerCase();
     if (!direccion || !direccion.includes("@")) {
@@ -85,6 +90,7 @@ export default function ChangeEmailCard({ verified }) {
     }
   };
 
+  /** Paso 2: con el código de la casilla nueva, el cambio queda hecho. */
   const confirmar = async () => {
     if (code.trim().length !== 6) { setError(tr("reg.errCode")); return; }
     setBusy(true); setError("");

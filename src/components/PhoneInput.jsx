@@ -66,6 +66,10 @@ export default function PhoneInput({
   const complete = isValidPhone(paisActual.dial, rest);
   const invalid = showError && rest.length > 0 && !complete;
 
+  /**
+   * Lo que se escribe en el campo. Solo deja dígitos, y si pegan el número con
+   * el código de país adelante se lo saca para no duplicarlo.
+   */
   const handle = (event) => {
     let digits = event.target.value.replace(/\D/g, "");
     // Si pegan el número entero con el código de país adelante, se saca para no

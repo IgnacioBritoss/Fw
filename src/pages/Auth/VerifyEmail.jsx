@@ -49,6 +49,8 @@ export default function VerifyEmail() {
     Ver anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // Muestra un error y sacude el cartel. El contador sube con cada aviso para
+  // que el mismo error dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setIntento((n) => n + 1);

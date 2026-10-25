@@ -42,6 +42,8 @@ import Avatar from "./Avatar";
 export default function ListaDeReseñas({ reviews = [], vacio }) {
   const { t: tr, lang } = useI18n();
 
+  // Quién dejó la reseña. Si no hay nombre, un texto genérico: una reseña sin
+  // firma se lee peor que una firmada por "un usuario".
   const nombreDe = (persona) =>
     persona?.displayName
     || `${persona?.firstName || ""} ${persona?.lastName || ""}`.trim()

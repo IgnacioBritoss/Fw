@@ -38,6 +38,13 @@ import { tSync } from "../i18n/core";
 const SIGNATURE_TTL_MS = 45 * 1000;
 let cachedSignature = null;
 
+/**
+ * La firma para subir a Cloudinary, guardada 45 segundos.
+ *
+ * Al subir seis fotos de un auto se pedirían seis firmas idénticas en pocos
+ * segundos. Con la caché se pide una sola; el secreto sigue viviendo únicamente
+ * en el servidor.
+ */
 async function fetchSignature(folder) {
   const now = Date.now();
   if (cachedSignature && cachedSignature.folder === folder && now - cachedSignature.at < SIGNATURE_TTL_MS) {

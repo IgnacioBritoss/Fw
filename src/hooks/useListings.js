@@ -28,6 +28,13 @@ import { mockCars } from "../data/mockData";
 
 const MOCK_CARS = mockCars.map(normalizeListing);
 
+/**
+ * Baja la lista de autos con los filtros que se le pasen.
+ *
+ * Devuelve `cars`, `loading` y `error`, y además `showingMocks`: cuando el
+ * servidor no contesta o no hay ningún auto publicado, muestra los autos de
+ * ejemplo para que la pantalla no quede vacía, y avisa que son de ejemplo.
+ */
 export function useListings(filters = {}, { includeMocks = true } = {}) {
   const { t: tr } = useI18n();
   const [cars, setCars] = useState([]);
@@ -58,6 +65,9 @@ export function useListings(filters = {}, { includeMocks = true } = {}) {
   const load = useCallback(async () => {
     const miPedido = ultimoPedido.current + 1;
     ultimoPedido.current = miPedido;
+    // ¿Esta respuesta sigue siendo la que importa? Al escribir en el buscador
+    // salen varios pedidos y pueden volver desordenados: sin esto, una
+    // respuesta vieja que llega tarde pisa los resultados del filtro de ahora.
     const vigente = () => ultimoPedido.current === miPedido;
 
     setLoading(true);

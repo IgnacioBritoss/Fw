@@ -38,6 +38,8 @@ const I = {
   help: <><circle cx="12" cy="12" r="10" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" /></>,
   gear: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.14.63.65 1.1 1.29 1.29H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></>,
 };
+// Dibuja uno de los íconos de arriba. Todos comparten el mismo trazo y la misma
+// caja, así que la lista de ajustes se ve pareja.
 const Svg = ({ d, color = "currentColor", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
@@ -56,6 +58,7 @@ const MENU = [
 
 // Clave de localStorage y función para leer las preferencias guardadas.
 const PREFS_KEY = "fw_prefs";
+/** Lee las preferencias guardadas en el navegador (idioma, moneda, tema). */
 const loadPrefs = () => {
   try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch { return {}; }
 };
@@ -127,6 +130,11 @@ export default function Settings() {
     }
   }, [avisosGuardados]);
 
+  /**
+   * Prende o apaga los avisos por mail. Se ve cambiado al toque y, si el
+   * guardado falla, vuelve atrás: dejar el interruptor donde no quedó sería
+   * prometer algo que no pasó.
+   */
   const cambiarAvisos = async (valor) => {
     const anterior = avisos;
     setAvisos(valor);
@@ -195,6 +203,7 @@ export default function Settings() {
     const [editing, setEditing] = useState(false);
     const [val, setVal] = useState(value || "");
     const [saving, setSaving] = useState(false);
+    // Guarda el campo y cierra la edición.
     const commit = async () => { setSaving(true); await saveField(fieldKey, val); setSaving(false); setEditing(false); };
     return (
       <div style={t.fieldBox}>
@@ -228,6 +237,8 @@ export default function Settings() {
     </button>
   );
 
+  // Una fila de la lista de verificación: el email, el teléfono, los documentos.
+  // Muestra el tilde verde si está hecho o el botón para hacerlo si falta.
   const VerifRow = ({ title, desc, verified, onVerify, last }) => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 0", borderBottom: last ? "none" : "1px solid var(--fw-line-soft)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
@@ -247,6 +258,7 @@ export default function Settings() {
     </div>
   );
 
+  // Una fila con interruptor: el título, la explicación y la llavecita.
   const SwitchRow = ({ title, desc, on, onChange, last }) => (
     <div style={{ ...t.rowSwitch, ...(last ? { borderBottom: "none" } : {}) }}>
       <div>

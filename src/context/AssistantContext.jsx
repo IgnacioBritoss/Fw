@@ -15,6 +15,13 @@ import { createContext, useContext, useMemo, useState } from "react";
 
 const AssistantContext = createContext(null);
 
+/**
+ * Guarda si la ventanita de Wili está abierta, para toda la aplicación.
+ *
+ * Está acá arriba y no adentro del asistente porque hay botones en otras
+ * pantallas que lo abren: si el estado viviera en el componente, esos botones
+ * no tendrían forma de llegar a él.
+ */
 export function AsistenteProvider({ children }) {
   const [abierto, setAbierto] = useState(false);
 
@@ -35,6 +42,8 @@ export function AsistenteProvider({ children }) {
  */
 const SIN_PROVEEDOR = { abierto: false, abrir: () => {}, cerrar: () => {}, alternar: () => {} };
 
+/** El asistente, desde cualquier pantalla. Sin proveedor devuelve algo inerte
+ *  en vez de romper: así una pantalla suelta en una prueba no se cae. */
 export function useAsistente() {
   return useContext(AssistantContext) || SIN_PROVEEDOR;
 }

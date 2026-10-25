@@ -12,6 +12,7 @@ import { useIsMobile } from "../../hooks/useIsMobile";
 import { useI18n } from "../../i18n/core";
 import { useSacudida } from "../../anim";
 
+// Los dos ojos del campo de contraseña: mostrar y ocultar.
 const EyeOpen = () => (
   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -71,6 +72,8 @@ export default function ResetPassword() {
     Ver anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // Muestra un error y hace que el cartel se sacuda. El contador sube con cada
+  // aviso para que el MISMO error dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setIntento((n) => n + 1);

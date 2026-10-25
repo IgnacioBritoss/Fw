@@ -458,6 +458,7 @@ export function TarjetaPropia({ onGuardar, onCancelar, nombreCuenta = "" }) {
   const errores = mostrarErrores ? revisado.errores : {};
   const primerError = errores.numero || errores.vencimiento || errores.codigo || errores.nombre;
 
+  /** Guarda la tarjeta, pero solo si los cuatro campos están bien. */
   const guardar = (evento) => {
     evento.preventDefault();
     setMostrarErrores(true);

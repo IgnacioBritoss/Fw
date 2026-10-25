@@ -41,6 +41,8 @@
 // ============================================================================
 import { animate, createTimeline, createDrawable, createSpring, utils } from "animejs";
 
+// ¿El sistema pidió menos animaciones? Hay gente a la que el movimiento en
+// pantalla le hace mal, y el navegador lo avisa con esta consulta.
 const menosMovimiento = () =>
   typeof matchMedia === "function" &&
   matchMedia("(prefers-reduced-motion: reduce)").matches;

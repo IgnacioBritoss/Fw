@@ -72,8 +72,13 @@ const safeFormat = (value, pattern, lang) => {
   return format(date, pattern, { locale: localeFor(lang) });
 };
 
+/** "25 de octubre de 2026", en el idioma que corresponda. */
 export const longDate = (value, lang) => safeFormat(value, LONG_PATTERNS[lang] || LONG_PATTERNS.es, lang);
+/** "25 oct 2026". */
 export const shortDate = (value, lang) => safeFormat(value, SHORT_PATTERNS[lang] || SHORT_PATTERNS.es, lang);
+/** "octubre de 2026". Se usa en "En Freewheel desde...". */
 export const monthYear = (value, lang) => safeFormat(value, MONTH_YEAR_PATTERNS[lang] || MONTH_YEAR_PATTERNS.es, lang);
+/** "25 oct", para los rangos de fechas de una reserva. */
 export const dayMonth = (value, lang) => safeFormat(value, DAY_MONTH_PATTERNS[lang] || DAY_MONTH_PATTERNS.es, lang);
+/** "14:30". */
 export const timeOfDay = (value, lang) => safeFormat(value, TIME_PATTERNS[lang] || TIME_PATTERNS.es, lang);

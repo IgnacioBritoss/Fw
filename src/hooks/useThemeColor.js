@@ -11,6 +11,13 @@
 // ============================================================================
 import { useEffect } from "react";
 
+/**
+ * Pinta la barra del navegador del celular con un color.
+ *
+ * Es el `<meta name="theme-color">`: en el teléfono, la franja de arriba toma
+ * ese color y la pantalla se ve de una pieza en vez de con una banda blanca
+ * arriba. Al salir de la pantalla, vuelve al color de antes.
+ */
 export function useThemeColor(color) {
   useEffect(() => {
     if (!color) return undefined;

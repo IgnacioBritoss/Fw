@@ -241,6 +241,8 @@ const PieIncognito = ({ angosta, tr, onEntrar, onCrearCuenta }) => {
   const [donde, setDonde] = useState(null);
   const botonRef = useRef(null);
 
+  // Abre o cierra el globo. Al abrir se mide dónde quedó el botón, porque el
+  // globo se dibuja fuera del flujo y necesita coordenadas de pantalla.
   const alternar = () => {
     if (abierto) { setAbierto(false); return; }
     const r = botonRef.current?.getBoundingClientRect();
@@ -260,7 +262,7 @@ const PieIncognito = ({ angosta, tr, onEntrar, onCrearCuenta }) => {
   // el botón se corre, lo que se ve queda flotando en cualquier lado.
   useEffect(() => {
     if (!abierto) return;
-    const cerrar = () => setAbierto(false);
+    const cerrar = () => setAbierto(false);  // cualquier movimiento lo cierra
     const tecla = (e) => { if (e.key === "Escape") cerrar(); };
     window.addEventListener("keydown", tecla);
     window.addEventListener("resize", cerrar);
@@ -396,6 +398,7 @@ export default function Layout({ children }) {
   const [barraCerrada, setBarraCerrada] = useState(() => {
     try { return localStorage.getItem("fw_barra") === "cerrada"; } catch { return false; }
   });
+  // Abre o cierra la barra lateral y lo recuerda para la próxima visita.
   const cambiarBarra = () => setBarraCerrada((v) => {
     try { localStorage.setItem("fw_barra", v ? "abierta" : "cerrada"); } catch { /* almacenamiento bloqueado */ }
     return !v;
@@ -411,6 +414,8 @@ export default function Layout({ children }) {
   useEffect(() => {
     if (!user) { setHasUnread(false); setHasUnreadNotif(false); return; }
     let active = true; // evita actualizar estado si el componente ya se desmontó
+    // Una ronda: pregunta por chats y por notificaciones, y prende o apaga los
+    // puntitos. `active` evita escribir estado si la pantalla ya se cerró.
     const check = () => {
       getMyConversations()
         .then(data => {
@@ -512,6 +517,9 @@ export default function Layout({ children }) {
   // Contenido del menú lateral: logo, links de navegación, tarjeta "Publicar",
   // botón de admin (si corresponde) y bloque de perfil con botón de salir.
   let turno = 0;
+  // El contenido de la barra lateral. Es una función y no un componente aparte
+  // porque se dibuja en dos lugares: fija al costado en la computadora, y
+  // adentro del cajón que se abre en el celular.
   const sidebarInner = () => (
     <>
       {isMobile ? (

@@ -64,6 +64,8 @@ export const ANIOS_CERCA_CATEGORIA = 3;
  * "no hay" de "da cero".
  */
 export function mediana(numeros) {
+  // Solo los números de verdad, ordenados: un null o un NaN en el medio
+  // correría la mediana a cualquier lado.
   const utiles = (numeros || []).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
   if (!utiles.length) return null;
   const medio = Math.floor(utiles.length / 2);
@@ -75,6 +77,7 @@ export function mediana(numeros) {
 /** El precio por día de un auto, con los dos nombres que puede tener el campo. */
 const precioDe = (car) => Number(car?.price_per_day ?? car?.pricePerDay ?? 0);
 
+/** El año de un auto, como número. */
 const anioDe = (car) => Number(car?.year);
 
 /**
@@ -98,6 +101,11 @@ function utilesParaComparar(cars, excluirId) {
   });
 }
 
+/**
+ * El resumen de un grupo de autos parecidos: cuántos son, qué precio tienen en
+ * el medio y entre qué años están. Es lo que se le muestra a quien publica para
+ * que vea contra qué está compitiendo.
+ */
 function resumen(nivel, grupo) {
   const precios = grupo.map(precioDe);
   const anios = grupo.map(anioDe).filter(Number.isFinite);

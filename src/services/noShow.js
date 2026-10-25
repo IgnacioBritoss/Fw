@@ -80,6 +80,8 @@ export function puedeReportar(reserva, { soyElDueno, ahora = new Date() } = {}) 
   const inicio = new Date(reserva.startDate).getTime();
   if (Number.isNaN(inicio)) return { puede: false, motivo: "todaviaNo" };
 
+  // Cuánto pasó desde la hora de retiro. Antes de los minutos de gracia no se
+  // puede reportar nada: llegar diez minutos tarde no es no aparecer.
   const minutosDesdeElInicio = (ahora.getTime() - inicio) / MINUTO;
   if (minutosDesdeElInicio < MINUTOS_DE_GRACIA) {
     return { puede: false, motivo: "todaviaNo" };

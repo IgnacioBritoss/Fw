@@ -78,6 +78,8 @@ export function useDraggableWindow({ ancho, alto, activo = true, ladoIzquierdo =
 
   useEffect(() => {
     if (!activo) return;
+    // Si la ventana se achica, la ventanita flotante vuelve adentro: si no,
+    // quedaría fuera de la pantalla y no habría forma de agarrarla.
     const onResize = () => setPos((p) => clamp(p, ancho, alto));
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);

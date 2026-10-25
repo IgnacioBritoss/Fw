@@ -391,6 +391,8 @@ export default function Home() {
   */
   useEffect(() => {
     if (!hayMapa) return;
+    // Un intento de armar el mapa. Devuelve true si quedó hecho, false si
+    // todavía falta algo (la librería o el div) y hay que volver a probar.
     const intentar = () => {
       if (mapInstanceRef.current) return true;
       const L = window.L;
@@ -442,6 +444,7 @@ export default function Home() {
   */
   useEffect(() => {
     if (!nodoMapa || typeof ResizeObserver === "undefined") return;
+    // Mide el div del mapa y guarda el tamaño solo si cambió de verdad.
     const medir = () => {
       const { width, height } = nodoMapa.getBoundingClientRect();
       setMedidaMapa((antes) => {
@@ -572,6 +575,7 @@ export default function Home() {
 
     // El oyente de `moveend` que arma el encuadre, para poder desarmarlo.
     let soltarOyente = null;
+    // Saca los círculos del mapa y deja de escuchar el movimiento.
     const limpiar = () => {
       soltarOyente?.();
       soltarOyente = null;
@@ -771,6 +775,8 @@ export default function Home() {
    * —ya no queda nada por elegir— y ahorra el toque en "Listo".
    */
   const elegirRango = ([desde, hasta]) => {
+    // Las fechas viajan como texto "2026-10-25": es lo que entienden el buscador
+    // y el backend, y no depende de la zona horaria del navegador.
     const aTexto = (d) => (d ? format(d, "yyyy-MM-dd") : "");
     setPickup(aTexto(desde));
     setDropoff(aTexto(hasta));
@@ -949,6 +955,8 @@ export default function Home() {
     </>
   );
 
+  // El bloque de "¿Primera vez?": los cuatro pasos de cómo se alquila. Se arma
+  // acá arriba y se ubica distinto en celular que en pantalla grande.
   const seccionPasos = (
     <>
       <div style={{ ...t.sectionTitle, marginBottom: 4 }}>{tr("home.firstTime")}</div>

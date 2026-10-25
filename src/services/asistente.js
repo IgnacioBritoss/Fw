@@ -42,6 +42,8 @@ import { PREGUNTAS, BOTONES } from "../data/preguntasWili.js";
  */
 export const REPETICIONES_PARA_SUBIR = 2;
 
+/** Dónde se guarda la cuenta de preguntas de cada usuario. Separada por cuenta:
+ *  en un navegador compartido, los botones de uno no son los del otro. */
 const clave = (usuarioId) => `fw_wili_preguntas_${usuarioId || "anon"}`;
 
 /*
@@ -194,8 +196,10 @@ export function cuentaQueManda(local = {}, delSitio = {}) {
  * cuenta del navegador.
  */
 export function preguntasDeLosBotones(cuenta = {}, cuantas = BOTONES) {
+  // Cuántas veces se hizo esta pregunta.
   const veces = (p) => Number(cuenta[p.id] || 0);
   const orden = new Map(PREGUNTAS.map((p, i) => [p.id, i]));
+  // Primero las más preguntadas; si empatan, se respeta el orden de la lista.
   const porRanking = (a, b) => veces(b) - veces(a) || orden.get(a.id) - orden.get(b.id);
 
   const deSiempre = PREGUNTAS.filter((p) => p.enLosBotones).slice().sort(porRanking);

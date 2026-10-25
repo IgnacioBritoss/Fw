@@ -61,6 +61,8 @@ export function extractJSON(text) {
     .replace(/<think>[\s\S]*$/i, "")
     .replace(/```(?:json)?/gi, "");
 
+  // Intenta leer un JSON. Devuelve null en vez de explotar: acá se prueban
+  // varias formas de recortar la respuesta hasta que una sirva.
   const probar = (t) => { try { return JSON.parse(t); } catch { return null; } };
 
   const directo = probar(limpio.trim());

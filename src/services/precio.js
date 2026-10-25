@@ -99,6 +99,7 @@ export function aNumero(valor) {
     if (atras !== 3) decimal = unico;
   }
 
+  // La parte entera, ya sin puntos ni comas de miles.
   const enteros = (decimal >= 0 ? limpio.slice(0, decimal) : limpio).replace(/[.,]/g, "");
   const decimales = decimal >= 0 ? limpio.slice(decimal + 1).replace(/[.,]/g, "") : "";
   const n = Number(decimales ? `${enteros}.${decimales}` : enteros);

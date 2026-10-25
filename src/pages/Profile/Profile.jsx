@@ -210,6 +210,7 @@ export default function Profile() {
   const originalSubida = useRef(null);
   const [abriendoEditor, setAbriendoEditor] = useState(false);
 
+  /** Lo que llega del selector de archivos: se guarda el original y se abre el editor de recorte. */
   const pickPhoto = (event) => {
     const file = event.target.files?.[0];
     // El input se limpia siempre: si no, elegir la misma foto dos veces no dispara el change.
@@ -225,6 +226,12 @@ export default function Profile() {
     setPorEncuadrar(file);
   };
 
+  /**
+   * El lápiz de la foto de perfil. Hace tres cosas distintas según el caso:
+   * sin foto, abre el selector de archivos; con una recién elegida, la reabre
+   * tal cual; y con una ya guardada, baja la ORIGINAL del servidor para
+   * recortar siempre sobre la foto entera.
+   */
   const reencuadrar = async () => {
     if (photoBusy || abriendoEditor) return;
     setPhotoError("");
@@ -331,6 +338,11 @@ export default function Profile() {
     }
   }, [visibilidadGuardada]);
 
+  /**
+   * Cambia quién puede ver la foto de perfil: todos, o solo con quien haya una
+   * reserva. Se muestra elegido antes de que conteste el servidor y, si el
+   * guardado falla, vuelve a lo anterior y lo dice.
+   */
   const cambiarQuienVeLaFoto = async (valor) => {
     if (valor === quienVeLaFoto || visibilityBusy) return;
     const anterior = quienVeLaFoto;
@@ -348,6 +360,7 @@ export default function Profile() {
     }
   };
 
+  /** Saca la foto de perfil: el recorte y la original, las dos. */
   const removePhoto = async () => {
     setPhotoError("");
     setPhotoBusy(true);
@@ -399,6 +412,7 @@ export default function Profile() {
     }
   }, [portadaGuardada.dibujo, portadaGuardada.color, portadaGuardada.foto, portadaGuardada.x, portadaGuardada.y]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** Guarda el diseño y el color de la portada. Se ve al toque y se guarda solo. */
   const cambiarPortada = async (dibujo, color) => {
     if (portadaGuardando) return;
     if (dibujo === portadaElegida.dibujo && color === portadaElegida.color) return;
@@ -437,6 +451,7 @@ export default function Profile() {
   */
   const [subiendoPortada, setSubiendoPortada] = useState(false);
 
+  /** Sube una foto de portada y la guarda. Mientras sube, la portada no cambia. */
   const elegirFotoDePortada = async (archivo) => {
     if (!archivo.type.startsWith("image/")) { setPortadaError(tr("profile.photoNotImage")); return; }
     // 8 MB: una foto de paisaje de celular entra, y no deja a nadie esperando
@@ -460,6 +475,7 @@ export default function Profile() {
     }
   };
 
+  /** Quita la foto de portada: vuelve a verse el diseño que estaba elegido. */
   const quitarFotoDePortada = async () => {
     if (portadaGuardando || subiendoPortada) return;
     const anterior = portadaElegida;
@@ -499,6 +515,7 @@ export default function Profile() {
   const encuadrePendiente = useRef(null);
   const encuadreTimer = useRef(null);
 
+  /** Manda el encuadre que quedó pendiente, si hay alguno. */
   async function guardarEncuadre() {
     if (encuadreTimer.current) {
       clearTimeout(encuadreTimer.current);
@@ -518,6 +535,7 @@ export default function Profile() {
     }
   }
 
+  /** Mueve el encuadre en pantalla y programa el guardado para medio segundo después. */
   const encuadrar = (x, y) => {
     if (portadaGuardando || subiendoPortada) return;
     setPortadaElegida(p => ({ ...p, x, y }));

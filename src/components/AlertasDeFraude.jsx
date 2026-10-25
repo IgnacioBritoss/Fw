@@ -134,6 +134,8 @@ export default function AlertasDeFraude({ onAviso }) {
 
   useEffect(() => { cargar(); }, [cargar]);
 
+  /** Marca una alerta como revisada. Pide una nota: queda como constancia de
+   *  qué decidió el admin y por qué. */
   const resolver = async (id) => {
     setTrabajando(id);
     try {
@@ -148,6 +150,7 @@ export default function AlertasDeFraude({ onAviso }) {
     }
   };
 
+  /** Suspende o reactiva la cuenta señalada por la alerta. */
   const cambiarEstado = async (userId, estado) => {
     setTrabajando(userId);
     try {

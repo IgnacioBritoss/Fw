@@ -25,6 +25,7 @@ import FlechaFoto from "./FlechaFoto";
 // El tamaño de la tarjeta sale de cuánto mapa hay: ver services/mapaGlobo.js.
 import { medidaDeLaTarjeta } from "../services/mapaGlobo";
 
+// El estilo de las flechitas de la galería, a izquierda o a derecha.
 const botonFlecha = (lado) => ({
   position: "absolute", top: "50%", [lado]: 6, transform: "translateY(-50%)",
   width: 26, height: 26, minHeight: 26, borderRadius: "50%",
@@ -55,6 +56,7 @@ export default function MapCarPopup({ car, precio, mapa = null }) {
     setI((n) => (n + paso + fotos.length) % fotos.length);
   };
 
+  /** Tocar la tarjeta lleva a la publicación. */
   const abrir = () => navigate(`/cars/${car.id}`);
 
   return (

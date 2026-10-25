@@ -107,8 +107,11 @@ export default function Notifications() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Qué está leído se guarda en el navegador: el servidor manda los avisos,
+  // pero cuáles ya miró esta persona es cosa de esta pantalla.
   const isRead = (n) => readIds.has(n.id);
   const unreadCount = notifs.filter(n => !isRead(n)).length;
+  // El número que va al lado de cada pestaña.
   const countFor = (key) => key === "todas" ? notifs.length : notifs.filter(n => n.cat === key).length;
 
   // Notificaciones que se muestran según la pestaña (categoría) activa.

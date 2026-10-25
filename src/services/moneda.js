@@ -63,6 +63,7 @@ const CLAVE_ELEGIDA = "fw_moneda";
 const CLAVE_TASAS = "fw_tasas";
 const UN_DIA = 24 * 60 * 60 * 1000;
 
+/** ¿Es una de las monedas que el sitio sabe mostrar? */
 export function esMonedaValida(code) {
   return MONEDAS.some((m) => m.code === code);
 }
@@ -78,6 +79,7 @@ export function monedaGuardada() {
   }
 }
 
+/** Recuerda la moneda elegida para la próxima visita. */
 export function guardarMoneda(code) {
   try { localStorage.setItem(CLAVE_ELEGIDA, code); } catch { /* ver arriba */ }
 }

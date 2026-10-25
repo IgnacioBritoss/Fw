@@ -103,11 +103,15 @@ function aRgb(hex) {
  */
 function mezclar(hex, hacia, cuanto) {
   const [r, g, b] = aRgb(hex);
+  // Cada canal por separado: del color actual hacia el destino, en la
+  // proporción pedida.
   const uno = (c) => Math.round(c + (hacia - c) * cuanto);
   return [uno(r), uno(g), uno(b)];
 }
 
+/** De los tres números al texto que entiende el CSS. */
 const comoRgb = ([r, g, b]) => `rgb(${r}, ${g}, ${b})`;
+/** Lo mismo, con transparencia. */
 const comoRgba = ([r, g, b], alfa) => `rgba(${r}, ${g}, ${b}, ${alfa})`;
 
 /** El mismo color, más claro. */
@@ -319,6 +323,8 @@ export function sobranteDeLaFoto(natural, caja) {
  * la foto cambie.
  */
 export function moverEncuadre(desde, movido, sobrante) {
+  // Un eje. `margen` es cuánta foto queda escondida de ese lado: sin margen no
+  // hay nada que correr y el eje se queda donde está.
   const uno = (actual, corrido, margen) => {
     const base = encuadreUsable(actual) ?? ENCUADRE_POR_OMISION;
     if (!(margen > 0)) return base;

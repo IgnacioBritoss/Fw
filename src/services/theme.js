@@ -199,11 +199,21 @@ const VARIABLE_DE = {
   "#6b7280": "--fw-text-3", "#9ca3af": "--fw-text-4",
   "#d1d5db": "--fw-border-2", "#e5e7eb": "--fw-border",
 };
+// Los íconos del sitio tienen el color escrito adentro del SVG. Esto arma una
+// regla por cada color para que, en modo oscuro, se pinten con la variable que
+// les corresponde en vez de quedar negros sobre fondo negro.
 const reglasDeIconos = () => ICONOS.flatMap((c) => [
   `html.fw-dark [stroke="${c}"] { stroke: var(${VARIABLE_DE[c]}); }`,
   `html.fw-dark [fill="${c}"] { fill: var(${VARIABLE_DE[c]}); }`,
 ]).join("\n    ");
 
+/**
+ * Mete la hoja de estilos del tema en la página, una sola vez.
+ *
+ * Acá viven las variables de color (--fw-blue, --fw-text...) en sus dos
+ * versiones, clara y oscura. Todo el sitio se pinta con esas variables, así que
+ * cambiar de tema es cambiar una clase en el <html> y nada más.
+ */
 function ponerEstilos() {
   if (document.getElementById(STYLE_ID)) return;
   const el = document.createElement("style");

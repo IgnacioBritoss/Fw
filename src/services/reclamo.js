@@ -53,6 +53,7 @@ export function hayQueRevisar(booking, ahora = new Date()) {
 
   const devuelto = new Date(booking.returnConfirmedAt);
   if (Number.isNaN(devuelto.getTime())) return false;
+  // Cuántas horas pasaron desde que se devolvió el auto.
   const horas = (new Date(ahora).getTime() - devuelto.getTime()) / 3600000;
   return horas < HORAS_DE_REVISION;
 }

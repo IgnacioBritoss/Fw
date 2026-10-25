@@ -186,6 +186,7 @@ export function contarAtributos(reviews = []) {
  * un caso dudoso.
  */
 export function resumenDe(cuenta, codeBueno, codeMalo) {
+  // Cuántas veces eligieron esta característica.
   const suma = (code) => cuenta.find(x => x.code === code)?.n || 0;
   const bien = suma(codeBueno);
   const mal = suma(codeMalo);

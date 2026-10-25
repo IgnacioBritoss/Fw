@@ -36,6 +36,8 @@ const PREFIJO = "fw_tarjetas_";
  */
 const delNavegador = () => (typeof localStorage === "undefined" ? null : localStorage);
 
+/** Dónde se guardan las tarjetas de cada cuenta. Separadas por usuario: en un
+ *  navegador compartido, las de uno no son las del otro. */
 const clave = (usuarioId) => `${PREFIJO}${usuarioId || "anonimo"}`;
 
 /**
@@ -57,6 +59,8 @@ export function leerTarjetas(usuarioId, deposito = delNavegador()) {
   }
 }
 
+/** Guarda la lista. Si el navegador no deja guardar, sigue igual: las tarjetas
+ *  de esta sesión andan lo mismo, solo que no quedan para la próxima. */
 function escribir(usuarioId, lista, deposito) {
   if (!deposito) return lista;
   try {

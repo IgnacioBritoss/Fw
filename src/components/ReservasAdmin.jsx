@@ -52,6 +52,7 @@ const s = {
   vacio: { textAlign: "center", padding: "40px 0", color: "var(--fw-text-4)" },
 };
 
+/** Un importe listo para leer: "$45.000 ARS". */
 const plata = (valor, moneda = "ARS") =>
   `$${Number(valor || 0).toLocaleString("es-AR")} ${String(moneda).toUpperCase()}`;
 
@@ -76,6 +77,7 @@ function Liquidar({ reserva, onListo }) {
   if (!liquidacionPendiente(reserva)) return null;
   if (listo) return <div style={s.hecho}>{tr("admin.settleDone")}</div>;
 
+  /** Vuelve a intentar el pago al dueño de una reserva ya devuelta. */
   const mandar = async () => {
     setMandando(true);
     setFallo(null);
@@ -126,6 +128,7 @@ function CobrarGarantia({ reserva, onCobrado }) {
   const revisado = revisarCaptura({ monto, motivo, topeMinor: garantia.topeMinor });
   const errores = mostrarErrores ? revisado.errores : {};
 
+  /** Manda la retención del depósito, ya con el monto y el motivo revisados. */
   const enviar = async (evento) => {
     evento.preventDefault();
     setMostrarErrores(true);
@@ -208,7 +211,9 @@ export default function ReservasAdmin() {
   if (cargando) return <Spinner block label={tr("common.loading")} />;
   if (reservas.length === 0) return <div style={s.vacio}>{tr("admin.noBookings")}</div>;
 
+  // El nombre de una persona, probando por orden hasta encontrar algo que mostrar.
   const persona = (p) => p?.displayName || `${p?.firstName || ""} ${p?.lastName || ""}`.trim() || p?.email || "";
+  // El auto de una reserva, escrito en una línea.
   const auto = (r) => {
     const v = r.vehicle || r.listing?.vehicle || {};
     return `${v.brand || ""} ${v.model || ""} ${v.year || ""}`.trim() || r.listing?.title || "";

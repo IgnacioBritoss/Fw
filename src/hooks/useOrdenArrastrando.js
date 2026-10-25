@@ -29,6 +29,17 @@ import { useRef, useState } from "react";
 /** Cuánto hay que mover antes de que cuente como arrastre y no como un toque. */
 const UMBRAL_PX = 6;
 
+/**
+ * Reordenar una lista arrastrando, con el dedo o con el mouse.
+ *
+ * Devuelve los tres manejadores que hay que colgarle a cada elemento y cuál se
+ * está arrastrando. Quien lo usa pone `data-orden={i}` en cada uno: es lo que
+ * mira este hook para saber sobre cuál se está soltando.
+ *
+ * `onMover(desde, hasta)` se llama mientras se arrastra, para que la lista se
+ * vea moverse; `alSoltar` recién al final, y solo si algo cambió de lugar, que
+ * es cuando hay un orden nuevo para guardar.
+ */
 export function useOrdenArrastrando(onMover, alSoltar) {
   const gesto = useRef(null);
   const [arrastrando, setArrastrando] = useState(null);
@@ -36,6 +47,7 @@ export function useOrdenArrastrando(onMover, alSoltar) {
   // navegador dispara al soltar no se tome como "eligió esta foto".
   const huboArrastre = useRef(false);
 
+  /** Se apoyó el dedo sobre el elemento `i`: empieza el gesto. */
   const empezar = (e, i) => {
     // Los botones de encima (la X de borrar, el reintentar) no arrastran nada.
     if (e.target.closest?.("button")) return;
@@ -45,6 +57,7 @@ export function useOrdenArrastrando(onMover, alSoltar) {
     setArrastrando(i);
   };
 
+  /** Se está arrastrando: mira qué elemento hay debajo del dedo y mueve el orden. */
   const seguir = (e) => {
     const g = gesto.current;
     if (!g) return;
@@ -63,6 +76,7 @@ export function useOrdenArrastrando(onMover, alSoltar) {
     setArrastrando(hasta);
   };
 
+  /** Se soltó: termina el gesto y, si cambió el orden, avisa para que se guarde. */
   const terminar = (e) => {
     e.currentTarget.releasePointerCapture?.(e.pointerId);
     const movido = gesto.current?.movido === true;

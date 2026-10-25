@@ -25,6 +25,13 @@ import {
   translate,
 } from "./core";
 
+/**
+ * El idioma elegido, para toda la aplicación.
+ *
+ * Guarda cuál está activo, lo recuerda para la próxima visita y le da a todas
+ * las pantallas la función `t("clave")` con la que buscan sus textos. Los
+ * diccionarios están en es.js, en.js, pt.js, it.js y zh.js.
+ */
 export function I18nProvider({ children }) {
   const [lang, setLangState] = useState(idiomaInicial);
 

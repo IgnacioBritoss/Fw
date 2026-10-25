@@ -65,9 +65,11 @@ const s = {
   vacio: { fontSize: 13, color: "var(--fw-text-4)" },
 };
 
+/** Un importe listo para leer: "$45.000 USD". */
 const plata = (valor, moneda = "USD") =>
   `$${Number(valor || 0).toLocaleString("es-AR")} ${String(moneda).toUpperCase()}`;
 
+/** El nombre de una persona, probando por orden hasta encontrar algo que mostrar. */
 const persona = (p) =>
   p?.displayName || `${p?.firstName || ""} ${p?.lastName || ""}`.trim() || p?.email || "";
 
@@ -88,6 +90,7 @@ function Reclamo({ claim, onResuelto }) {
 
   const revisado = revisarCaptura({ monto, motivo: nota, topeMinor });
 
+  /** Resuelve el reclamo: acepta la retención o la rechaza, siempre con una nota. */
   const resolver = async (aceptar) => {
     setMostrarErrores(true);
     // Rechazar no necesita importe, pero sí la nota: las dos partes van a leer

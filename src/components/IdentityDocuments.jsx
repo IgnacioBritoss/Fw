@@ -52,6 +52,7 @@ export default function IdentityDocuments({
   doc, compact = false, urls = null, onLoadPhotos = null, loadingPhotos = false,
 }) {
   const { t: tr, lang } = useI18n();
+  // Una fecha escrita entera ("25 de octubre de 2026"), o null si no hay.
   const prettyDate = (value) => longDate(value, lang) || null;
   if (!doc) return null;
 

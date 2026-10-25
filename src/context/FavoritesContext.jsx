@@ -17,6 +17,13 @@ const FavoritesContext = createContext(null);
 
 const EMPTY_IDS = new Set();
 
+/**
+ * Los ids de los autos marcados como favoritos, para toda la aplicación.
+ *
+ * Se bajan UNA vez al entrar y se guardan acá: sin esto, cada tarjeta de cada
+ * lista preguntaría por su cuenta si es favorita, que son veinte llamadas para
+ * dibujar veinte corazones.
+ */
 export function FavoritesProvider({ children }) {
   const { user } = useAuth();
   const token = user?.accessToken || null;
@@ -52,6 +59,7 @@ export function FavoritesProvider({ children }) {
     if (!token || !listingId) return null;
 
     const wasFavorite = ids.has(listingId);
+    // Prende o apaga el corazón en pantalla, sin esperar al servidor.
     const apply = (add) => setLoaded(prev => {
       const next = new Set(prev.token === token ? prev.ids : EMPTY_IDS);
       if (add) next.add(listingId); else next.delete(listingId);

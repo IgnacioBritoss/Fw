@@ -120,6 +120,8 @@ const listingStatusColors = {
   DELETED: { background: "var(--fw-red-bg)", color: "var(--fw-red-text-2)" },
 };
 
+// El color del cartelito de estado de una cuenta: verde activa, ámbar
+// suspendida, rojo dada de baja.
 const userStatusColor = (status) => {
   if (status === "ACTIVE") return { background: "var(--fw-green-bg)", color: "var(--fw-green-text-2)" };
   if (status === "SUSPENDED") return { background: "var(--fw-amber-bg)", color: "var(--fw-amber-text)" };
@@ -358,6 +360,7 @@ export default function Admin() {
       showAlert(tr("admin.listingDeleted", { label }));
     } catch (err) { showAlert(`${tr("admin.error")}: ${err.message || ""}`, "err"); }
   };
+  /** Vuelve a publicar un aviso que el panel había dado de baja. */
   const handleRestoreListing = async (id, label) => {
     try {
       await adminUpdateListingStatus(id, "ACTIVE");
@@ -450,8 +453,12 @@ export default function Admin() {
   // Abren el modal de confirmación (en vez de alert nativo). Guardan la acción
   // a ejecutar; recién se corre cuando el usuario confirma en el modal.
   const handleDeleteListing = (id, label) => setConfirmModal({ title: tr("car.deleteListing"), msg: tr("admin.confirmDeleteListing", { label }), confirmLabel: tr("common.delete"), action: () => doDeleteListing(id, label) });
+  // Suspender: la cuenta no puede operar pero SIGUE EXISTIENDO, así que su
+  // email y su documento quedan tomados y no se puede volver a registrar.
   const handleSuspendUser = (id, name) => setConfirmModal({ title: tr("admin.suspendUser"), msg: tr("admin.confirmSuspend", { name }), confirmLabel: tr("admin.suspend"), action: () => doSetUserStatus(id, name, "SUSPENDED") });
+  // Dar de baja: el escalón de arriba de suspender.
   const handleDeactivateUser = (id, name) => setConfirmModal({ title: tr("admin.deactivateUser"), msg: tr("admin.confirmDeactivate", { name }), confirmLabel: tr("admin.deactivate"), action: () => doSetUserStatus(id, name, "DELETED") });
+  // Reactivar: la cuenta vuelve a funcionar como antes.
   const handleReactivateUser = (id, name) => setConfirmModal({ title: tr("admin.reactivateUser"), msg: tr("admin.confirmReactivate", { name }), confirmLabel: tr("admin.reactivate"), action: () => doSetUserStatus(id, name, "ACTIVE") });
 
   // Ejecuta la acción guardada en el modal y lo cierra.

@@ -33,6 +33,8 @@ function ageFrom(dateString) {
   return age;
 }
 
+/** La fecha de nacimiento más nueva que se acepta: hoy menos 18 años. Se
+ *  calcula, no se escribe: un número a mano quedaría viejo el año que viene. */
 function maxBirthDate() {
   const d = new Date();
   d.setFullYear(d.getFullYear() - 18);
@@ -62,6 +64,8 @@ export default function CompleteProfile() {
     Ver anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // Muestra un error y sacude el cartel. El contador sube con cada aviso para
+  // que el mismo error dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setIntento((n) => n + 1);

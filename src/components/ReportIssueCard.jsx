@@ -90,6 +90,7 @@ async function enviarReporte({ mensaje, archivos, usuario }) {
   return reporte;
 }
 
+/** El peso de un archivo escrito para leer: "2.4 MB" o "840 KB". */
 const pesoLegible = (bytes) =>
   bytes >= 1024 * 1024
     ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -113,6 +114,7 @@ export default function ReportIssueCard() {
   });
   const [reciénEnviado, setReciénEnviado] = useState(false);
 
+  /** Suma archivos a la lista, revisando que no sean demasiados ni muy pesados. */
   const agregarArchivos = (event) => {
     const elegidos = [...(event.target.files || [])];
     // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
@@ -129,8 +131,10 @@ export default function ReportIssueCard() {
     setArchivos([...archivos, ...elegidos]);
   };
 
+  /** Saca un archivo de la lista. */
   const quitar = (i) => setArchivos(archivos.filter((_, j) => j !== i));
 
+  /** Sube los archivos y manda el reporte. */
   const enviar = async () => {
     if (mensaje.trim().length < MINIMO_TEXTO) {
       setError(tr("report.errShort", { min: MINIMO_TEXTO })); return;

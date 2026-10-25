@@ -59,6 +59,7 @@ const MINIMO_ORIGINAL = 160;
 /** Lado de la vista previa redonda de al lado (el tamaño real de un avatar). */
 const MUESTRA = 44;
 
+/** Deja un número adentro de un rango. Se usa para que el recorte no salga de la foto. */
 const limitar = (v, min, max) => Math.min(max, Math.max(min, v));
 
 /** Hasta dónde se deja acercar esta foto en particular. */
@@ -145,11 +146,13 @@ function ladoDeVista() {
   );
 }
 
+/** El punto del medio entre varios dedos: es el centro de la pinza. */
 const medioDe = (puntos) => ({
   x: puntos.reduce((s, p) => s + p.x, 0) / puntos.length,
   y: puntos.reduce((s, p) => s + p.y, 0) / puntos.length,
 });
 
+/** Cuánto hay entre dos dedos. Lo que crece o se achica es el zoom. */
 const distanciaDe = ([a, b]) => Math.hypot(a.x - b.x, a.y - b.y);
 
 export default function AvatarEditor({
@@ -215,7 +218,7 @@ export default function AvatarEditor({
   // El marco se adapta al ancho de la pantalla. Como el encuadre está guardado en
   // fracciones, cambiar de tamaño acá no lo mueve ni un píxel.
   useEffect(() => {
-    const alCambiar = () => setLado(ladoDeVista());
+    const alCambiar = () => setLado(ladoDeVista());  // la ventana cambió de tamaño
     window.addEventListener("resize", alCambiar);
     window.addEventListener("orientationchange", alCambiar);
     return () => {
@@ -300,6 +303,7 @@ export default function AvatarEditor({
     };
   }, [zoom, centro]);
 
+  // Empieza un gesto: se anota el dedo y se guarda desde dónde arranca.
   const alBajar = (e) => {
     if (busy || !imagen) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -307,6 +311,8 @@ export default function AvatarEditor({
     anclarGesto();
   };
 
+  // El gesto en curso. Con un dedo arrastra la foto; con dos, además, hace zoom
+  // según cuánto se abrió o cerró la pinza.
   const alMover = (e) => {
     if (!punteros.current.has(e.pointerId)) return;
     punteros.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -333,6 +339,7 @@ export default function AvatarEditor({
     aplicarGesto(g.zoom, g.centro, p.x - q.x, p.y - q.y, g.zoom);
   };
 
+  // Se levantó un dedo. Si queda otro apoyado, el gesto sigue desde ahí.
   const alSoltar = (e) => {
     punteros.current.delete(e.pointerId);
     // Si quedaba un dedo apoyado, el gesto sigue desde donde está: sin volver a
@@ -360,7 +367,7 @@ export default function AvatarEditor({
   // está guardando no: la foto se está subiendo y cerrar dejaría el pedido a
   // medio camino.
   useEffect(() => {
-    const tecla = (e) => { if (e.key === "Escape" && !busy) onCancel(); };
+    const tecla = (e) => { if (e.key === "Escape" && !busy) onCancel(); };  // Escape cierra
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
   }, [busy, onCancel]);
@@ -375,6 +382,7 @@ export default function AvatarEditor({
   useEffect(() => {
     const nodo = marcoRef.current;
     if (!nodo) return undefined;
+    // La rueda acerca y aleja. `preventDefault` evita que, además, se mueva la página.
     const alGirar = (e) => {
       e.preventDefault();
       cambiarZoom(zoom - e.deltaY * 0.0015);
@@ -402,6 +410,7 @@ export default function AvatarEditor({
       );
     });
 
+  /** Recorta de verdad y le devuelve el resultado a quien abrió el editor. */
   const confirmar = async () => {
     if (!imagen || busy) return;
     onConfirm(await recortar(), visibility);

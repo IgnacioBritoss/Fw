@@ -124,6 +124,8 @@ export default function EscanerQR({ onLeido, onCerrar, onAMano }) {
     let ocupado = false;          // el lector nativo es asincrónico: sin esto
     let ultimo = null;            // se pisan dos lecturas y se lee dos veces
 
+    // Un cuadro: se copia lo que ve la cámara a un lienzo y se busca un QR
+    // adentro. Corre varias veces por segundo mientras el escáner está abierto.
     const mirar = async () => {
       if (ocupado || !vivo) return;
       const v = video.current;
@@ -162,6 +164,7 @@ export default function EscanerQR({ onLeido, onCerrar, onAMano }) {
       }
     };
 
+    // Pide permiso de cámara, la prende y empieza a mirar.
     const arrancar = async () => {
       try {
         if (!navigator?.mediaDevices?.getUserMedia) throw new TypeError("sin getUserMedia");

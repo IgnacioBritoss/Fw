@@ -46,6 +46,8 @@ const CUERPO =
 // estirado o con aire muerto a los costados.
 const PROPORCION = 48 / 22;
 
+/** El autito solo, sin la palabra. Se usa donde no entra el logo entero: el
+ *  ícono de la pestaña, el botón del asistente, la barra angosta. */
 export function LogoMark({ size = 20, accent = "#0f6ce6" }) {
   return (
     <svg width={Math.round(size * PROPORCION)} height={size} viewBox="0 0 48 22"

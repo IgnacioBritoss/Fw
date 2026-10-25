@@ -138,11 +138,13 @@ export default function Billetera({ onCambio, compacta = false }) {
   // puede hacer en una pantalla vacía.
   const [agregando, setAgregando] = useState(() => leerTarjetas(usuarioId).length === 0);
 
+  /** Deja la lista nueva en pantalla y le avisa a quien abrió la billetera. */
   const actualizar = (lista) => {
     setTarjetas(lista);
     onCambio?.(lista);
   };
 
+  /** Guarda una tarjeta y cierra el formulario. */
   const guardar = (ficha) => {
     actualizar(agregarTarjeta(usuarioId, ficha));
     setAgregando(false);

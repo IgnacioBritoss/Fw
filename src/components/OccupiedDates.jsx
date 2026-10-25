@@ -60,6 +60,7 @@ function firstFreeDay(days) {
   return null;
 }
 
+/** Una fecha corta: "25 oct". */
 const short = (day) => format(parseISO(day), "d MMM", { locale: es });
 
 export default function OccupiedDates({ days = [], isMobile = false }) {

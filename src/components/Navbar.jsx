@@ -20,6 +20,7 @@ export default function Navbar() {
 
   // Cierra el menú desplegable si el usuario hace clic fuera de él.
   useEffect(() => {
+    // Un clic afuera del menú lo cierra.
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
     };

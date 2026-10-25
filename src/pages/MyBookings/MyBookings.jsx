@@ -116,6 +116,8 @@ function getVehicleInfo(booking) {
   };
 }
 
+// El nombre de una persona, probando por orden: el que eligió mostrar, nombre y
+// apellido, y como último recurso el email. Nunca devuelve vacío si hay alguien.
 function getPersonName(person) {
   if (!person) return "";
   return person.displayName || `${person.firstName || ""} ${person.lastName || ""}`.trim() || person.email || "";
@@ -224,6 +226,7 @@ export default function MyBookings() {
   */
   const [reportando, setReportando] = useState(null);
 
+  /** Deja la constancia del retiro que no pasó, del lado que corresponda. */
   const confirmarNoShow = async () => {
     const reserva = reportando;
     if (!reserva) return;
@@ -234,9 +237,12 @@ export default function MyBookings() {
     setReportando(null);
   };
 
+  // Las tres acciones del dueño. `runAction` se encarga de lo mismo en las tres:
+  // deja el botón en "...", corre la llamada, y al terminar vuelve a bajar las
+  // reservas para que la pantalla muestre el estado nuevo.
   const handleAccept = (id) => runAction(`${id}-accept`, () => acceptBooking(id));
-  const handleReject = (id) => runAction(`${id}-reject`, () => rejectBooking(id));
-  const handleReady = (id) => runAction(`${id}-ready`, () => markReadyForPickup(id));
+  const handleReject = (id) => runAction(`${id}-reject`, () => rejectBooking(id));   // la rechaza
+  const handleReady = (id) => runAction(`${id}-ready`, () => markReadyForPickup(id)); // auto listo
   // Antes esto era un `window.confirm`: el cartel gris del navegador, en el
   // idioma del navegador y con "Aceptar" a un centímetro de "Cancelar". Para
   // algo que no se puede deshacer es poco. Ahora abre el cartel de la app, que
@@ -245,6 +251,7 @@ export default function MyBookings() {
   // baja devuelve todo, siempre. Ver services/cancelacion.js.
   const handleCancel = (id, laCancelaElDueno) => setCancelando({ id, laCancelaElDueno });
 
+  /** Cancela de verdad, ya con la frase escrita en el cartel de confirmación. */
   const confirmarCancelacion = async () => {
     const id = cancelando?.id;
     if (!id) return;
@@ -323,6 +330,15 @@ export default function MyBookings() {
     const showPickupQR = b.status === "READY_FOR_PICKUP";
     const showReturnQR = ["IN_PROGRESS", "RETURN_PENDING"].includes(b.status);
 
+    /*
+      LOS BOTONES DE ESTA RESERVA.
+
+      Se arman acá arriba y se dibujan más abajo, en dos lugares distintos
+      (escritorio y celular), para no escribir la misma lista dos veces. Cuál
+      aparece lo deciden las variables de arriba: cada una es una condición
+      sobre el estado de la reserva y sobre si quien mira es el dueño o el que
+      alquila.
+    */
     const buttons = (
       <div style={s.btnRow}>
         {canAcceptOwner && (
@@ -413,6 +429,10 @@ export default function MyBookings() {
       </div>
     );
 
+    /*
+      LOS DATOS DE LA RESERVA: el auto, las fechas, la otra persona y el total.
+      Mismo motivo que los botones: se arma una vez y se usa en los dos diseños.
+    */
     const details = (
       <>
         <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 15, marginBottom: 4, color: "var(--fw-text)" }}>

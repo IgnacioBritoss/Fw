@@ -97,8 +97,12 @@ export function labelFor(tr, keys, labels, code) {
   // translate() devuelve la clave cuando no la encuentra: ahí se usa el respaldo.
   return text === key ? (labels[code] || code) : text;
 }
+// Los tres pasan del código del backend ("SUV", "MANUAL", "GASOLINE") al texto
+// en el idioma elegido. Si falta la traducción, cae en el nombre en castellano.
 export const categoryLabel = (tr, code) => labelFor(tr, CATEGORY_KEYS, CATEGORY_LABELS, code);
+/** La caja: "Manual" o "Automático". */
 export const transmissionLabel = (tr, code) => labelFor(tr, TRANSMISSION_KEYS, TRANSMISSION_LABELS, code);
+/** El combustible: nafta, diésel, híbrido, eléctrico. */
 export const fuelLabel = (tr, code) => labelFor(tr, FUEL_KEYS, FUEL_LABELS, code);
 
 // Las mismas tablas al revés: de lo que elige el usuario al código del backend.

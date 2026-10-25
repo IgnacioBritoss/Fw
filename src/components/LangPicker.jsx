@@ -28,6 +28,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LANGUAGES, useI18n } from "../i18n/core";
 
+// El globo terráqueo del selector de idioma.
 const Globo = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -48,6 +49,7 @@ export default function LangPicker({ tono = "claro", style }) {
     // `pointerdown` y no `click`: si se escucha el clic, tocar el botón que abre
     // el menú lo cierra en el mismo gesto y parece que no pasa nada.
     const afuera = (e) => { if (!caja.current?.contains(e.target)) setAbierto(false); };
+    // Escape cierra la lista.
     const tecla = (e) => { if (e.key === "Escape") setAbierto(false); };
     document.addEventListener("pointerdown", afuera);
     window.addEventListener("keydown", tecla);

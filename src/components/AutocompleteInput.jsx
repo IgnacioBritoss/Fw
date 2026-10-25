@@ -56,6 +56,7 @@ export default function AutocompleteInput({
     ? completar(value, opciones)
     : { resto: "", completa: "" };
 
+  /** Toma la sugerencia que está en gris y la escribe completa en el campo. */
   const aceptar = () => {
     if (!sugerencia) return false;
     // Se pone la palabra de la lista y no lo tecleado + el resto: así "cordo"
@@ -64,6 +65,7 @@ export default function AutocompleteInput({
     return true;
   };
 
+  /** Tab y flecha derecha aceptan la sugerencia; Escape la descarta. */
   const teclas = (e) => {
     if (e.key === "Tab" && sugerencia) {
       // Solo se queda con el Tab cuando hay algo para completar; si no, deja

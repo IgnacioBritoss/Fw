@@ -199,6 +199,8 @@ export default function Booking() {
   const avisoConducir = bloqueoConducir || avisoDeConducir(user);
   const noPuedeConducir = avisoConducir?.tono === "bloqueo";
 
+  // El cartel de "verificá tu cuenta". Se arma acá y se dibuja más abajo en dos
+  // lugares, según el diseño: no es una pantalla aparte, es una fila más.
   const avisoVerificacion = (needsVerification || (user && !isVerified)) && (
     <div style={{ background: "var(--fw-orange-bg)", border: "1.5px solid var(--fw-orange-line)", borderRadius: 10, padding: "12px 16px", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div style={{ fontSize: 13, color: "var(--fw-orange-text)" }}>{tr("booking.needVerified")}</div>

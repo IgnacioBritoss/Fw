@@ -37,6 +37,7 @@ export default function CurrencyPicker({ tono = "claro", style }) {
     if (!abierto) return;
     // `pointerdown` y no `click`: ver la nota en LangPicker.
     const afuera = (e) => { if (!caja.current?.contains(e.target)) setAbierto(false); };
+    // Escape cierra la lista.
     const tecla = (e) => { if (e.key === "Escape") setAbierto(false); };
     document.addEventListener("pointerdown", afuera);
     window.addEventListener("keydown", tecla);

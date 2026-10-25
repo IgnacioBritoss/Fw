@@ -14,9 +14,17 @@
 // ============================================================================
 import { useEffect, useState } from "react";
 
+/** ¿La página está en modo oscuro ahora mismo? */
 const estaOscuro = () =>
   typeof document !== "undefined" && document.documentElement.classList.contains("fw-dark");
 
+/**
+ * Avisa cuándo se prende o se apaga el modo oscuro.
+ *
+ * Hace falta para lo que NO se pinta con CSS: un mapa, un gráfico o un canvas
+ * tienen que redibujarse con otros colores, y para eso necesitan enterarse del
+ * cambio desde JavaScript.
+ */
 export function useModoOscuro() {
   const [oscuro, setOscuro] = useState(estaOscuro);
 

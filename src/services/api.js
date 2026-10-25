@@ -58,6 +58,7 @@ function getToken() {
 // Rutas donde un 401 es una respuesta esperada ("contraseña incorrecta"), no una
 // sesión vencida: acá NO hay que borrar la sesión ni redirigir al login.
 const AUTH_ROUTES = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"];
+/** ¿Esta ruta es una de las de arriba? */
 const isAuthRoute = (path) => AUTH_ROUTES.some(route => path.startsWith(route));
 
 // Función central: hace un pedido HTTP al backend y devuelve la respuesta en JSON.
@@ -302,12 +303,28 @@ const campoDesconocido = (err, campo) =>
   err?.status === 400 &&
   new RegExp(`${campo}\\b[^·]*should not exist`, "i").test(String(err?.message ?? ""));
 
+/**
+ * Guarda cambios en el perfil propio.
+ *
+ * Cómo funciona, paso a paso:
+ *  1. Se queda solo con los campos que el perfil deja editar (`CAMPOS_EDITABLES`),
+ *     así nada de lo que mande una pantalla por error llega al servidor.
+ *  2. Saca los campos que YA rebotaron antes en esta sesión por no existir en el
+ *     backend (`desconocidos`).
+ *  3. Manda el PATCH. Si el backend contesta "ese campo no existe", lo anota y
+ *     vuelve a intentar sin él, hasta que pase.
+ *
+ * Es un bucle y no un intento suelto porque el front y el backend se publican
+ * por separado: mientras el backend viejo sigue arriba, un campo nuevo haría
+ * fallar el guardado ENTERO y la persona no podría cambiar ni su teléfono.
+ */
 export async function updateMe(fields = {}) {
   const body = {};
   for (const key of CAMPOS_EDITABLES) {
     if (fields[key] !== undefined) body[key] = fields[key];
   }
 
+  /** Un intento de guardado, con el cuerpo que se le pase. */
   const enviar = (payload) =>
     apiFetch("/users/me", { method: "PATCH", body: JSON.stringify(payload) });
 
@@ -342,11 +359,15 @@ export async function updateMe(fields = {}) {
 export async function createVehicle(data) {
   return apiFetch("/vehicles", { method: "POST", body: JSON.stringify(data) });
 }
+/** Los autos cargados por mí, tenga cada uno un aviso publicado o no. */
 export async function getMyVehicles() { return apiFetch("/vehicles/me"); }
+/** Los datos de un auto por su id. */
 export async function getVehicleById(id) { return apiFetch(`/vehicles/${id}`); }
+/** Cambia los datos de un auto (solo los campos que se manden). */
 export async function updateVehicle(id, data) {
   return apiFetch(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }
+/** Borra un auto. El backend no deja si tiene un aviso o reservas vivas. */
 export async function deleteVehicle(id) {
   return apiFetch(`/vehicles/${id}`, { method: "DELETE" });
 }
@@ -372,7 +393,9 @@ export async function getListings(params = {}) {
   const qs = search.toString();
   return apiFetch(`/listings${qs ? `?${qs}` : ""}`);
 }
+/** Mis avisos, publicados y pausados. Es lo que muestra "Mis autos". */
 export async function getMyListings() { return apiFetch("/listings/me"); }
+/** Un aviso entero: el auto, el precio, la ubicación y el dueño. */
 export async function getListingById(id) { return apiFetch(`/listings/${id}`); }
 
 // Disponibilidad de una publicación entre dos fechas. El backend espera
@@ -390,12 +413,14 @@ export async function getListingAvailability(listingId, startDate, endDate) {
 export async function getAvailabilityBlocks(listingId) {
   return apiFetch(`/listings/${listingId}/availability-blocks`);
 }
+/** Bloquea un rango de fechas: en esos días el auto no aparece disponible. */
 export async function createAvailabilityBlock(listingId, { startDate, endDate, reason }) {
   return apiFetch(`/listings/${listingId}/availability-blocks`, {
     method: "POST",
     body: JSON.stringify({ startDate, endDate, ...(reason ? { reason } : {}) }),
   });
 }
+/** Levanta un bloqueo: esos días vuelven a estar disponibles. */
 export async function deleteAvailabilityBlock(listingId, blockId) {
   return apiFetch(`/listings/${listingId}/availability-blocks/${blockId}`, { method: "DELETE" });
 }
@@ -404,10 +429,19 @@ export async function deleteAvailabilityBlock(listingId, blockId) {
 // Se guardan en la base, así que los favoritos siguen estando al entrar desde
 // otro dispositivo.
 export async function getMyFavorites() { return apiFetch("/favorites/me"); }
+/**
+ * Solo los ids de mis favoritos.
+ *
+ * Existe aparte de getMyFavorites() porque para pintar el corazón en cada
+ * tarjeta alcanza con saber si el id está o no: traer los avisos enteros sería
+ * bajar decenas de publicaciones para dibujar un ícono.
+ */
 export async function getMyFavoriteIds() { return apiFetch("/favorites/me/ids"); }
+/** Agrega un aviso a favoritos. */
 export async function addFavorite(listingId) {
   return apiFetch("/favorites", { method: "POST", body: JSON.stringify({ listingId }) });
 }
+/** Saca un aviso de favoritos. */
 export async function removeFavorite(listingId) {
   return apiFetch(`/favorites/${listingId}`, { method: "DELETE" });
 }
@@ -426,12 +460,15 @@ export async function removeFavorite(listingId) {
 const ESPERA_CONSULTA = 10_000;
 export const ESPERA_REVISION = 70_000;
 
+/** El checklist de verificación: qué pasos están hechos y cuáles faltan. */
 export async function getVerificationStatus() {
   return apiFetch("/verification/me/status", { timeoutMs: ESPERA_CONSULTA });
 }
+/** Pide que manden el código por SMS al teléfono cargado en el perfil. */
 export async function requestPhoneCode() {
   return apiFetch("/verification/phone/request", { method: "POST" });
 }
+/** Confirma el teléfono con el código que llegó por SMS. */
 export async function confirmPhoneCode(code) {
   return apiFetch("/verification/phone/confirm", { method: "POST", body: JSON.stringify({ code }) });
 }
@@ -558,9 +595,11 @@ export async function getIdentityDiagnostics() {
   return apiFetch("/verification/identity/diagnostics", { timeoutMs: ESPERA_CONSULTA });
 }
 
+/** Cambia un aviso: precio, descripción, ubicación, estado. */
 export async function updateListing(id, data) {
   return apiFetch(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }
+/** Borra un aviso. El auto queda cargado: lo que se da de baja es el alquiler. */
 export async function deleteListing(id) {
   return apiFetch(`/listings/${id}`, { method: "DELETE" });
 }
@@ -625,6 +664,14 @@ let backendEntiendeIdioma = true;
 const rechazaElIdioma = (err) =>
   err?.status === 400 && /\blang\b/i.test(String(err?.message ?? ""));
 
+/**
+ * Un POST que intenta mandar el idioma y, si el backend no lo entiende, lo saca.
+ *
+ * Primero prueba con `lang`. Si vuelve el 400 que delata que ese campo no
+ * existe, lo anota en `backendEntiendeIdioma` y reintenta sin él: la llamada
+ * sale igual, solo que el motivo vuelve en castellano. Ver el comentario de
+ * arriba, que explica por qué hace falta esta gimnasia.
+ */
 async function postConIdioma(path, payload, base) {
   if (backendEntiendeIdioma) {
     try {
@@ -706,9 +753,11 @@ export async function aiChat(messages, temperature, { json } = {}) {
     }),
   }));
 }
+/** Revisa una foto: ¿es un vehículo real? Devuelve además sus rasgos. */
 export async function aiVision(imageDataUrl) {
   return conServicioDeIa((base) => postConIdioma("/ai/vision", { imageDataUrl }, base));
 }
+/** Pasa a texto una nota de voz ya subida a Cloudinary. */
 export async function aiTranscribe(audioUrl) {
   return conServicioDeIa((base) => apiFetch("/ai/transcribe", {
     base,
@@ -750,6 +799,7 @@ export async function aiQuestionsTop() {
 export async function getListingReviews(listingId) {
   return apiFetch(`/listings/${listingId}/reviews`);
 }
+/** Las reseñas que recibió una persona, para mostrar en su perfil. */
 export async function getUserReviews(userId) {
   return apiFetch(`/users/${userId}/reviews`);
 }
@@ -818,9 +868,11 @@ export async function createReport({
     }),
   });
 }
+/** Los reportes que hice yo, con en qué estado quedó cada uno. */
 export async function getMyReports() {
   return apiFetch("/reports/me");
 }
+/** Los reportes de todo el sitio, para el panel de admin. Se puede filtrar por estado. */
 export async function getAdminReports(status) {
   return apiFetch(`/admin/reports${status ? `?status=${status}` : ""}`);
 }
@@ -836,6 +888,7 @@ export async function getAdminReports(status) {
 export async function getAdminOpenReportsCount() {
   return apiFetch("/admin/reports/open-count");
 }
+/** Cierra un reporte: el admin elige qué hacer y puede dejar una nota. */
 export async function resolveReport(reportId, action, note) {
   return apiFetch(`/admin/reports/${reportId}/resolve`, {
     method: "PATCH",
@@ -850,18 +903,21 @@ export async function resolveReport(reportId, action, note) {
 export async function getPriceChangeStatus(listingId) {
   return apiFetch(`/listings/${listingId}/price-change`);
 }
+/** Paso 1 del cambio de precio: lo pide y el backend manda el código por email. */
 export async function requestPriceChange(listingId, pricePerDay) {
   return apiFetch(`/listings/${listingId}/price-change`, {
     method: "POST",
     body: JSON.stringify({ pricePerDay }),
   });
 }
+/** Paso 2: con el código del email, el precio nuevo queda aplicado. */
 export async function confirmPriceChange(listingId, code) {
   return apiFetch(`/listings/${listingId}/price-change/confirm`, {
     method: "POST",
     body: JSON.stringify({ code }),
   });
 }
+/** Da de baja un cambio de precio pedido y todavía sin confirmar. */
 export async function cancelPriceChange(listingId) {
   return apiFetch(`/listings/${listingId}/price-change`, { method: "DELETE" });
 }
@@ -875,17 +931,29 @@ export async function createBooking({ listingId, startDate, endDate }) {
     body: JSON.stringify({ listingId, startDate, endDate }),
   });
 }
+/** Todas mis reservas: las que pedí y las que recibí como dueño. */
 export async function getMyBookings() { return apiFetch("/bookings/me"); }
+/** Una reserva entera: fechas, importes, estado y las dos personas. */
 export async function getBookingById(id) { return apiFetch(`/bookings/${id}`); }
+/**
+ * Cancela una reserva. La puede cancelar cualquiera de los dos.
+ *
+ * Qué se devuelve y qué se retiene lo decide el servidor según cuánto falte
+ * para el retiro; acá solo se avisa que se cancela y por qué. Ver
+ * services/cancelacion.js, que es lo que le muestra al usuario, ANTES de
+ * cancelar, lo que va a pasar.
+ */
 export async function cancelBooking(id, reason) {
   return apiFetch(`/bookings/${id}/cancel`, {
     method: "PATCH",
     body: JSON.stringify(reason ? { reason } : {}),
   });
 }
+/** El dueño acepta la reserva: recién ahí se puede pagar. */
 export async function acceptBooking(id) {
   return apiFetch(`/bookings/${id}/accept`, { method: "PATCH" });
 }
+/** El dueño rechaza la reserva. */
 export async function rejectBooking(id) {
   return apiFetch(`/bookings/${id}/reject`, { method: "PATCH" });
 }
@@ -921,10 +989,13 @@ export async function reportarQueNoEntrego(id) {
   return apiFetch(`/bookings/${id}/owner-no-show`, { method: "POST" });
 }
 
+/** Los códigos de retiro y devolución. A cada uno le devuelve solo el suyo. */
 export async function getBookingTokens(id) { return apiFetch(`/bookings/${id}/tokens`); }
+/** El dueño escanea el código del inquilino: el auto quedó entregado. */
 export async function confirmPickup(id, token) {
   return apiFetch(`/bookings/${id}/confirm-pickup`, { method: "POST", body: JSON.stringify({ token }) });
 }
+/** El inquilino escanea el código del dueño: el auto quedó devuelto y la reserva se completa. */
 export async function confirmReturn(id, token) {
   return apiFetch(`/bookings/${id}/confirm-return`, { method: "POST", body: JSON.stringify({ token }) });
 }
@@ -937,9 +1008,11 @@ export async function confirmReturn(id, token) {
 export async function createSenaIntent(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/sena-intent`, { method: "POST" });
 }
+/** Tramo 2: el saldo. El servidor exige que la seña ya esté cobrada. */
 export async function createBalanceIntent(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/balance-intent`, { method: "POST" });
 }
+/** Tramo 3: el depósito de garantía. No se cobra, se RETIENE y se libera al devolver el auto. */
 export async function createDepositHold(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/deposit-hold`, { method: "POST" });
 }
@@ -962,18 +1035,26 @@ export async function crearIntentoDePago(bookingId, kind) {
   if (kind === "DEPOSIT_HOLD") return createDepositHold(bookingId);
   return createSenaIntent(bookingId);
 }
+/**
+ * Da el cobro por pagado SIN pasar por la tarjeta. Solo para la demo.
+ *
+ * Funciona únicamente si el backend está en modo simulación
+ * (PAYMENTS_PROVIDER=mock). En producción el servidor lo rechaza.
+ */
 export async function mockConfirmPayment(bookingId, kind) {
   return apiFetch(`/payments/bookings/${bookingId}/mock-confirm`, {
     method: "POST",
     body: JSON.stringify(kind ? { kind } : {}),
   });
 }
+/** El espejo del anterior: hace fallar el cobro a propósito, para probar el camino del error. */
 export async function mockFailPayment(bookingId, kind) {
   return apiFetch(`/payments/bookings/${bookingId}/mock-fail`, {
     method: "POST",
     body: JSON.stringify(kind ? { kind } : {}),
   });
 }
+/** Cómo viene el pago de una reserva: qué tramo está cobrado y cuál es el que sigue. */
 export async function getBookingPaymentStatus(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/status`);
 }
@@ -1066,6 +1147,13 @@ export async function adminResolverReclamo(claimId, { aceptar, amountMinor, nota
   });
 }
 
+/**
+ * El movimiento del dinero de una reserva, línea por línea.
+ *
+ * Es lo que alimenta el comprobante: cada seña, saldo, retención, devolución y
+ * pago al dueño con su fecha y su importe. Lo arma el servidor, que es el
+ * único que sabe lo que de verdad pasó con la plata.
+ */
 export async function getBookingLedger(bookingId) {
   return apiFetch(`/payments/bookings/${bookingId}/ledger`);
 }
@@ -1124,9 +1212,11 @@ export async function captureDeposit(bookingId, amountMinor, reason) {
 export async function getBookingContract(bookingId) {
   return apiFetch(`/contracts/bookings/${bookingId}`);
 }
+/** Acepta el contrato de alquiler. Sin esto no se puede retirar el auto. */
 export async function acceptBookingContract(bookingId) {
   return apiFetch(`/contracts/bookings/${bookingId}/accept`, { method: "POST" });
 }
+/** La dirección del PDF del contrato, para abrirlo o descargarlo. */
 export function getBookingContractPdfUrl(bookingId) {
   return `${BASE_URL}/contracts/bookings/${bookingId}/pdf`;
 }
@@ -1140,17 +1230,22 @@ export async function startConversation(listingId) {
     body: JSON.stringify({ listingId }),
   });
 }
+/** Mis chats, con el último mensaje y cuántos tengo sin leer. */
 export async function getMyConversations() { return apiFetch("/conversations/me"); }
+/** Los datos de un chat: con quién es y sobre qué auto. */
 export async function getConversation(id) { return apiFetch(`/conversations/${id}`); }
+/** Los mensajes de un chat, del más viejo al más nuevo. */
 export async function getConversationMessages(id) {
   return apiFetch(`/conversations/${id}/messages`);
 }
+/** Manda un mensaje a un chat. */
 export async function sendMessage(id, data) {
   return apiFetch(`/conversations/${id}/messages`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
+/** Marca el chat como leído: apaga el globito de mensajes sin leer. */
 export async function markConversationRead(id) {
   return apiFetch(`/conversations/${id}/read`, { method: "PATCH" });
 }
@@ -1159,6 +1254,7 @@ export async function markConversationRead(id) {
 // Solo para usuarios con rol admin. Permiten moderar la plataforma:
 // aprobar/rechazar publicaciones y cambiar estado/rol de los usuarios.
 export async function adminGetListings() { return apiFetch("/admin/listings"); }
+/** Todas las cuentas del sitio, con su rol y su estado. */
 export async function adminGetUsers() { return apiFetch("/admin/users"); }
 
 /**
@@ -1195,6 +1291,7 @@ export async function adminGetSettings() { return apiFetch("/admin/settings"); }
 export async function adminDeleteUser(id) {
   return apiFetch(`/admin/users/${id}`, { method: "DELETE" });
 }
+/** Aprueba, pausa o da de baja un aviso desde el panel. */
 export async function adminUpdateListingStatus(id, status) {
   return apiFetch(`/admin/listings/${id}/status`, {
     method: "PATCH",
@@ -1212,6 +1309,7 @@ export async function adminUpdateListingStatus(id, status) {
 export async function adminGetFraudSignals() {
   return apiFetch("/admin/fraud-signals");
 }
+/** Cierra una alerta de fraude: el admin la revisó y deja escrito qué decidió. */
 export async function adminResolveFraudSignal(id, note) {
   return apiFetch(`/admin/fraud-signals/${id}/resolve`, {
     method: "POST",
@@ -1219,12 +1317,14 @@ export async function adminResolveFraudSignal(id, note) {
   });
 }
 
+/** Suspende o reactiva una cuenta. Suspender no la borra: su email y su documento siguen tomados. */
 export async function adminUpdateUserStatus(id, status) {
   return apiFetch(`/admin/users/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 }
+/** Cambia el rol de una cuenta (usuario o administrador). */
 export async function adminUpdateUserRole(id, role) {
   return apiFetch(`/admin/users/${id}/role`, {
     method: "PATCH",
@@ -1242,6 +1342,7 @@ export async function adminGetVerifications() { return apiFetch("/admin/verifica
 // necesita un administrador para atender un reclamo: la reserva de la que le
 // están hablando, con quién la hizo y de quién era el auto.
 export async function adminGetBookings() { return apiFetch("/admin/bookings"); }
+/** Una reserva vista desde el panel, con las dos partes y el auto. */
 export async function adminGetBooking(id) { return apiFetch(`/admin/bookings/${id}`); }
 
 /**
@@ -1256,6 +1357,7 @@ export async function adminGetBooking(id) { return apiFetch(`/admin/bookings/${i
 export async function adminGetVerificationDocuments(id) {
   return apiFetch(`/admin/verifications/${id}/documents`);
 }
+/** Aprueba o rechaza una verificación de identidad, con una nota opcional. */
 export async function adminReviewVerification(id, status, notes) {
   return apiFetch(`/admin/verifications/${id}/review`, {
     method: "PATCH",

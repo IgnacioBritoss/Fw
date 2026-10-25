@@ -62,6 +62,7 @@ const DIENTE_HONDO = 6;
   es una arcotangente. El `from 135deg` deja el centro de la cuña en 45.
 */
 const MEDIA_CUNA = (Math.atan((DIENTE_ANCHO / 2) / DIENTE_HONDO) * 180) / Math.PI;
+// Dónde empieza y dónde termina cada diente del borde dentado del comprobante.
 const CUNA_DESDE = (45 - MEDIA_CUNA).toFixed(2);
 const CUNA_HASTA = (45 + MEDIA_CUNA).toFixed(2);
 

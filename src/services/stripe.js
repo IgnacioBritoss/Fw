@@ -111,6 +111,8 @@ export function cargarStripe() {
  * de crear los campos, que es lo que los hace seguir el modo elegido.
  */
 export function aparienciaDeLosCampos() {
+  // Lee una variable de color del tema actual. Es lo que hace que los campos
+  // de Stripe sigan el modo claro u oscuro del sitio.
   const leer = (nombre, porDefecto) => {
     if (typeof window === "undefined") return porDefecto;
     const valor = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();

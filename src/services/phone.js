@@ -74,6 +74,7 @@ export const PAISES = [
 /** El país que viene elegido de entrada. */
 export const PAIS_POR_DEFECTO = "AR";
 
+/** El país por su código ISO ("AR"), o el primero de la lista si no está. */
 export const buscarPais = (iso) =>
   PAISES.find((p) => p.iso === iso) ?? PAISES[0];
 
@@ -111,6 +112,7 @@ export function normalizeArgentinePhone(value) {
   return null;
 }
 
+/** ¿Es un celular argentino válido? */
 export const isArgentinePhone = (value) => normalizeArgentinePhone(value) !== null;
 
 /**
@@ -135,6 +137,7 @@ export function normalizePhone(dial, local) {
   return `+${paisDigits}${locales}`;
 }
 
+/** ¿Este número cierra para el país elegido? */
 export const isValidPhone = (dial, local) => normalizePhone(dial, local) !== null;
 
 /** Cuántos dígitos locales entran como máximo para este país. */

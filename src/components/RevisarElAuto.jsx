@@ -118,6 +118,7 @@ const s = {
   nota: { fontSize: 12, color: "var(--fw-text-4)", lineHeight: 1.6, marginTop: 10 },
 };
 
+/** Un importe listo para leer: "$45.000 USD". */
 const plata = (valor, moneda = "USD") =>
   `$${Number(valor || 0).toLocaleString("es-AR")} ${String(moneda).toUpperCase()}`;
 
@@ -145,6 +146,8 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
   const [fotos, setFotos] = useState([]);           // { id, dataUrl }
   const [mostrarErrores, setMostrarErrores] = useState(false);
 
+  // Muestra un error y sacude el cartel. El contador sube siempre, así el mismo
+  // error dos veces seguidas vuelve a sacudirse en vez de quedarse quieto.
   const avisar = (mensaje) => {
     setFallo(mensaje);
     if (mensaje) setAvisoNro(n => n + 1);
@@ -190,6 +193,7 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
     }
   };
 
+  /** "El auto volvió bien": cierra la revisión sin reclamo y libera el depósito. */
   const todoBien = async () => {
     setMandando(true);
     avisar("");
@@ -205,6 +209,7 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
     }
   };
 
+  /** Manda el reclamo con las fotos y el detalle del daño. */
   const mandarReclamo = async () => {
     setMostrarErrores(true);
     if (!revisado.ok || mandando) return;
@@ -234,6 +239,8 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
     }
   };
 
+  // Qué se ve adentro del cartel, según el momento: cargando, el formulario de
+  // revisión, o el resultado una vez enviado.
   const cuerpo = () => {
     if (cargando) return <Spinner block label={tr("common.loading")} />;
 
@@ -255,6 +262,7 @@ export default function RevisarElAuto({ bookingId, moneda, onCerrar, onListo }) 
       );
     }
 
+    // Los reclamos ya hechos sobre esta reserva, con el texto ya traducido.
     const yaReclamado = (estado?.claims || []).map(c => ({ ...c, leido: comoSeLeeElReclamo(c) }));
 
     return (

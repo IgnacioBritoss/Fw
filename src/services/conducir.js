@@ -34,6 +34,8 @@
 //  fecha. Se muestran tal cual vienen.
 // ============================================================================
 
+/** Lo que venga, como lista. Un campo que el servidor no mandó queda en una
+ *  lista vacía en vez de romper el recorrido. */
 const lista = (x) => (Array.isArray(x) ? x : []);
 
 /**
@@ -146,6 +148,11 @@ export const CAMPOS_DE_DOCUMENTOS = [
   { campo: "dniExpiresAt", clave: "docs.dniExpires", fecha: true },
 ];
 
+/**
+ * Los vencimientos que el servidor leyó del DNI y de la licencia, listos para
+ * mostrar. Los que no se saben no se muestran: una fecha vacía al lado de
+ * "vence el" se lee como un error de la página.
+ */
 export function datosDeDocumentos(user) {
   return CAMPOS_DE_DOCUMENTOS
     .map((x) => ({ ...x, valor: user?.[x.campo] ?? null }))

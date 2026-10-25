@@ -19,6 +19,8 @@
 // ============================================================================
 
 export default function Spinner({ size = 20, color = "var(--fw-blue)", label, block = false }) {
+  // El anillo que gira. Se arma aparte para poder devolverlo solo o centrado en
+  // un bloque, según cómo se haya pedido.
   const anillo = (
     <span
       style={{

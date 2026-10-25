@@ -26,6 +26,7 @@ import AuthShell from "../../components/AuthShell";
 import { useI18n } from "../../i18n/core";
 import { useSacudida } from "../../anim";
 
+// El sobre que acompaña al cartel de "te mandamos un mail".
 const MailIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f6ce6"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -54,6 +55,8 @@ export default function ForgotPassword() {
     Ver anim/index.js.
   */
   const [intento, setIntento] = useState(0);
+  // Muestra un error y hace que el cartel se sacuda. El contador sube con cada
+  // aviso para que el MISMO error dos veces seguidas vuelva a sacudirse.
   const avisar = (mensaje) => {
     setError(mensaje);
     if (mensaje) setIntento((n) => n + 1);
@@ -62,6 +65,13 @@ export default function ForgotPassword() {
   const [sentTo, setSentTo] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Pide el mail de recuperación.
+   *
+   * Conteste lo que conteste el servidor, la pantalla dice lo mismo: "si esa
+   * dirección existe, te llegó un mail". Decir "esa cuenta no existe" sería
+   * una forma de averiguar quién tiene cuenta en el sitio.
+   */
   const handleSubmit = async () => {
     const address = email.trim();
     if (!address) { avisar(t("reg.errEmail")); return; }
@@ -79,6 +89,8 @@ export default function ForgotPassword() {
     setSentTo(address);
   };
 
+  // El enlace de "volver al inicio de sesión", que se dibuja en los dos estados
+  // de esta pantalla.
   const volver = (
     <div style={{ textAlign: "center" }}>
       <Link to="/login" style={{ color: "var(--fw-blue)", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>

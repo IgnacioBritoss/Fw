@@ -51,6 +51,8 @@ export function tramosDelPago({
 } = {}) {
   const lista = Array.isArray(records) ? records : [];
 
+  // El movimiento más NUEVO de ese tramo. Puede haber varios —un intento que
+  // falló y otro que salió bien—, y el que vale es el último.
   const registroDe = (kind) => lista
     .filter(r => r.kind === kind)
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0] || null;

@@ -288,6 +288,8 @@ export default function Search() {
   */
   useEffect(() => {
     if (!showMap || isMobile) return;
+    // Arma el mapa. Devuelve sin hacer nada si Leaflet todavía no cargó o si
+    // el mapa ya estaba hecho.
     const init = () => {
       if (!mapRef.current || mapInstanceRef.current) return;
       const L = window.L; if (!L) return;

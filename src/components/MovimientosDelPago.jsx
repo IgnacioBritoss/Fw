@@ -88,6 +88,8 @@ export default function MovimientosDelPago({ bookingId, moneda = "ARS" }) {
   };
 
   const movimientos = paraMostrar(registro);
+  // Los importes vienen en centavos, que es como los guarda el servidor para no
+  // arrastrar decimales. Acá se dividen y se escriben para leer.
   const plata = (minor, mon) => (minor == null
     ? ""
     : `$${Number(minor / 100).toLocaleString("es-AR")} ${String(mon || moneda).toUpperCase()}`);

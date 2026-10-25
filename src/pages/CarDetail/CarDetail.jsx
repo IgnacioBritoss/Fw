@@ -483,6 +483,13 @@ export default function CarDetail() {
     setCurrentPhoto((p) => indiceTrasMover(p, desde, hasta));
   };
 
+  /**
+   * Guarda el orden de las fotos para todo el mundo.
+   *
+   * Si el servidor desplegado todavía no tiene esta ruta, hay que DESHACER lo
+   * que se mostró: dejar las fotos dadas vuelta sin avisar haría creer que el
+   * orden quedó guardado cuando no.
+   */
   const guardarOrdenDeFotos = async () => {
     const previo = ordenPrevio.current;
     const ahora = fotosRef.current;
@@ -548,6 +555,7 @@ export default function CarDetail() {
   // Navegación circular de la galería (anterior / siguiente foto).
   const prevPhoto = () =>
     setCurrentPhoto(p => (p === 0 ? photos.length - 1 : p - 1));
+  // Y la siguiente: de la última vuelve a la primera.
   const nextPhoto = () =>
     setCurrentPhoto(p => (p === photos.length - 1 ? 0 : p + 1));
 

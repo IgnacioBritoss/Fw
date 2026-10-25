@@ -116,6 +116,14 @@ export default function ChatBot() {
   return <Asistente />;
 }
 
+/**
+ * Wili, el asistente, en su ventanita flotante.
+ *
+ * Lo que hace, en orden: junta lo que se escribe o se dicta, busca primero una
+ * respuesta ya escrita (services/asistente.js) y, si no hay ninguna que
+ * corresponda, se lo pregunta a la IA. Mantiene la conversación abierta
+ * mientras se navega por el sitio.
+ */
 function Asistente() {
   const { isMobile } = useIsMobile();
   const location = useLocation();
@@ -204,11 +212,13 @@ function Asistente() {
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [avisoVoz, setAvisoVoz] = useState(null); // clave del diccionario, o null
 
+  /** Arranca a grabar. Si el navegador no da permiso al micrófono, lo avisa. */
   const empezarAGrabar = async () => {
     setAvisoVoz(null);
     if (!(await grabadora.empezar())) setAvisoVoz("chat.voice.denied");
   };
 
+  /** Corta la grabación, la manda a transcribir y pone el texto en el campo. */
   const terminarDeGrabar = async () => {
     const audio = await grabadora.detener();
     // Sin blob es que la grabación no llegó a durar nada: un toque sin querer.
@@ -229,6 +239,7 @@ function Asistente() {
     }
   };
 
+  /** Tira la grabación sin mandarla. */
   const descartarGrabacion = () => {
     grabadora.cancelar();
     setAvisoVoz(null);
@@ -246,10 +257,14 @@ function Asistente() {
   // Escucha los cambios de tamaño/posición de la pantalla (teclado que aparece,
   // rotación del celular, etc.) y recalcula el viewport para reacomodar el chat.
   useEffect(() => {
+    // Vuelve a medir el alto visible de la pantalla.
     const updateViewport = () => {
       setViewport(getViewportData());
     };
 
+    // Lo mismo, pero midiendo otra vez en el cuadro siguiente: el teclado del
+    // celular termina de abrirse DESPUÉS del aviso, y la primera medida sale
+    // con el alto de antes.
     const updateViewportDeferred = () => {
       updateViewport();
 
@@ -325,6 +340,13 @@ function Asistente() {
   // `idGuardado` llega cuando se tocó un botón de pregunta sugerida: ahí no hay
   // nada que reconocer, el botón sabe qué pregunta es. Escrita a mano, la
   // reconoce respuestaGuardada(). Ver services/asistente.js.
+  /**
+   * Manda una pregunta y trae la respuesta.
+   *
+   * El orden importa: primero se busca entre las respuestas ya escritas, que
+   * son instantáneas y gratis, y recién si ninguna corresponde se le pregunta
+   * a la IA.
+   */
   const send = async (text, idGuardado = null) => {
     const userText = (text || input).trim();
     if (!userText || loading) return; // no manda vacío ni si ya está esperando

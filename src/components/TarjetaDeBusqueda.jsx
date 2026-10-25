@@ -50,6 +50,11 @@ import {
   categoryLabel, fuelLabel, priceOf, transmissionLabel,
 } from "../services/listings";
 
+/**
+ * La tarjeta en sí. `activo` es un booleano y no el id marcado a propósito: ver
+ * la explicación del encabezado, es lo que evita que las demás se vuelvan a
+ * dibujar cuando el mouse pasa por una.
+ */
 function Tarjeta({ car, activo, isMobile, onEntrar, onSalir, onAbrir }) {
   const { t: tr } = useI18n();
   const { precio } = useCurrency();
