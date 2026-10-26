@@ -262,3 +262,28 @@ const PRIORIDAD_DE_REVISION = { MANUAL_REVIEW: 0, FAILED: 1, PENDING: 2, APPROVE
 
 export const ordenDeRevision = (a, b) =>
   (PRIORIDAD_DE_REVISION[a?.status] ?? 5) - (PRIORIDAD_DE_REVISION[b?.status] ?? 5);
+
+const CLASE_DE_LICENCIA = /^[A-Za-z][A-Za-z0-9. ]{0,9}$/;
+
+export function problemaDeDatosDelDni({ vence }) {
+  if (!vence) return "kyc.errDniExpiry";
+  return null;
+}
+
+export function problemaDeDatosDeLicencia({ vence, otorgada, clase, principiante, principianteHasta }) {
+  if (!vence || !otorgada || !String(clase ?? "").trim()) return "kyc.errLicenseData";
+  if (!CLASE_DE_LICENCIA.test(String(clase).trim())) return "kyc.errLicenseClass";
+  if (otorgada > vence) return "kyc.errLicenseDates";
+  if (principiante && !principianteHasta) return "kyc.errBeginnerUntil";
+  return null;
+}
+
+export function datosDeLicenciaParaEnviar({ vence, otorgada, clase, principiante, principianteHasta }) {
+  return {
+    expiresAt: vence,
+    issuedAt: otorgada,
+    licenseClass: String(clase).trim(),
+    isBeginner: Boolean(principiante),
+    ...(principiante ? { beginnerUntil: principianteHasta } : {}),
+  };
+}
