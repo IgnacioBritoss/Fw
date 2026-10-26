@@ -244,3 +244,21 @@ export function accionSugerida(codes = []) {
   }
   return "reintentar";
 }
+
+export function comoVistaDeAdmin(fila) {
+  if (!fila) return fila;
+  const motivos = Array.isArray(fila.matchReport?.reasons)
+    ? fila.matchReport.reasons
+    : (fila.reasonCodes ?? []).map((code) => ({ code }));
+  return {
+    ...fila,
+    documents: fila.documents ?? { front: Boolean(fila.frontUrl), back: Boolean(fila.backUrl) },
+    reasons: fila.reasons ?? motivos,
+    analysis: fila.analysis ?? { status: fila.analysisStatus, error: fila.analysisError ?? null },
+  };
+}
+
+const PRIORIDAD_DE_REVISION = { MANUAL_REVIEW: 0, FAILED: 1, PENDING: 2, APPROVED: 3, REJECTED: 4 };
+
+export const ordenDeRevision = (a, b) =>
+  (PRIORIDAD_DE_REVISION[a?.status] ?? 5) - (PRIORIDAD_DE_REVISION[b?.status] ?? 5);

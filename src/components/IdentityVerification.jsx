@@ -380,6 +380,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
     (d) => d && d.status !== "APPROVED",
   );
 
+  const paraRevisionManual = documentosRevisados.filter(
+    (d) => d?.canRequestManualReview === true && d.analysis?.pending !== true,
+  );
+
   /**
    * Qué botón ofrecer con estos motivos. Una lista de códigos no es una
    * respuesta: la persona necesita saber cuál es el único paso que le sirve, y no
@@ -719,6 +723,26 @@ export default function IdentityVerification({ onDone, onCancel }) {
     } finally {
       setBusy(false);
       setRevisando(false);
+    }
+  };
+
+  const pedirRevisionManual = async () => {
+    setBusy(true); avisar(""); setInfo("");
+    try {
+      const resultados = await Promise.allSettled(
+        paraRevisionManual.map((d) => requestDocumentReview(d.type === "LICENSE" ? "license" : "dni")),
+      );
+      await Promise.all([traerDocumentos(), refrescarStatus(), refreshUser()]);
+      const fallidos = resultados.filter((r) => r.status === "rejected");
+      if (resultados.length > 0 && fallidos.length === resultados.length) {
+        const err = fallidos[0].reason;
+        const clave = claveDelError(err);
+        avisar(clave ? tr(clave) : err?.message || tr("kyc.errRetry"));
+        return;
+      }
+      setInfo(tr("kyc.reviewRequested"));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1193,6 +1217,12 @@ export default function IdentityVerification({ onDone, onCancel }) {
               </div>
             )}
 
+            {!status?.fullyVerified && paraRevisionManual.length > 0 && (
+              <div style={{ maxWidth: 380, margin: "18px auto 0", fontSize: 12.5, color: "var(--fw-text-3)", lineHeight: 1.6 }}>
+                {tr("kyc.manualReviewHint")}
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
               {!checklist.phoneVerified && (
                 <button style={st.btnGhost} onClick={() => { setCode(""); setCodeSent(false); setStep(2); }}>{tr("kyc.verifyPhone")}</button>
@@ -1212,6 +1242,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
               {accion !== "soporte" && accion !== "datos" && accion !== "fotos" && puedeReintentar && (
                 <button style={{ ...st.btnGhost, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={reintentarRevision}>
                   {busy ? tr("verify.checking") : tr("kyc.retryReview")}
+                </button>
+              )}
+              {!status?.fullyVerified && paraRevisionManual.length > 0 && (
+                <button style={{ ...st.btnGhost, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={pedirRevisionManual}>
+                  {tr("kyc.ctaManualReview")}
                 </button>
               )}
 

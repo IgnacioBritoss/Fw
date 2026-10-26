@@ -20,6 +20,7 @@ import {
   adminReviewVerification, getAiHealth, probeAiModels,
 } from "../../services/api";
 import IdentityDocuments from "../../components/IdentityDocuments";
+import { comoVistaDeAdmin, ordenDeRevision } from "../../services/identity";
 
 /**
  * ¿Este documento está esperando a que lo mire un administrador?
@@ -53,6 +54,9 @@ import IdentityDocuments from "../../components/IdentityDocuments";
 */
 const esperaAlAdmin = (v) =>
   Boolean(v?.status) && v.status !== "APPROVED" && v.status !== "REJECTED";
+
+const prepararVerificaciones = (data) =>
+  Array.isArray(data) ? data.map(comoVistaDeAdmin).sort(ordenDeRevision) : [];
 import ConfirmarEscribiendo from "../../components/ConfirmarEscribiendo";
 import Spinner from "../../components/Spinner";
 import ReservasAdmin from "../../components/ReservasAdmin";
@@ -256,7 +260,7 @@ export default function Admin() {
     if (tab === "verifications") {
       setLoadingVerifications(true);
       adminGetVerifications()
-        .then(data => setVerifications(Array.isArray(data) ? data : []))
+        .then(data => setVerifications(prepararVerificaciones(data)))
         .catch(() => showAlert(tr("admin.errVerifications"), "err"))
         .finally(() => setLoadingVerifications(false));
       // Si la IA está caída, las solicitudes quedan esperando a un humano: hay
@@ -311,7 +315,7 @@ export default function Admin() {
     try {
       await adminReviewVerification(id, status);
       const fresh = await adminGetVerifications();
-      setVerifications(Array.isArray(fresh) ? fresh : []);
+      setVerifications(prepararVerificaciones(fresh));
       setPendingVerifications(
         (Array.isArray(fresh) ? fresh : []).filter(esperaAlAdmin).length,
       );
@@ -871,6 +875,16 @@ export default function Admin() {
                     <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fw-text)" }}>{name}</div>
                     {person.email && (
                       <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginTop: 2 }}>{person.email}</div>
+                    )}
+                    {v.status === "MANUAL_REVIEW" && (
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-orange-text)", marginTop: 6 }}>
+                        {tr("admin.askedForReview")}
+                      </div>
+                    )}
+                    {(v.status === "FAILED" || (v.status === "PENDING" && v.analysisError)) && (
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--fw-orange-text)", marginTop: 6 }}>
+                        {tr("admin.autoCheckFailed")}
+                      </div>
                     )}
                   </div>
                 </div>
