@@ -511,14 +511,17 @@ export async function getMyIdentity() {
  * preguntando por GET /verification/identity/me hasta que `analysis.pending`
  * deje de ser true.
  *
- * Se mandan SOLO las dos URLs. El backend valida el cuerpo con lista blanca y
- * rechaza con 400 cualquier propiedad que no esté en el contrato.
+ * Además de las dos URLs van los datos que la persona copia del documento:
+ * `expiresAt` para el DNI, y `expiresAt`, `issuedAt`, `licenseClass`,
+ * `isBeginner` (y `beginnerUntil` si es principiante) para la licencia. Sin
+ * ellos el backend contesta 400 DATOS_DEL_DOCUMENTO_FALTANTES y no guarda nada.
+ * Valida el cuerpo con lista blanca: no se puede mandar ninguna otra propiedad.
  */
-export async function submitIdentityDocument(documento, { frontUrl, backUrl }) {
+export async function submitIdentityDocument(documento, { frontUrl, backUrl, ...declarados }) {
   return apiFetch(`/verification/identity/${documento}/submit`, {
     method: "POST",
     timeoutMs: ESPERA_REVISION,
-    body: JSON.stringify({ frontUrl, backUrl }),
+    body: JSON.stringify({ frontUrl, backUrl, ...declarados }),
   });
 }
 

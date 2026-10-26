@@ -49,6 +49,7 @@ import { useCelebracion, useSacudida, aparecer } from "../anim";
 import {
   accionSugerida, claveDelError, cuilCoincideConDni, dniDelCuil,
   normalizarCuil, normalizarDni, problemaDeIdentidad,
+  problemaDeDatosDelDni, problemaDeDatosDeLicencia, datosDeLicenciaParaEnviar,
 } from "../services/identity";
 import {
   confirmPhoneCode, requestPhoneCode,
@@ -207,6 +208,7 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const { t: tr } = useI18n();
   const { isMobile } = useIsMobile();
   const st = styles(isMobile);
+  const inputFecha = { ...st.input, paddingRight: 38 };
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState(0);       // 0=DNI, 1=licencia, 2=teléfono, 3=confirmación
   // Los datos que la revisión coteja contra los documentos.
@@ -238,6 +240,10 @@ export default function IdentityVerification({ onDone, onCancel }) {
   const [docs, setDocs] = useState({ dniFront: null, dniBack: null, licFront: null, licBack: null });
   const [reviews, setReviews] = useState({}); // resultado de la revisión por foto
   const [docsConfirmed, setDocsConfirmed] = useState(false);
+  const [dniVence, setDniVence] = useState("");
+  const [licencia, setLicencia] = useState({
+    vence: "", otorgada: "", clase: "", principiante: false, principianteHasta: "",
+  });
   const [error, setError] = useState("");
   /*
     Cuántas veces se avisó, para que el cartel se sacuda también cuando el aviso
@@ -549,6 +555,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
     // contra qué cotejarlas y la solicitud queda pendiente PARA SIEMPRE, sin
     // motivo ni forma de darse cuenta desde afuera. Es el error de integración
     // más probable de todo el flujo, así que se corta acá.
+    const faltaDelDni = problemaDeDatosDelDni({ vence: dniVence });
+    if (faltaDelDni) { avisar(tr(faltaDelDni)); setStep(0); return; }
+    const faltaDeLicencia = problemaDeDatosDeLicencia(licencia);
+    if (faltaDeLicencia) { avisar(tr(faltaDeLicencia)); return; }
+
     if (!(await guardarDatos())) { setStep(0); return; }
 
     // Las cuatro tienen que estar. Se puede llegar acá con una casilla vacía: si
@@ -596,10 +607,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
       }
 
       const submission = await submitIdentityDocument("dni", {
-        frontUrl: urls.dniFrontUrl, backUrl: urls.dniBackUrl,
+        frontUrl: urls.dniFrontUrl, backUrl: urls.dniBackUrl, expiresAt: dniVence,
       });
       await submitIdentityDocument("license", {
         frontUrl: urls.licenseFrontUrl, backUrl: urls.licenseBackUrl,
+        ...datosDeLicenciaParaEnviar(licencia),
       });
 
       /*
@@ -933,6 +945,14 @@ export default function IdentityVerification({ onDone, onCancel }) {
                 value={docs.dniBack?.preview} avisoClave={docs.dniBack?.avisoClave}
                 review={reviews.dniBack} onChange={handlePhoto("dniBack")} />
             </div>
+            <div style={{ marginBottom: 24, maxWidth: isMobile ? "none" : 340 }}>
+              <label style={st.label} htmlFor="iv-dni-expires">{tr("kyc.dniExpiryLabel")}</label>
+              <input id="iv-dni-expires" type="date" style={inputFecha} value={dniVence}
+                onChange={(e) => setDniVence(e.target.value)} />
+              <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginTop: 6, lineHeight: 1.5 }}>
+                {tr("kyc.declaredSub")}
+              </div>
+            </div>
             <div style={{ borderTop: "1px solid var(--fw-line-soft)", paddingTop: 20, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)", marginBottom: 12 }}>{tr("kyc.tips")}</div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -966,7 +986,11 @@ export default function IdentityVerification({ onDone, onCancel }) {
               {onCancel && <button style={st.btnGhost} onClick={onCancel}>{tr("common.cancel")}</button>}
               <button style={{ ...st.btnPrimary, opacity: docsReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? 1 : 0.5, cursor: docsReady && !hasInvalid && !isChecking && !busy && !faltaConfirmar ? "pointer" : "not-allowed" }}
                 disabled={!docsReady || hasInvalid || isChecking || busy || faltaConfirmar}
-                onClick={async () => { if (await guardarDatos()) setStep(1); }}>
+                onClick={async () => {
+                  const falta = problemaDeDatosDelDni({ vence: dniVence });
+                  if (falta) { avisar(tr(falta)); return; }
+                  if (await guardarDatos()) setStep(1);
+                }}>
                 {busy ? tr("common.saving") : tr("common.continue")}
               </button>
             </div>
@@ -985,6 +1009,45 @@ export default function IdentityVerification({ onDone, onCancel }) {
               <PhotoCard id="iv-lic-back" label={tr("kyc.licBack")} hint={tr("kyc.licBackHint")}
                 value={docs.licBack?.preview} avisoClave={docs.licBack?.avisoClave}
                 review={reviews.licBack} onChange={handlePhoto("licBack")} />
+            </div>
+            <div style={{ background: "var(--fw-surface-2)", border: "1px solid var(--fw-line-soft)", borderRadius: 12, padding: isMobile ? 14 : 18, marginBottom: 22 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--fw-text)", marginBottom: 3 }}>
+                {tr("kyc.licenseDataTitle")}
+              </div>
+              <div style={{ fontSize: 12.5, color: "var(--fw-text-3)", marginBottom: 14, lineHeight: 1.5 }}>
+                {tr("kyc.declaredSub")}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={st.label} htmlFor="iv-lic-issued">{tr("kyc.licIssuedLabel")}</label>
+                  <input id="iv-lic-issued" type="date" style={inputFecha} value={licencia.otorgada}
+                    onChange={(e) => setLicencia((l) => ({ ...l, otorgada: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={st.label} htmlFor="iv-lic-expires">{tr("kyc.licExpiryLabel")}</label>
+                  <input id="iv-lic-expires" type="date" style={inputFecha} value={licencia.vence}
+                    onChange={(e) => setLicencia((l) => ({ ...l, vence: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={st.label} htmlFor="iv-lic-class">{tr("kyc.licClassLabel")}</label>
+                  <input id="iv-lic-class" style={st.input} maxLength={10} autoComplete="off"
+                    placeholder={tr("kyc.licClassPlaceholder")} value={licencia.clase}
+                    onChange={(e) => setLicencia((l) => ({ ...l, clase: e.target.value }))} />
+                </div>
+                <label style={{ gridColumn: isMobile ? "auto" : "1 / -1", display: "flex", gap: 10, alignItems: "center", fontSize: 13, color: "var(--fw-text-2)", cursor: "pointer" }}>
+                  <input type="checkbox" checked={licencia.principiante}
+                    onChange={(e) => setLicencia((l) => ({ ...l, principiante: e.target.checked }))}
+                    style={{ width: 17, height: 17, flexShrink: 0, cursor: "pointer" }} />
+                  {tr("kyc.licBeginnerLabel")}
+                </label>
+                {licencia.principiante && (
+                  <div>
+                    <label style={st.label} htmlFor="iv-lic-beginner">{tr("kyc.licBeginnerUntilLabel")}</label>
+                    <input id="iv-lic-beginner" type="date" style={inputFecha} value={licencia.principianteHasta}
+                      onChange={(e) => setLicencia((l) => ({ ...l, principianteHasta: e.target.value }))} />
+                  </div>
+                )}
+              </div>
             </div>
             <div style={{ fontSize: 12, color: "var(--fw-text-4)", marginBottom: 20 }}>
               {tr("kyc.dataNote")}
