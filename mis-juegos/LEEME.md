@@ -9,6 +9,7 @@ original:
   un solo color. También anda el tema claro.
 - **Sin anuncios** y con el **servidor online propio**: se juega online desde tu compu, con otros en la misma red.
 - **Un doble clic para jugar**: `jugar.bat` (Windows) o `./jugar.sh` (Mac y Linux).
+- **Un juego que no está en el original**: [Julay’s Donas](#julays-donas-un-juego-nuevo), al estilo Papa’s Donuteria.
 
 ![El portal con la paleta tierra](capturas/portal.jpg)
 
@@ -36,6 +37,30 @@ El zip ya es un repo de git, con todo el historial. Falta solo el repo vacío en
    ```
 
 Conviene que sea privado: el código es de Tejada y el repo original no tiene licencia.
+
+## Julay’s Donas, un juego nuevo
+
+Un juego de donas inspirado en Papa’s Donuteria. Julay se va de viaje a buscar la receta de la dona perfecta y te deja
+el local:
+
+- **Hacés todo vos:** tomás el pedido en el mostrador, elegís la masa y cortás la forma, freís cada lado en su punto y
+  decorás con relleno, baño, hilos, toppings y piezas.
+- **Clientes nuevos cada día:** son 20 del barrio, y el último de cada día es un cliente exigente que mira todo con
+  lupa. Cada 7 días viene la misma Julay a probar.
+- **Bonus:** con las propinas y los logros comprás decoración para el local, y así los clientes esperan más tranquilos.
+- **Tu personaje:** nombre, piel, peinado, ojos, barba, pecas, aros, anteojos, gorro, remera y delantal. Se cambia en el
+  vestidor al terminar cada día.
+
+![Julay’s Donas: la historia, el vestidor, el mostrador, las estaciones, la decoración del local y el fin del día](capturas/julays-donas.jpg)
+
+No viene en `mis-juegos.zip`: se suma con `julays-donas.patch`. Guardalo y, parado en tu repo (o en la carpeta del
+zip), corré
+
+```bash
+git am -3 --whitespace=nowarn julays-donas.patch
+```
+
+La partida se guarda en el navegador al terminar cada día; si salís en la mitad, ese día empieza de nuevo.
 
 ## Antes y después
 
