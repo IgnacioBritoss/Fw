@@ -81,6 +81,9 @@ La partida se guarda en el navegador al terminar cada día; si salís en la mita
 git am -3 --whitespace=nowarn julays-donas-2.patch
 ```
 
+`julays-donas-3.patch` (arriba del segundo) le saca la "pera" a la cara sonriente: un óvalo que quedaba debajo de la boca
+y un escote que parecía papada.
+
 ## Antes y después
 
 A la izquierda, el original; a la derecha, la copia en tono tierra.
