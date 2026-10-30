@@ -62,6 +62,25 @@ git am -3 --whitespace=nowarn julays-donas.patch
 
 La partida se guarda en el navegador al terminar cada día; si salís en la mitad, ese día empieza de nuevo.
 
+### La segunda versión
+
+`julays-donas-2.patch` va arriba del primero y suma:
+
+- **Más personalización:** elegís si sos hombre o mujer, la contextura, el color de ojos, más peinados, prendas de arriba
+  y de abajo con estampados, calzado, delantales, gorros y accesorios. Tu nombre va en una plaquita en el delantal.
+- **Mejoras de cocina que cambian el juego:** segunda mesa de masa (dos masas estiradas a la vez), palote de mármol,
+  freidora de seis lugares, termómetro, manga profesional, pomo ancho, espolvoreador, libreta rápida y cartel de turnos.
+- **Más decoración y colores a elección** para paredes, toldo, cartel, puerta, mesas y mostrador.
+- **Una comanda que se entiende:** cada renglón dice si es masa, forma, relleno, baño, hilos, topping o piezas.
+- **Dibujos más trabajados y animaciones:** la historia es una película animada, los clientes entran por la puerta y los
+  nuevos, el exigente y Julay se presentan con una tarjeta animada.
+
+![Julay’s Donas 2: el vestidor, la película, la presentación de un cliente nuevo, la comanda, las mejoras de cocina, las dos mesas de masa, la freidora grande y el local decorado](capturas/julays-donas-2.jpg)
+
+```bash
+git am -3 --whitespace=nowarn julays-donas-2.patch
+```
+
 ## Antes y después
 
 A la izquierda, el original; a la derecha, la copia en tono tierra.
