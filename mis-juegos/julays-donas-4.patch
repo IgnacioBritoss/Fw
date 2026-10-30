@@ -1,0 +1,826 @@
+From e89d8fa80661b28b35b0e2ef2713db442f19da77 Mon Sep 17 00:00:00 2001
+From: IgnacioBritoss <167232030+IgnacioBritoss@users.noreply.github.com>
+Date: Fri, 30 Oct 2026 01:01:37 +0000
+Subject: [PATCH] =?UTF-8?q?Julay=E2=80=99s=20Donas:=20dificultad,=20aviso?=
+ =?UTF-8?q?=20chico=20de=20llegada=20y=20m=C3=BAsica=20tranquila?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Fácil, Medio y Difícil se eligen en la pantalla de inicio (Medio es el
+  ritmo de antes). Cambian cuántos clientes vienen, cada cuánto llegan,
+  su paciencia, la zona justa de la freidora y, en Difícil, la propina.
+- Cuando llega alguien ya no se tapa la pantalla ni se frena el juego:
+  aparece un aviso chico abajo a la derecha con su cara.
+- Música de fondo lenta y tranquila (sintetizada), con el volumen de
+  música del portal; se apaga desde el inicio o desde la pausa.
+- La pantalla de inicio va en dos columnas para que entre todo.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VRU32TvSy1do7AcAzADaXU
+---
+ public/games/julays-donas/data.js         |  20 +-
+ public/games/julays-donas/dia.js          |  10 +-
+ public/games/julays-donas/game.js         |  84 ++++++--
+ public/games/julays-donas/guardado.js     |   1 +
+ public/games/julays-donas/mejoras.js      |   7 +-
+ public/games/julays-donas/presentacion.js | 243 ----------------------
+ public/games/julays-donas/sonido.js       | 107 ++++++++++
+ public/games/julays-donas/style.css       |  14 +-
+ public/games/julays-donas/ui.js           |  60 +++++-
+ 9 files changed, 270 insertions(+), 276 deletions(-)
+ delete mode 100644 public/games/julays-donas/presentacion.js
+
+diff --git a/public/games/julays-donas/data.js b/public/games/julays-donas/data.js
+index 281919c..e8e6d24 100644
+--- a/public/games/julays-donas/data.js
++++ b/public/games/julays-donas/data.js
+@@ -288,8 +288,20 @@ export function exigenteDelDia(day) {
+   return ya[(day - 1) % ya.length];
+ }
+ 
+-/** Cuántos clientes comunes vienen cada día (sin contar al exigente). */
+-export const clientesPorDia = (day) => Math.min(7, 2 + Math.ceil(day / 3));
++/**
++ * Las tres dificultades. «Medio» es el ritmo de siempre. clientes: cuántos comunes vienen cada día
++ * (sin contar al exigente); espacio: cuánto tardan en llegar uno tras otro; paciencia: cuánto
++ * esperan tranquilos; punto: la zona justa de la freidora; propinas: cuánto más (o menos) dejan.
++ */
++export const DIFICULTADES = {
++  facil: { name: { es: 'Fácil', en: 'Easy' }, desc: { es: 'Menos clientes, más paciencia y la fritura más fácil.', en: 'Fewer customers, more patience and easier frying.' }, clientes: (d) => Math.min(5, 3 + Math.floor(d / 5)), espacio: 1.3, paciencia: 1.35, punto: [0.84, 1.26], propinas: 1 },
++  medio: { name: { es: 'Medio', en: 'Medium' }, desc: { es: 'El ritmo de siempre.', en: 'The usual pace.' }, clientes: (d) => Math.min(7, 2 + Math.ceil(d / 3)), espacio: 1, paciencia: 1, punto: [0.9, 1.15], propinas: 1 },
++  dificil: { name: { es: 'Difícil', en: 'Hard' }, desc: { es: 'Más clientes, menos paciencia… y más propina.', en: 'More customers, less patience… and bigger tips.' }, clientes: (d) => Math.min(8, 2 + Math.ceil(d / 2)), espacio: 0.8, paciencia: 0.8, punto: [0.93, 1.1], propinas: 1.25 },
++};
++export const dificultadDe = (save) => DIFICULTADES[save?.dificultad] || DIFICULTADES.medio;
++
++/** Cuántos clientes comunes vienen cada día (sin contar al exigente), en dificultad media. */
++export const clientesPorDia = (day) => DIFICULTADES.medio.clientes(day);
+ 
+ // ------------------------------------------------------------------ decoración del local
+ 
+@@ -465,6 +477,10 @@ export const TXT = {
+   nueva: { es: 'Nueva partida', en: 'New game' },
+   comoSeJuega: { es: 'Cómo se juega', en: 'How to play' },
+   vestidor: { es: 'Vestidor', en: 'Wardrobe' },
++  dificultad: { es: 'Dificultad', en: 'Difficulty' },
++  musica: { es: 'Música', en: 'Music' },
++  si2: { es: 'Sí', en: 'On' },
++  no2: { es: 'No', en: 'Off' },
+   decorar: { es: 'Mejorar el local', en: 'Upgrade the shop' },
+   cocinaTab: { es: 'Cocina', en: 'Kitchen' },
+   coloresTab: { es: 'Colores', en: 'Colors' },
+diff --git a/public/games/julays-donas/dia.js b/public/games/julays-donas/dia.js
+index 2891cbc..8bbfcc2 100644
+--- a/public/games/julays-donas/dia.js
++++ b/public/games/julays-donas/dia.js
+@@ -3,7 +3,7 @@
+  * etapa (cruda, en el aceite, lista), la freidora que sigue cocinando aunque estés en otra estación,
+  * y el puntaje cuando entregás un pedido. Sin dibujo: lo usan las estaciones y las pruebas.
+  */
+-import { CLIENTES, DECO, exigenteDelDia, clientesPorDia, byId } from './data.js';
++import { CLIENTES, DECO, exigenteDelDia, dificultadDe, byId } from './data.js';
+ import { crearPedido, COCCION, PUNTO, notaMasa, notaFritura, notaDecorado, notaEspera, notaFinal, propina, tolerancia, PACIENCIA } from './orders.js';
+ import { LUGARES } from './local.js';
+ import { tiene, zonaFritura, lugaresFreidora } from './mejoras.js';
+@@ -56,7 +56,7 @@ export class Dia {
+   armarLista() {
+     const nuevos = CLIENTES.filter((c) => c.day === this.n);
+     const viejos = CLIENTES.filter((c) => c.day < this.n);
+-    const cant = clientesPorDia(this.n);
++    const cant = dificultadDe(this.save).clientes(this.n);
+     const lista = [...nuevos];
+     const pool = [...viejos];
+     while (lista.length < cant && pool.length) lista.push(pool.splice(Math.floor(this.rng() * pool.length), 1)[0]);
+@@ -76,13 +76,13 @@ export class Dia {
+   // ---------------------------------------------------------------- clientes
+ 
+   pacienciaDe(def) {
+-    return (PACIENCIA[def.id] || 1) * (1 + this.bonus.paciencia / 100) * (tiene(this.save, 'turnos') ? 1.1 : 1);
++    return (PACIENCIA[def.id] || 1) * (1 + this.bonus.paciencia / 100) * (tiene(this.save, 'turnos') ? 1.1 : 1) * dificultadDe(this.save).paciencia;
+   }
+ 
+   /** Separación entre llegadas: más tranquilo los primeros días. */
+   espacio() {
+     const base = this.n === 1 ? 26 : this.n <= 7 ? 22 : this.n <= 14 ? 19 : 16;
+-    return base + this.rng() * 9;
++    return (base + this.rng() * 9) * dificultadDe(this.save).espacio;
+   }
+ 
+   llegar(def, exigente = false) {
+@@ -239,7 +239,7 @@ export class Dia {
+       crudas: notas,
+       notas: fin.notas,
+       total: fin.total,
+-      propina: propina(fin.total, tk.pedido.donas.length, !!ex, this.bonus.propinas),
++      propina: Math.round(propina(fin.total, tk.pedido.donas.length, !!ex, this.bonus.propinas) * dificultadDe(this.save).propinas),
+       espera,
+     };
+     this.resultados.push(res);
+diff --git a/public/games/julays-donas/game.js b/public/games/julays-donas/game.js
+index 9a3fa39..8fc29a7 100644
+--- a/public/games/julays-donas/game.js
++++ b/public/games/julays-donas/game.js
+@@ -17,10 +17,9 @@ import * as mostrador from './mostrador.js';
+ import * as masa from './masa.js';
+ import * as fritura from './fritura.js';
+ import * as decorado from './decorado.js';
+-import { snd, chisporroteo } from './sonido.js';
++import { snd, chisporroteo, musicaFondo } from './sonido.js';
+ import { cargar, guardar, borrar, partidaNueva, lookAlAzar } from './guardado.js';
+ import * as ui from './ui.js';
+-import { presentar, saltarPresentacion, dibujarPresentacion } from './presentacion.js';
+ 
+ const G = window.GameIt;
+ const canvas = document.getElementById('c');
+@@ -73,6 +72,12 @@ const J = {
+   },
+ };
+ window.__donas = J; // para las pruebas
++// la música se puede apagar desde la pausa (queda guardado en este navegador)
++try {
++  J.musica = localStorage.getItem('julays-donas:musica') !== 'no';
++} catch {
++  J.musica = true;
++}
+ 
+ // ---------------------------------------------------------------- canvas y escala
+ 
+@@ -273,6 +278,60 @@ function dibujarToasts(dt) {
+   ctx.restore();
+ }
+ 
++// ---------------------------------------------------------------- avisos de llegada
++
++/**
++ * Cuando llega alguien, un aviso chiquito abajo a la derecha (no tapa nada ni frena el juego).
++ * En el mostrador no hace falta para los conocidos: se los ve entrar.
++ */
++function avisoLlegada(actor) {
++  const s = J.save;
++  const def = actor.def;
++  s.presentados = s.presentados || [];
++  const nuevo = !actor.exigente && !s.presentados.includes(def.id);
++  if (nuevo) s.presentados.push(def.id);
++  const tipo = def.julay ? 'julay' : actor.exigente ? 'exigente' : nuevo ? 'nuevo' : 'comun';
++  if (tipo === 'comun' && J.estacion === 'mostrador') return;
++  if (tipo === 'julay') snd('logro');
++  J.avisos = (J.avisos || []).slice(-2);
++  J.avisos.push({ def, tipo, t: 0 });
++}
++
++function dibujarAvisos(dt) {
++  J.avisos = (J.avisos || []).filter((a) => a.t < 3.4);
++  const ancho = 270;
++  const alto = 52;
++  J.avisos.forEach((a, i) => {
++    a.t += dt;
++    const entra = 1 - Math.pow(1 - Math.min(1, a.t / 0.3), 3);
++    const sale = Math.max(0, (a.t - 3) / 0.4);
++    const x = W - ancho - 12 + (1 - entra) * (ancho + 20) + sale * sale * (ancho + 20);
++    const y = 582 - (J.avisos.length - 1 - i) * (alto + 8);
++    const mujer = a.def.look.genero === 'mujer';
++    const es = J.lang === 'es';
++    const col = { nuevo: C.oliva, exigente: C.terracota, julay: C.mostaza, comun: C.tinta2 }[a.tipo];
++    const linea2 = {
++      nuevo: es ? (mujer ? 'Clienta nueva' : 'Cliente nuevo') : 'New customer',
++      exigente: es ? '★ La más exigente del día' : '★ Toughest of the day',
++      julay: es ? '★ ¡Viene a probar tus donas!' : '★ Here to taste your donuts!',
++      comun: es ? 'Entró al local' : 'Just walked in',
++    }[a.tipo];
++    ctx.save();
++    ctx.globalAlpha = 1 - sale * 0.6;
++    panel(ctx, x, y, ancho, alto, { radio: 16, borde: col, grosor: 3 });
++    retrato(ctx, a.def.look, x + 28, y + alto / 2, 19, { animo: 'feliz' });
++    ctx.fillStyle = C.tinta;
++    ctx.textAlign = 'left';
++    ctx.textBaseline = 'middle';
++    ctx.font = F(700, 17);
++    ctx.fillText((es ? '🔔 Llegó ' : '🔔 ') + a.def.name + (es ? '' : ' arrived'), x + 56, y + 18, ancho - 66);
++    ctx.font = F(600, 13);
++    ctx.fillStyle = col;
++    ctx.fillText(linea2, x + 56, y + 36, ancho - 66);
++    ctx.restore();
++  });
++}
++
+ // ---------------------------------------------------------------- consejos (tutorial del día 1)
+ 
+ function consejo() {
+@@ -546,10 +605,6 @@ canvas.addEventListener('pointerdown', (e) => {
+   canvas.setPointerCapture(e.pointerId);
+   const p = punto(e);
+   activo = e.pointerId;
+-  if (J.intro) {
+-    saltarPresentacion(J.intro);
+-    return;
+-  }
+   if (J.entrega) {
+     if (J.entrega.fase === 'tarjeta' && (dentroRect(p, SEGUIR) || J.entrega.t > 1.9)) cerrarTarjeta();
+     return;
+@@ -593,7 +648,6 @@ addEventListener('keydown', (e) => {
+   if (J.modo !== 'jugando') return;
+   if (e.key === 'Escape') return J.pausado ? cerrarPausa() : abrirPausa();
+   if (J.pausado) return;
+-  if (J.intro && (e.key === 'Enter' || e.key === ' ')) return saltarPresentacion(J.intro);
+   if (J.entrega && (e.key === 'Enter' || e.key === ' ')) return cerrarTarjeta();
+   const k = ['1', '2', '3', '4'].indexOf(e.key);
+   if (k >= 0) J.irA(ORDEN[k]);
+@@ -634,11 +688,7 @@ function frame(now) {
+   const dt = Math.min(0.05, (now - ultimo) / 1000) * (J.vel || 1); // vel: solo para las pruebas
+   ultimo = now;
+   const t = now / 1000;
+-  if (J.modo === 'jugando' && !J.pausado && !J.portalPausa && J.intro) {
+-    // presentación de un cliente: el día espera
+-    J.intro.t += dt;
+-    if (J.intro.t >= J.intro.dur) J.intro = null;
+-  } else if (J.modo === 'jugando' && !J.pausado && !J.portalPausa) {
++  if (J.modo === 'jugando' && !J.pausado && !J.portalPausa) {
+     if (J.entrega) actualizarEntrega(dt);
+     else {
+       J.dia.update(dt);
+@@ -646,11 +696,7 @@ function frame(now) {
+         if (['llega', 'exigente', 'ticket', 'aceite', 'vuelta', 'sacar', 'punto', 'quema', 'tirar'].includes(ev.tipo)) snd(ev.tipo);
+         if (ev.tipo === 'llega') {
+           J.campana = 1;
+-          const P = presentar(J, ev.actor);
+-          if (P) {
+-            J.intro = P;
+-            if (P.tipo === 'julay') snd('logro');
+-          }
++          avisoLlegada(ev.actor);
+         }
+         if (ev.tipo === 'punto' && J.estacion !== 'fritura') J.toast(J.lang === 'es' ? '¡Mirá la freidora!' : 'Check the fryer!');
+       }
+@@ -663,6 +709,7 @@ function frame(now) {
+     for (const k of ORDEN) ESTACIONES[k].update(J, dt);
+   }
+   chisporroteo(J.dia ? J.dia.freidora.filter(Boolean).length : 0, J.estacion === 'fritura', J.modo !== 'jugando' || J.pausado || J.portalPausa);
++  musicaFondo(J.musica, J.portalPausa);
+   dibujar(t, dt);
+   requestAnimationFrame(frame);
+ }
+@@ -693,7 +740,7 @@ function dibujar(t, dt) {
+     dibujarConsejo();
+     dibujarTarjeta();
+     dibujarToasts(dt);
+-    if (J.intro) dibujarPresentacion(ctx, J, J.intro, t);
++    dibujarAvisos(dt);
+   }
+ }
+ 
+@@ -722,6 +769,7 @@ function titulo() {
+       const nueva = () => {
+         // si ya había partida, el personaje se queda como estaba; si no, uno al azar
+         J.save = partidaNueva('', { ...lookAlAzar(), ...hay?.look });
++        J.save.dificultad = ui.dificultadElegida(J, false);
+         ui.creador(J, {
+           onListo: () => {
+             guardar(J.save);
+diff --git a/public/games/julays-donas/guardado.js b/public/games/julays-donas/guardado.js
+index 955abe1..75695e8 100644
+--- a/public/games/julays-donas/guardado.js
++++ b/public/games/julays-donas/guardado.js
+@@ -55,6 +55,7 @@ export function partidaNueva(nombre = '', look = lookAlAzar()) {
+     compradas: DECO.filter((d) => d.precio === 0).map((d) => d.id),
+     mejoras: {},
+     colores: {},
++    dificultad: 'medio',
+     conocidos: [],
+     logros: [],
+     stats: { atendidos: 0, felices90: 0, mejor: 0, puntos: 0 },
+diff --git a/public/games/julays-donas/mejoras.js b/public/games/julays-donas/mejoras.js
+index d0af0ac..ca41fcb 100644
+--- a/public/games/julays-donas/mejoras.js
++++ b/public/games/julays-donas/mejoras.js
+@@ -3,7 +3,7 @@
+  * (dos mesas de masa, freidora grande, termómetro, manga profesional…). Acá están sus efectos y sus
+  * dibujos para la tienda.
+  */
+-import { C } from './data.js';
++import { C, dificultadDe } from './data.js';
+ import { TAU, alfa } from './color.js';
+ import { dona } from './art.js';
+ 
+@@ -11,7 +11,10 @@ import { dona } from './art.js';
+ export const tiene = (save, id) => !!save?.mejoras?.[id];
+ 
+ /** Zona justa de cada lado en la freidora (más ancha con el termómetro). */
+-export const zonaFritura = (save) => (tiene(save, 'termometro') ? [0.86, 1.22] : [0.9, 1.15]);
++export const zonaFritura = (save) => {
++  const [a, b] = dificultadDe(save).punto;
++  return tiene(save, 'termometro') ? [a - 0.04, b + 0.07] : [a, b];
++};
+ 
+ /** Lugares en el aceite. */
+ export const lugaresFreidora = (save) => (tiene(save, 'freidora6') ? 6 : 4);
+diff --git a/public/games/julays-donas/presentacion.js b/public/games/julays-donas/presentacion.js
+deleted file mode 100644
+index c11301d..0000000
+--- a/public/games/julays-donas/presentacion.js
++++ /dev/null
+@@ -1,243 +0,0 @@
+-/**
+- * Presentación animada cuando llega alguien importante: un cliente nuevo (la primera vez que viene),
+- * el cliente exigente del día o Julay. Entra una tarjeta deslizándose, el personaje camina y saluda,
+- * su frase se escribe letra por letra y se ve qué le gusta. El día queda en pausa mientras se ve.
+- */
+-import { C, MASAS, FORMAS, RELLENOS, BANOS, HILOS, TOPPINGS, PIEZAS, byId } from './data.js';
+-import { TAU, alfa, tono } from './color.js';
+-import { persona, altoPersona } from './personas.js';
+-import { panel, F, parrafo } from './dibujo.js';
+-import { icono } from './ticket.js';
+-
+-const CARTA = { x: 250, y: 132, w: 780, h: 400 };
+-
+-/** ¿Hay que presentar a este cliente? Devuelve la presentación o null. */
+-export function presentar(J, actor) {
+-  const def = actor.def;
+-  const s = J.save;
+-  s.presentados = s.presentados || [];
+-  let tipo = null;
+-  if (def.julay) tipo = 'julay';
+-  else if (actor.exigente) tipo = 'exigente';
+-  else if (!s.presentados.includes(def.id)) tipo = 'nuevo';
+-  if (!tipo) return null;
+-  if (tipo === 'nuevo') s.presentados.push(def.id);
+-  // en las pruebas (tiempo acelerado) se ve un instante
+-  const dur = (J.vel || 1) > 1 ? 0.5 : tipo === 'nuevo' ? 3.4 : 3.8;
+-  return { def, tipo, t: 0, dur, cerrando: false };
+-}
+-
+-/** Tocar la pantalla adelanta el final. */
+-export function saltarPresentacion(P) {
+-  if (P.t > 0.5 && !P.cerrando) {
+-    P.cerrando = true;
+-    P.t = Math.max(P.t, P.dur - 0.35);
+-  }
+-}
+-
+-const easeOutBack = (k) => {
+-  const c = 1.5;
+-  return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2);
+-};
+-const clamp = (v) => Math.max(0, Math.min(1, v));
+-
+-const ROTULO = {
+-  nuevo: { es: '¡CLIENTE NUEVO!', en: 'NEW CUSTOMER!' },
+-  exigente: { es: '★ CLIENTE EXIGENTE', en: '★ TOUGH CUSTOMER' },
+-  julay: { es: '¡VOLVIÓ JULAY!', en: 'JULAY IS BACK!' },
+-};
+-const FOCO = {
+-  fritura: { es: 'Mira con lupa la fritura.', en: 'Inspects the frying closely.' },
+-  decorado: { es: 'Mira con lupa el decorado.', en: 'Inspects the decorating closely.' },
+-  masa: { es: 'Mira con lupa la masa.', en: 'Inspects the dough closely.' },
+-  espera: { es: 'No le gusta nada esperar.', en: 'Hates waiting.' },
+-};
+-
+-/** Lo que le gusta, para mostrarlo con íconos. */
+-function gustos(def) {
+-  const out = [];
+-  const L = def.likes || {};
+-  for (const id of L.masa || []) out.push({ cat: 'masa', id, n: byId(MASAS, id)?.name });
+-  for (const id of L.forma || []) out.push({ cat: 'forma', id, n: byId(FORMAS, id)?.name });
+-  for (const id of L.relleno || []) out.push({ cat: 'relleno', id, n: byId(RELLENOS, id)?.name });
+-  for (const id of L.bano || []) out.push({ cat: 'bano', id, n: byId(BANOS, id)?.name });
+-  for (const id of L.hilos || []) out.push({ cat: 'hilos', id, n: byId(HILOS, id)?.name });
+-  for (const id of L.topping || []) out.push({ cat: 'topping', id, n: byId(TOPPINGS, id)?.name });
+-  for (const id of L.pieza || []) out.push({ cat: 'pieza', id, n: byId(PIEZAS, id)?.name });
+-  return out.filter((g) => g.n).slice(0, 4);
+-}
+-
+-export function dibujarPresentacion(ctx, J, P, tReal) {
+-  const t = P.t;
+-  const kin = clamp(t / 0.5);
+-  const kout = clamp((t - (P.dur - 0.35)) / 0.35);
+-  const dx = (1 - easeOutBack(kin)) * 900 - kout * kout * 1100;
+-  const R = CARTA;
+-  ctx.save();
+-  // fondo oscurecido
+-  ctx.fillStyle = `rgba(43,33,27,${0.55 * clamp(t / 0.25) * (1 - kout)})`;
+-  ctx.fillRect(0, 0, 1280, 720);
+-  ctx.translate(dx, 0);
+-  const acento = P.tipo === 'nuevo' ? C.oliva : P.tipo === 'exigente' ? C.terracota : C.mostaza;
+-  panel(ctx, R.x, R.y, R.w, R.h, { radio: 28 });
+-  // escenario del personaje: un círculo de color con el piso
+-  const ex = R.x + 190;
+-  const ey = R.y + R.h - 46;
+-  ctx.save();
+-  ctx.beginPath();
+-  ctx.roundRect(R.x + 24, R.y + 24, 330, R.h - 48, 22);
+-  ctx.clip();
+-  ctx.fillStyle = tono(acento, 0.62);
+-  ctx.fillRect(R.x + 24, R.y + 24, 330, R.h - 48);
+-  // rayos suaves que giran despacio detrás (sin brillo: franjas apenas más claras)
+-  ctx.translate(ex, ey - 150);
+-  ctx.rotate(tReal * 0.25);
+-  ctx.fillStyle = 'rgba(255,250,242,.22)';
+-  for (let i = 0; i < 12; i++) {
+-    ctx.beginPath();
+-    ctx.moveTo(0, 0);
+-    ctx.arc(0, 0, 420, (i / 12) * TAU, (i / 12) * TAU + 0.18);
+-    ctx.closePath();
+-    ctx.fill();
+-  }
+-  ctx.restore();
+-  ctx.fillStyle = 'rgba(59,42,32,.18)';
+-  ctx.beginPath();
+-  ctx.ellipse(ex, ey + 2, 90, 16, 0, 0, TAU);
+-  ctx.fill();
+-  // entra caminando desde la izquierda, frena y saluda
+-  const kc = clamp((t - 0.15) / 0.9);
+-  const px = ex - (1 - (1 - Math.pow(1 - kc, 3))) * 170;
+-  const camina = kc < 1;
+-  const s = Math.min(1.25, 300 / altoPersona(P.def.look));
+-  ctx.save();
+-  ctx.beginPath();
+-  ctx.roundRect(R.x + 24, R.y + 24, 330, R.h - 48, 22);
+-  ctx.clip();
+-  persona(ctx, P.def.look, px, ey, s, {
+-    t: tReal,
+-    camina: camina ? t * 1.2 : undefined,
+-    dir: 1,
+-    animo: P.tipo === 'exigente' ? (t > 1.4 ? 'normal' : 'sorpresa') : 'encantado',
+-    pose: !camina && P.tipo !== 'exigente' ? 'saluda' : undefined,
+-  });
+-  ctx.restore();
+-  ctx.lineWidth = 3;
+-  ctx.strokeStyle = C.tinta;
+-  ctx.beginPath();
+-  ctx.roundRect(R.x + 24, R.y + 24, 330, R.h - 48, 22);
+-  ctx.stroke();
+-  // rótulo
+-  const tx = R.x + 384;
+-  const rot = J.tr(ROTULO[P.tipo]);
+-  ctx.font = F(700, 18);
+-  const rw = ctx.measureText(rot).width + 34;
+-  const kr = clamp((t - 0.35) / 0.3);
+-  ctx.save();
+-  ctx.translate(tx + rw / 2, R.y + 56);
+-  ctx.scale(0.6 + 0.4 * easeOutBack(kr), 0.6 + 0.4 * easeOutBack(kr));
+-  ctx.globalAlpha = kr;
+-  ctx.fillStyle = acento;
+-  ctx.beginPath();
+-  ctx.roundRect(-rw / 2, -18, rw, 36, 18);
+-  ctx.fill();
+-  ctx.stroke();
+-  ctx.fillStyle = C.crema;
+-  ctx.textAlign = 'center';
+-  ctx.textBaseline = 'middle';
+-  ctx.fillText(rot, 0, 1);
+-  ctx.restore();
+-  // nombre
+-  const kn = clamp((t - 0.5) / 0.3);
+-  ctx.globalAlpha = kn;
+-  ctx.fillStyle = C.tinta;
+-  ctx.font = F(700, 42);
+-  ctx.textAlign = 'left';
+-  ctx.textBaseline = 'middle';
+-  ctx.fillText(P.def.name, tx + (1 - kn) * 30, R.y + 116, R.w - 410);
+-  ctx.globalAlpha = 1;
+-  // la frase, letra por letra, en una burbuja
+-  const frase = '“' + J.tr(P.def.line) + '”';
+-  const letras = Math.max(0, Math.floor((t - 0.75) * 38));
+-  if (letras > 0) {
+-    ctx.fillStyle = '#fff8ec';
+-    ctx.beginPath();
+-    ctx.roundRect(tx - 4, R.y + 148, R.w - 410, 78, 16);
+-    ctx.fill();
+-    ctx.lineWidth = 2.5;
+-    ctx.stroke();
+-    parrafo(ctx, frase.slice(0, letras), tx + 12, R.y + 160, R.w - 440, 26, { font: F(600, 21) });
+-  }
+-  // qué le gusta / qué mira con lupa
+-  const kg = clamp((t - 1.5) / 0.4);
+-  if (kg > 0) {
+-    ctx.globalAlpha = kg;
+-    ctx.fillStyle = C.tinta2;
+-    ctx.font = F(700, 14);
+-    ctx.textAlign = 'left';
+-    if (P.tipo === 'nuevo') {
+-      ctx.fillText(J.lang === 'es' ? 'LE GUSTA' : 'LIKES', tx, R.y + 254);
+-      gustos(P.def).forEach((g, i) => {
+-        const gx = tx + (i % 2) * 196;
+-        const gy = R.y + 286 + Math.floor(i / 2) * 44;
+-        ctx.fillStyle = '#fff8ec';
+-        ctx.beginPath();
+-        ctx.roundRect(gx, gy - 17, 184, 34, 12);
+-        ctx.fill();
+-        ctx.lineWidth = 2;
+-        ctx.strokeStyle = C.tinta;
+-        ctx.stroke();
+-        if (g.cat === 'masa') {
+-          ctx.fillStyle = byId(MASAS, g.id).crudo;
+-          ctx.beginPath();
+-          ctx.arc(gx + 18, gy, 9, 0, TAU);
+-          ctx.fill();
+-          ctx.stroke();
+-        } else if (g.cat === 'forma') {
+-          ctx.fillStyle = '#e8d2a6';
+-          ctx.beginPath();
+-          ctx.arc(gx + 18, gy, 9, 0, TAU);
+-          ctx.fill();
+-          ctx.stroke();
+-        } else icono(ctx, g.cat, g.id, gx + 18, gy, 20);
+-        ctx.fillStyle = C.tinta;
+-        ctx.font = F(600, 15);
+-        ctx.fillText(J.tr(g.n), gx + 34, gy + 1, 144);
+-      });
+-    } else {
+-      const texto = P.tipo === 'julay' ? (J.lang === 'es' ? 'Mira con lupa TODO. Es la más exigente.' : 'Inspects EVERYTHING. The toughest of all.') : J.tr(FOCO[P.def.foco] || FOCO.decorado);
+-      ctx.fillStyle = acento;
+-      ctx.font = F(700, 20);
+-      ctx.fillText('🔍 ' + texto, tx, R.y + 268, R.w - 410);
+-      ctx.fillStyle = C.tinta2;
+-      ctx.font = F(600, 16);
+-      ctx.fillText(J.lang === 'es' ? 'Deja más propina si queda conforme.' : 'Tips more if satisfied.', tx, R.y + 300);
+-    }
+-    ctx.globalAlpha = 1;
+-  }
+-  // tocá para seguir
+-  if (t > 1.2) {
+-    ctx.globalAlpha = 0.5 + Math.sin(tReal * 4) * 0.25;
+-    ctx.fillStyle = C.tinta2;
+-    ctx.font = F(600, 14);
+-    ctx.textAlign = 'right';
+-    ctx.fillText(J.lang === 'es' ? 'Tocá para seguir' : 'Tap to continue', R.x + R.w - 24, R.y + R.h - 22);
+-    ctx.globalAlpha = 1;
+-  }
+-  // papel picado para Julay
+-  if (P.tipo === 'julay') {
+-    const cols = [C.terracota, C.mostaza, C.oliva, C.petroleo, C.rosa];
+-    for (let i = 0; i < 46; i++) {
+-      const x = R.x + ((i * 97) % R.w);
+-      const y = R.y - 40 + ((i * 53 + t * 160 * (1 + (i % 3) * 0.3)) % (R.h + 80));
+-      ctx.save();
+-      ctx.translate(x, y);
+-      ctx.rotate(t * 3 + i);
+-      ctx.fillStyle = alfa(cols[i % 5], 0.9);
+-      ctx.fillRect(-6, -3, 12, 6);
+-      ctx.restore();
+-    }
+-  }
+-  ctx.restore();
+-}
+-
+diff --git a/public/games/julays-donas/sonido.js b/public/games/julays-donas/sonido.js
+index 681be77..b12a835 100644
+--- a/public/games/julays-donas/sonido.js
++++ b/public/games/julays-donas/sonido.js
+@@ -87,3 +87,110 @@ export function chisporroteo(n, cerca, pausado) {
+   const objetivo = pausado ? 0 : Math.min(1, n / 3) * (cerca ? 0.09 : 0.03) * vol();
+   ganancia.gain.setTargetAtTime(objetivo, ac.currentTime, 0.15);
+ }
++
++// ---------------------------------------------------------------- música de fondo
++
++/*
++ * Música lenta y tranquila, sintetizada: acordes suaves de piano eléctrico (Fa7M, Mim7, Rem7, Do7M),
++ * un bajo y una melodía que aparece de a ratos, con un poco de eco. Usa el volumen de música del
++ * portal (no el de efectos) y se puede apagar desde la pausa.
++ */
++const G = window.GameIt;
++const ACORDES = [
++  [53, 57, 60, 64],
++  [52, 55, 59, 62],
++  [50, 53, 57, 60],
++  [48, 52, 55, 59],
++];
++const MELODIA = [65, 67, 69, 72, 74, 76, 77, 79];
++const PULSO = 60 / 64; // 64 pulsos por minuto
++const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
++
++let acMus = null;
++let mus = null;
++
++function volumenMusica() {
++  const v = G?.prefs?.volume;
++  if (!v) return 0.48;
++  return v.muted ? 0 : v.music ?? 0.48;
++}
++
++function armar(ac) {
++  const salida = ac.createGain();
++  salida.gain.value = 0;
++  salida.connect(ac.destination);
++  const filtro = ac.createBiquadFilter();
++  filtro.type = 'lowpass';
++  filtro.frequency.value = 1700;
++  filtro.connect(salida);
++  // eco suave
++  const eco = ac.createDelay(1);
++  eco.delayTime.value = PULSO * 0.75;
++  const vuelta = ac.createGain();
++  vuelta.gain.value = 0.28;
++  const mezcla = ac.createGain();
++  mezcla.gain.value = 0.22;
++  filtro.connect(eco);
++  eco.connect(vuelta).connect(eco);
++  eco.connect(mezcla).connect(salida);
++  let s = 7;
++  const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
++  return { salida, entrada: filtro, prox: ac.currentTime + 0.3, pulso: 0, rnd, previa: 4 };
++}
++
++function nota(ac, destino, f, t, dur, v) {
++  const o = ac.createOscillator();
++  o.type = 'sine';
++  o.frequency.value = f;
++  const o2 = ac.createOscillator();
++  o2.type = 'triangle';
++  o2.frequency.value = f * 2;
++  const g2 = ac.createGain();
++  g2.gain.value = 0.1;
++  const g = ac.createGain();
++  g.gain.setValueAtTime(0.0001, t);
++  g.gain.exponentialRampToValueAtTime(v, t + 0.05);
++  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
++  o.connect(g);
++  o2.connect(g2).connect(g);
++  g.connect(destino);
++  o.start(t);
++  o2.start(t);
++  o.stop(t + dur + 0.05);
++  o2.stop(t + dur + 0.05);
++}
++
++function tocarPulso(ac, M, t) {
++  const i = M.pulso++;
++  const compas = Math.floor(i / 4);
++  const tiempo = i % 4;
++  const acorde = ACORDES[compas % 4];
++  if (tiempo === 0) {
++    acorde.forEach((n, k) => nota(ac, M.entrada, hz(n), t + k * 0.035, PULSO * 3.8, 0.05));
++    nota(ac, M.entrada, hz(acorde[0] - 12), t, PULSO * 3.4, 0.08);
++  } else if (tiempo === 2) {
++    acorde.slice(1).forEach((n, k) => nota(ac, M.entrada, hz(n), t + k * 0.03, PULSO * 1.6, 0.025));
++  }
++  // la melodía: algunas notas sueltas, cerca de la anterior; cada tanto un compás en silencio
++  if (compas % 8 !== 7 && M.rnd() < (tiempo === 0 ? 0.55 : 0.35)) {
++    M.previa = Math.max(0, Math.min(MELODIA.length - 1, M.previa + Math.round((M.rnd() - 0.5) * 4)));
++    nota(ac, M.entrada, hz(MELODIA[M.previa]), t + (M.rnd() < 0.3 ? PULSO / 2 : 0), PULSO * 1.6, 0.045);
++  }
++}
++
++/** Llamar en cada cuadro: programa la música un poquito adelante. encendida: si el jugador la quiere. */
++export function musicaFondo(encendida, pausadoPortal) {
++  if (!acMus) acMus = unlock();
++  const ac = acMus;
++  if (!ac || ac.state !== 'running') return;
++  if (!mus) mus = armar(ac);
++  const objetivo = encendida && !pausadoPortal ? volumenMusica() * 0.55 : 0;
++  mus.salida.gain.setTargetAtTime(objetivo, ac.currentTime, 0.6);
++  if (!objetivo) return;
++  // si el audio estuvo frenado, retomar desde ahora (sin tocar de golpe lo atrasado)
++  if (mus.prox < ac.currentTime - 0.1) mus.prox = ac.currentTime + 0.1;
++  while (mus.prox < ac.currentTime + 1.2) {
++    tocarPulso(ac, mus, mus.prox);
++    mus.prox += PULSO;
++  }
++}
+diff --git a/public/games/julays-donas/style.css b/public/games/julays-donas/style.css
+index 75fb98a..8f2b485 100644
+--- a/public/games/julays-donas/style.css
++++ b/public/games/julays-donas/style.css
+@@ -52,9 +52,14 @@ body { display: grid; place-items: center; }
+ .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+ 
+ /* título */
+-.titulo { text-align: center; align-items: center; width: min(520px, 100%); }
++.titulo { text-align: center; align-items: center; width: min(820px, 100%); flex-direction: row; gap: 26px; }
++.titulo .marca { flex: 1 1 0; min-width: 0; display: grid; gap: 10px; justify-items: center; }
++.titulo .menu { flex: 0 0 300px; display: grid; gap: 14px; justify-items: center; }
+ .logo-dona { width: 150px; }
+-.titulo .botones { flex-direction: column; align-items: stretch; width: min(320px, 100%); }
++.titulo .botones { flex-direction: column; align-items: stretch; width: 100%; }
++.dificultad { display: grid; gap: 6px; justify-items: center; }
++.dificultad > span { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta2); }
++.dificultad small { color: var(--tinta2); font-size: 14px; }
+ 
+ /* vestidor: el personaje a la izquierda, las opciones por pestañas a la derecha */
+ .vestidor { width: min(940px, 100%); flex-direction: row; gap: 20px; }
+@@ -150,6 +155,8 @@ body { display: grid; place-items: center; }
+   .tienda .der { position: static; }
+   .items { position: static; }
+   .vestidor { flex-direction: column; }
++  .titulo { flex-direction: column; }
++  .titulo .menu { flex: none; width: 100%; }
+   .vestidor .persona { max-width: 180px; }
+   .fila { grid-template-columns: 1fr; gap: 4px; }
+   .tarjeta { padding: 16px; border-radius: 20px; }
+@@ -176,6 +183,9 @@ body { display: grid; place-items: center; }
+   .tabs { gap: 5px; }
+   .logo-dona { width: 84px; }
+   .titulo .botones { gap: 6px; }
++  .titulo { gap: 16px; }
++  .titulo .menu { flex-basis: 260px; gap: 8px; }
++  .dificultad small { font-size: 12px; }
+   .vestidor { gap: 14px; }
+   .vestidor .persona { max-height: calc(var(--alto) - 96px); border-width: 2.5px; border-radius: 14px; }
+   .nombre { gap: 2px; font-size: 13px; }
+diff --git a/public/games/julays-donas/ui.js b/public/games/julays-donas/ui.js
+index 6597eb6..06e19d3 100644
+--- a/public/games/julays-donas/ui.js
++++ b/public/games/julays-donas/ui.js
+@@ -2,7 +2,7 @@
+  * Pantallas en HTML sobre el canvas: título, vestidor (crear tu personaje), historia, inicio y fin
+  * del día, decoración del local, pausa y ayuda.
+  */
+-import { C, TXT, PIELES, PELOS, ROPA, OJOS as OJOS_COL, ORDEN_PIELES, LOGROS, DECO, DECO_INICIAL, SLOTS, MEJORAS, COLORES_LOCAL, byId } from './data.js';
++import { C, TXT, DIFICULTADES, PIELES, PELOS, ROPA, OJOS as OJOS_COL, ORDEN_PIELES, LOGROS, DECO, DECO_INICIAL, SLOTS, MEJORAS, COLORES_LOCAL, byId } from './data.js';
+ import { persona, retrato, dona, donaIdeal, altoPersona, completarLook, lookJugador } from './art.js';
+ 
+ import { icono } from './ticket.js';
+@@ -58,22 +58,69 @@ const on = (sel, ev, fn) => root.querySelectorAll(sel).forEach((el) => el.addEve
+ 
+ // ---------------------------------------------------------------- título
+ 
++/** Prender o apagar la música (queda guardado en este navegador). */
++function alternarMusica(J) {
++  J.musica = !J.musica;
++  try {
++    localStorage.setItem('julays-donas:musica', J.musica ? 'si' : 'no');
++  } catch {}
++  J.snd('click');
++}
++
++/** La dificultad elegida: la de la partida guardada, o la última que elegiste para una nueva. */
++export function dificultadElegida(J, hayPartida) {
++  if (hayPartida && J.save?.dificultad) return J.save.dificultad;
++  try {
++    return localStorage.getItem('julays-donas:dificultad') || 'medio';
++  } catch {
++    return 'medio';
++  }
++}
++
+ export function titulo(J, o) {
+   ultimo = () => titulo(J, o);
++  const dif = dificultadElegida(J, o.hayPartida);
+   const el = mostrar(
+     `<div class="tarjeta titulo">
+-      <canvas class="logo-dona"></canvas>
+-      <h1>Julay’s Donas</h1>
+-      <p class="bajada">${J.tr({ es: 'Tomá pedidos, armá la masa, freí y decorá. El último cliente del día es el más exigente.', en: 'Take orders, shape the dough, fry and decorate. The last customer of the day is the toughest.' })}</p>
++      <div class="marca">
++        <canvas class="logo-dona"></canvas>
++        <h1>Julay’s Donas</h1>
++        <p class="bajada">${J.tr({ es: 'Tomá pedidos, armá la masa, freí y decorá. El último cliente del día es el más exigente.', en: 'Take orders, shape the dough, fry and decorate. The last customer of the day is the toughest.' })}</p>
++      </div>
++      <div class="menu">
+       <div class="botones">
+         ${o.hayPartida ? `<button class="b primario" data-a="seguir">${J.tr(TXT.seguir)} · ${J.tr(TXT.dia, { d: J.save.dia })}</button>` : ''}
+         ${o.hayPartida ? `<button class="b" data-a="vestidor">${J.tr(TXT.vestidor)}</button>` : ''}
+         <button class="b ${o.hayPartida ? '' : 'primario'}" data-a="nueva">${J.tr(TXT.nueva)}</button>
+         <button class="b" data-a="ayuda">${J.tr(TXT.comoSeJuega)}</button>
+       </div>
++      <div class="dificultad">
++        <span>${J.tr(TXT.dificultad)}</span>
++        <div class="tabs">${Object.entries(DIFICULTADES).map(([id, d]) => `<button class="chip${id === dif ? ' on' : ''}" data-dif="${id}">${J.tr(d.name)}</button>`).join('')}</div>
++        <small>${J.tr(DIFICULTADES[dif].desc)}</small>
++      </div>
++      <button class="chip" data-a="musica">🎵 ${J.tr(TXT.musica)}: ${J.tr(J.musica ? TXT.si2 : TXT.no2)}</button>
++      </div>
+     </div>`,
+     'con-fondo',
+   );
++  on('[data-a="musica"]', 'click', () => {
++    alternarMusica(J);
++    titulo(J, o);
++  });
++  on('[data-dif]', 'click', (e) => {
++    const id = e.currentTarget.dataset.dif;
++    try {
++      localStorage.setItem('julays-donas:dificultad', id);
++    } catch {}
++    // si hay partida guardada, se cambia también en ella (se nota desde el próximo día)
++    if (o.hayPartida && J.save) {
++      J.save.dificultad = id;
++      guardar(J.save);
++    }
++    J.snd('click');
++    titulo(J, o);
++  });
+   const logo = el.querySelector('.logo-dona');
+   let t = 0;
+   const giro = () => {
+@@ -581,12 +628,17 @@ export function pausa(J, o) {
+       <h2>${J.tr(TXT.pausa)}</h2>
+       <div class="botones columna">
+         <button class="b primario" data-a="seguir">${J.tr(TXT.seguir)}</button>
++        <button class="b" data-a="musica">🎵 ${J.tr(TXT.musica)}: ${J.tr(J.musica ? TXT.si2 : TXT.no2)}</button>
+         <button class="b" data-a="ayuda">${J.tr(TXT.comoSeJuega)}</button>
+         <button class="b" data-a="salir">${J.tr(TXT.salir)}</button>
+       </div>
+     </div>`,
+     'oscuro',
+   );
++  on('[data-a="musica"]', 'click', () => {
++    alternarMusica(J);
++    pausa(J, o);
++  });
+   on('[data-a="seguir"]', 'click', () => o.onSeguir());
+   on('[data-a="ayuda"]', 'click', () => ayuda(J, () => pausa(J, o)));
+   on('[data-a="salir"]', 'click', () => confirmar(J, J.tr(TXT.confirmarSalir), o.onSalir, () => pausa(J, o)));
+-- 
+2.43.0
+

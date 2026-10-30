@@ -84,6 +84,10 @@ git am -3 --whitespace=nowarn julays-donas-2.patch
 `julays-donas-3.patch` (arriba del segundo) le saca la "pera" a la cara sonriente: un óvalo que quedaba debajo de la boca
 y un escote que parecía papada.
 
+`julays-donas-4.patch` (arriba del tercero) suma la dificultad (Fácil, Medio o Difícil, en la pantalla de inicio),
+cambia la tarjeta que tapaba la pantalla cuando llegaba alguien por un aviso chico en una esquina y agrega música de
+fondo lenta y tranquila (se apaga desde el inicio o la pausa).
+
 ## Antes y después
 
 A la izquierda, el original; a la derecha, la copia en tono tierra.
