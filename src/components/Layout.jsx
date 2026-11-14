@@ -522,6 +522,7 @@ export default function Layout({ children }) {
   // adentro del cajón que se abre en el celular.
   const sidebarInner = () => (
     <>
+      {/* - [Celular] En celular la barra lateral pasa a ser un menú que se abre con un botón */}
       {isMobile ? (
         // Al costado del logo: es la copia que se ve mientras el cajón está
         // abierto, y la que muestra la X.
@@ -744,6 +745,7 @@ export default function Layout({ children }) {
           position: "fixed", top: 0, left: 0, bottom: 0, width: 248, zIndex: 101,
           // Sin padding a los costados: lo pone cada cosa de adentro, para que
           // la franja del seleccionado pueda llegar a los bordes.
+          // - [Modo oscuro] Los componentes usan la variable, no un color fijo
           background: "var(--fw-surface)", padding: "24px 0", display: "flex", flexDirection: "column",
           boxShadow: "0 0 40px rgba(0,0,0,.2)", overflowY: "auto",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",

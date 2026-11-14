@@ -99,6 +99,7 @@ export default function LangPicker({ tono = "claro", style }) {
                 key={l.code}
                 lang={l.code}
                 aria-current={elegido}
+                // - [Idiomas] El botón de cada idioma
                 onClick={() => { setLang(l.code); setAbierto(false); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, width: "100%",

@@ -50,6 +50,7 @@ import VueltaDeStripe from "./pages/Connect/VueltaDeStripe";
 // Páginas de la app: se muestran dentro del Layout (con sidebar + topbar)
 const app = (el) => <Layout>{el}</Layout>;
 // Páginas privadas dentro del Layout
+// - [Sesiones] Las pantallas privadas se envuelven con PrivateRoute
 const priv = (el) => <PrivateRoute><Layout>{el}</Layout></PrivateRoute>;
 
 // Pantalla para cualquier dirección que no exista. Sin esto, escribir mal una URL
@@ -73,6 +74,7 @@ const NotFound = () => {
 
 export default function App() {
   // Al arrancar, aplicamos el modo claro/oscuro guardado por el usuario.
+  // - [Modo oscuro] Aplica el tema guardado al abrir la app
   useEffect(() => { initTheme(); }, []);
   return (
     <AuthProvider>

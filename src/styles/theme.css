@@ -438,6 +438,7 @@ h1, h2, h3, h4, p, label, strong, td, th, li, a {
   overflow-wrap: break-word;
 }
 
+/* - [Celular] Ajustes de CSS para pantallas chicas */
 @media (max-width: 767px) {
   /* En iOS, un campo con letra menor a 16px hace que el navegador haga zoom solo
      al tocarlo, y después la página queda corrida. Con 16px no pasa. */

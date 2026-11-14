@@ -180,6 +180,7 @@ export default function Admin() {
   const [borrando, setBorrando] = useState(null);
   const [borrandoAhora, setBorrandoAhora] = useState(false);
 
+  // - [Errores] Error corregido: la pantalla quedaba en blanco si el rol cambiaba con el panel abierto
   /*
     EL PORTÓN DE SEGURIDAD SE DECIDE ACÁ Y SE DIBUJA ABAJO DE TODOS LOS HOOKS.
 

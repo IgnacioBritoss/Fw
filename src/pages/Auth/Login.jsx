@@ -77,6 +77,7 @@ export default function Login() {
   const handleSubmit = async () => {
     if (!form.email || !form.password) { setError(t("auth.errAllFields")); setIntento(n => n + 1); return; }
     setLoading(true); setError("");
+    // - [Sesiones] El formulario manda email y contraseña al contexto de sesión
     const result = await loginWithCredentials(form.email.trim(), form.password);
     setLoading(false);
     if (!result.success) { setError(result.error); setIntento(n => n + 1); return; }

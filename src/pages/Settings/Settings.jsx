@@ -89,8 +89,11 @@ export default function Settings() {
     const next = { ...prefs, [k]: v };
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+    // - [Modo oscuro] El interruptor de Ajustes. Antes guarda la preferencia en fw_prefs
     if (k === "dark") applyDarkMode(v);
+    // - [Modo lectura] El interruptor de Ajustes
     if (k === "lectura") applyReadableFont(v);
+    // - [Daltonismo] El interruptor de Ajustes
     if (k === "daltonico") applyColorBlindMode(v);
   };
 

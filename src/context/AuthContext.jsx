@@ -71,6 +71,7 @@ export function AuthProvider({ children }) {
 
   // Guarda el usuario en memoria y en localStorage (persistencia de la sesión).
   const saveUser = useCallback((userData) => {
+    // - [Sesiones] Guarda el usuario y el token en el navegador, por eso al recargar seguís adentro
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
     setUser(userData);
     return userData;
@@ -135,6 +136,7 @@ export function AuthProvider({ children }) {
   }, [saveUser, tr]);
 
   // ── Inicio de sesión ────────────────────────────────────────────────────
+  // - [Sesiones] Llama al back con loginUser y guarda la respuesta
   const loginWithCredentials = useCallback(async (email, password) => {
     try {
       return applyAuthResponse(await loginUser({ email, password }));

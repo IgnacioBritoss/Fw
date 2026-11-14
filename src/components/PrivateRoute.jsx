@@ -15,5 +15,6 @@ export function PrivateRoute({ children }) {
   const { t: tr } = useI18n();
   // El círculo mientras se resuelve la sesión: era un texto quieto.
   if (loading) return <Spinner block label={tr("common.loading")} />;
+  // - [Sesiones] Sin sesión te manda al login. Esto solo esconde pantallas, la seguridad real está en el back
   return user ? children : <Navigate to="/login" replace />;
 }

@@ -33,6 +33,7 @@ import {
  * diccionarios están en es.js, en.js, pt.js, it.js y zh.js.
  */
 export function I18nProvider({ children }) {
+  // - [Idiomas] El idioma vive en un estado de React para toda la app
   const [lang, setLangState] = useState(idiomaInicial);
 
   // El atributo lang del <html> importa de verdad: es lo que usan el corrector
@@ -42,6 +43,7 @@ export function I18nProvider({ children }) {
     document.documentElement.setAttribute("lang", lang);
   }, [lang]);
 
+  // - [Idiomas] Cambia el idioma, React vuelve a dibujar todo con los textos nuevos
   const setLang = useCallback((code) => {
     if (!DICTIONARIES[code]) return;
     setLangState(code);

@@ -37,6 +37,7 @@ export function CurrencyProvider({ children }) {
   */
   useEffect(() => {
     let vivo = true;
+    // - [Monedas] Pide las cotizaciones una sola vez al abrir la app
     traerTasas().then((t) => { if (vivo) setTasas(t); });
     return () => { vivo = false; };
   }, []);
@@ -49,6 +50,7 @@ export function CurrencyProvider({ children }) {
     tasas,
     setMoneda: (code) => { setMonedaEstado(code); guardarMoneda(code); },
     /** Un precio en pesos → el texto que se muestra. */
+    // - [Monedas] La función precio() que usan todas las pantallas
     precio: (pesos) => formatearPrecio(pesos, moneda, tasas),
     /** ¿Se está mostrando en la moneda real de la operación? */
     esMonedaReal: moneda === MONEDA_POR_DEFECTO,

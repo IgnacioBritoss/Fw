@@ -43,8 +43,10 @@ const STYLE_ID = "fw-tema";
   título, `--fw-text-4` el dato chiquito gris) y de más claro a más oscuro en
   las líneas (`--fw-line` es apenas visible, `--fw-border-2` es la más marcada).
 */
+// - [Modo oscuro 1] Los colores del modo claro, cada uno es una variable de CSS
 const CLARO = `
   --fw-bg: #f3f4f6;
+  /* - [Modo oscuro 2] Ejemplo: el fondo de una tarjeta, blanco en claro */
   --fw-surface: #ffffff;
   --fw-surface-2: #f9fafb;
   --fw-surface-3: #e5e7eb;
@@ -114,8 +116,10 @@ const CLARO = `
   --fw-sombra-fuerte: rgba(0,0,0,.18);
 `;
 
+// - [Modo oscuro 3] Las mismas variables con los valores oscuros
 const OSCURO = `
   --fw-bg: #0d1117;
+  /* - [Modo oscuro 4] La misma variable, gris oscuro en el modo oscuro */
   --fw-surface: #161b22;
   --fw-surface-2: #1c2128;
   --fw-surface-3: #21262d;
@@ -214,12 +218,15 @@ const reglasDeIconos = () => ICONOS.flatMap((c) => [
  * versiones, clara y oscura. Todo el sitio se pinta con esas variables, así que
  * cambiar de tema es cambiar una clase en el <html> y nada más.
  */
+// - [Modo oscuro 5] Mete todos los colores en la página, una sola vez, en una etiqueta style
 function ponerEstilos() {
   if (document.getElementById(STYLE_ID)) return;
   const el = document.createElement("style");
   el.id = STYLE_ID;
   el.textContent = `
+    /* - [Modo oscuro 6] Los colores claros valen siempre */
     :root { ${CLARO} }
+    /* - [Modo oscuro 7] Con la clase fw-dark en el html valen los oscuros */
     html.fw-dark { ${OSCURO} }
     ${reglasDeDaltonismo()}
 
@@ -323,6 +330,7 @@ function ponerEstilos() {
 
     ${reglasDeBotones()}
 
+    /* - [Modo lectura 6] Acá se meten esas reglas en la página */
     ${reglasDeLectura()}
   `;
   document.head.appendChild(el);
@@ -364,15 +372,18 @@ function ponerEstilos() {
   además por la línea cortada. Esta opción mejora lo que ya se distingue sin
   color; no lo reemplaza.
 */
+// - [Daltonismo 2] Cambia solo algunas variables de color
 function reglasDeDaltonismo() {
   // Va DESPUÉS de la paleta oscura en la hoja: con la misma especificidad, gana
   // el que está más abajo, y así funciona con el modo oscuro prendido.
   const CAMBIOS_CLARO = `
+    /* - [Daltonismo 3] El verde pasa a verde azulado, de la paleta Okabe e Ito */
     --fw-green: #009E73;
     --fw-green-text: #007A59;
     --fw-green-text-2: #006147;
     --fw-green-bg: #eafaf5;
     --fw-green-line: #9ee0cd;
+    /* - [Daltonismo 4] El rojo pasa a naranja rojizo, se distinguen con cualquier daltonismo */
     --fw-red: #D55E00;
     --fw-red-text: #D55E00;
     --fw-red-text-2: #A34700;
@@ -416,7 +427,9 @@ function reglasDeDaltonismo() {
     --fw-teal-bg: #102a38;
   `;
   return `
+    /* - [Daltonismo 5] Los cambios en el modo claro */
     html.fw-daltonico { ${CAMBIOS_CLARO} }
+    /* - [Daltonismo 6] Y cuando también está el modo oscuro, por eso funcionan juntos */
     html.fw-dark.fw-daltonico { ${CAMBIOS_OSCURO} }
   `;
 }
@@ -511,11 +524,13 @@ function reglasDeBotones() {
   dígitos, el año—, donde el espaciado extra los separa tanto que dejan de verse
   como un número. Ahí se respeta lo que ya tenían.
 */
+// - [Modo lectura 2] Las reglas que se activan con esa clase
 function reglasDeLectura() {
   return `
     /* La tipografía vive en public/fuentes y se sirve desde la raíz del sitio.
        El navegador la baja recién cuando una regla que la usa le toca a algún
        texto de verdad, o sea solo si el modo está prendido. */
+    /* - [Modo lectura 3] La tipografía OpenDyslexic, viene con la app en public/fuentes */
     @font-face {
       font-family: "OpenDyslexic";
       src: url("/fuentes/opendyslexic-400.woff2") format("woff2");
@@ -534,6 +549,7 @@ function reglasDeLectura() {
       font-display: swap;
     }
 
+    /* - [Modo lectura 4] Cambia la tipografía de toda la página */
     html.fw-lectura, html.fw-lectura body {
       font-family: "OpenDyslexic", "Comic Sans MS", Verdana, Tahoma,
         "Trebuchet MS", system-ui, sans-serif;
@@ -561,6 +577,7 @@ function reglasDeLectura() {
     html.fw-lectura *:not(svg):not(svg *) {
       /* Poco, porque OpenDyslexic ya viene separada de fábrica: sumándole mucho
          más, el texto se estira y empieza a salirse de los botones. */
+      /* - [Modo lectura 5] Más espacio entre letras, palabras y renglones */
       letter-spacing: .02em;
       word-spacing: .12em;
       line-height: 1.75;
@@ -586,6 +603,7 @@ function reglasDeLectura() {
 }
 
 /** Prende o apaga los colores para daltonismo. */
+// - [Daltonismo 1] Pone o saca la clase fw-daltonico del html
 export function applyColorBlindMode(on) {
   ponerEstilos();
   const root = document.documentElement;
@@ -594,6 +612,7 @@ export function applyColorBlindMode(on) {
 }
 
 /** Prende o apaga el modo lectura. */
+// - [Modo lectura 1] Pone o saca la clase fw-lectura del html
 export function applyReadableFont(on) {
   ponerEstilos();
   const root = document.documentElement;
@@ -602,6 +621,7 @@ export function applyReadableFont(on) {
 }
 
 /** Prende o apaga el modo oscuro. */
+// - [Modo oscuro 8] El botón solo pone o saca la clase fw-dark del html
 export function applyDarkMode(on) {
   ponerEstilos();
   const root = document.documentElement;
@@ -615,6 +635,7 @@ export function applyDarkMode(on) {
 }
 
 /** Lee las preferencias guardadas y las aplica, al arrancar la app. */
+// - [Modo oscuro 9] Al abrir la app aplica lo que estaba guardado
 export function initTheme() {
   let prefs = {};
   try { prefs = JSON.parse(localStorage.getItem("fw_prefs") || "{}"); } catch { prefs = {}; }

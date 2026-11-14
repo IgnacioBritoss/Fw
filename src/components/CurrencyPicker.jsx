@@ -84,6 +84,7 @@ export default function CurrencyPicker({ tono = "claro", style }) {
               <button
                 key={m.code}
                 aria-current={elegida}
+                // - [Monedas] El botón de cada moneda
                 onClick={() => { setMoneda(m.code); setAbierto(false); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, width: "100%",

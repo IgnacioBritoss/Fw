@@ -72,6 +72,7 @@ async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
   const token = getToken();
   const headers = {
     "Content-Type": "application/json",
+    // - [Sesiones] Todos los pedidos llevan el token en este header
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -123,6 +124,7 @@ async function apiFetch(path, { timeoutMs, base, ...options } = {}) {
     // sabe de sesiones. El servicio de IA no maneja cuentas: un 401 suyo sería
     // por SU clave, y cerrarle la sesión a la persona por eso la echaría de la
     // app por algo que no tiene nada que ver con ella.
+    // - [Sesiones] Si el back dice que la sesión venció, se borra y se manda al login
     if (res.status === 401 && !isAuthRoute(path) && servidor === BASE_URL) {
       localStorage.removeItem("fw_user");
       if (!window.location.pathname.startsWith("/login")) {

@@ -17,6 +17,7 @@
 //  dependencia grande a un proyecto que se entrega y se defiende.
 // ============================================================================
 import { createContext, useContext } from "react";
+// - [Idiomas 1] Se importan los cinco diccionarios, todos con las mismas claves
 import es from "./es";
 import en from "./en";
 import pt from "./pt";
@@ -24,6 +25,7 @@ import it from "./it";
 import zh from "./zh";
 
 /** Los idiomas disponibles, con el nombre escrito EN SU PROPIO IDIOMA. */
+// - [Idiomas 2] Lista de idiomas que aparece en el selector
 export const LANGUAGES = [
   { code: "es", label: "Español", flagless: "ES" },
   { code: "en", label: "English", flagless: "EN" },
@@ -32,7 +34,9 @@ export const LANGUAGES = [
   { code: "zh", label: "中文", flagless: "ZH" },
 ];
 
+// - [Idiomas 3] Junta los cinco diccionarios en un solo objeto
 export const DICTIONARIES = { es, en, pt, it, zh };
+// - [Idiomas 4] Clave con la que se guarda el idioma elegido en el navegador
 export const STORAGE_KEY = "fw_lang";
 
 /**
@@ -44,7 +48,9 @@ export const STORAGE_KEY = "fw_lang";
  * ("home.title"). Es a propósito: una pantalla a medio traducir se sigue
  * entendiendo, una pantalla con claves crudas no.
  */
+// - [Idiomas 5] Busca un texto por su clave en el idioma elegido
 export function translate(lang, key, vars) {
+  // - [Idiomas 6] Si falta la traducción usa el español, así nunca queda vacío
   const texto = DICTIONARIES[lang]?.[key] ?? es[key] ?? key;
   if (!vars) return texto;
   return Object.entries(vars).reduce(
@@ -54,6 +60,7 @@ export function translate(lang, key, vars) {
 }
 
 /** El idioma guardado, o castellano: la app se hizo en Argentina. */
+// - [Idiomas 7] Al abrir la app lee el idioma guardado, o arranca en español
 export function idiomaInicial() {
   try {
     const guardado = localStorage.getItem(STORAGE_KEY);
@@ -65,6 +72,7 @@ export function idiomaInicial() {
 export const I18nContext = createContext(null);
 
 /** Hook de atajo. Cualquier componente hace `const { t } = useI18n();`. */
+// - [Idiomas 8] Lo que usa cada pantalla: t("clave") en vez del texto
 export function useI18n() {
   const ctx = useContext(I18nContext);
   if (!ctx) {

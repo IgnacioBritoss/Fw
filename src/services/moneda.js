@@ -43,6 +43,7 @@ const PESOS_POR_UNIDAD = {
  *  · Y las de los países que hacen frontera con Argentina, que es de donde
  *    llega la mayor parte de quien cruza y alquila un auto acá.
  */
+// - [Monedas 1] Las nueve monedas con su símbolo
 export const MONEDAS = [
   { code: "ARS", simbolo: "$", locale: "es-AR" },
   { code: "USD", simbolo: "US$", locale: "en-US" },
@@ -85,6 +86,7 @@ export function guardarMoneda(code) {
 }
 
 /** Las cotizaciones que se hayan bajado, si no están vencidas. */
+// - [Monedas 2] Si ya hay cotizaciones de menos de un día guardadas, no se vuelven a pedir
 function tasasGuardadas() {
   try {
     const crudo = JSON.parse(localStorage.getItem(CLAVE_TASAS) || "null");
@@ -103,11 +105,13 @@ function tasasGuardadas() {
  * usa al revés —cuántos pesos vale una unidad— porque es como se piensa la
  * cuenta y como está escrita la tabla de respaldo.
  */
+// - [Monedas 3] Trae la cotización del día
 export async function traerTasas() {
   const guardadas = tasasGuardadas();
   if (guardadas) return guardadas;
 
   try {
+    // - [Monedas 4] Se piden a open.er-api.com, un servicio gratis sin clave
     const r = await fetch("https://open.er-api.com/v6/latest/ARS");
     if (!r.ok) throw new Error(String(r.status));
     const datos = await r.json();
@@ -119,14 +123,17 @@ export async function traerTasas() {
       const valor = Number(porPeso[code]);
       // Se descarta cualquier valor raro en vez de dejar pasar un precio absurdo.
       if (code !== "ARS" && Number.isFinite(valor) && valor > 0) {
+        // - [Monedas 5] Se da vuelta la cuenta para saber cuántos pesos vale cada moneda
         pesosPorUnidad[code] = 1 / valor;
       }
     }
     try {
+      // - [Monedas 6] Se guardan en el navegador con la hora
       localStorage.setItem(CLAVE_TASAS, JSON.stringify({ cuando: Date.now(), pesosPorUnidad }));
     } catch { /* ver arriba */ }
     return { ...PESOS_POR_UNIDAD, ...pesosPorUnidad };
   } catch {
+    // - [Monedas 7] Si falla el pedido, tabla de respaldo para que los precios nunca queden vacíos
     return PESOS_POR_UNIDAD;
   }
 }
@@ -153,12 +160,14 @@ function redondearLindo(n) {
  *
  * `monto` viene siempre en pesos: es como está guardado todo en la base.
  */
+// - [Monedas 8] Lo que usan las pantallas para mostrar un precio
 export function formatearPrecio(monto, code = MONEDA_POR_DEFECTO, tasas = PESOS_POR_UNIDAD) {
   const numero = Number(monto);
   if (!Number.isFinite(numero)) return "";
 
   const moneda = MONEDAS.find((m) => m.code === code) || MONEDAS[0];
   const pesosPorUnidad = Number(tasas?.[moneda.code]) || PESOS_POR_UNIDAD[moneda.code] || 1;
+  // - [Monedas 9] Convierte de pesos a la moneda elegida y redondea
   const valor = redondearLindo(numero / pesosPorUnidad);
 
   /*
