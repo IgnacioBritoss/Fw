@@ -1,0 +1,460 @@
+From 41b98d2e7726f553599c9f2fb9930e8496437e0e Mon Sep 17 00:00:00 2001
+From: IgnacioBritoss <167232030+IgnacioBritoss@users.noreply.github.com>
+Date: Wed, 18 Nov 2026 13:28:55 +0000
+Subject: [PATCH] Truco: el mazo en la primera paga el envido y en parejas el
+ envido lo cantan los pies
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Irse al mazo cuando el envido todavía se podía cantar (en la primera, sin envido jugado ni truco querido) le da al
+  rival 1 punto más por el envido: 2 si no se cantó nada. El resumen de la mano lo aclara.
+- De a cuatro, el envido lo cantan y lo contestan solo los pies (el que repartió y el compañero del mano). El primer
+  truco lo contesta el pie rival si todavía no tiró, para que pueda cantar el envido (el envido está primero).
+- La seña: de a cuatro, mientras se puede cantar el envido, cada uno ve los puntos de su compañero; la compu los usa
+  y en la mesa el pie ve "tu compañero N" y el otro, quién lo canta.
+- Reglas de la ayuda (en español e inglés), README y pruebas nuevas.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VRU32TvSy1do7AcAzADaXU
+---
+ README.md                          |   5 +-
+ public/games/truco/game.js         |  23 ++++--
+ public/games/truco/shared/bot.js   |  10 ++-
+ public/games/truco/shared/rules.js |   7 ++
+ public/games/truco/shared/table.js |  46 ++++++++---
+ tests/truco.test.mjs               | 125 +++++++++++++++++++++++++++--
+ 6 files changed, 188 insertions(+), 28 deletions(-)
+
+diff --git a/README.md b/README.md
+index 63f8462..a0b16cb 100644
+--- a/README.md
++++ b/README.md
+@@ -621,8 +621,9 @@ El truco argentino con el mazo español de 40 cartas dibujado en SVG (`public/sh
+ y bastos con las pintas del marco, los anchos grandes y la sota, el caballo y el rey vestidos por palo) sobre una mesa de
+ paño, con los porotos anotados con fósforos. Está todo: tres bazas con parda, truco, retruco y vale cuatro (solo sube el
+ que quiso el último canto), envido, real envido y falta envido que se encadenan (y "el envido está primero" cuando te
+-cantan truco antes de tirar), mazo, flor opcional (se canta sola, anula el envido y se cobra al terminar la primera baza)
+-y partidas a 15 o a 30. Las reglas (`shared/rules.js`) son puras; la mesa (`shared/table.js`: turnos, cantos, puntos,
++cantan truco antes de tirar; en parejas lo cantan y lo contestan solo los pies, que ven el envido de su compañero como si
++fuera la seña), mazo (en la primera, con el envido sin jugar, le da además 1 al rival: 2 si no se cantó nada), flor
++opcional (se canta sola, anula el envido y se cobra al terminar la primera baza) y partidas a 15 o a 30. Las reglas (`shared/rules.js`) son puras; la mesa (`shared/table.js`: turnos, cantos, puntos,
+ tiempo por jugada, ausentes) corre igual en el navegador y en el servidor y a cada jugador le manda solo sus cartas. La
+ compu (`shared/bot.js`) decide con lo mismo que ve una persona: reparte muchas veces las cartas que no vio (respetando lo
+ que se dijo en el envido y quién cantó flor), juega cada mano hasta el final para estimar la chance de ganarla, le da peso
+diff --git a/public/games/truco/game.js b/public/games/truco/game.js
+index 0647ca2..6d4abf6 100644
+--- a/public/games/truco/game.js
++++ b/public/games/truco/game.js
+@@ -5,7 +5,7 @@
+  * Reglas en shared/rules.js, la compu en shared/bot.js, la mesa (turnos, cantos, puntos) en shared/table.js y el
+  * mazo dibujado en /shared/spanish-deck.js.
+  */
+-import { DECK, TRUCO, teamOf, envido, hasFlor, shuffled, seatOrder } from './shared/rules.js';
++import { DECK, TRUCO, teamOf, envido, hasFlor, shuffled, seatOrder, pieOf } from './shared/rules.js';
+ import { Table, PACE } from './shared/table.js';
+ import { cardURL } from '/shared/spanish-deck.js';
+ import { OnlineRoom, netText, defaultName, share as shareRoom, roomFromUrl } from '/shared/online.js';
+@@ -121,6 +121,8 @@ const TXT = {
+   st_dealYou: { es: 'Repartís vos…', en: 'You deal…' },
+   worth: { es: '{x} · vale {n}', en: '{x} · worth {n}' },
+   envHint: { es: 'Envido {p}', en: 'Envido {p}' },
++  envHintMate: { es: 'Envido {p} · tu compañero {q}', en: 'Envido {p} · partner {q}' },
++  envHintPie: { es: 'Envido {p} · lo canta {name}', en: 'Envido {p} · {name} calls it' },
+   florHint: { es: 'Tenés flor', en: 'You have flor' },
+   manoTag: { es: 'Sos mano', en: 'You lead' },
+   mano: { es: 'mano', en: 'lead' },
+@@ -139,6 +141,7 @@ const TXT = {
+   w_mazoUs: { es: 'Nos fuimos al mazo', en: 'We folded' },
+   w_mazoThem: { es: 'Se fueron al mazo', en: 'They folded' },
+   w_mazoName: { es: '{name} se fue al mazo', en: '{name} folded' },
++  w_mazoEnv: { es: '1 es por el envido que no se jugó', en: '1 is for the envido nobody played' },
+   e_line: { es: 'Envido: {who} +{p}', en: 'Envido: {who} +{p}' },
+   e_vs: { es: '{a} a {b}', en: '{a} to {b}' },
+   e_buenas: { es: '{a}, son buenas', en: '{a}, unbeaten' },
+@@ -179,18 +182,18 @@ const RULES = {
+ <h3>Qué carta mata a cuál</h3><div class="rank">{rank}</div>
+ <p>Si en una baza empatan (es <b>parda</b>), define la siguiente; si la primera la ganó alguien y después hay parda, gana el de la primera. Si todas son pardas, gana el que es mano.</p>
+ <h3>El truco</h3>
+-<p>En tu turno podés cantar <b>truco</b> (la mano pasa a valer 2). El otro contesta <b>quiero</b>, <b>no quiero</b> (y vos te llevás 1) o lo sube: <b>retruco</b> (3) y <b>vale cuatro</b> (4). Solo puede subir el que quiso el último canto. Si nadie canta, la mano vale 1. Irse al <b>mazo</b> es entregar la mano.</p>
++<p>En tu turno podés cantar <b>truco</b> (la mano pasa a valer 2). El otro contesta <b>quiero</b>, <b>no quiero</b> (y vos te llevás 1) o lo sube: <b>retruco</b> (3) y <b>vale cuatro</b> (4). Solo puede subir el que quiso el último canto. Si nadie canta, la mano vale 1. Irse al <b>mazo</b> es entregar la mano; si todavía se podía cantar el envido (en la primera, antes de que se juegue), el otro se lleva además 1 por el envido: irse sin que nadie cante nada da 2.</p>
+ <h3>El envido</h3>
+-<p>Antes de tirar tu primera carta podés cantar <b>envido</b> (2), <b>real envido</b> (3) o <b>falta envido</b> (lo que le falta al que va ganando para terminar). Se pueden encadenar: envido, envido, real, falta. Tus puntos: dos cartas del mismo palo suman 20 más sus valores (las figuras valen 0); si no tenés dos del mismo palo, vale la más alta. Gana el que tiene más; si empatan, el que es mano. Si te cantan truco en la primera, todavía podés contestar con envido: <b>el envido está primero</b>.</p>
++<p>Antes de tirar tu primera carta podés cantar <b>envido</b> (2), <b>real envido</b> (3) o <b>falta envido</b> (lo que le falta al que va ganando para terminar). Se pueden encadenar: envido, envido, real, falta. Tus puntos: dos cartas del mismo palo suman 20 más sus valores (las figuras valen 0); si no tenés dos del mismo palo, vale la más alta. Gana el que tiene más; si empatan, el que es mano. Si te cantan truco en la primera, todavía podés contestar con envido: <b>el envido está primero</b>. De a cuatro, el envido lo cantan y lo contestan solo los <b>pies</b>, el último de cada pareja en tirar (el que repartió y el compañero del mano); el pie sabe cuántos tiene su compañero, como si le hiciera la seña.</p>
+ <p><b>Con flor</b>: tres cartas del mismo palo se cantan solas, valen 3 y anulan el envido; si los dos equipos tienen flor, el de la mejor se lleva 3 por cada flor (al menos 6).</p>
+ <p>Se juega a 15 o a 30 puntos (los primeros 15 son las <b>malas</b> y los otros, las <b>buenas</b>). Los porotos se anotan con fósforos: cada cuadradito cerrado son cinco.</p>`,
+   en: `<p>Played with the 40-card <b>Spanish deck</b> (no eights or nines). Everyone gets <b>three cards</b> and the hand is played in up to <b>three tricks</b>: everybody plays a card and the highest wins. Win two tricks to win the hand.</p>
+ <h3>Which card beats which</h3><div class="rank">{rank}</div>
+ <p>A tied trick (<b>parda</b>) is decided by the next one; if someone won the first trick and a later one ties, the first winner takes it. If all are tied, the leading player wins.</p>
+ <h3>Truco</h3>
+-<p>On your turn you can call <b>truco</b> (the hand is worth 2). The other side answers <b>accept</b>, <b>decline</b> (you get 1) or raises: <b>retruco</b> (3) and <b>vale cuatro</b> (4). Only whoever accepted the last call can raise. If nobody calls, the hand is worth 1. <b>Folding</b> gives the hand away.</p>
++<p>On your turn you can call <b>truco</b> (the hand is worth 2). The other side answers <b>accept</b>, <b>decline</b> (you get 1) or raises: <b>retruco</b> (3) and <b>vale cuatro</b> (4). Only whoever accepted the last call can raise. If nobody calls, the hand is worth 1. <b>Folding</b> gives the hand away; if the envido could still be called (on the first trick, before it is played), the other side also gets 1 for the envido: folding before anyone calls anything gives 2.</p>
+ <h3>Envido</h3>
+-<p>Before playing your first card you can call <b>envido</b> (2), <b>real envido</b> (3) or <b>falta envido</b> (whatever the leader needs to finish). They chain: envido, envido, real, falta. Your points: two cards of the same suit score 20 plus their values (face cards are 0); otherwise your highest card. Highest wins, ties go to the leading player. If they call truco on the first trick, you can still answer with envido: <b>envido comes first</b>.</p>
++<p>Before playing your first card you can call <b>envido</b> (2), <b>real envido</b> (3) or <b>falta envido</b> (whatever the leader needs to finish). They chain: envido, envido, real, falta. Your points: two cards of the same suit score 20 plus their values (face cards are 0); otherwise your highest card. Highest wins, ties go to the leading player. If they call truco on the first trick, you can still answer with envido: <b>envido comes first</b>. In pairs, only the <b>pies</b> (the last of each pair to play: the dealer and the leader's partner) call and answer the envido; the pie knows their partner's points, as if signalled.</p>
+ <p><b>With flor</b>: three cards of the same suit are announced automatically, score 3 and cancel the envido; if both sides have flor, the best one takes 3 per flor (at least 6).</p>
+ <p>Games go to 15 or 30 points, tallied with matchsticks: each closed square is five.</p>`,
+ };
+@@ -846,7 +849,13 @@ function renderInfo(v) {
+   const hint = $('env-hint');
+   if (first && h.env.state === 'open') {
+     hint.hidden = false;
+-    hint.textContent = v.flor && hasFlor(h.dealt) ? t('florHint') : t('envHint', { p: envido(h.dealt) });
++    const pie = pieOf(teamOf(v.me), h.mano, v.n);
++    const p = envido(h.dealt);
++    // de a cuatro el envido lo canta el pie: él ve los puntos de su compañero (la seña) y el otro sabe quién canta
++    if (v.flor && hasFlor(h.dealt)) hint.textContent = t('florHint');
++    else if (v.n === 4 && pie !== v.me) hint.textContent = t('envHintPie', { p, name: seatName(v, pie) });
++    else if (v.n === 4 && typeof h.partnerEnv === 'number') hint.textContent = t('envHintMate', { p, q: h.partnerEnv });
++    else hint.textContent = t('envHint', { p });
+   } else hint.hidden = true;
+   $('me-mano').hidden = !(h.mano === v.me && first);
+   $('me-mano').textContent = t('manoTag');
+@@ -949,7 +958,7 @@ function showToast(v, e) {
+     const x = noquieroWhat(v, e);
+     why = v.n === 2 ? (loser === me ? t('w_noYou', { x }) : t('w_noName', { name: other, x })) : loser === me ? t('w_noUs', { x }) : t('w_noThem', { x });
+   } else why = v.n === 2 ? (loser === me ? t('w_mazoYou') : t('w_mazoName', { name: other })) : loser === me ? t('w_mazoUs') : t('w_mazoThem');
+-  const lines = [`<p>${esc(why)} · <em>+${e.pts}</em></p>`];
++  const lines = [`<p>${esc(why)} · <em>+${e.pts}</em>${e.env ? ` <small>(${esc(t('w_mazoEnv'))})</small>` : ''}</p>`];
+   const en = S.handEnv;
+   if (en) {
+     const detail = en.yes ? (en.said[1].pts === null ? t('e_buenas', { a: en.said[0].pts }) : t('e_vs', { a: en.said[1].pts, b: en.said[0].pts })) : t('e_no');
+diff --git a/public/games/truco/shared/bot.js b/public/games/truco/shared/bot.js
+index 5987dc7..0f07339 100644
+--- a/public/games/truco/shared/bot.js
++++ b/public/games/truco/shared/bot.js
+@@ -1,8 +1,8 @@
+ /**
+  * Truco — la compu. Decide solo con lo que ve su asiento (la misma vista que recibe una persona): sus cartas, las
+- * jugadas, los cantos y los puntos que se dijeron. Para estimar cuánto gana reparte muchas veces las cartas que no
+- * vio entre los demás (respetando lo que se sabe: el envido declarado, quién tiene flor) y juega cada mano hasta el
+- * final con una política simple. Los cantos de los rivales pesan: el que canta truco suele tener con qué.
++ * jugadas, los cantos, los puntos que se dijeron y, de a cuatro, la seña del envido del compañero. Para estimar cuánto
++ * gana reparte muchas veces las cartas que no vio entre los demás (respetando lo que se sabe: el envido declarado,
++ * quién tiene flor) y juega cada mano hasta el final con una política simple. Los cantos de los rivales pesan: el que canta truco suele tener con qué.
+  *
+  * Niveles: 1 fácil (pocas cuentas, se equivoca, casi no miente), 2 normal y 3 difícil (más cuentas, lee los cantos y
+  * miente mejor).
+@@ -39,6 +39,8 @@ function know(v) {
+         cap = Math.max(cap, s.pts);
+       }
+   }
++  // de a cuatro, la seña del compañero: sus puntos de envido
++  if (n === 4 && typeof h.partnerEnv === 'number' && exact[(v.me + 2) % 4] === undefined) exact[(v.me + 2) % 4] = h.partnerEnv;
+   // quién cantó qué en esta mano (para leer a los rivales)
+   const truco = new Set(), env = new Set();
+   for (const c of h.calls || []) {
+@@ -235,7 +237,7 @@ const noisy = (p, P, rng) => Math.max(0, Math.min(1, p + (rng() * 2 - 1) * P.noi
+ 
+ /** ¿Canto envido (y cuál)? */
+ function envidoCall(v, K, rng, P, kinds) {
+-  const mine = envido(v.hand.dealt);
++  const mine = Math.max(envido(v.hand.dealt), v.hand.partnerEnv ?? 0);
+   const pe = noisy(envidoOdds(v, K, rng, P), P, rng);
+   const my = v.scores[K.team], op = v.scores[1 - K.team];
+   const falta = faltaValue(v.scores, v.target);
+diff --git a/public/games/truco/shared/rules.js b/public/games/truco/shared/rules.js
+index 9dd2a37..64df686 100644
+--- a/public/games/truco/shared/rules.js
++++ b/public/games/truco/shared/rules.js
+@@ -127,6 +127,13 @@ export function handWinner(res, manoTeam) {
+ /** El orden de juego a partir de un asiento (contrario a las agujas del reloj: el siguiente es el de la derecha). */
+ export const orderFrom = (start, n) => Array.from({ length: n }, (_, k) => (start + k) % n);
+ 
++/**
++ * El pie de un equipo: el último de ese equipo en jugar la primera baza. De a cuatro son el que repartió y el
++ * compañero del mano, y solo ellos cantan el envido (mano a mano, cada uno es su propio pie).
++ */
++export const pieOf = (team, mano, n) => orderFrom(mano, n).filter((s) => teamOf(s) === team).pop();
++export const isPie = (seat, mano, n) => pieOf(teamOf(seat), mano, n) === seat;
++
+ /**
+  * El envido de cada equipo y quién gana: el que tiene más; si empatan, el que está más cerca de la mano.
+  * hands: las tres cartas de cada asiento. Devuelve { winner, pts: [mejor de cada equipo], seat: [quién lo tiene] }.
+diff --git a/public/games/truco/shared/table.js b/public/games/truco/shared/table.js
+index 482e17e..53d8f9d 100644
+--- a/public/games/truco/shared/table.js
++++ b/public/games/truco/shared/table.js
+@@ -11,7 +11,7 @@
+  * `dealFn(hand)` (opcional) da el mazo de cada mano en vez de mezclar con `rng`: en el truco del día todos reciben
+  * las mismas cartas.
+  */
+-import { DECK, TRUCO, teamOf, shuffled, bazaWinner, handWinner, envidoNext, envidoAccepted, envidoRejected, envidoResult, envidoCards, florResult, hasFlor, trucoValue, trucoRejected } from './rules.js';
++import { DECK, TRUCO, teamOf, shuffled, bazaWinner, handWinner, envido, envidoNext, envidoAccepted, envidoRejected, envidoResult, envidoCards, florResult, hasFlor, trucoValue, trucoRejected, pieOf, isPie } from './rules.js';
+ import { decide } from './bot.js';
+ 
+ /** Pausas (ms) para que se pueda seguir lo que pasa. */
+@@ -99,7 +99,8 @@ export class Table {
+     const h = this.h;
+     const tm = teamOf(seat);
+     const first = h.bazas.length === 1 && !h.bazas[0].plays.some((p) => p.seat === seat);
+-    const envOpen = h.env.state === 'open' && first;
++    // de a cuatro el envido lo cantan solo los pies (el que repartió y el compañero del mano)
++    const envOpen = h.env.state === 'open' && first && isPie(seat, h.mano, this.n);
+     const p = h.pending;
+     if (p?.kind === 'truco')
+       // el envido está primero: contra el primer truco, si todavía no tiró en la primera
+@@ -184,21 +185,41 @@ export class Table {
+       h.pending = { kind: 'truco', level, by: seat, to: p.by };
+     } else {
+       level = h.truco.level + 1;
+-      h.pending = { kind: 'truco', level, by: seat, to: (seat + 1) % this.n };
++      h.pending = { kind: 'truco', level, by: seat, to: this.trucoTo(seat, level) };
+     }
+     h.calls.push({ seat, what: TRUCO[level] });
+     this.push({ k: 'call', seat, what: TRUCO[level], raise: p?.kind === 'truco' });
+     this.proceed();
+   }
+ 
++  /**
++   * Quién contesta un truco nuevo: el que sigue; pero si es el primer truco y el pie del otro equipo todavía puede
++   * cantar el envido (el envido está primero), lo contesta él.
++   */
++  trucoTo(seat, level) {
++    const h = this.h;
++    const pie = pieOf(1 - teamOf(seat), h.mano, this.n);
++    if (level === 1 && h.env.state === 'open' && h.bazas.length === 1 && !h.bazas[0].plays.some((p) => p.seat === pie)) return pie;
++    return (seat + 1) % this.n;
++  }
++
++  /** ¿El equipo `team` todavía podía cantar el envido? (primera baza, sin envido jugado ni truco querido, su pie sin tirar) */
++  envidoPending(team) {
++    const h = this.h;
++    if (h.env.state !== 'open' || h.bazas.length !== 1 || h.truco.level > 0) return false;
++    if (this.opts.flor && florResult(h.dealt, h.mano)) return false; // la flor anula el envido
++    const pie = pieOf(team, h.mano, this.n);
++    return !h.bazas[0].plays.some((p) => p.seat === pie);
++  }
++
+   callEnvido(seat, kind) {
+     const h = this.h;
+     const p = h.pending;
+     if (p?.kind === 'envido') h.pending = { kind: 'envido', chain: [...p.chain, kind], by: seat, to: p.by, resume: p.resume };
+     else {
+-      // en su turno, o contra el truco (el truco queda esperando la respuesta)
++      // en su turno, o contra el truco (el truco queda esperando la respuesta); lo contesta el pie del otro equipo
+       const resume = p?.kind === 'truco' ? p : null;
+-      h.pending = { kind: 'envido', chain: [kind], by: seat, to: resume ? resume.by : (seat + 1) % this.n, resume };
++      h.pending = { kind: 'envido', chain: [kind], by: seat, to: pieOf(1 - teamOf(seat), h.mano, this.n), resume };
+     }
+     h.calls.push({ seat, what: kind });
+     this.push({ k: 'call', seat, what: kind, chain: h.pending.chain.slice() });
+@@ -244,11 +265,16 @@ export class Table {
+     this.hold(PACE.ENV);
+   }
+ 
++  /**
++   * Irse al mazo entrega lo que vale la mano; si el envido todavía se podía cantar (en la primera, antes de que se
++   * juegue), el otro equipo se lleva además 1 por el envido: 2 si no se cantó nada.
++   */
+   mazo(seat) {
+     const h = this.h;
++    const env = this.envidoPending(teamOf(seat)) ? 1 : 0;
+     h.calls.push({ seat, what: 'mazo' });
+     this.push({ k: 'mazo', seat });
+-    this.endHand(1 - teamOf(seat), trucoValue(h.truco.level), 'mazo');
++    this.endHand(1 - teamOf(seat), trucoValue(h.truco.level) + env, 'mazo', env);
+   }
+ 
+   /** La flor se canta sola la primera vez que el que la tiene debe jugar o contestar en la primera baza. */
+@@ -276,7 +302,7 @@ export class Table {
+     return this.award(r.winner, r.pts);
+   }
+ 
+-  endHand(team, pts, why) {
++  endHand(team, pts, why, env = 0) {
+     const h = this.h;
+     h.over = true;
+     h.pending = null;
+@@ -284,14 +310,14 @@ export class Table {
+     const show = [];
+     const er = h.env.result;
+     if (er?.yes) show.push({ seat: er.seat, cards: envidoCards(h.dealt[er.seat]) });
+-    h.end = { team, pts, why, show };
++    h.end = { team, pts, why, show, env };
+     // cuánto canta cada equipo (lo ve cualquiera en la mesa; la compu lo usa para no comerse los amagues)
+     this.stats.hands++;
+     for (const tm of [0, 1]) {
+       if (h.calls.some((c) => teamOf(c.seat) === tm && c.what === 'truco')) this.stats.truco[tm]++;
+       if (h.calls.some((c) => teamOf(c.seat) === tm && ['envido', 'real', 'falta'].includes(c.what))) this.stats.envido[tm]++;
+     }
+-    this.push({ k: 'hand', team, pts, why, show, truco: h.truco.level });
++    this.push({ k: 'hand', team, pts, why, show, truco: h.truco.level, env });
+     if (this.award(team, pts)) return;
+     this.mano = (h.mano + 1) % this.n;
+     this.handNum++;
+@@ -445,6 +471,8 @@ export class Table {
+         over: h.over,
+         mine: h.cards[i].slice(),
+         dealt: h.dealt[i].slice(),
++        // la seña del envido: de a cuatro, mientras se puede cantar, cada uno sabe los puntos de su compañero
++        partnerEnv: this.n === 4 && h.bazas.length === 1 && h.env.state === 'open' ? envido(h.dealt[(i + 2) % 4]) : null,
+         bazas: h.bazas.map((b) => ({ lead: b.lead, plays: b.plays.map((x) => ({ ...x })), res: b.res, win: b.win })),
+         pending: p ? { kind: p.kind, level: p.level ?? 0, chain: p.chain ? p.chain.slice() : null, by: p.by, to: p.to, resume: !!p.resume } : null,
+         truco: { ...h.truco },
+diff --git a/tests/truco.test.mjs b/tests/truco.test.mjs
+index 5daf4b8..3a928aa 100644
+--- a/tests/truco.test.mjs
++++ b/tests/truco.test.mjs
+@@ -1,7 +1,7 @@
+ /** Truco: jerarquía de cartas, envido, flor, cantos, bazas, la mesa (turnos, cantos, puntos, tiempos), la compu, el diario y el servidor. */
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+-import { DECK, power, envido, envidoCards, hasFlor, florPts, envidoNext, envidoAccepted, envidoRejected, faltaValue, bazaWinner, handWinner, envidoResult, florResult, trucoValue, trucoRejected, shuffled, seatOrder, isCard } from '../public/games/truco/shared/rules.js';
++import { DECK, power, envido, envidoCards, hasFlor, florPts, envidoNext, envidoAccepted, envidoRejected, faltaValue, bazaWinner, handWinner, envidoResult, florResult, trucoValue, trucoRejected, shuffled, seatOrder, isCard, pieOf, isPie } from '../public/games/truco/shared/rules.js';
+ import { decide } from '../public/games/truco/shared/bot.js';
+ import { Table, PACE } from '../public/games/truco/shared/table.js';
+ import { cardSVG, backSVG } from '../public/shared/spanish-deck.js';
+@@ -355,10 +355,10 @@ test('truco: retruco y vale cuatro, lo que vale cada no quiero y el mazo', () =>
+   go(C, 0, { t: 'truco' });
+   go(C, 1, { t: 'noquiero' });
+   assert.deepEqual(C.T.scores, [3, 0]);
+-  // mazo sin cantos entrega 1; con retruco querido, 3
++  // mazo sin cantos en la primera entrega 2 (1 por el envido que no se jugó); con retruco querido, 3
+   const D = scene([['1e', '2o', '4c'], ['3b', '4o', '6c']]);
+   go(D, 0, { t: 'mazo' });
+-  assert.deepEqual(D.T.scores, [0, 1]);
++  assert.deepEqual(D.T.scores, [0, 2]);
+   const E = scene([['1e', '2o', '4c'], ['3b', '4o', '6c']]);
+   go(E, 0, { t: 'truco' });
+   go(E, 1, { t: 'truco' });
+@@ -504,13 +504,13 @@ test('la partida termina al llegar al tanteo, una sola vez y sin pasarse', () =>
+   assert.equal(F.T.phase, 'over');
+ });
+ 
+-test('de a cuatro: el truco lo contesta el que sigue y las bazas son por equipo', () => {
++test('de a cuatro: el primer truco lo contesta el pie rival (por el envido) y las bazas son por equipo', () => {
+   const hands = [['7e', '12c', '5c'], ['3b', '4o', '6c'], ['1o', '2o', '10e'], ['11b', '12b', '4e']];
+   const S = scene(hands);
+   const { T } = S;
+   go(S, 0, { t: 'truco' });
+-  assert.equal(T.actor(), 1, 'contesta el que sigue (un rival)');
+-  go(S, 1, { t: 'quiero' });
++  assert.equal(T.actor(), 3, 'contesta el pie del otro equipo, que todavía puede cantar el envido');
++  go(S, 3, { t: 'quiero' });
+   // baza 0: 0 juega 7e, 1 juega 3b, 2 juega 1o, 3 juega 4e → gana el 7e (equipo 0)
+   go(S, 0, { t: 'play', card: '7e' });
+   go(S, 1, { t: 'play', card: '3b' });
+@@ -534,6 +534,119 @@ test('de a cuatro: el truco lo contesta el que sigue y las bazas son por equipo'
+   assert.deepEqual(T.scores, [2, 0], 'dos bazas del equipo con el truco querido: 2 puntos');
+ });
+ 
++test('pies: el último de cada equipo en la primera (de a cuatro, el que repartió y el compañero del mano)', () => {
++  assert.deepEqual([pieOf(0, 0, 4), pieOf(1, 0, 4)], [2, 3]);
++  assert.deepEqual([pieOf(0, 1, 4), pieOf(1, 1, 4)], [0, 3], 'mano el 1: reparte el 0, que es el pie de su equipo');
++  assert.deepEqual([pieOf(0, 3, 4), pieOf(1, 3, 4)], [2, 1]);
++  assert.deepEqual([pieOf(0, 0, 2), pieOf(1, 0, 2)], [0, 1], 'mano a mano, cada uno es su pie');
++  assert.ok(isPie(2, 0, 4) && isPie(3, 0, 4) && !isPie(0, 0, 4) && !isPie(1, 0, 4));
++});
++
++test('mazo: en la primera, con el envido sin jugar, el otro se lleva 1 más; después, lo que vale la mano', () => {
++  const hands = [['7e', '6e', '1o'], ['7c', '5b', '4o']];
++  // el mano se va sin tirar: 2
++  const A = scene(hands);
++  go(A, 0, { t: 'mazo' });
++  assert.deepEqual(A.T.scores, [0, 2]);
++  const ev = lastEv(A.T, 'hand');
++  assert.deepEqual([ev.pts, ev.env, ev.why], [2, 1, 'mazo'], 'el resumen dice que 1 es del envido');
++  // el pie se va después de que tiró el mano, sin tirar él: también 2
++  const B = scene(hands);
++  go(B, 0, { t: 'play', card: '1o' });
++  go(B, 1, { t: 'mazo' });
++  assert.deepEqual(B.T.scores, [2, 0]);
++  // en la segunda baza ya no hay envido: 1
++  const C = scene(hands);
++  go(C, 0, { t: 'play', card: '7e' });
++  go(C, 1, { t: 'play', card: '4o' });
++  go(C, C.T.actor(), { t: 'mazo' });
++  assert.deepEqual(C.T.scores, [0, 1]);
++  assert.equal(lastEv(C.T, 'hand').env, 0);
++  // con el envido ya jugado, el mazo en la primera entrega solo la mano
++  const D = scene(hands);
++  go(D, 0, { t: 'envido', kind: 'envido' });
++  go(D, 1, { t: 'noquiero' });
++  assert.deepEqual(D.T.scores, [1, 0]);
++  go(D, 0, { t: 'mazo' });
++  assert.deepEqual(D.T.scores, [1, 1]);
++  // con el truco querido (ya no se puede cantar el envido): lo que vale el truco, sin el punto del envido
++  const E = scene(hands);
++  go(E, 0, { t: 'truco' });
++  go(E, 1, { t: 'quiero' });
++  go(E, 0, { t: 'mazo' });
++  assert.deepEqual(E.T.scores, [0, 2]);
++  // con flor en la mesa no hay envido que perder: la flor se cobra y el mazo vale 1
++  const F = scene([['7e', '6e', '1e'], ['7c', '5b', '4o']], { flor: true });
++  go(F, 0, { t: 'play', card: '1e' });
++  go(F, 1, { t: 'mazo' });
++  assert.deepEqual(F.T.scores, [3 + 1, 0], 'flor 3 y mazo 1');
++  // de a cuatro: el mano se va antes de tirar y el envido de su pareja no se jugó: 2
++  const G = scene([['7e', '12c', '5c'], ['3b', '4o', '6c'], ['1o', '2o', '10e'], ['11b', '12b', '4e']]);
++  go(G, 0, { t: 'mazo' });
++  assert.deepEqual(G.T.scores, [0, 2]);
++});
++
++test('de a cuatro: el envido lo cantan y lo contestan solo los pies', () => {
++  const hands = [['7e', '6e', '1o'], ['7c', '5c', '4o'], ['3b', '2b', '11o'], ['12e', '6b', '4c']];
++  const S = scene(hands);
++  const { T } = S;
++  // mano 0, reparte el 3: los pies son el 2 (compañero del mano) y el 3
++  assert.equal(T.actor(), 0);
++  assert.deepEqual(T.legal(0).envido, [], 'el mano no canta el envido');
++  assert.ok(!T.act(0, { t: 'envido', kind: 'envido' }));
++  go(S, 0, { t: 'play', card: '1o' });
++  assert.deepEqual(T.legal(1).envido, [], 'el que sigue tampoco (no es pie)');
++  go(S, 1, { t: 'play', card: '4o' });
++  assert.equal(T.legal(2).envido.length, 3, 'el compañero del mano es pie');
++  go(S, 2, { t: 'play', card: '11o' });
++  assert.equal(T.legal(3).envido.length, 3, 'el que repartió es pie');
++  go(S, 3, { t: 'envido', kind: 'envido' });
++  assert.equal(T.actor(), 2, 'lo contesta el pie del otro equipo (aunque ya tiró)');
++  go(S, 2, { t: 'envido', kind: 'real' });
++  assert.equal(T.actor(), 3);
++  go(S, 3, { t: 'quiero' });
++  // el 0 tiene 33 (7 y 6 de espadas) y gana su pareja: envido 2 + real 3
++  assert.deepEqual(T.scores, [5, 0]);
++  // la seña: mientras se puede cantar, cada uno ve los puntos de su compañero (y nada mientras no hay envido)
++  const V = scene(hands);
++  assert.equal(V.T.view(2).hand.partnerEnv, 33);
++  assert.equal(V.T.view(3).hand.partnerEnv, envido(hands[1]));
++  assert.equal(scene([['7e', '6e', '1o'], ['7c', '5b', '4o']]).T.view(1).hand.partnerEnv, null, 'mano a mano no hay seña');
++});
++
++test('de a cuatro: contra el primer truco, el pie rival canta el envido y después se sigue con el truco', () => {
++  const hands = [['7e', '6e', '1o'], ['7c', '5c', '4o'], ['3b', '2b', '11o'], ['12e', '6b', '4c']];
++  const S = scene(hands);
++  const { T } = S;
++  go(S, 0, { t: 'truco' });
++  assert.equal(T.actor(), 3, 'el truco lo contesta el pie rival');
++  assert.equal(T.legal(3).envido.length, 3, 'y puede cantar el envido: está primero');
++  go(S, 3, { t: 'envido', kind: 'envido' });
++  assert.equal(T.actor(), 2, 'el envido lo contesta el pie del equipo del truco');
++  go(S, 2, { t: 'quiero' });
++  assert.deepEqual(T.scores, [2, 0]);
++  assert.equal(T.h.pending.kind, 'truco');
++  assert.equal(T.actor(), 3, 'vuelve el truco al pie que lo tenía que contestar');
++  go(S, 3, { t: 'quiero' });
++  // después de la primera baza, el truco lo contesta el que sigue
++  const R = scene(hands);
++  go(R, 0, { t: 'play', card: '7e' });
++  go(R, 1, { t: 'play', card: '7c' });
++  go(R, 2, { t: 'play', card: '11o' });
++  go(R, 3, { t: 'play', card: '4c' });
++  assert.equal(R.T.actor(), 0);
++  go(R, 0, { t: 'truco' });
++  assert.equal(R.T.actor(), 1);
++  // si el pie rival ya tiró en la primera, contesta el que sigue
++  const Q = scene(hands);
++  go(Q, 0, { t: 'play', card: '1o' });
++  go(Q, 1, { t: 'play', card: '4o' });
++  go(Q, 2, { t: 'play', card: '11o' });
++  go(Q, 3, { t: 'truco' });
++  assert.equal(Q.T.actor(), 0, 'el pie del otro equipo (2) ya tiró: contesta el que sigue');
++  assert.deepEqual(Q.T.legal(0).envido, []);
++});
++
+ test('tiempo: si se le acaba el turno juega la compu por él y el ausente juega solo hasta que vuelve', () => {
+   const io = fakeIo();
+   const T = new Table({ seats: seats(2), opts: { target: 30, first: 0, turnMs: 30000 }, io, rng: mulberry(3), dealFn: () => deckFor([['7e', '6e', '1o'], ['7c', '5b', '4o']]) });
+-- 
+2.43.0
+
