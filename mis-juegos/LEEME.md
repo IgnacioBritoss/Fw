@@ -10,6 +10,7 @@ original:
 - **Sin anuncios** y con el **servidor online propio**: se juega online desde tu compu, con otros en la misma red.
 - **Un doble clic para jugar**: `jugar.bat` (Windows) o `./jugar.sh` (Mac y Linux).
 - **Un juego que no está en el original**: [Julay’s Donas](#julays-donas-un-juego-nuevo), al estilo Papa’s Donuteria.
+- **El Truco** del original con reglas arregladas y las cartas del naipe argentino: [se suma con un parche](#el-truco).
 
 ![El portal con la paleta tierra](capturas/portal.jpg)
 
@@ -87,6 +88,34 @@ y un escote que parecía papada.
 `julays-donas-4.patch` (arriba del tercero) suma la dificultad (Fácil, Medio o Difícil, en la pantalla de inicio),
 cambia la tarjeta que tapaba la pantalla cuando llegaba alguien por un aviso chico en una esquina y agrega música de
 fondo lenta y tranquila (se apaga desde el inicio o la pausa).
+
+## El Truco
+
+El Truco del original no estaba en esta copia (se sumó después). `truco.patch` lo trae con los arreglos que le
+propusimos a game.it:
+
+- Irse al mazo en la primera, con el envido sin jugar, le da 2 al rival.
+- En parejas, el envido lo cantan y lo contestan solo los pies (el que repartió y el compañero del mano), que ven los
+  puntos de su compañero, como la seña.
+- En el envido querido siempre se ven los puntos de los dos: «Vos 4 · Cacho 23».
+- El tanteador es más grande en la compu.
+- Las cartas copian el naipe clásico argentino.
+
+![Las 40 cartas del Truco](capturas/truco-cartas.jpg)
+
+Va arriba de los cuatro parches de Julay’s Donas. En PowerShell, parado en la carpeta de tu repo:
+
+```powershell
+git status
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/IgnacioBritoss/Fw/claude/trusting-faraday-i43oyo/mis-juegos/truco.patch -OutFile truco.patch
+git am -3 --whitespace=nowarn truco.patch
+Remove-Item truco.patch
+.\jugar.bat
+```
+
+`git status` tiene que decir que no hay cambios sin guardar; si no, `git am` no arranca. Trae también la baraja
+(`public/shared/spanish-deck.js`) y lo del truco del día (`public/shared/daily.js`), y suma el Truco al servidor para
+jugar online. Queda con sus colores: `npm run tierra` no lo toca.
 
 ## Antes y después
 
